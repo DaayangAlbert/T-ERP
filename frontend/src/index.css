@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Aptos", "Segoe UI", "Helvetica Neue", sans-serif;
+  --color-primary: 37 99 235;
+  --color-secondary: 59 130 246;
+  --color-accent: 31 41 55;
+  --color-surface: 243 244 246;
+  --app-background: #f5f7fb;
+  --app-foreground: #111827;
+  --app-muted: #6b7280;
+  --app-muted-strong: #374151;
+  --app-card: rgba(255, 255, 255, 0.94);
+  --app-card-muted: rgba(248, 250, 252, 0.9);
+  --app-border: #dbe5f1;
+  --app-border-strong: #c9d7e8;
+  --app-input: #ffffff;
+  --app-input-border: #cbd5e1;
+  --app-input-foreground: #0f172a;
+  --app-ring: rgba(37, 99, 235, 0.16);
+  --app-shadow-sm: 0 18px 50px -32px rgba(15, 23, 42, 0.18);
+  --app-shadow-md: 0 30px 80px -44px rgba(15, 23, 42, 0.22);
+  --app-shadow-lg: 0 38px 96px -50px rgba(15, 23, 42, 0.28);
+}
+
+html.theme-dark {
+  --color-primary: 59 130 246;
+  --color-secondary: 96 165 250;
+  --color-accent: 226 232 240;
+  --color-surface: 15 23 42;
+  --app-background: #020617;
+  --app-foreground: #e5eefb;
+  --app-muted: #94a3b8;
+  --app-muted-strong: #cbd5e1;
+  --app-card: rgba(15, 23, 42, 0.9);
+  --app-card-muted: rgba(15, 23, 42, 0.72);
+  --app-border: rgba(148, 163, 184, 0.24);
+  --app-border-strong: rgba(148, 163, 184, 0.34);
+  --app-input: rgba(15, 23, 42, 0.82);
+  --app-input-border: rgba(148, 163, 184, 0.28);
+  --app-input-foreground: #f8fafc;
+  --app-ring: rgba(96, 165, 250, 0.18);
+  --app-shadow-sm: 0 22px 52px -34px rgba(2, 6, 23, 0.74);
+  --app-shadow-md: 0 34px 84px -48px rgba(2, 6, 23, 0.84);
+  --app-shadow-lg: 0 42px 100px -54px rgba(2, 6, 23, 0.92);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-surface antialiased;
+  color: var(--app-foreground);
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 20%),
+    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.08), transparent 18%),
+    linear-gradient(180deg, #f8fafc 0%, #f5f7fb 42%, #eef4fb 100%);
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+html.theme-dark body {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.1), transparent 22%),
+    linear-gradient(180deg, #020617 0%, #081225 48%, #0f172a 100%);
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: var(--app-foreground);
+}
+
+:where(.grid > *, .flex > *) {
+  min-width: 0;
+}
+
+:where(img, svg, canvas, video) {
+  display: block;
+  max-width: 100%;
+}
+
+:where(input, select, textarea, button) {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+}
+
+@layer components {
+  .app-panel {
+    border: 1px solid var(--app-border);
+    background: var(--app-card);
+    box-shadow: var(--app-shadow-sm);
+    backdrop-filter: blur(14px);
+  }
+
+  .app-panel-muted {
+    border: 1px solid var(--app-border);
+    background: var(--app-card-muted);
+    box-shadow: var(--app-shadow-sm);
+    backdrop-filter: blur(10px);
+  }
+
+  .app-surface-soft {
+    border: 1px solid var(--app-border);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(248, 250, 252, 0.92));
+  }
+
+  .app-field {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1px solid var(--app-input-border);
+    background: var(--app-input);
+    color: var(--app-input-foreground);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .app-field:focus {
+    border-color: rgb(var(--color-primary));
+    box-shadow:
+      0 0 0 4px var(--app-ring),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    outline: none;
+  }
+
+  .app-eyebrow {
+    color: var(--app-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .app-title {
+    color: var(--app-foreground);
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 28%),
+      linear-gradient(180deg, #f8fafc 0%, #f3f6fb 58%, #edf4fb 100%);
+  }
+
+  html.theme-dark body {
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 24%),
+      linear-gradient(180deg, #020617 0%, #081225 62%, #0f172a 100%);
+  }
+}

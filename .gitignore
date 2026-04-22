@@ -1,0 +1,57 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local virtual environments
+.venv/
+venv/
+
+# Python caches and tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+backend/tests/.tmp_pytest/
+backend/tests/.runtime_tmp/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Backend runtime files
+backend/.env
+backend/.env.local
+backend/.smoke-tmp/
+backend/.pytest-runtime/
+backend/instance/
+backend/uploads/
+backend/app/modules/payroll/output/**
+!backend/app/modules/payroll/output/
+!backend/app/modules/payroll/output/.gitkeep
+!backend/app/modules/payroll/output/bulletins/
+!backend/app/modules/payroll/output/bulletins/.gitkeep
+!backend/app/modules/payroll/output/companies/
+!backend/app/modules/payroll/output/companies/.gitkeep
+backend/*.log
+backend/*.sqlite3
+backend/*.db
+backend/pytest-cache-files-*/
+backend/tests/runtime_tmp_probe/
+
+# Frontend runtime files
+frontend/.env
+frontend/.env.local
+frontend/.npm-cache/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+frontend/vite-*.err
+
+# Local audit artifacts
+artifacts/
+
+# Generic logs
+*.log
