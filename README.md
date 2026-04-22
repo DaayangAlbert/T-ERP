@@ -3,6 +3,24 @@
 T-ERP is currently a structured MVP foundation for a multi-tenant ERP focused on construction businesses.
 At this stage, the repository is not yet production-ready: the core modules exist, the architecture is in place, Sprint 1 hardened the repo and auth flow, and Sprint 2 is now introducing database migrations, repeatable seeding, and backend cleanup for the V1 modules.
 
+## Developer Onboarding
+
+If you are joining the project as a contributor, start with these files:
+
+- [docs/developer-onboarding.md](docs/developer-onboarding.md): quickest path from clone to local run
+- [CONTRIBUTING.md](CONTRIBUTING.md): branch, PR, testing, and review expectations
+- [.github/workflows/ci.yml](.github/workflows/ci.yml): backend and frontend checks enforced in CI
+
+Fast contributor checklist:
+
+1. Create `backend/.env` from `backend/.env.example`.
+2. Create `frontend/.env.local` from `frontend/.env.example` only if you need to override the default local proxy.
+3. Install backend dev dependencies with `python -m pip install -r backend/requirements-dev.txt`.
+4. Install frontend dependencies with `npm ci` inside `frontend/`.
+5. Apply migrations with `python backend/bootstrap_schema.py`.
+6. Run the backend with `python backend/run.py`.
+7. Run the frontend with `npm run dev` inside `frontend/`.
+
 ## Architecture Overview
 
 - Backend: Flask API using modular Blueprints (domain-driven modules).
@@ -142,6 +160,13 @@ T-ERP/
 - `VITE_API_BASE_URL`: API base URL. If omitted, the frontend uses `/api/v1` and the Vite development proxy.
 - `VITE_SOCKET_URL`: Socket.IO server URL. If omitted, the frontend uses the API origin.
 - `VITE_ENABLED_BACKEND_MODULES`: comma-separated list of modules exposed in the shell navigation.
+
+## Collaboration Notes
+
+- CI runs on every push and pull request for both backend and frontend.
+- Repository line endings and editor defaults are normalized through `.gitattributes` and `.editorconfig`.
+- Local secrets, uploads, generated payroll bulletins, caches, and build output must stay out of commits.
+- New contributors should use [CONTRIBUTING.md](CONTRIBUTING.md) as the review and PR baseline.
 
 ## Multi-Tenant Principles
 
