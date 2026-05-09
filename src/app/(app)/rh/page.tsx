@@ -1,0 +1,82 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { LayoutDashboard, Banknote, Crown, BarChart3, GraduationCap } from "lucide-react";
+import { PayrollMassChart } from "@/components/hr/PayrollMassChart";
+import { TopSalariesTable } from "@/components/hr/TopSalariesTable";
+import { SuccessionOrgChart } from "@/components/hr/SuccessionOrgChart";
+import { SocialIndicatorsDashboard } from "@/components/hr/SocialIndicatorsDashboard";
+import { TrainingsCalendar } from "@/components/hr/TrainingsCalendar";
+import { clsx } from "clsx";
+
+type Tab = "overview" | "payroll" | "succession" | "social" | "trainings";
+
+const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
+  { key: "overview", label: "Vue d'ensemble", icon: <LayoutDashboard className="h-3.5 w-3.5" /> },
+  { key: "payroll", label: "Masse salariale", icon: <Banknote className="h-3.5 w-3.5" /> },
+  { key: "succession", label: "Plan de succession", icon: <Crown className="h-3.5 w-3.5" /> },
+  { key: "social", label: "Indicateurs sociaux", icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { key: "trainings", label: "Formations", icon: <GraduationCap className="h-3.5 w-3.5" /> },
+];
+
+export default function RhPage() {
+  const [tab, setTab] = useState<Tab>("overview");
+
+  return (
+    <>
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Ressources humaines</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Vue stratégique : masse salariale, succession, indicateurs sociaux, formations.
+          </p>
+        </div>
+        <Link
+          href="/rh/succession"
+          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
+        >
+          <Crown className="h-3.5 w-3.5" /> Organigramme dédié
+        </Link>
+      </header>
+
+      <div className="mb-4 flex flex-wrap gap-1 border-b border-line">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={clsx(
+              "relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition",
+              tab === t.key ? "text-primary-700" : "text-ink-3 hover:text-ink"
+            )}
+          >
+            {t.icon}
+            {t.label}
+            {tab === t.key && <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-primary-500" />}
+          </button>
+        ))}
+      </div>
+
+      {tab === "overview" && <Overview />}
+      {tab === "payroll" && (
+        <div className="space-y-4">
+          <PayrollMassChart />
+          <TopSalariesTable />
+        </div>
+      )}
+      {tab === "succession" && <SuccessionOrgChart />}
+      {tab === "social" && <SocialIndicatorsDashboard />}
+      {tab === "trainings" && <TrainingsCalendar />}
+    </>
+  );
+}
+
+function Overview() {
+  return (
+    <div className="space-y-4">
+      <PayrollMassChart />
+      <SocialIndicatorsDashboard />
+    </div>
+  );
+}

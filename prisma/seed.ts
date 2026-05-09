@@ -40,6 +40,9 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.training.deleteMany();
+  await prisma.successionPlan.deleteMany();
+  await prisma.socialIndicator.deleteMany();
   await prisma.resourceConflict.deleteMany();
   await prisma.milestone.deleteMany();
   await prisma.siteDecision.deleteMany();
@@ -569,6 +572,164 @@ async function main() {
     });
   }
   console.log(`✓ ${conflicts.length} conflits ressources créés (3 arbitrages DG en attente)`);
+
+  // ===== RH STRATÉGIQUE (Phase 2 / Bloc 3 — fn 3.3) =====
+  // Plan de succession pour 8 postes clés
+  const successions: Array<{ position: string; incumbentRole: Role; successorRole?: Role; readyInMonths?: number; status: "IDENTIFIED" | "AT_RISK" | "NONE" | "READY_NOW"; notes?: string }> = [
+    { position: "Directeur Général", incumbentRole: Role.DG, status: "AT_RISK", notes: "Successeur potentiel à former : 18 mois minimum." },
+    { position: "DAF", incumbentRole: Role.DAF, successorRole: Role.ACCOUNTANT, readyInMonths: 12, status: "IDENTIFIED" },
+    { position: "Directeur Technique", incumbentRole: Role.TECH_DIRECTOR, successorRole: Role.WORKS_DIRECTOR, readyInMonths: 6, status: "READY_NOW" },
+    { position: "Directeur de Travaux Sud", incumbentRole: Role.WORKS_DIRECTOR, successorRole: Role.WORKS_MANAGER, readyInMonths: 24, status: "IDENTIFIED" },
+    { position: "Directeur de Travaux Nord", incumbentRole: Role.WORKS_DIRECTOR, status: "NONE", notes: "Aucun successeur interne identifié — recrutement externe à envisager." },
+    { position: "Conducteur de Travaux Senior", incumbentRole: Role.WORKS_MANAGER, successorRole: Role.SITE_MANAGER, readyInMonths: 18, status: "IDENTIFIED" },
+    { position: "Responsable RH", incumbentRole: Role.HR, status: "AT_RISK", notes: "Profil rare sur la place de Yaoundé." },
+    { position: "Comptable Principal", incumbentRole: Role.ACCOUNTANT, status: "NONE" },
+  ];
+
+  for (const sp of successions) {
+    const incumbent = createdUsers.find((u) => u.role === sp.incumbentRole);
+    if (!incumbent) continue;
+    const successor = sp.successorRole ? createdUsers.find((u) => u.role === sp.successorRole) : null;
+    await prisma.successionPlan.create({
+      data: {
+        tenantId: tenant.id,
+        positionTitle: sp.position,
+        incumbentId: incumbent.id,
+        successorId: successor?.id ?? null,
+        readyInMonths: sp.readyInMonths ?? null,
+        status: sp.status,
+        notes: sp.notes ?? null,
+      },
+    });
+  }
+  console.log(`✓ ${successions.length} plans de succession créés`);
+
+  // 50 formations historiques + 20 en cours + 15 planifiées
+  const trainingTitles = [
+    { title: "CACES Catégorie B (engins terrassement)", category: "CACES", expires: 5 * 365 },
+    { title: "Habilitation électrique BR", category: "Sécurité", expires: 3 * 365 },
+    { title: "Travail en hauteur", category: "Sécurité", expires: 365 },
+    { title: "AIPR Encadrant", category: "Sécurité", expires: 5 * 365 },
+    { title: "Management d'équipe chantier", category: "Management", expires: null },
+    { title: "Lecture de plans BTP", category: "Métier", expires: null },
+    { title: "Coffrage moderne", category: "Métier", expires: null },
+    { title: "Soudure ARC niveau 2", category: "Métier", expires: 3 * 365 },
+    { title: "ISO 9001 Auditeur interne", category: "Qualité", expires: 3 * 365 },
+    { title: "SST Sauveteur Secouriste", category: "Sécurité", expires: 2 * 365 },
+  ];
+
+  const trainingUsers = createdUsers.filter((u) => u.role !== Role.SUPER_ADMIN);
+  let trainingCount = 0;
+
+  // 50 historiques
+  for (let i = 0; i < 50; i++) {
+    const t = trainingTitles[i % trainingTitles.length];
+    const u = trainingUsers[i % trainingUsers.length];
+    const startDate = new Date(Date.now() - (300 - i * 5) * 86_400_000);
+    const endDate = new Date(startDate.getTime() + (3 + Math.floor(Math.random() * 4)) * 86_400_000);
+    const expires = t.expires ? new Date(endDate.getTime() + t.expires * 86_400_000) : null;
+    await prisma.training.create({
+      data: {
+        tenantId: tenant.id,
+        userId: u.id,
+        title: t.title,
+        category: t.category,
+        provider: ["INFOSEC Cameroun", "AFB Formation", "BTP Academy", "Centre Métiers"][i % 4],
+        startDate,
+        endDate,
+        cost: BigInt(150_000 + Math.floor(Math.random() * 350_000)),
+        status: "COMPLETED",
+        expiresAt: expires,
+      },
+    });
+    trainingCount++;
+  }
+
+  // 20 en cours
+  for (let i = 0; i < 20; i++) {
+    const t = trainingTitles[i % trainingTitles.length];
+    const u = trainingUsers[(i + 5) % trainingUsers.length];
+    const startDate = new Date(Date.now() - 7 * 86_400_000);
+    const endDate = new Date(Date.now() + 7 * 86_400_000);
+    await prisma.training.create({
+      data: {
+        tenantId: tenant.id,
+        userId: u.id,
+        title: t.title,
+        category: t.category,
+        provider: "Centre Métiers BTP",
+        startDate,
+        endDate,
+        cost: BigInt(280_000),
+        status: "IN_PROGRESS",
+      },
+    });
+    trainingCount++;
+  }
+
+  // 15 planifiées
+  for (let i = 0; i < 15; i++) {
+    const t = trainingTitles[i % trainingTitles.length];
+    const u = trainingUsers[(i + 10) % trainingUsers.length];
+    const startDate = new Date(Date.now() + (i + 1) * 14 * 86_400_000);
+    const endDate = new Date(startDate.getTime() + 5 * 86_400_000);
+    await prisma.training.create({
+      data: {
+        tenantId: tenant.id,
+        userId: u.id,
+        title: t.title,
+        category: t.category,
+        provider: "AFB Formation",
+        startDate,
+        endDate,
+        cost: BigInt(220_000),
+        status: "PLANNED",
+      },
+    });
+    trainingCount++;
+  }
+  console.log(`✓ ${trainingCount} formations créées (50 historiques + 20 en cours + 15 planifiées)`);
+
+  // 5 certifications expirent dans 60 jours (forçage)
+  for (let i = 0; i < 5; i++) {
+    const u = trainingUsers[i + 1];
+    const expires = new Date(Date.now() + (10 + i * 8) * 86_400_000);
+    await prisma.training.create({
+      data: {
+        tenantId: tenant.id,
+        userId: u.id,
+        title: `CACES Catégorie ${["A", "B", "C", "D", "F"][i]}`,
+        category: "CACES",
+        provider: "INFOSEC Cameroun",
+        startDate: new Date(expires.getTime() - 5 * 365 * 86_400_000),
+        endDate: new Date(expires.getTime() - 5 * 365 * 86_400_000 + 5 * 86_400_000),
+        status: "COMPLETED",
+        expiresAt: expires,
+      },
+    });
+  }
+  console.log(`✓ 5 certifications CACES expirantes dans 60j (alertes)`);
+
+  // 12 mois d'indicateurs sociaux
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - 11 + i, 1);
+    const period = d.toISOString().slice(0, 7);
+    await prisma.socialIndicator.create({
+      data: {
+        tenantId: tenant.id,
+        period,
+        indicators: {
+          turnover: { rate: 8.5 + (Math.random() - 0.5) * 4, byCategory: [{ category: "OQ", rate: 12 }, { category: "Manœuvres", rate: 18 }] },
+          absenteeism: { rate: 4.2 + (Math.random() - 0.5) * 1.5, byReason: [{ reason: "Maladie", rate: 2.1 }, { reason: "Accident", rate: 0.8 }] },
+          seniorityAvg: 6.5 + i * 0.05,
+          genderEquity: { femaleRatio: 0.18 + i * 0.005, femaleSalaryGap: 0.08 - i * 0.002 },
+          climate: { score: 4.0 + (Math.random() - 0.5) * 0.5, lastSurveyDate: period + "-15" },
+          conflicts: i % 4 === 0 ? 1 : 0,
+        } as object,
+      },
+    });
+  }
+  console.log(`✓ 12 mois d'indicateurs sociaux créés`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
