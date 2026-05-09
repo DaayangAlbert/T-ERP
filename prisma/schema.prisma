@@ -65,6 +65,10 @@ model Tenant {
   suppliers   Supplier[]
   frameworkContracts FrameworkContract[]
   purchaseOrders PurchaseOrder[]
+  fixedAssets FixedAsset[]
+  stockMovements StockMovement[]
+  inventories Inventory[]
+  losses      Loss[]
 
   @@index([parentId])
   @@map("tenants")
@@ -1465,4 +1469,137 @@ enum PoStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+// ========================================
+// STOCKS & MATÉRIEL DG (Phase 2 / Bloc 5 — fn 5.1)
+// ========================================
+// Immobilisations significatives, mouvements de stock (avec détection
+// d'anomalies), inventaires et sinistres.
+model FixedAsset {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code          String
+  description   String
+  category      AssetCategory
+  acquisitionDate DateTime
+  grossValue    BigInt
+  accumulatedDepreciation BigInt @default(0)
+  netValue      BigInt   // VNC = grossValue - accumulatedDepreciation
+  usefulLifeMonths Int
+  siteId        String?
+  condition     String   @default("GOOD") // EXCELLENT, GOOD, FAIR, POOR
+  insurance     Json?    // { company, policyRef, expiresAt, coveredAmount }
+  lastRevaluedAt DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, category])
+  @@map("fixed_assets")
+}
+
+enum AssetCategory {
+  EQUIPMENT
+  VEHICLE
+  BUILDING
+  TOOLING
+  IT
+  FURNITURE
+  OTHER
+}
+
+model StockMovement {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type         MovementType
+  itemCode     String
+  itemLabel    String
+  quantity     Float
+  unitValue    BigInt
+  totalValue   BigInt
+  fromSiteId   String?
+  toSiteId     String?
+  reason       String?
+  initiatorId  String
+  anomalous    Boolean  @default(false)
+  anomalyReason String?
+
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, anomalous])
+  @@index([tenantId, createdAt])
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  INBOUND
+  OUTBOUND
+  TRANSFER
+  ADJUSTMENT
+  WRITEOFF
+}
+
+model Inventory {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  siteId        String?
+  period        String // "2026-04"
+  items         Json     @default("[]") // [{ code, label, theoretical, counted, gap }]
+  itemsCount    Int      @default(0)
+  gapsCount     Int      @default(0)
+  gapsValue     BigInt   @default(0)
+  status        InventoryStatus @default(PLANNED)
+  dgValidated   Boolean  @default(false)
+  startDate     DateTime
+  endDate       DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("inventories")
+}
+
+enum InventoryStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  VALIDATED
+}
+
+model Loss {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type        LossType
+  itemDescription String
+  value       BigInt
+  siteId      String?
+  occurredAt  DateTime
+  declaredToInsurance Boolean @default(false)
+  declaredAt  DateTime?
+  indemnification BigInt?
+  correctiveActions String? @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, type])
+  @@map("losses")
+}
+
+enum LossType {
+  THEFT
+  DAMAGE
+  LOSS
+  OTHER
 }

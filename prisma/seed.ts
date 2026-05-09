@@ -40,6 +40,10 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.loss.deleteMany();
+  await prisma.inventory.deleteMany();
+  await prisma.stockMovement.deleteMany();
+  await prisma.fixedAsset.deleteMany();
   await prisma.purchaseOrder.deleteMany();
   await prisma.supplierEvaluation.deleteMany();
   await prisma.frameworkContract.deleteMany();
@@ -1205,6 +1209,157 @@ async function main() {
     });
   }
   console.log(`✓ 5 BC en attente validation DG créés`);
+
+  // ===== STOCKS & MATÉRIEL (Phase 2 / Bloc 5 — fn 5.1) =====
+  // 42 immobilisations cohérentes
+  const sitesForAssets = await prisma.site.findMany({
+    where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+    select: { id: true },
+  });
+  const assetSeeds = [
+    // Engins (15)
+    ...Array.from({ length: 4 }, (_, i) => ({ desc: `Pelle hydraulique CAT 320 #${i + 1}`, cat: "EQUIPMENT" as const, gross: 220_000_000, life: 84, age: 12 + i * 6, cond: "GOOD" })),
+    ...Array.from({ length: 3 }, (_, i) => ({ desc: `Bulldozer Komatsu D65 #${i + 1}`, cat: "EQUIPMENT" as const, gross: 280_000_000, life: 96, age: 24 + i * 12, cond: i === 2 ? "FAIR" : "GOOD" })),
+    ...Array.from({ length: 3 }, (_, i) => ({ desc: `Compacteur Bomag #${i + 1}`, cat: "EQUIPMENT" as const, gross: 95_000_000, life: 84, age: 36 + i * 6, cond: "FAIR" })),
+    ...Array.from({ length: 3 }, (_, i) => ({ desc: `Grue à tour Liebherr #${i + 1}`, cat: "EQUIPMENT" as const, gross: 320_000_000, life: 120, age: 48 + i * 6 })),
+    ...Array.from({ length: 2 }, (_, i) => ({ desc: `Centrale à béton mobile #${i + 1}`, cat: "EQUIPMENT" as const, gross: 180_000_000, life: 96, age: 18 })),
+    // Véhicules (12)
+    ...Array.from({ length: 6 }, (_, i) => ({ desc: `Camion benne Mercedes Actros #${i + 1}`, cat: "VEHICLE" as const, gross: 65_000_000, life: 60, age: 12 + i * 4 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ desc: `Pickup Toyota Hilux #${i + 1}`, cat: "VEHICLE" as const, gross: 28_000_000, life: 72, age: 24 + i * 6 })),
+    ...Array.from({ length: 2 }, (_, i) => ({ desc: `Berline DG ${i === 0 ? "Toyota Land Cruiser" : "Mercedes E-Class"}`, cat: "VEHICLE" as const, gross: 45_000_000, life: 60, age: 18 })),
+    // Bâtiments (4)
+    { desc: "Siège social Bonapriso (immeuble R+3)", cat: "BUILDING" as const, gross: 850_000_000, life: 600, age: 96 },
+    { desc: "Base logistique Bonabéri (entrepôt 2 000 m²)", cat: "BUILDING" as const, gross: 320_000_000, life: 480, age: 60 },
+    { desc: "Agence Yaoundé Bastos", cat: "BUILDING" as const, gross: 180_000_000, life: 480, age: 48 },
+    { desc: "Atelier de maintenance Douala", cat: "BUILDING" as const, gross: 120_000_000, life: 360, age: 36 },
+    // Outillage (5)
+    ...Array.from({ length: 5 }, (_, i) => ({ desc: `Lot outillage ${["coffrage", "ferraillage", "finitions", "topographie", "hydraulique"][i]}`, cat: "TOOLING" as const, gross: 12_500_000 + i * 2_000_000, life: 60, age: 24 })),
+    // IT (4)
+    ...Array.from({ length: 2 }, (_, i) => ({ desc: `Serveur Dell PowerEdge #${i + 1}`, cat: "IT" as const, gross: 18_000_000, life: 60, age: 12 })),
+    ...Array.from({ length: 2 }, (_, i) => ({ desc: `Lot postes de travail (10 unités) #${i + 1}`, cat: "IT" as const, gross: 11_000_000, life: 48, age: 18 })),
+    // Mobilier (2)
+    ...Array.from({ length: 2 }, (_, i) => ({ desc: `Mobilier de bureau ${i === 0 ? "siège" : "agence"}`, cat: "FURNITURE" as const, gross: 14_000_000, life: 120, age: 36 })),
+  ];
+
+  for (const [i, s] of assetSeeds.entries()) {
+    const ageMonths = (s as any).age ?? 24;
+    const life = (s as any).life ?? 60;
+    const grossValue = BigInt(s.gross);
+    const accumulatedDepreciation = (grossValue * BigInt(Math.min(ageMonths, life))) / BigInt(life);
+    const netValue = grossValue - accumulatedDepreciation;
+    const acquisitionDate = new Date(Date.now() - ageMonths * 30 * 86_400_000);
+    await prisma.fixedAsset.create({
+      data: {
+        tenantId: tenant.id,
+        code: `IMMO-${String(i + 1).padStart(4, "0")}`,
+        description: s.desc,
+        category: s.cat,
+        acquisitionDate,
+        grossValue,
+        accumulatedDepreciation,
+        netValue,
+        usefulLifeMonths: life,
+        siteId: sitesForAssets.length ? sitesForAssets[i % sitesForAssets.length].id : null,
+        condition: ((s as any).cond ?? "GOOD") as string,
+        insurance: i % 3 === 0 ? { company: "AXA Cameroun", policyRef: `POL-${String(i).padStart(4, "0")}`, coveredAmount: grossValue.toString() } as object : undefined,
+      },
+    });
+  }
+  console.log(`✓ ${assetSeeds.length} immobilisations créées`);
+
+  // 200 mouvements de stock sur 30 jours dont 5 anormaux
+  const stockItems = [
+    { code: "CIM-CPJ45", label: "Ciment CPJ 45 (sac 50kg)", unit: 5_800 },
+    { code: "FER-HA12", label: "Fer HA 12 mm (barre)", unit: 8_400 },
+    { code: "GRA-15-25", label: "Gravier 15-25 (m³)", unit: 18_500 },
+    { code: "SAB-FIN", label: "Sable fin (m³)", unit: 9_200 },
+    { code: "GAS-DSL", label: "Gasoil (litre)", unit: 730 },
+    { code: "EPI-CASQUE", label: "Casque chantier", unit: 4_500 },
+    { code: "EPI-GANTS", label: "Gants protection", unit: 1_200 },
+  ];
+  const movementInitiator = createdUsers.find((u) => u.role === Role.WORKS_MANAGER || u.role === Role.WAREHOUSE) ?? createdUsers[0];
+
+  let anomalousCount = 0;
+  for (let i = 0; i < 200; i++) {
+    const item = stockItems[i % stockItems.length];
+    const types = ["INBOUND", "OUTBOUND", "TRANSFER", "ADJUSTMENT"] as const;
+    const type = types[i % types.length];
+    const isAnomalous = i % 40 === 17 || i === 73; // ~5 anomalies
+    const quantity = isAnomalous ? 200 + Math.floor(Math.random() * 500) : 5 + Math.floor(Math.random() * 50);
+    const unitValue = BigInt(item.unit);
+    const totalValue = unitValue * BigInt(quantity);
+    const date = new Date(Date.now() - (30 - (i % 30)) * 86_400_000 - Math.random() * 86_400_000);
+    if (isAnomalous) anomalousCount++;
+    await prisma.stockMovement.create({
+      data: {
+        tenantId: tenant.id,
+        type,
+        itemCode: item.code,
+        itemLabel: item.label,
+        quantity,
+        unitValue,
+        totalValue,
+        fromSiteId: type !== "INBOUND" && sitesForAssets.length ? sitesForAssets[i % sitesForAssets.length].id : null,
+        toSiteId: type !== "OUTBOUND" && sitesForAssets.length ? sitesForAssets[(i + 1) % sitesForAssets.length].id : null,
+        reason: ["Approvisionnement chantier", "Dotation équipe", "Transfert inter-chantier", "Régularisation inventaire", "Casse"][i % 5],
+        initiatorId: movementInitiator.id,
+        anomalous: isAnomalous,
+        anomalyReason: isAnomalous ? "Quantité hors norme statistique (>3σ)" : null,
+        createdAt: date,
+      },
+    });
+  }
+  console.log(`✓ 200 mouvements stock créés (${anomalousCount} anormaux)`);
+
+  // 4 inventaires (2 terminés, 1 en cours, 1 planifié)
+  const inventories = [
+    { period: "2026-Q1", status: "VALIDATED" as const, gapsCount: 8, gapsValue: 1_200_000n, dgValidated: true, daysAgo: 90, duration: 5 },
+    { period: "2026-Q2", status: "COMPLETED" as const, gapsCount: 14, gapsValue: 8_500_000n, dgValidated: false, daysAgo: 30, duration: 4 },
+    { period: "2026-Q3", status: "IN_PROGRESS" as const, gapsCount: 0, gapsValue: 0n, dgValidated: false, daysAgo: 5, duration: null },
+    { period: "2026-Q4", status: "PLANNED" as const, gapsCount: 0, gapsValue: 0n, dgValidated: false, daysAgo: -30, duration: null },
+  ];
+  for (const inv of inventories) {
+    const start = new Date(Date.now() - inv.daysAgo * 86_400_000);
+    await prisma.inventory.create({
+      data: {
+        tenantId: tenant.id,
+        period: inv.period,
+        siteId: sitesForAssets.length ? sitesForAssets[0].id : null,
+        startDate: start,
+        endDate: inv.duration ? new Date(start.getTime() + inv.duration * 86_400_000) : null,
+        itemsCount: inv.status === "PLANNED" || inv.status === "IN_PROGRESS" ? 0 : 380 + Math.floor(Math.random() * 100),
+        gapsCount: inv.gapsCount,
+        gapsValue: inv.gapsValue,
+        status: inv.status,
+        dgValidated: inv.dgValidated,
+      },
+    });
+  }
+  console.log(`✓ 4 inventaires créés (1 en attente validation DG > seuil)`);
+
+  // 3 sinistres historiques
+  const losses = [
+    { type: "THEFT", desc: "Vol de 15 sacs ciment et 200 m de fer HA — chantier Voirie Bonabéri", value: 850_000n, daysAgo: 45, declared: true, indem: 600_000n, actions: "Renforcement gardiennage 24h sur le site, installation 4 caméras IP." },
+    { type: "DAMAGE", desc: "Casse vitre cabine pelle CAT 320 (collision avec mur)", value: 280_000n, daysAgo: 12, declared: true, indem: 220_000n, actions: "Sensibilisation conducteurs, mise en place plan de circulation chantier." },
+    { type: "LOSS", desc: "Perte d'outillage topographique (théodolite + accessoires)", value: 1_500_000n, daysAgo: 60, declared: false, indem: null, actions: "Inventaire physique trimestriel des outils sensibles, traçabilité QR." },
+  ];
+  for (const l of losses) {
+    await prisma.loss.create({
+      data: {
+        tenantId: tenant.id,
+        type: l.type as any,
+        itemDescription: l.desc,
+        value: l.value,
+        siteId: sitesForAssets.length ? sitesForAssets[0].id : null,
+        occurredAt: new Date(Date.now() - l.daysAgo * 86_400_000),
+        declaredToInsurance: l.declared,
+        declaredAt: l.declared ? new Date(Date.now() - (l.daysAgo - 2) * 86_400_000) : null,
+        indemnification: l.indem,
+        correctiveActions: l.actions,
+      },
+    });
+  }
+  console.log(`✓ 3 sinistres historiques créés`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
