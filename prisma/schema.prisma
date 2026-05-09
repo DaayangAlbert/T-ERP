@@ -51,6 +51,8 @@ model Tenant {
   delegations Delegation[]
   reports     Report[]
   settings    TenantSettings?
+  milestones  Milestone[]
+  resourceConflicts ResourceConflict[]
 
   @@index([parentId])
   @@map("tenants")
@@ -979,4 +981,79 @@ model SiteDecision {
 
   @@index([siteId, createdAt])
   @@map("site_decisions")
+}
+
+// ========================================
+// PLANNING DG (Phase 2 / Bloc 3 — fn 3.2)
+// ========================================
+// Jalons stratégiques (réceptions, lancements, échéances fiscales, AG…)
+// + conflits ressources détectés (surcharges) à arbitrer par le DG.
+model Milestone {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  siteId    String?  // optionnel : jalon d'un chantier précis
+  type      MilestoneType
+  title     String
+  date      DateTime
+  critical  Boolean  @default(false)
+  status    MilestoneStatus @default(PLANNED)
+  notes     String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, date])
+  @@index([tenantId, type])
+  @@map("milestones")
+}
+
+enum MilestoneType {
+  SITE_START
+  SITE_DELIVERY
+  MILESTONE
+  FINANCIAL
+  COMMERCIAL
+  INTERNAL
+}
+
+enum MilestoneStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  DELAYED
+  CANCELLED
+}
+
+model ResourceConflict {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  resourceType String   // CREW, EQUIPMENT
+  resourceLabel String  // "Maçons coffreurs", "Pelle hydraulique 20T"...
+  periodStart  DateTime
+  periodEnd    DateTime
+  demandLevel  Int      // % de surcharge (>100 = saturé)
+  siteIds      String[] // chantiers concernés
+  resolved     Boolean  @default(false)
+  resolution   String?  @db.Text
+  arbitration  Boolean  @default(false) // demande arbitrage DG
+  arbitrationStatus ArbitrationStatus @default(PENDING)
+  arbitrationNote   String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, resolved])
+  @@index([tenantId, arbitration])
+  @@map("resource_conflicts")
+}
+
+enum ArbitrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
 }

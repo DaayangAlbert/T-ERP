@@ -40,6 +40,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.resourceConflict.deleteMany();
+  await prisma.milestone.deleteMany();
   await prisma.siteDecision.deleteMany();
   await prisma.siteAlert.deleteMany();
   await prisma.sitePhoto.deleteMany();
@@ -463,6 +465,110 @@ async function main() {
     });
   }
   console.log(`✓ Alertes chantiers créées`);
+
+  // ===== JALONS STRATÉGIQUES + CONFLITS RESSOURCES (Phase 2 / Bloc 3 — fn 3.2) =====
+  const today = new Date();
+
+  // 30 jalons répartis sur 12 mois
+  const milestoneSeed: Array<{ daysFromNow: number; type: "SITE_START" | "SITE_DELIVERY" | "MILESTONE" | "FINANCIAL" | "COMMERCIAL" | "INTERNAL"; title: string; critical?: boolean }> = [
+    { daysFromNow: -25, type: "SITE_START", title: "Démarrage Forage AEP Mbalmayo" },
+    { daysFromNow: -10, type: "MILESTONE", title: "Réception lot terrassement Pont Mfoundi" },
+    { daysFromNow: 5, type: "FINANCIAL", title: "Acompte TVA T1", critical: true },
+    { daysFromNow: 12, type: "COMMERCIAL", title: "Remise dossier AO Voirie Bertoua", critical: true },
+    { daysFromNow: 18, type: "INTERNAL", title: "Conseil d'administration trimestriel" },
+    { daysFromNow: 22, type: "SITE_DELIVERY", title: "Livraison Lycée bilingue Yaoundé" },
+    { daysFromNow: 28, type: "FINANCIAL", title: "Échéance CNPS Avril" },
+    { daysFromNow: 35, type: "COMMERCIAL", title: "Visite chantier MINTP" },
+    { daysFromNow: 40, type: "MILESTONE", title: "Coulage dalle R+3 Bastos" },
+    { daysFromNow: 50, type: "SITE_START", title: "Démarrage extension Bonabéri" },
+    { daysFromNow: 55, type: "INTERNAL", title: "Audit qualité ISO 9001" },
+    { daysFromNow: 62, type: "FINANCIAL", title: "Acompte IS S1" },
+    { daysFromNow: 68, type: "COMMERCIAL", title: "Soutenance offre marché AEP Bafia", critical: true },
+    { daysFromNow: 75, type: "SITE_DELIVERY", title: "Réception Tour Mfoundi" },
+    { daysFromNow: 82, type: "MILESTONE", title: "Pose charpente Lotissement Odza" },
+    { daysFromNow: 90, type: "FINANCIAL", title: "Solde TVA T2" },
+    { daysFromNow: 98, type: "INTERNAL", title: "Assemblée générale annuelle", critical: true },
+    { daysFromNow: 110, type: "SITE_START", title: "Démarrage Voirie Yaoundé III" },
+    { daysFromNow: 120, type: "COMMERCIAL", title: "AO réhabilitation hôpital Garoua" },
+    { daysFromNow: 130, type: "FINANCIAL", title: "Déclaration DGI mensuelle" },
+    { daysFromNow: 145, type: "MILESTONE", title: "Phase 2 Lotissement Odza" },
+    { daysFromNow: 160, type: "SITE_DELIVERY", title: "Livraison Pont Mfoundi" },
+    { daysFromNow: 175, type: "INTERNAL", title: "Revue mi-parcours stratégie 2026" },
+    { daysFromNow: 190, type: "FINANCIAL", title: "Acompte IS S2" },
+    { daysFromNow: 210, type: "COMMERCIAL", title: "Salon Promote Cameroun" },
+    { daysFromNow: 230, type: "MILESTONE", title: "Réception VRD Lotissement Odza" },
+    { daysFromNow: 250, type: "FINANCIAL", title: "Bilan comptable annuel" },
+    { daysFromNow: 280, type: "SITE_DELIVERY", title: "Livraison Forage Mbalmayo" },
+    { daysFromNow: 310, type: "INTERNAL", title: "Comex de fin d'exercice" },
+    { daysFromNow: 340, type: "COMMERCIAL", title: "Dépôt budget prévisionnel CA" },
+  ];
+  for (const m of milestoneSeed) {
+    await prisma.milestone.create({
+      data: {
+        tenantId: tenant.id,
+        type: m.type as any,
+        title: m.title,
+        date: new Date(today.getTime() + m.daysFromNow * 86_400_000),
+        critical: m.critical ?? false,
+        status: m.daysFromNow < 0 ? "DONE" : "PLANNED",
+      },
+    });
+  }
+  console.log(`✓ ${milestoneSeed.length} jalons stratégiques créés`);
+
+  // 4 conflits ressources
+  const sitesIds = allSites.map((s) => s.id);
+  const conflicts = [
+    {
+      resourceType: "CREW",
+      resourceLabel: "Maçons coffreurs (équipe A)",
+      periodStart: new Date(today.getTime() + 14 * 86_400_000),
+      periodEnd: new Date(today.getTime() + 28 * 86_400_000),
+      demandLevel: 135,
+      siteIds: sitesIds.slice(0, 3),
+      arbitration: true,
+      arbitrationNote: "Faut-il sous-traiter une partie du coffrage Bastos ou décaler Voirie Bonabéri ?",
+    },
+    {
+      resourceType: "CREW",
+      resourceLabel: "Maçons coffreurs (équipe B)",
+      periodStart: new Date(today.getTime() + 21 * 86_400_000),
+      periodEnd: new Date(today.getTime() + 42 * 86_400_000),
+      demandLevel: 118,
+      siteIds: sitesIds.slice(2, 4),
+      arbitration: false,
+    },
+    {
+      resourceType: "EQUIPMENT",
+      resourceLabel: "Pelle hydraulique 20T",
+      periodStart: new Date(today.getTime() + 7 * 86_400_000),
+      periodEnd: new Date(today.getTime() + 21 * 86_400_000),
+      demandLevel: 145,
+      siteIds: sitesIds.slice(0, 2),
+      arbitration: true,
+      arbitrationNote: "Location externe à 850 K FCFA / mois ou priorisation ?",
+    },
+    {
+      resourceType: "EQUIPMENT",
+      resourceLabel: "Grue à tour Liebherr",
+      periodStart: new Date(today.getTime() + 30 * 86_400_000),
+      periodEnd: new Date(today.getTime() + 60 * 86_400_000),
+      demandLevel: 105,
+      siteIds: sitesIds.slice(1, 3),
+      arbitration: true,
+      arbitrationNote: "Conflit Lotissement Odza vs Tour Mfoundi sur le mois de juin.",
+    },
+  ];
+  for (const c of conflicts) {
+    await prisma.resourceConflict.create({
+      data: {
+        tenantId: tenant.id,
+        ...c,
+        arbitrationStatus: "PENDING",
+      },
+    });
+  }
+  console.log(`✓ ${conflicts.length} conflits ressources créés (3 arbitrages DG en attente)`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
