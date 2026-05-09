@@ -67,13 +67,12 @@ export default function BulletinOfficielPage({ params }: Props) {
           >
             <Mail className="h-3.5 w-3.5" /> Email
           </button>
-          <button
-            disabled
-            title="Téléchargement PDF (J5+)"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white opacity-60"
+          <a
+            href={`/api/payslips/${params.id}/pdf`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
           >
-            <Download className="h-3.5 w-3.5" /> PDF
-          </button>
+            <Download className="h-3.5 w-3.5" /> Télécharger PDF
+          </a>
         </div>
       </div>
 
