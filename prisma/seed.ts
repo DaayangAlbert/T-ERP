@@ -40,6 +40,12 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.performanceBonus.deleteMany();
+  await prisma.benefitInKind.deleteMany();
+  await prisma.interestDeclaration.deleteMany();
+  await prisma.agendaEvent.deleteMany();
+  await prisma.userSignature.deleteMany();
+  await prisma.userPreferences.deleteMany();
   await prisma.loss.deleteMany();
   await prisma.inventory.deleteMany();
   await prisma.stockMovement.deleteMany();
@@ -1360,6 +1366,131 @@ async function main() {
     });
   }
   console.log(`✓ 3 sinistres historiques créés`);
+
+  // ===== PROFIL DG (Phase 2 / Bloc 5 — fn 5.2) =====
+  const dgUserForProfile = createdUsers.find((u) => u.role === Role.DG)!;
+
+  // Préférences DG
+  await prisma.userPreferences.create({
+    data: {
+      userId: dgUserForProfile.id,
+      dashboardWidgets: ["revenue", "margin", "treasury", "validations", "alerts", "objectives"] as object,
+      alertThresholds: { treasuryMin: "150000000", marginMin: 12, validationOverdueDays: 5 } as object,
+      notificationChannels: { validations: ["EMAIL", "PUSH"], alerts: ["EMAIL", "INAPP"] } as object,
+      dailyReportEnabled: true,
+      dailyReportTime: "07:00",
+      numberFormat: "M_FCFA",
+    },
+  });
+  console.log(`✓ Préférences DG créées pour Albert`);
+
+  // 15 événements agenda DG sur 30 jours
+  const eventsToday = new Date();
+  const agendaSeed = [
+    { title: "Comité de direction hebdo", type: "MEETING" as const, day: 0, hour: 9, dur: 90, loc: "Salle CD - Siège" },
+    { title: "RDV banque UBA — renouvellement ligne", type: "MEETING" as const, day: 1, hour: 14, dur: 60, loc: "UBA Bonapriso" },
+    { title: "Conseil d'administration trimestriel", type: "BOARD" as const, day: 3, hour: 10, dur: 240, loc: "Siège · 3e étage" },
+    { title: "Échéance validation paie Avril", type: "VALIDATION_DEADLINE" as const, day: 4, hour: 17, dur: 30, loc: "" },
+    { title: "Audit interne ISO 9001", type: "AUDIT" as const, day: 5, hour: 9, dur: 480, loc: "Base logistique" },
+    { title: "Visite chantier Pont Mfoundi", type: "MEETING" as const, day: 7, hour: 8, dur: 180, loc: "Yaoundé · MINTP" },
+    { title: "Déjeuner CIMENCAM (relation client)", type: "MEETING" as const, day: 8, hour: 12, dur: 120, loc: "Restaurant Le Fouquet's" },
+    { title: "Revue trimestrielle objectifs", type: "MEETING" as const, day: 10, hour: 14, dur: 180, loc: "Salle CD" },
+    { title: "Échéance validation marché Bonabéri", type: "VALIDATION_DEADLINE" as const, day: 12, hour: 18, dur: 30, loc: "" },
+    { title: "Comité direction hebdo", type: "MEETING" as const, day: 14, hour: 9, dur: 90, loc: "Salle CD" },
+    { title: "Audit fiscal DGI (préparation)", type: "AUDIT" as const, day: 16, hour: 10, dur: 180, loc: "Bureau DAF" },
+    { title: "Déjeuner stratégique Caterpillar", type: "MEETING" as const, day: 18, hour: 12, dur: 120, loc: "Akwa, Douala" },
+    { title: "Préparation AG annuelle", type: "BOARD" as const, day: 20, hour: 14, dur: 240, loc: "Cabinet juridique" },
+    { title: "Échéance validation budget Q3", type: "VALIDATION_DEADLINE" as const, day: 22, hour: 17, dur: 30, loc: "" },
+    { title: "Personnel · Rendez-vous médecin", type: "PERSONAL" as const, day: 25, hour: 8, dur: 60, loc: "" },
+  ];
+
+  for (const e of agendaSeed) {
+    const start = new Date(eventsToday.getTime() + e.day * 86_400_000);
+    start.setHours(e.hour, 0, 0, 0);
+    const end = new Date(start.getTime() + e.dur * 60_000);
+    await prisma.agendaEvent.create({
+      data: {
+        userId: dgUserForProfile.id,
+        title: e.title,
+        startAt: start,
+        endAt: end,
+        location: e.loc || null,
+        type: e.type,
+      },
+    });
+  }
+  console.log(`✓ ${agendaSeed.length} événements agenda DG créés`);
+
+  // Déclaration d'intérêts 2026
+  const interestYear = new Date().getFullYear();
+  await prisma.interestDeclaration.create({
+    data: {
+      userId: dgUserForProfile.id,
+      year: interestYear,
+      mandates: [
+        { entity: "Groupement Patronal du Cameroun (GICAM)", role: "Membre du conseil exécutif", since: "2022-03-15" },
+        { entity: "Fondation BatimCAM Action Sociale", role: "Président bénévole", since: "2024-06-01" },
+      ] as object,
+      shareholdings: [
+        { entity: "BatimCAM SA", percent: 28.5, value: "850000000" },
+        { entity: "DAAYANG Holding (SCI familiale)", percent: 100, value: null },
+      ] as object,
+      conflictsOfInterest: [
+        { description: "Beau-frère salarié chez Total Cameroun (fournisseur stratégique)", mitigation: "Récusation sur les décisions de marché Total Cameroun" },
+      ] as object,
+      declaredAt: new Date(),
+      validUntil: new Date(interestYear, 11, 31),
+    },
+  });
+  console.log(`✓ Déclaration d'intérêts ${interestYear} pour Albert`);
+
+  // ===== PAIE DG ENRICHIE (Phase 2 / Bloc 5 — fn 5.3) =====
+  // 5 avantages en nature pour Albert
+  const benefitsSeed: Array<{ type: "HOUSING" | "VEHICLE" | "FUEL" | "PHONE" | "INSURANCE"; desc: string; monthly: bigint; fiscal: bigint }> = [
+    { type: "HOUSING", desc: "Villa de fonction · Bastos Yaoundé", monthly: 800_000n, fiscal: 200_000n },
+    { type: "VEHICLE", desc: "Toyota Land Cruiser V8 + chauffeur", monthly: 450_000n, fiscal: 180_000n },
+    { type: "FUEL", desc: "Carburant illimité (parc société)", monthly: 80_000n, fiscal: 80_000n },
+    { type: "PHONE", desc: "iPhone Pro + forfait illimité 50 GB", monthly: 25_000n, fiscal: 12_500n },
+    { type: "INSURANCE", desc: "Mutuelle santé famille (5 personnes)", monthly: 75_000n, fiscal: 37_500n },
+  ];
+  for (const b of benefitsSeed) {
+    await prisma.benefitInKind.create({
+      data: {
+        userId: dgUserForProfile.id,
+        type: b.type,
+        description: b.desc,
+        monthlyValue: b.monthly,
+        fiscalValue: b.fiscal,
+        startDate: new Date("2018-01-15"),
+      },
+    });
+  }
+  console.log(`✓ ${benefitsSeed.length} avantages en nature DG créés`);
+
+  // 3 ans de bonus historiques
+  const bonusSeed = [
+    { year: 2024, type: "ANNUAL_RESULT" as const, formula: "5% du résultat net consolidé", target: 35_000_000n, actual: 28_500_000n, status: "PAID" as const, paid: new Date("2025-04-15") },
+    { year: 2024, type: "OBJECTIVES" as const, formula: "Sur atteinte 8 objectifs DG", target: 20_000_000n, actual: 17_200_000n, status: "PAID" as const, paid: new Date("2025-04-15") },
+    { year: 2025, type: "ANNUAL_RESULT" as const, formula: "5% du résultat net consolidé", target: 45_000_000n, actual: 42_300_000n, status: "PAID" as const, paid: new Date("2026-04-15") },
+    { year: 2025, type: "OBJECTIVES" as const, formula: "Sur atteinte 8 objectifs DG", target: 22_000_000n, actual: 19_800_000n, status: "PAID" as const, paid: new Date("2026-04-15") },
+    { year: 2026, type: "ANNUAL_RESULT" as const, formula: "5% du résultat net consolidé", target: 50_000_000n, actual: null, status: "PROVISIONED" as const, paid: null },
+    { year: 2026, type: "OBJECTIVES" as const, formula: "Sur atteinte 8 objectifs DG", target: 25_000_000n, actual: null, status: "TARGETED" as const, paid: null },
+  ];
+  for (const b of bonusSeed) {
+    await prisma.performanceBonus.create({
+      data: {
+        userId: dgUserForProfile.id,
+        fiscalYear: b.year,
+        bonusType: b.type,
+        formula: b.formula,
+        targetAmount: b.target,
+        actualAmount: b.actual,
+        status: b.status,
+        paidAt: b.paid,
+      },
+    });
+  }
+  console.log(`✓ ${bonusSeed.length} bonus de performance DG créés (3 ans)`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [

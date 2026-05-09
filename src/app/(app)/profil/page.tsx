@@ -19,15 +19,26 @@ import { useProfile, useUpdateProfile, useChangePassword } from "@/hooks/useProf
 import { updateProfileSchema, changePasswordSchema, type UpdateProfileInput, type ChangePasswordInput } from "@/schemas/user";
 import { formatDate, formatRelativeDate } from "@/lib/format";
 import { Field, inputClass } from "@/components/auth/LoginForm";
+import { Pen, Sliders, Calendar as CalIcon, Briefcase, Activity as ActIcon } from "lucide-react";
+import Link from "next/link";
+import { SignatureUploader } from "@/components/profile/SignatureUploader";
+import { PreferencesForm } from "@/components/profile/PreferencesForm";
+import { AgendaCalendar } from "@/components/profile/AgendaCalendar";
+import { InterestDeclarationForm } from "@/components/profile/InterestDeclarationForm";
+import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
 
-type TabId = "info" | "documents" | "activity" | "security" | "preferences";
+type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests";
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean }[] = [
   { id: "info", label: "Informations", icon: <UserIcon className="h-3.5 w-3.5" /> },
   { id: "documents", label: "Documents", icon: <FileText className="h-3.5 w-3.5" /> },
-  { id: "activity", label: "Activité", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+  { id: "activity", label: "Activité", icon: <ActIcon className="h-3.5 w-3.5" /> },
   { id: "security", label: "Sécurité", icon: <Shield className="h-3.5 w-3.5" /> },
   { id: "preferences", label: "Préférences", icon: <KeyRound className="h-3.5 w-3.5" /> },
+  { id: "signature", label: "Signature", icon: <Pen className="h-3.5 w-3.5" />, dgOnly: true },
+  { id: "dg-prefs", label: "Préférences DG", icon: <Sliders className="h-3.5 w-3.5" />, dgOnly: true },
+  { id: "agenda", label: "Agenda", icon: <CalIcon className="h-3.5 w-3.5" />, dgOnly: true },
+  { id: "interests", label: "Déclarations", icon: <Briefcase className="h-3.5 w-3.5" />, dgOnly: true },
 ];
 
 export default function ProfilePage() {
@@ -36,12 +47,14 @@ export default function ProfilePage() {
 
   if (isLoading || !profile) return <ProfileSkeleton />;
 
+  const visibleTabs = TABS.filter((t) => !t.dgOnly || profile.role === "DG");
+
   return (
     <>
       <ProfileHero profile={profile} />
 
       <div className="my-5 flex flex-wrap gap-1 rounded-md bg-surface-alt p-1">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
@@ -66,14 +79,39 @@ export default function ProfilePage() {
           {tab === "info" && <ProInfoCard profile={profile} />}
           {tab === "documents" && <DocumentsCard />}
           {tab === "activity" && <ActivityCard profile={profile} />}
+          {tab === "activity" && profile.role === "DG" && <ActivityTimeline />}
           {tab === "security" && <SecurityCard profile={profile} />}
           {tab === "preferences" && <PreferencesCard />}
+          {tab === "signature" && <SignatureUploader />}
+          {tab === "dg-prefs" && <PreferencesForm />}
+          {tab === "agenda" && <AgendaCalendar />}
+          {tab === "interests" && <InterestDeclarationForm />}
         </div>
         <div className="space-y-4">
           <SidePanel profile={profile} />
+          {profile.role === "DG" && tab === "info" && <DgDelegationsCard />}
         </div>
       </div>
     </>
+  );
+}
+
+function DgDelegationsCard() {
+  return (
+    <div className="rounded-xl border border-line bg-white p-4 shadow-card">
+      <h3 className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">
+        Mes délégations
+      </h3>
+      <p className="text-[12.5px] text-ink-2">
+        Gérez les délégations de pouvoir données et reçues depuis l'écran « Validations ».
+      </p>
+      <Link
+        href="/validations?tab=delegations"
+        className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-primary-700 hover:underline"
+      >
+        Ouvrir la gestion des délégations →
+      </Link>
+    </div>
   );
 }
 

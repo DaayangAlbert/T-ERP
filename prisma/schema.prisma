@@ -145,6 +145,12 @@ model User {
   trainings             Training[]
   successionsAsIncumbent SuccessionPlan[] @relation("SuccessionIncumbent")
   successionsAsSuccessor SuccessionPlan[] @relation("SuccessionSuccessor")
+  preferences           UserPreferences?
+  signature             UserSignature?
+  agendaEvents          AgendaEvent[]
+  interestDeclarations  InterestDeclaration[]
+  benefits              BenefitInKind[]
+  performanceBonuses    PerformanceBonus[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -1602,4 +1608,153 @@ enum LossType {
   DAMAGE
   LOSS
   OTHER
+}
+
+// ========================================
+// MON PROFIL DG (Phase 2 / Bloc 5 — fn 5.2)
+// ========================================
+// Préférences DG, signature numérique, agenda, déclarations d'intérêts.
+model UserPreferences {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dashboardWidgets     Json     @default("[]")
+  alertThresholds      Json     @default("{}")
+  notificationChannels Json     @default("{}")
+  dailyReportEnabled   Boolean  @default(false)
+  dailyReportTime      String?  // "07:00"
+  numberFormat         String   @default("M_FCFA") // M_FCFA, MD_FCFA, RAW
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+model UserSignature {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  signatureUrl String?
+  initialsUrl  String?
+  uploadedAt   DateTime?
+
+  @@map("user_signatures")
+}
+
+model AgendaEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?  @db.Text
+  startAt     DateTime
+  endAt       DateTime
+  location    String?
+  type        EventType @default(MEETING)
+  externalId  String?  // pour sync Google/Outlook
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, startAt])
+  @@map("agenda_events")
+}
+
+enum EventType {
+  MEETING
+  BOARD
+  AUDIT
+  VALIDATION_DEADLINE
+  PERSONAL
+  OTHER
+}
+
+model InterestDeclaration {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  year                Int
+  mandates            Json     @default("[]") // [{ entity, role, since, end? }]
+  shareholdings       Json     @default("[]") // [{ entity, percent, value? }]
+  conflictsOfInterest Json     @default("[]") // [{ description, mitigation }]
+  declaredAt          DateTime
+  validUntil          DateTime
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([userId, year])
+  @@map("interest_declarations")
+}
+
+// ========================================
+// PAIE DG ENRICHIE (Phase 2 / Bloc 5 — fn 5.3)
+// ========================================
+// Avantages en nature et bonus de performance pour le DG (et autres
+// cadres dirigeants). Évaluation conforme barème CNPS Cameroun.
+model BenefitInKind {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type         BenefitType
+  description  String
+  monthlyValue BigInt   // valeur réelle
+  fiscalValue  BigInt   // selon barème CNPS
+  startDate    DateTime
+  endDate      DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, type])
+  @@map("benefits_in_kind")
+}
+
+enum BenefitType {
+  HOUSING
+  VEHICLE
+  FUEL
+  PHONE
+  INSURANCE
+  OTHER
+}
+
+model PerformanceBonus {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fiscalYear   Int
+  bonusType    BonusType
+  formula      String?
+  targetAmount BigInt
+  actualAmount BigInt?
+  status       BonusStatus @default(TARGETED)
+  paidAt       DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, fiscalYear])
+  @@map("performance_bonuses")
+}
+
+enum BonusType {
+  ANNUAL_RESULT
+  OBJECTIVES
+  SIGNING
+  RETENTION
+}
+
+enum BonusStatus {
+  TARGETED
+  PROVISIONED
+  VALIDATED
+  PAID
 }

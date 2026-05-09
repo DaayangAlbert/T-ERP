@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Calendar, Clock, Download, FileText } from "lucide-react";
+import { Calendar, Clock, Download, FileText, ArrowRight } from "lucide-react";
 import { useMyPayslips, type PayslipItem } from "@/hooks/usePayslips";
 import { useProfile } from "@/hooks/useProfile";
 import { formatDate, formatFCFA } from "@/lib/format";
 import { PayslipStatus } from "@prisma/client";
 import { clsx } from "clsx";
+import { TotalCompensationPyramid } from "@/components/payroll/TotalCompensationPyramid";
+import { BenefitsTable } from "@/components/payroll/BenefitsTable";
+import { PerformanceBonusesHistory } from "@/components/payroll/PerformanceBonusesHistory";
+import { IncomeAttestationGenerator } from "@/components/payroll/IncomeAttestationGenerator";
+import { StcSimulator } from "@/components/payroll/StcSimulator";
 
 const STATUS_LABEL: Record<PayslipStatus, string> = {
   DRAFT: "Brouillon",
@@ -50,6 +55,14 @@ export default function PaiePage() {
             </p>
           )}
         </div>
+        {profile?.role === "DG" && (
+          <Link
+            href="/paie/remuneration-globale"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
+          >
+            Vue rémunération globale <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
       </header>
 
       {latest && (
