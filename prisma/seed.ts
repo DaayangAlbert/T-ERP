@@ -180,6 +180,21 @@ async function main() {
   }
   console.log(`✓ ${createdUsers.length} utilisateurs créés (mot de passe : ${PWD})`);
 
+  // ===== SUPER-ADMIN SaaS (plateforme, pas de tenant) =====
+  await prisma.user.create({
+    data: {
+      email: "superadmin@terp.cm",
+      firstName: "Super",
+      lastName: "ADMIN",
+      role: Role.SUPER_ADMIN,
+      passwordHash,
+      emailVerified: true,
+      tenantId: null,
+      position: "Administrateur plateforme T-ERP",
+    },
+  });
+  console.log(`✓ Super-admin SaaS créé (superadmin@terp.cm / ${PWD})`);
+
   // ===== CHANTIERS =====
   const sites = [
     {

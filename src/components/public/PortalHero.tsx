@@ -42,6 +42,8 @@ export function PortalHero({ totalJobs, onSearch }: Props) {
         </p>
 
         <form
+          role="search"
+          aria-label="Rechercher des offres d'emploi"
           onSubmit={(e) => {
             e.preventDefault();
             onSearch?.(q, region === REGIONS[0] ? "" : region);

@@ -65,6 +65,7 @@ export function Composer({ onSend, disabled }: Props) {
       <textarea
         ref={taRef}
         value={value}
+        aria-label="Écrire un message"
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {

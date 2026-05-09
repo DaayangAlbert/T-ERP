@@ -169,9 +169,11 @@ export function Sidebar() {
                   key={item.href}
                   href={item.href}
                   title={visualCompact ? item.label : undefined}
+                  aria-current={active ? "page" : undefined}
                   className={clsx(
                     "group relative flex items-center gap-2.5 px-4 py-1.5 text-[13px]",
                     "border-l-[3px] transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-inset",
                     active
                       ? "border-primary-500 bg-white/8 font-medium text-white"
                       : "border-transparent text-white/78 hover:bg-white/8 hover:text-white",

@@ -20,7 +20,7 @@ const ROLE_TO_PATH: Record<Role, string> = {
   EMPLOYEE: "/dashboard/employee",
   CANDIDATE: "/dashboard/candidate",
   TENANT_ADMIN: "/dashboard/tenant-admin",
-  SUPER_ADMIN: "/dashboard/super-admin",
+  SUPER_ADMIN: "/tenants",
 };
 
 export default async function DashboardIndex() {
