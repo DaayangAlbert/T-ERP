@@ -1,6 +1,7 @@
 "use client";
 
-import { Calendar, Download, Plus } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Download, Plus, Sliders } from "lucide-react";
 import { useDashboardDg } from "@/hooks/useDashboardDg";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,12 +11,17 @@ import { DonutChart } from "@/components/dashboard/DonutChart";
 import { AlertsList } from "@/components/dashboard/AlertsList";
 import { ValidationsList } from "@/components/dashboard/ValidationsList";
 import { TopSitesTable } from "@/components/dashboard/TopSitesTable";
+import { SecondaryKpiRow } from "@/components/dg/SecondaryKpiRow";
+import { DailyKeyStats } from "@/components/dg/DailyKeyStats";
+import { WeeklyTrendChart } from "@/components/dg/WeeklyTrendChart";
+import { DashboardCustomizer } from "@/components/dg/DashboardCustomizer";
 import { formatFCFA, formatNumber, formatDate } from "@/lib/format";
 
 export default function DgDashboard() {
   const { tenant } = useTenant();
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useDashboardDg();
+  const [customizerOpen, setCustomizerOpen] = useState(false);
 
   const today = formatDate(new Date(), "MMMM yyyy");
 
@@ -31,7 +37,18 @@ export default function DgDashboard() {
     return <DashboardSkeleton period={today} tenantName={tenant?.name} />;
   }
 
-  const { kpis, revenueChart, siteTypeBreakdown, alerts, pendingValidations, topSites, meta } = data;
+  const {
+    kpis,
+    kpisSecondaires,
+    chiffresCles,
+    tendanceHebdo,
+    revenueChart,
+    siteTypeBreakdown,
+    alerts,
+    pendingValidations,
+    topSites,
+    meta,
+  } = data;
 
   const revenueFmt = formatFCFA(kpis.revenue.value, { splitUnit: true });
   const treasuryFmt = formatFCFA(kpis.treasury.value, { splitUnit: true });
@@ -55,6 +72,14 @@ export default function DgDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ActionStub icon={<Calendar className="h-3.5 w-3.5" />}>{today}</ActionStub>
+          <button
+            type="button"
+            onClick={() => setCustomizerOpen(true)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-3 text-[12px] font-medium text-primary-700 hover:border-primary-400 hover:bg-primary-100"
+          >
+            <Sliders className="h-3.5 w-3.5" />
+            Personnaliser
+          </button>
           <ActionStub icon={<Download className="h-3.5 w-3.5" />}>Exporter</ActionStub>
           <ActionStub icon={<Plus className="h-3.5 w-3.5" />} primary>
             Nouveau chantier
@@ -106,6 +131,19 @@ export default function DgDashboard() {
         <ValidationsList validations={pendingValidations} />
       </div>
 
+      {/* === Phase 2 / fn 1.1 — sections enrichies, juste avant Top chantiers === */}
+      <div className="mt-4">
+        <SecondaryKpiRow kpis={kpisSecondaires} />
+      </div>
+
+      <div className="mt-4">
+        <DailyKeyStats stats={chiffresCles} />
+      </div>
+
+      <div className="mt-4">
+        <WeeklyTrendChart data={tendanceHebdo} />
+      </div>
+
       <div className="mt-4">
         <TopSitesTable sites={topSites} />
       </div>
@@ -113,6 +151,8 @@ export default function DgDashboard() {
       <p className="mt-4 text-right text-[11px] text-ink-4">
         Bonjour {user?.firstName} · données mises à jour le {formatDate(meta.generatedAt, "dd/MM/yyyy 'à' HH:mm")}
       </p>
+
+      <DashboardCustomizer open={customizerOpen} onClose={() => setCustomizerOpen(false)} />
     </>
   );
 }
