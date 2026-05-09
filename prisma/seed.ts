@@ -20,7 +20,11 @@ import {
   CashFlowType,
   BoardReportType,
   BoardReportStatus,
+  ValidationType,
+  ValidationStatus,
+  ValidationPriority,
 } from "@prisma/client";
+import { buildDefaultWorkflow, approveCurrentStep } from "../src/lib/validation-workflow";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -33,6 +37,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.delegation.deleteMany();
+  await prisma.validation.deleteMany();
   await prisma.boardReport.deleteMany();
   await prisma.cashFlowProjection.deleteMany();
   await prisma.objective.deleteMany();
@@ -815,9 +821,201 @@ async function main() {
   });
   console.log(`✓ Conversation démo créée`);
 
+  // ===== VALIDATIONS DG (Phase 2 / Bloc 2 — fn 2.1) =====
+  const dgUser = createdUsers.find((u) => u.role === Role.DG)!;
+  const dafUser = createdUsers.find((u) => u.role === Role.DAF)!;
+  const hrUser = createdUsers.find((u) => u.role === Role.HR);
+  const techDir = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
+  const accountant = createdUsers.find((u) => u.role === Role.ACCOUNTANT);
+  const initiator = accountant ?? dafUser;
+
+  const dgName = `${dgUser.firstName} ${dgUser.lastName}`;
+  const dafName = `${dafUser.firstName} ${dafUser.lastName}`;
+  const hrName = hrUser ? `${hrUser.firstName} ${hrUser.lastName}` : "RH";
+
+  // Calcule un workflow pour lequel les étapes amont sont déjà approuvées,
+  // et l'étape DG est PENDING (d'où le badge "7" dans la sidebar).
+  function workflowAtDgStep(type: ValidationType, dafApproved = true) {
+    let wf = buildDefaultWorkflow(type);
+    // Approuver toutes les étapes sauf la dernière (DG)
+    while (wf.steps.findIndex((s) => s.status === "PENDING") < wf.steps.length - 1) {
+      const idx = wf.steps.findIndex((s) => s.status === "PENDING");
+      const step = wf.steps[idx];
+      const approver = step.role === "HR" ? { id: hrUser?.id ?? dafUser.id, name: hrName } : { id: dafUser.id, name: dafName };
+      const result = approveCurrentStep(wf, approver);
+      wf = result.workflow;
+      // Backdate les décisions
+      wf.steps[idx].decidedAt = new Date(Date.now() - (wf.steps.length - idx) * 86400000).toISOString();
+    }
+    return wf;
+  }
+
+  const pendingValidations = [
+    {
+      type: ValidationType.PAYROLL,
+      reference: "VAL-2026-0042",
+      title: "Paie mensuelle Avril 2026 — 487 employés",
+      description: "Bulletins calculés et validés N1+N2. Total brut : 142 000 000 FCFA / Net : 96 240 000 FCFA.",
+      amount: BigInt(96_240_000),
+      priority: ValidationPriority.HIGH,
+    },
+    {
+      type: ValidationType.CONTRACT,
+      reference: "VAL-2026-0043",
+      title: "Avenant Pont Mfoundi — Plus-value travaux supplémentaires",
+      description: "Augmentation de l'enveloppe de 18 M FCFA pour terrassement complémentaire.",
+      amount: BigInt(18_000_000),
+      priority: ValidationPriority.NORMAL,
+    },
+    {
+      type: ValidationType.PURCHASE,
+      reference: "VAL-2026-0044",
+      title: "BC Carburant Avril 2026 — Total Cameroun",
+      description: "Approvisionnement gazole 45 000 L pour parc engins (4 chantiers).",
+      amount: BigInt(28_500_000),
+      priority: ValidationPriority.NORMAL,
+    },
+    {
+      type: ValidationType.HIRING,
+      reference: "VAL-2026-0045",
+      title: "Embauche 3 ingénieurs travaux BTP",
+      description: "Recrutement validé par RH pour démarrage chantier Bonabéri.",
+      priority: ValidationPriority.NORMAL,
+    },
+    {
+      type: ValidationType.PURCHASE,
+      reference: "VAL-2026-0046",
+      title: "BC Pelle hydraulique CAT 320D",
+      description: "Acquisition matériel TP, fournisseur Tractafric.",
+      amount: BigInt(85_000_000),
+      priority: ValidationPriority.HIGH,
+    },
+    {
+      type: ValidationType.CONTRACT,
+      reference: "VAL-2026-0047",
+      title: "Marché Bonabéri — Lot terrassement",
+      description: "Adjudication du lot terrassement à BatimCAM Douala.",
+      amount: BigInt(120_000_000),
+      priority: ValidationPriority.URGENT,
+      dueDate: new Date(Date.now() + 2 * 86400000),
+    },
+    {
+      type: ValidationType.LEAVE,
+      reference: "VAL-2026-0048",
+      title: "Congé exceptionnel — M. BELLO Issa (chef chantier)",
+      description: "12 jours ouvrés en mai pour raisons familiales.",
+      priority: ValidationPriority.LOW,
+    },
+  ];
+
+  for (const v of pendingValidations) {
+    const wf = workflowAtDgStep(v.type);
+    const currentStep = wf.steps.find((s) => s.status === "PENDING");
+    await prisma.validation.create({
+      data: {
+        tenantId: tenant.id,
+        type: v.type,
+        reference: v.reference,
+        title: v.title,
+        description: v.description,
+        amount: v.amount ?? null,
+        priority: v.priority,
+        initiatorId: initiator.id,
+        currentStep: currentStep?.key ?? null,
+        currentApproverId: dgUser.id,
+        workflow: wf as any,
+        status: ValidationStatus.PENDING,
+        dueDate: (v as any).dueDate ?? null,
+      },
+    });
+  }
+  console.log(`✓ ${pendingValidations.length} validations en attente créées`);
+
+  // 30 validations historiques (validées/rejetées dans les 60 derniers jours)
+  const histTypes: ValidationType[] = [
+    ValidationType.PAYROLL,
+    ValidationType.EXPENSE,
+    ValidationType.PURCHASE,
+    ValidationType.HIRING,
+    ValidationType.CONTRACT,
+    ValidationType.LEAVE,
+  ];
+  for (let i = 1; i <= 30; i++) {
+    const t = histTypes[i % histTypes.length];
+    const isApproved = i % 6 !== 0; // ~5/6 approuvées
+    let wf = buildDefaultWorkflow(t);
+    // Approuver/rejeter toutes les étapes
+    let approver = { id: hrUser?.id ?? dafUser.id, name: hrName };
+    while (wf.steps.findIndex((s) => s.status === "PENDING") >= 0) {
+      const step = wf.steps.find((s) => s.status === "PENDING")!;
+      approver = step.role === "HR" ? { id: hrUser?.id ?? dafUser.id, name: hrName }
+        : step.role === "DAF" ? { id: dafUser.id, name: dafName }
+        : { id: dgUser.id, name: dgName };
+      const isLast = wf.steps.filter((s) => s.status === "PENDING").length === 1;
+      if (!isApproved && isLast) {
+        wf = { steps: wf.steps.map((s) => s.status === "PENDING" ? { ...s, status: "REJECTED" as const, decidedById: approver.id, decidedByName: approver.name, decidedAt: new Date().toISOString(), comment: "Budget insuffisant" } : s) };
+        break;
+      }
+      const r = approveCurrentStep(wf, approver);
+      wf = r.workflow;
+    }
+    const daysAgo = (i * 2) % 60 + 1;
+    const decisionAt = new Date(Date.now() - daysAgo * 86400000);
+    await prisma.validation.create({
+      data: {
+        tenantId: tenant.id,
+        type: t,
+        reference: `VAL-2026-${String(1000 + i).padStart(4, "0")}`,
+        title: `${t === "PAYROLL" ? "Paie" : t === "EXPENSE" ? "Dépense" : t === "PURCHASE" ? "BC" : t === "HIRING" ? "Embauche" : t === "CONTRACT" ? "Marché" : "Congé"} historique #${i}`,
+        description: `Demande historique pour test (J-${daysAgo}).`,
+        amount: t === "LEAVE" || t === "HIRING" ? null : BigInt(Math.floor(Math.random() * 50_000_000) + 1_000_000),
+        priority: ValidationPriority.NORMAL,
+        initiatorId: initiator.id,
+        workflow: wf as any,
+        status: isApproved ? ValidationStatus.APPROVED : ValidationStatus.REJECTED,
+        decidedById: approver.id,
+        decisionAt,
+        decisionReason: isApproved ? null : "Budget insuffisant",
+        createdAt: new Date(decisionAt.getTime() - 3 * 86400000),
+      },
+    });
+  }
+  console.log(`✓ 30 validations historiques créées`);
+
+  // 2 délégations actives
+  if (techDir) {
+    await prisma.delegation.create({
+      data: {
+        tenantId: tenant.id,
+        fromUserId: dgUser.id,
+        toUserId: dafUser.id,
+        types: [ValidationType.EXPENSE, ValidationType.PURCHASE],
+        maxAmount: BigInt(20_000_000),
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 60 * 86400000),
+        active: true,
+        reason: "Couverture pendant les déplacements DG (mai-juin 2026)",
+      },
+    });
+    await prisma.delegation.create({
+      data: {
+        tenantId: tenant.id,
+        fromUserId: dgUser.id,
+        toUserId: techDir.id,
+        types: [ValidationType.HIRING, ValidationType.CONTRACT],
+        maxAmount: BigInt(50_000_000),
+        startDate: new Date(),
+        endDate: null, // permanente
+        active: true,
+        reason: "Délégation permanente technique",
+      },
+    });
+    console.log(`✓ 2 délégations actives créées`);
+  }
+
   console.log("\n✅ Seed terminé.\n");
   console.log(`Login : albert@batimcam.cm / ${PWD}`);
-  console.log(`URL   : http://batimcam.terp.local:3000\n`);
+  console.log(`URL   : http://batimcam.terp.local:5000\n`);
 }
 
 main()

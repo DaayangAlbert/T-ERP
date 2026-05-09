@@ -47,6 +47,8 @@ model Tenant {
   objectives  Objective[]
   cashFlowProjections CashFlowProjection[]
   boardReports BoardReport[]
+  validations Validation[]
+  delegations Delegation[]
 
   @@index([parentId])
   @@map("tenants")
@@ -113,6 +115,11 @@ model User {
   dgSettings   DgSettings?
   objectives   Objective[]
   boardReports BoardReport[]
+  validationsInitiated  Validation[] @relation("ValidationInitiator")
+  validationsAssigned   Validation[] @relation("ValidationCurrentApprover")
+  validationsDecided    Validation[] @relation("ValidationDecidedBy")
+  delegationsGiven      Delegation[] @relation("DelegationFrom")
+  delegationsReceived   Delegation[] @relation("DelegationTo")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -667,4 +674,105 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+// ========================================
+// VALIDATIONS DG (Phase 2 / Bloc 2 — fn 2.1)
+// ========================================
+// Demandes nécessitant l'approbation d'un cadre (paie, dépense, achat,
+// embauche, marché, congé). Chaque demande porte un workflow JSON avec
+// les étapes (initiateur → N1 → N2 → N3) et leurs dates de validation.
+model Validation {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type            ValidationType
+  reference       String   // VAL-2026-0042
+  title           String
+  description     String?  @db.Text
+  amount          BigInt?  // FCFA si applicable
+
+  initiatorId     String
+  initiator       User     @relation("ValidationInitiator", fields: [initiatorId], references: [id])
+
+  // Étape courante du workflow (par convention : "RH" | "DAF" | "DG")
+  currentStep     String?
+  currentApproverId String?
+  currentApprover User?    @relation("ValidationCurrentApprover", fields: [currentApproverId], references: [id])
+
+  // Workflow complet (étapes + dates) — { steps: [{ key, label, role, status, decidedBy?, decidedAt? }] }
+  workflow        Json
+  // Historique commentaires + demandes justification + délégations
+  comments        Json     @default("[]")
+
+  status          ValidationStatus @default(PENDING)
+  priority        ValidationPriority @default(NORMAL)
+
+  decidedById     String?
+  decidedBy       User?    @relation("ValidationDecidedBy", fields: [decidedById], references: [id])
+  decisionAt      DateTime?
+  decisionReason  String?  @db.Text
+
+  dueDate         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, reference])
+  @@index([tenantId, status])
+  @@index([currentApproverId, status])
+  @@index([tenantId, type, status])
+  @@map("validations")
+}
+
+enum ValidationType {
+  PAYROLL
+  EXPENSE
+  PURCHASE
+  HIRING
+  CONTRACT
+  LEAVE
+  OTHER
+}
+
+enum ValidationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ValidationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// Délégations ponctuelles ou permanentes : un cadre délègue ses pouvoirs
+// d'approbation à un autre, pour certains types et jusqu'à un montant max.
+model Delegation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  fromUserId  String
+  fromUser    User     @relation("DelegationFrom", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      User     @relation("DelegationTo", fields: [toUserId], references: [id])
+
+  types       ValidationType[]
+  maxAmount   BigInt?
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean  @default(true)
+  reason      String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, active])
+  @@index([fromUserId, active])
+  @@map("delegations")
 }
