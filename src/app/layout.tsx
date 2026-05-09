@@ -19,6 +19,10 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "T-ERP — ERP BTP Cameroun",
   description: "Plateforme ERP multi-tenant pour les entreprises du BTP au Cameroun.",
+  icons: {
+    icon: "/logo-terp.svg",
+    shortcut: "/logo-terp.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
