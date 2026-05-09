@@ -2201,6 +2201,39 @@ async function main() {
   }
   console.log(`✓ ${pendingValidations.length} validations en attente créées`);
 
+  // 5 validations supplémentaires bloquées à l'étape DAF (DAF Bloc 1 / fn 1.3)
+  const dafPendingValidations = [
+    { type: ValidationType.PURCHASE, ref: "VAL-2026-DAF-01", title: "BC Quincaillerie Centrale 5", amount: 8_400_000n, priority: "NORMAL" as const },
+    { type: ValidationType.EXPENSE, ref: "VAL-2026-DAF-02", title: "Frais déplacement DT — mission Bonabéri", amount: 4_200_000n, priority: "NORMAL" as const },
+    { type: ValidationType.PURCHASE, ref: "VAL-2026-DAF-03", title: "BC EPI casques + gants (lot 200)", amount: 6_800_000n, priority: "HIGH" as const },
+    { type: ValidationType.EXPENSE, ref: "VAL-2026-DAF-04", title: "Note de frais représentation Q1", amount: 12_500_000n, priority: "NORMAL" as const },
+    { type: ValidationType.PURCHASE, ref: "VAL-2026-DAF-05", title: "BC Carrelage Plus chantier Lycée", amount: 9_200_000n, priority: "URGENT" as const, dueDate: new Date(Date.now() + 2 * 86_400_000) },
+  ];
+  for (const v of dafPendingValidations) {
+    // workflow : initiateur OK, RH OK (si applicable), DAF en attente, DG futur
+    let wf = buildDefaultWorkflow(v.type);
+    // EXPENSE/PURCHASE : seules étapes DAF + DG, donc DAF est l'étape pending courante
+    await prisma.validation.create({
+      data: {
+        tenantId: tenant.id,
+        type: v.type,
+        reference: v.ref,
+        title: v.title,
+        description: "Validation N2 DAF en attente — Marie NGONO doit instruire.",
+        amount: v.amount,
+        priority: v.priority,
+        initiatorId: initiator.id,
+        currentStep: "DAF",
+        currentApproverId: dafUser.id,
+        workflow: wf as any,
+        status: ValidationStatus.PENDING,
+        dueDate: (v as any).dueDate ?? null,
+        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7) * 86_400_000),
+      },
+    });
+  }
+  console.log(`✓ ${dafPendingValidations.length} validations DAF (étape N2) en attente`);
+
   // 30 validations historiques (validées/rejetées dans les 60 derniers jours)
   const histTypes: ValidationType[] = [
     ValidationType.PAYROLL,
