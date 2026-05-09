@@ -40,6 +40,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.session.deleteMany();
+  await prisma.customRole.deleteMany();
   await prisma.report.deleteMany();
   await prisma.delegation.deleteMany();
   await prisma.validation.deleteMany();
@@ -1136,6 +1138,92 @@ async function main() {
     },
   });
   console.log(`✓ 8 rapports historiques + 2 planifiés créés`);
+
+  // ===== SESSIONS ACTIVES (Phase 2 / Bloc 2 — fn 2.4) =====
+  // 20 sessions simulées (IPs variées, dont 2 suspectes)
+  const ipPool = ["41.205.18.42", "154.0.5.111", "92.184.108.5", "185.220.101.8", "154.0.5.99", "169.255.58.220"];
+  const uaPool = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_2) Safari/17.2",
+    "Mozilla/5.0 (Linux; Android 13; Pixel 7) Chrome/120.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1) Safari/17.1",
+  ];
+  const locPool = ["Yaoundé · Cameroun", "Douala · Cameroun", "Bafoussam · Cameroun", "Paris · France", "Tor Exit Node"];
+  const sessionUsers = createdUsers.slice(0, 12);
+  for (let i = 0; i < 20; i++) {
+    const u = sessionUsers[i % sessionUsers.length];
+    const ip = ipPool[i % ipPool.length];
+    const loc = locPool[i % locPool.length];
+    const suspicious = i === 4 || i === 17; // 2 sessions suspectes
+    await prisma.session.create({
+      data: {
+        userId: u.id,
+        ipAddress: ip,
+        userAgent: uaPool[i % uaPool.length],
+        location: suspicious ? "Tor Exit Node" : loc,
+        suspicious,
+        lastActivityAt: new Date(Date.now() - i * 60_000),
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
+    });
+  }
+  console.log(`✓ 20 sessions actives créées (dont 2 suspectes)`);
+
+  // 100 entrées audit_log historiques (60 derniers jours)
+  const actions = [
+    "user.login", "user.logout", "validation.approve", "validation.reject",
+    "site.update", "payslip.validate", "report.generate", "report.send",
+    "config.modules.update", "config.paie.update", "user.create", "user.suspend",
+  ];
+  const auditUsers = createdUsers.slice(0, 8);
+  for (let i = 0; i < 100; i++) {
+    const u = auditUsers[i % auditUsers.length];
+    const action = actions[i % actions.length];
+    const daysAgo = Math.floor(Math.random() * 60);
+    await prisma.auditLog.create({
+      data: {
+        tenantId: tenant.id,
+        userId: u.id,
+        action,
+        entityType: action.split(".")[0],
+        entityId: `seed-${i}`,
+        ipAddress: ipPool[i % ipPool.length],
+        metadata: { seeded: true, idx: i },
+        createdAt: new Date(Date.now() - daysAgo * 86_400_000 - Math.random() * 86_400_000),
+      },
+    });
+  }
+  console.log(`✓ 100 entrées audit log historiques créées`);
+
+  // 2 rôles personnalisés
+  await prisma.customRole.create({
+    data: {
+      tenantId: tenant.id,
+      name: "Validateur dérogatoire",
+      basedOn: Role.DAF,
+      permissions: {
+        validations: ["read", "approve"],
+        sites: ["read"],
+        payroll: ["read"],
+      } as object,
+      userCount: 1,
+    },
+  });
+  await prisma.customRole.create({
+    data: {
+      tenantId: tenant.id,
+      name: "Auditeur externe",
+      basedOn: Role.ACCOUNTANT,
+      permissions: {
+        accounting: ["read"],
+        finances: ["read"],
+        reports: ["read"],
+        audit: ["read"],
+      } as object,
+      userCount: 0,
+    },
+  });
+  console.log(`✓ 2 rôles personnalisés créés`);
 
   console.log("\n✅ Seed terminé.\n");
   console.log(`Login : albert@batimcam.cm / ${PWD}`);

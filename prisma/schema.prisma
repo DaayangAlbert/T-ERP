@@ -123,6 +123,7 @@ model User {
   delegationsGiven      Delegation[] @relation("DelegationFrom")
   delegationsReceived   Delegation[] @relation("DelegationTo")
   reports               Report[]
+  sessions              Session[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -851,4 +852,46 @@ model TenantSettings {
   createdAt     DateTime @default(now())
 
   @@map("tenant_settings")
+}
+
+// ========================================
+// SESSIONS UTILISATEUR (Phase 2 / Bloc 2 — fn 2.4)
+// ========================================
+// Sessions actives suivies pour permettre au DG de voir qui est connecté
+// et déconnecter à distance. Une session ≠ un JWT : c'est une trace
+// d'identification (IP, user-agent, géoloc).
+model Session {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress       String?
+  userAgent       String?
+  location        String?  // résolu via API IP geolocation
+  suspicious      Boolean  @default(false)
+  lastActivityAt  DateTime @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+// ========================================
+// RÔLES PERSONNALISÉS (Phase 2 / Bloc 2 — fn 2.4)
+// ========================================
+// Permet de cloner un rôle système et d'ajuster ses permissions pour un
+// tenant donné (ex: "Validateur dérogatoire", "Auditeur externe").
+model CustomRole {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  basedOn     Role
+  permissions Json     // { sites: ["read"], payroll: ["read", "write"], ... }
+  userCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("custom_roles")
 }
