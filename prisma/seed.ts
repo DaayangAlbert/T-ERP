@@ -1408,6 +1408,80 @@ async function main() {
   }
   console.log(`✓ 5 BC en attente validation DG créés`);
 
+  // ===== ACHATS DAF (DAF Bloc 2 / fn 2.3) — Validation N2 + suivi financier =====
+  // Enrichir les 10 fournisseurs stratégiques avec données financières
+  const ratingsByIndex = ["AAA", "AA+", "AA", "A+", "A", "BBB+", "BBB", "BB+", "BB", "B+"];
+  const sources = ["COFACE", "Bloomberg", "Atradius", "Coface", "Internal scoring", "COFACE", "Atradius", "Internal scoring", "Bloomberg", "Atradius"];
+  for (let i = 0; i < Math.min(createdSuppliers.length, 10); i++) {
+    const s = createdSuppliers[i];
+    const contract = supplierData[i].payment ?? 45;
+    const actualDelta = i % 4 === 0 ? -2 : Math.floor((i * 3) % 25); // certains paient plus vite
+    const incidents = i === 1 ? 2 : i === 5 ? 3 : i === 7 ? 1 : 0;
+    await prisma.supplier.update({
+      where: { id: s.id },
+      data: {
+        paymentTermsContract: contract,
+        paymentTermsActual: Math.max(0, contract + actualDelta),
+        financialRating: ratingsByIndex[i],
+        financialRatingSource: sources[i],
+        incidentsCount: incidents,
+      },
+    });
+  }
+  console.log(`✓ 10 fournisseurs stratégiques enrichis (rating, délais, incidents)`);
+
+  // 4 BC en attente validation N2 DAF (montants 5M-50M)
+  const n2Pos = [
+    { supplierIdx: 3, label: "Carburant flotte mai", amount: 12_350_000n, category: "Carburant", days: 2 },
+    { supplierIdx: 0, label: "Ciment lot complémentaire chantier Mfoundi", amount: 28_400_000n, category: "Ciment", days: 1 },
+    { supplierIdx: 1, label: "Acier HA 20 mm lot 2", amount: 41_750_000n, category: "Acier", days: 4 },
+    { supplierIdx: 9, label: "Branchements eau base-vie Maroua", amount: 7_900_000n, category: "Eau", days: 3 },
+  ];
+  for (const [i, p] of n2Pos.entries()) {
+    const supplier = createdSuppliers[p.supplierIdx];
+    const created = new Date(finToday.getTime() - p.days * 86_400_000);
+    await prisma.purchaseOrder.create({
+      data: {
+        tenantId: tenant.id,
+        supplierId: supplier.id,
+        reference: `BC-${finToday.getFullYear()}${String(finToday.getMonth() + 1).padStart(2, "0")}-${String(50 + i).padStart(4, "0")}`,
+        label: p.label,
+        amount: p.amount,
+        category: p.category,
+        initiatorId: accountantUser.id,
+        status: "PENDING_DAF",
+        createdAt: created,
+      },
+    });
+  }
+  console.log(`✓ ${n2Pos.length} BC en attente N2 DAF (5M-50M) créés`);
+
+  // 6 engagements actifs (SupplierCommitment) avec différents stades de livraison
+  const commitmentsSeed = [
+    { supplierIdx: 0, poRef: "BC-2026-T1-0023", amount: 85_000_000n, delivered: 85_000_000n, invoiced: 60_000_000n, dDays: 12, status: "PARTIAL_DELIVERY" as const },
+    { supplierIdx: 1, poRef: "BC-2026-T1-0041", amount: 120_000_000n, delivered: 90_000_000n, invoiced: 90_000_000n, dDays: 25, status: "PARTIAL_DELIVERY" as const },
+    { supplierIdx: 5, poRef: "BC-2026-T1-0017", amount: 220_000_000n, delivered: 0n, invoiced: 0n, dDays: 45, status: "ACTIVE" as const },
+    { supplierIdx: 3, poRef: "BC-2026-T1-0089", amount: 95_000_000n, delivered: 95_000_000n, invoiced: 75_000_000n, dDays: 8, status: "PARTIAL_DELIVERY" as const },
+    { supplierIdx: 6, poRef: "BC-2026-T1-0102", amount: 180_000_000n, delivered: 60_000_000n, invoiced: 60_000_000n, dDays: 60, status: "PARTIAL_DELIVERY" as const },
+    { supplierIdx: 2, poRef: "BC-2026-T1-0118", amount: 42_000_000n, delivered: 0n, invoiced: 0n, dDays: 20, status: "ACTIVE" as const },
+  ];
+  for (const c of commitmentsSeed) {
+    const supplier = createdSuppliers[c.supplierIdx];
+    await prisma.supplierCommitment.create({
+      data: {
+        tenantId: tenant.id,
+        supplierId: supplier.id,
+        poRef: c.poRef,
+        amount: c.amount,
+        deliveredAmount: c.delivered,
+        invoicedAmount: c.invoiced,
+        expectedDeliveryDate: new Date(finToday.getTime() + c.dDays * 86_400_000),
+        status: c.status,
+      },
+    });
+  }
+  console.log(`✓ ${commitmentsSeed.length} engagements fournisseurs créés`);
+
   // ===== STOCKS & MATÉRIEL (Phase 2 / Bloc 5 — fn 5.1) =====
   // 42 immobilisations cohérentes
   const sitesForAssets = await prisma.site.findMany({
