@@ -36,14 +36,17 @@ export function middleware(request: NextRequest) {
   if (subdomain === hostname.split(":")[0]) subdomain = ""; // pas de sous-domaine extrait
 
   const response = NextResponse.next();
+  const isLocalhost =
+    hostname.startsWith("localhost") || hostname.includes(".localhost");
 
   // Cas 1 : portail public
   if (PUBLIC_SUBDOMAINS.includes(subdomain)) {
     response.headers.set("x-tenant-slug", "");
     response.headers.set("x-route-type", "public");
 
-    // Rediriger vers (public) si on est sur une route app/admin
-    if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+    // Sur le portail prod (app.terp.cm), /dashboard n'a pas de sens — rediriger vers /.
+    // Sur localhost en dev, laisser le layout (app) gérer l'auth pour permettre le flow de test.
+    if (!isLocalhost && (pathname.startsWith("/dashboard") || pathname.startsWith("/admin"))) {
       return NextResponse.redirect(new URL("/", request.url));
     }
     return response;
