@@ -26,6 +26,7 @@ import {
   Crown,
   Target,
   TrendingUp,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +50,7 @@ const DG_SECTION: NavSection = {
     { label: "Consolidation groupe", href: "/dg/consolidation", icon: Building2 },
     { label: "Mes objectifs", href: "/dg/objectifs", icon: Target },
     { label: "Trésorerie prévisionnelle", href: "/dg/tresorerie-previsionnelle", icon: TrendingUp },
+    { label: "Reporting CA", href: "/dg/reporting-ca", icon: ClipboardList },
     // Les fonctions DG seront ajoutées ici au fil des Blocs Phase 2.
   ],
 };

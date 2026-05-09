@@ -24,6 +24,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   consolidation: "Consolidation groupe",
   objectifs: "Mes objectifs",
   "tresorerie-previsionnelle": "Trésorerie prévisionnelle",
+  "reporting-ca": "Reporting CA",
+  nouveau: "Nouveau",
   chantiers: "Chantiers",
   finances: "Finances",
   comptabilite: "Comptabilité",

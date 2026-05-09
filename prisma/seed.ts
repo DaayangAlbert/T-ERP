@@ -18,6 +18,8 @@ import {
   ObjectivePeriod,
   ObjectiveStatus,
   CashFlowType,
+  BoardReportType,
+  BoardReportStatus,
 } from "@prisma/client";
 import bcrypt from "bcrypt";
 
@@ -31,6 +33,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.boardReport.deleteMany();
   await prisma.cashFlowProjection.deleteMany();
   await prisma.objective.deleteMany();
   await prisma.payslipLine.deleteMany();
@@ -693,6 +696,89 @@ async function main() {
     data: cashflows.map((c) => ({ ...c, tenantId: tenant.id })),
   });
   console.log(`✓ ${cashflows.length} projections de trésorerie créées`);
+
+  // ===== RAPPORTS CONSEIL D'ADMINISTRATION (Phase 2 / fn 1.5) =====
+  const reportPeriods = [
+    {
+      period: "2026-02",
+      boardDate: new Date("2026-03-15"),
+      ca: 720_000_000,
+      margin: 17.8,
+      treasury: 380_000_000,
+      sites: 4,
+      synthesis:
+        "Bonne dynamique commerciale en février : 3 nouveaux contrats signés. Vigilance sur la marge du Pont Mfoundi.",
+    },
+    {
+      period: "2026-03",
+      boardDate: new Date("2026-04-15"),
+      ca: 1_980_000_000,
+      margin: 18.1,
+      treasury: 395_000_000,
+      sites: 5,
+      synthesis:
+        "T1 clos avec un CA cumulé de 1,98 Md FCFA, conforme au prévisionnel. Marge en légère progression vs T4 2025.",
+    },
+    {
+      period: "2026-04",
+      boardDate: new Date("2026-05-15"),
+      ca: 2_580_000_000,
+      margin: 18.4,
+      treasury: 412_000_000,
+      sites: 6,
+      synthesis:
+        "Mois d'avril solide. Lancement opérationnel Voirie Bonabéri (CHT-2026-014). Deux dérives à arbitrer en CA.",
+    },
+  ];
+  for (const r of reportPeriods) {
+    await prisma.boardReport.create({
+      data: {
+        tenantId: tenant.id,
+        authorId: dg.id,
+        type: BoardReportType.MONTHLY,
+        period: r.period,
+        boardDate: r.boardDate,
+        status: BoardReportStatus.ARCHIVED,
+        chapters: {
+          synthesis: true,
+          financial: true,
+          operational: true,
+          commercial: true,
+          hr: true,
+          hse: true,
+          strategic: true,
+          risks: true,
+          outlook: true,
+        },
+        comments: {
+          synthesis: r.synthesis,
+          financial: "P&L conforme · BFR maîtrisé · trésorerie au-dessus du seuil de confort.",
+          operational: "Avancements globalement à temps. Suivi renforcé sur les chantiers en dérive.",
+          commercial: "Pipeline qualifié de 1,1 Md FCFA. Carnet supérieur à l'année dernière.",
+          hr: "Effectif stable, absentéisme en baisse, pas de risque social majeur.",
+          hse: "Pas d'accident grave sur la période. Audit CARSAT planifié en T2.",
+          strategic: "Avancement des certifications ISO 9001 et Qualibat dans le calendrier.",
+          risks: "Surveillance des délais de paiement publics. DSO en hausse à 62 j.",
+          outlook: "Prochaine étape : sécuriser la trésorerie de juin (échéances fiscales + paie).",
+        },
+        data: {
+          generatedAt: new Date().toISOString(),
+          kpis: {
+            revenue: r.ca,
+            margin: r.margin,
+            treasury: r.treasury,
+            activeSites: r.sites,
+          },
+        },
+        pdfUrl: null,
+        sentTo: [
+          { email: "president.ca@batimcam.cm", name: "Président du Conseil", sentAt: r.boardDate.toISOString() },
+          { email: "tresorier@batimcam.cm", name: "Trésorier", sentAt: r.boardDate.toISOString() },
+        ],
+      },
+    });
+  }
+  console.log(`✓ ${reportPeriods.length} rapports CA archivés créés`);
 
   // ===== CONVERSATION DÉMO =====
   const conv = await prisma.conversation.create({
