@@ -2331,6 +2331,63 @@ async function main() {
   }
   console.log(`✓ ${receivablesSeeds.length} créances créées (8 actives, 2 non échues)`);
 
+  // ===== FISCALITÉ (DAF Bloc 1 / fn 1.6) =====
+  const fiscalToday = new Date();
+  const taxSeeds: Array<{ type: any; authority: any; period: string; daysFromNow: number; amount: bigint | null; declarationStatus?: any; paymentStatus?: any; declared?: number; paid?: number }> = [
+    // 6 échéances 30 jours
+    { type: "VAT", authority: "DGI", period: "2026-04", daysFromNow: 6, amount: 28_400_000n },
+    { type: "CNPS_DIPE", authority: "CNPS", period: "2026-04", daysFromNow: 14, amount: 18_650_000n },
+    { type: "IRPP", authority: "DGI", period: "2026-04", daysFromNow: 14, amount: 22_400_000n },
+    { type: "TAXES_ANNEXES", authority: "DGI", period: "2026-04", daysFromNow: 22, amount: 4_800_000n },
+    { type: "DSF_FILING", authority: "DGI", period: "2025", daysFromNow: 22, amount: null },
+    { type: "IS_INSTALLMENT", authority: "DGI", period: "2026-T2", daysFromNow: 37, amount: 35_000_000n },
+    // 3 dépôts récents
+    { type: "CNPS_DIPE", authority: "CNPS", period: "2026-03", daysFromNow: -10, amount: 17_900_000n, declarationStatus: "ACCEPTED", paymentStatus: "PAID", declared: -10, paid: -8 },
+    { type: "VAT", authority: "DGI", period: "2026-03", daysFromNow: -16, amount: 26_500_000n, declarationStatus: "ACCEPTED", paymentStatus: "PAID", declared: -16, paid: -14 },
+    { type: "IRPP", authority: "DGI", period: "2026-03", daysFromNow: -16, amount: 21_200_000n, declarationStatus: "ACCEPTED", paymentStatus: "PAID", declared: -16, paid: -14 },
+  ];
+  for (const t of taxSeeds) {
+    await prisma.taxDeadline.create({
+      data: {
+        tenantId: tenant.id,
+        type: t.type,
+        authority: t.authority,
+        period: t.period,
+        dueDate: new Date(fiscalToday.getTime() + t.daysFromNow * 86_400_000),
+        amount: t.amount,
+        declarationStatus: t.declarationStatus ?? "PENDING",
+        paymentStatus: t.paymentStatus ?? "PENDING",
+        declaredAt: t.declared != null ? new Date(fiscalToday.getTime() + t.declared * 86_400_000) : null,
+        paidAt: t.paid != null ? new Date(fiscalToday.getTime() + t.paid * 86_400_000) : null,
+      },
+    });
+  }
+  console.log(`✓ ${taxSeeds.length} échéances fiscales créées (6 à venir, 3 récents)`);
+
+  // 3 audits / contrôles
+  const auditSeeds: Array<{ type: any; authority: any; period: string; auditor: string; status: any; daysAgo: number; daysEnd: number | null; opinion?: string; adj?: bigint }> = [
+    { type: "TAX_VERIFICATION", authority: "DGI", period: "2024-2025", auditor: "CIME M. EFFA", status: "IN_PROGRESS", daysAgo: 45, daysEnd: null },
+    { type: "CAC", authority: "OTHER", period: "2025", auditor: "Cabinet Mazars Cameroun", status: "CLOSED", daysAgo: 120, daysEnd: -30, opinion: "Comptes certifiés sans réserve" },
+    { type: "CNPS_CONTROL", authority: "CNPS", period: "2025-2026", auditor: "Inspection CNPS Centre", status: "ANNOUNCED", daysAgo: -16, daysEnd: null },
+  ];
+  for (const a of auditSeeds) {
+    await prisma.taxAudit.create({
+      data: {
+        tenantId: tenant.id,
+        type: a.type,
+        authority: a.authority,
+        period: a.period,
+        auditor: a.auditor,
+        status: a.status,
+        startDate: new Date(fiscalToday.getTime() - a.daysAgo * 86_400_000),
+        endDate: a.daysEnd != null ? new Date(fiscalToday.getTime() + a.daysEnd * 86_400_000) : null,
+        opinion: a.opinion,
+        adjustmentsAmount: a.adj,
+      },
+    });
+  }
+  console.log(`✓ ${auditSeeds.length} audits / contrôles créés`);
+
   // 30 validations historiques (validées/rejetées dans les 60 derniers jours)
   const histTypes: ValidationType[] = [
     ValidationType.PAYROLL,
