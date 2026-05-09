@@ -5,7 +5,19 @@
  * Usage : pnpm db:seed
  */
 
-import { PrismaClient, Role, ContractType, SiteType, SiteStatus, Plan, JobStatus, PayslipStatus } from "@prisma/client";
+import {
+  PrismaClient,
+  Role,
+  ContractType,
+  SiteType,
+  SiteStatus,
+  Plan,
+  JobStatus,
+  PayslipStatus,
+  ObjectiveCategory,
+  ObjectivePeriod,
+  ObjectiveStatus,
+} from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -469,6 +481,87 @@ async function main() {
     });
   }
   console.log(`✓ Bulletin de paie démo créé pour ${dg.firstName} ${dg.lastName}`);
+
+  // ===== OBJECTIFS DG 2026 (Phase 2 / fn 1.3) =====
+  const yearStart = new Date("2026-01-01");
+  const yearEnd = new Date("2026-12-31");
+  const objectives = [
+    {
+      category: ObjectiveCategory.FINANCIAL,
+      title: "CA annuel 2026",
+      description: "Atteindre 4 Md FCFA de chiffre d'affaires consolidé sur l'exercice.",
+      targetValue: 4_000_000_000,
+      actualValue: 2_840_000_000,
+      unit: "FCFA",
+      weight: 5,
+      status: ObjectiveStatus.IN_PROGRESS,
+    },
+    {
+      category: ObjectiveCategory.FINANCIAL,
+      title: "Marge moyenne consolidée",
+      description: "Marge brute moyenne supérieure à 22 % sur l'ensemble des chantiers.",
+      targetValue: 22,
+      actualValue: 18.4,
+      unit: "%",
+      weight: 4,
+      status: ObjectiveStatus.AT_RISK,
+    },
+    {
+      category: ObjectiveCategory.HR,
+      title: "Effectif total",
+      description: "Recruter pour atteindre 520 collaborateurs (vs 487 en début d'année).",
+      targetValue: 520,
+      actualValue: 487,
+      unit: "employés",
+      weight: 3,
+      status: ObjectiveStatus.IN_PROGRESS,
+    },
+    {
+      category: ObjectiveCategory.COMMERCIAL,
+      title: "Nouveaux contrats signés",
+      description: "Signer 15 nouveaux marchés (publics ou privés) sur 2026.",
+      targetValue: 15,
+      actualValue: 12,
+      unit: "contrats",
+      weight: 4,
+      status: ObjectiveStatus.IN_PROGRESS,
+    },
+    {
+      category: ObjectiveCategory.HSE,
+      title: "Jours sans accident",
+      description: "Maintenir un compteur sans accident du travail sur l'année entière.",
+      targetValue: 365,
+      actualValue: 142,
+      unit: "jours",
+      weight: 5,
+      status: ObjectiveStatus.IN_PROGRESS,
+    },
+    {
+      category: ObjectiveCategory.STRATEGIC,
+      title: "Certifications qualité",
+      description: "Obtenir ISO 9001 + qualibat (2 certifications stratégiques).",
+      targetValue: 2,
+      actualValue: 1,
+      unit: "certifications",
+      weight: 3,
+      status: ObjectiveStatus.IN_PROGRESS,
+    },
+  ];
+
+  for (const o of objectives) {
+    await prisma.objective.create({
+      data: {
+        ...o,
+        tenantId: tenant.id,
+        ownerId: dg.id,
+        period: ObjectivePeriod.ANNUAL,
+        year: 2026,
+        startDate: yearStart,
+        endDate: yearEnd,
+      },
+    });
+  }
+  console.log(`✓ ${objectives.length} objectifs DG 2026 créés`);
 
   // ===== CONVERSATION DÉMO =====
   const conv = await prisma.conversation.create({

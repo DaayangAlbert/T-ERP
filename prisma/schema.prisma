@@ -44,6 +44,7 @@ model Tenant {
   conversations Conversation[]
   documents   Document[]
   auditLogs   AuditLog[]
+  objectives  Objective[]
 
   @@index([parentId])
   @@map("tenants")
@@ -108,10 +109,69 @@ model User {
   auditLogs    AuditLog[]
   managedSites Site[]   @relation("SiteManager")
   dgSettings   DgSettings?
+  objectives   Objective[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
   @@map("users")
+}
+
+// ========================================
+// OBJECTIFS DG (Phase 2 / fn 1.3)
+// ========================================
+// Objectifs annuels / trimestriels suivis par le DG.
+model Objective {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  category    ObjectiveCategory
+  title       String
+  description String?  @db.Text
+
+  targetValue Float
+  actualValue Float    @default(0)
+  unit        String   // "FCFA", "%", "jours", "unités", "M FCFA", etc.
+
+  period      ObjectivePeriod
+  year        Int
+  quarter     Int?     // 1..4 si period = QUARTERLY ou MONTHLY ; null si ANNUAL
+  weight      Int      @default(1) // pondération sur la note globale
+
+  status      ObjectiveStatus @default(IN_PROGRESS)
+  startDate   DateTime
+  endDate     DateTime
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, year, period])
+  @@index([ownerId, year])
+  @@map("objectives")
+}
+
+enum ObjectiveCategory {
+  FINANCIAL
+  COMMERCIAL
+  HR
+  HSE
+  STRATEGIC
+}
+
+enum ObjectivePeriod {
+  ANNUAL
+  QUARTERLY
+  MONTHLY
+}
+
+enum ObjectiveStatus {
+  IN_PROGRESS
+  AT_RISK
+  ACHIEVED
+  MISSED
+  CANCELLED
 }
 
 // ========================================

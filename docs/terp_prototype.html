@@ -2522,6 +2522,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -3633,6 +3634,181 @@ html{scroll-behavior:smooth}
   </div>
 </div>
 
+<!-- ========================= DG · OBJECTIFS (Phase 2 / fn 1.3) ========================= -->
+<div class="screen" id="screen-dg-objectifs">
+  <header class="app-header">
+    <button class="burger" onclick="toggleSidebar()" aria-label="Menu"><svg class="ic-lg ic" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <div class="app-header-brand">
+      <div class="logo-mark"><svg viewBox="0 0 64 64"><defs><linearGradient id="obj-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C084FC"/><stop offset="100%" stop-color="#A855F7"/></linearGradient></defs><rect fill="url(#obj-grad)" x="6" y="14" width="52" height="11" rx="2"/><rect fill="url(#obj-grad)" x="14" y="29" width="36" height="11" rx="2"/><rect fill="url(#obj-grad)" x="22" y="44" width="20" height="11" rx="2"/></svg></div>
+      <div class="logo-text">T-ERP</div>
+      <button class="tenant-badge"><div class="tenant-mark" style="background:#A855F7">B</div><span class="tenant-name">BatimCAM SA</span><svg class="ic-sm ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+    <nav class="app-header-nav">
+      <div class="nav-tab" onclick="go('screen-dg')">Tableau de bord</div>
+      <div class="nav-tab" onclick="go('screen-dg-consolidation')">Consolidation</div>
+      <div class="nav-tab active">Mes objectifs</div>
+    </nav>
+    <div class="header-user"><div class="av av-1">AD</div><span>Albert DAAYANG</span></div>
+  </header>
+
+  <div class="app">
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar">
+      <div class="sidebar-toggle"><button onclick="toggleSidebarCompact()"><svg class="ic-sm ic" viewBox="0 0 24 24" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+      <div class="sidebar-section">Espace DG</div>
+      <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
+      <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item active" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
+      <div class="sidebar-section">Pilotage</div>
+      <div data-tip="Tableau de bord" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
+    </aside>
+
+    <div class="main">
+      <div class="action-bar">
+        <div class="breadcrumbs"><span class="crumb" onclick="go('screen-dg')">Espace DG</span><span class="sep">›</span><span class="current">Mes objectifs</span></div>
+      </div>
+
+      <div class="page" style="max-width:1400px;margin:0 auto">
+        <div class="view-header" style="background:transparent;border:none;padding:0 0 14px">
+          <div>
+            <div class="view-title">Mes objectifs 2026</div>
+            <div class="view-subtitle">6 objectifs annuels · 2 en cours T2 · pondération moyenne 4/10</div>
+          </div>
+          <div class="view-header-actions">
+            <select class="form-control" style="padding:3px 8px;font-size:11.5px;width:auto"><option>Exercice 2026</option><option>Exercice 2025</option><option>Exercice 2024</option></select>
+            <button class="btn btn-primary btn-sm" data-ph data-ph-title="Définir un nouvel objectif">+ Nouvel objectif</button>
+            <button class="btn btn-default btn-sm" data-ph data-ph-title="Définir objectifs 2027">Définir 2027</button>
+          </div>
+        </div>
+
+        <!-- OBJECTIFS ANNUELS -->
+        <h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:0 0 12px">Objectifs annuels</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:24px">
+          <!-- Card 1 — CA annuel (à temps) -->
+          <div data-ph data-ph-title="CA annuel 2026 — détail" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">💰</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">Financier</span></span>
+              <span class="status status-success">À temps</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">CA annuel 2026</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">2,84 Md</span> <span class="muted">/ 4 Md FCFA</span></span><span class="bold mono" style="color:#15803D">71 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:71%;background:#15803D;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5);border-radius:1px" title="Temps écoulé : 42 %"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>En cours</span></div>
+          </div>
+
+          <!-- Card 2 — Marge (en retard) -->
+          <div data-ph data-ph-title="Marge moyenne consolidée" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">💰</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">Financier</span></span>
+              <span class="status status-warning">En retard</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">Marge moyenne consolidée</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">18,4 %</span> <span class="muted">/ 22 %</span></span><span class="bold mono" style="color:#B45309">84 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:84%;background:#B45309;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5)"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>À risque</span></div>
+          </div>
+
+          <!-- Card 3 — Effectif (en avance) -->
+          <div data-ph data-ph-title="Effectif total" style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">👥</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">RH</span></span>
+              <span class="status status-primary">En avance</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">Effectif total</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">487</span> <span class="muted">/ 520 employés</span></span><span class="bold mono" style="color:#A855F7">94 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:94%;background:#A855F7;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5)"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>En cours</span></div>
+          </div>
+
+          <!-- Card 4 — Nouveaux contrats (à temps) -->
+          <div data-ph style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">📊</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">Commercial</span></span>
+              <span class="status status-primary">En avance</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">Nouveaux contrats signés</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">12</span> <span class="muted">/ 15 contrats</span></span><span class="bold mono" style="color:#A855F7">80 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:80%;background:#A855F7;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5)"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>En cours</span></div>
+          </div>
+
+          <!-- Card 5 — HSE (à temps) -->
+          <div data-ph style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">🛡️</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">HSE</span></span>
+              <span class="status status-success">À temps</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">Jours sans accident</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">142</span> <span class="muted">/ 365 jours</span></span><span class="bold mono" style="color:#15803D">39 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:39%;background:#15803D;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5)"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>En cours</span></div>
+          </div>
+
+          <!-- Card 6 — Certifications (à temps) -->
+          <div data-ph style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;box-shadow:var(--shadow-sm)">
+            <div class="flex between center" style="margin-bottom:10px">
+              <span class="flex gap-6 center"><span style="width:24px;height:24px;background:#FAF5FF;border-radius:6px;display:grid;place-items:center;color:#7E22CE">⭐</span><span class="tiny bold muted" style="text-transform:uppercase;letter-spacing:.05em">Stratégique</span></span>
+              <span class="status status-primary">En avance</span>
+            </div>
+            <div class="bold" style="font-size:14px;margin-bottom:8px">Certifications obtenues</div>
+            <div class="flex between center" style="margin-bottom:6px"><span class="mono small"><span class="bold">1</span> <span class="muted">/ 2 certifications</span></span><span class="bold mono" style="color:#A855F7">50 %</span></div>
+            <div style="position:relative;height:8px;background:var(--surface-alt);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:50%;background:#A855F7;border-radius:4px"></div>
+              <span style="position:absolute;top:50%;left:42%;transform:translateY(-50%);width:2px;height:12px;background:rgba(31,42,61,.5)"></span>
+            </div>
+            <div class="flex between" style="margin-top:6px;font-size:10.5px;color:var(--ink-3)"><span>Temps écoulé : 42 %</span><span>En cours</span></div>
+          </div>
+        </div>
+
+        <!-- OBJECTIFS TRIMESTRIELS T2 -->
+        <h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:0 0 12px">Objectifs trimestriels en cours (T2 2026)</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:24px;color:var(--ink-3);font-size:13px;font-style:italic;padding:24px;background:#FAFAFB;border:1px dashed var(--line);border-radius:12px">
+          Aucun objectif trimestriel saisi pour T2 2026 — utilisez « + Nouvel objectif » pour en créer un.
+        </div>
+
+        <!-- TRAJECTOIRE (chart prévu vs réalisé) -->
+        <div class="chart-card">
+          <div class="card-head">
+            <div>
+              <h3>Trajectoire — CA annuel 2026</h3>
+              <span class="meta">Cible 4 Md FCFA · Réalisé 2,84 Md (71 %)</span>
+            </div>
+          </div>
+          <svg class="chart-svg" viewBox="0 0 600 240" preserveAspectRatio="xMidYMid meet">
+            <g stroke="#E5E7EB" stroke-width="1"><line x1="40" y1="40" x2="580" y2="40"/><line x1="40" y1="100" x2="580" y2="100"/><line x1="40" y1="160" x2="580" y2="160"/></g>
+            <g font-size="10" fill="#6B7280" font-family="IBM Plex Mono"><text x="34" y="44" text-anchor="end">4Md</text><text x="34" y="104" text-anchor="end">2,7Md</text><text x="34" y="164" text-anchor="end">1,3Md</text></g>
+            <!-- Cible (ReferenceLine violette) -->
+            <line x1="40" y1="40" x2="580" y2="40" stroke="#7E22CE" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <text x="575" y="36" text-anchor="end" font-size="10" fill="#7E22CE" font-weight="600">Cible</text>
+            <!-- Prévisionnel (gris pointillé linéaire) -->
+            <polyline fill="none" stroke="#9CA3AF" stroke-width="2" stroke-dasharray="6 4" points="40,170 85,160 130,150 175,140 220,130 265,120 310,110 355,100 400,90 445,80 490,70 535,55 580,40"/>
+            <!-- Réalisé (violet plein, s'arrête à mai = ~42 %) -->
+            <polyline fill="none" stroke="#A855F7" stroke-width="3" points="40,168 85,158 130,144 175,130 220,115"/>
+            <g fill="#A855F7"><circle cx="40" cy="168" r="3"/><circle cx="85" cy="158" r="3"/><circle cx="130" cy="144" r="3"/><circle cx="175" cy="130" r="3"/><circle cx="220" cy="115" r="3"/></g>
+            <g font-size="10" fill="#6B7280" text-anchor="middle"><text x="40" y="200">Janv</text><text x="130" y="200">Mars</text><text x="220" y="200">Mai</text><text x="310" y="200">Juil</text><text x="400" y="200">Sept</text><text x="490" y="200">Nov</text><text x="580" y="200">Déc</text></g>
+          </svg>
+          <div class="chart-legend"><span><span class="swatch" style="background:#A855F7"></span>Réalisé</span><span><span class="swatch" style="background:#9CA3AF"></span>Prévisionnel</span><span><span class="swatch" style="background:#7E22CE"></span>Cible</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ========================= DAF ========================= -->
 <div class="screen" id="screen-daf">
   <header class="app-header">
@@ -3683,6 +3859,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-daf')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -4425,6 +4602,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-cc')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -4784,6 +4962,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-log')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -5166,6 +5345,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-ged')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -6318,6 +6498,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-sg')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -6602,6 +6783,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-mag')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -6927,6 +7109,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-info')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -7074,6 +7257,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-condtrav')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -7189,6 +7373,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-dirtrav')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -7319,6 +7504,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item active" onclick="go('screen-dirtech')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -7484,6 +7670,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -7884,6 +8071,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8134,6 +8322,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8428,6 +8617,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8535,6 +8725,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item active" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8656,6 +8847,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8759,6 +8951,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8880,6 +9073,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -8988,6 +9182,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9080,6 +9275,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9193,6 +9389,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9305,6 +9502,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9431,6 +9629,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item active" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9628,6 +9827,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9768,6 +9968,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -9892,6 +10093,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -10033,6 +10235,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -10206,6 +10409,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -10399,6 +10603,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Pilotage" class="sidebar-item" onclick="go('screen-pilotage')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Pilotage</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -10570,6 +10775,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
@@ -10970,6 +11176,7 @@ html{scroll-behavior:smooth}
       <div class="sidebar-section">Espace DG</div>
       <div data-tip="Tableau de bord DG" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg><span>Tableau de bord DG</span></div>
       <div data-tip="Consolidation groupe" class="sidebar-item" onclick="go('screen-dg-consolidation')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12" rx="1"/><rect x="9" y="3" width="6" height="18" rx="1"/><rect x="15" y="6" width="6" height="15" rx="1"/></svg><span>Consolidation groupe</span></div>
+      <div data-tip="Mes objectifs" class="sidebar-item" onclick="go('screen-dg-objectifs')"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Mes objectifs</span></div>
       <div class="sidebar-section">Pilotage</div>
       <div data-tip="Tableau de bord" class="sidebar-item" onclick="go('screen-dg')"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></div>
       <div data-tip="Rapports consolidés" class="sidebar-item" onclick="go('screen-reports')"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg><span>Rapports consolidés</span></div>
