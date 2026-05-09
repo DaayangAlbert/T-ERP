@@ -96,10 +96,27 @@ model User {
   notifications Notification[]
   auditLogs    AuditLog[]
   managedSites Site[]   @relation("SiteManager")
+  dgSettings   DgSettings?
 
   @@index([tenantId, email])
   @@index([tenantId, role])
   @@map("users")
+}
+
+// ========================================
+// PRÉFÉRENCES DG (Phase 2 — Bloc 1)
+// ========================================
+// Stocke les préférences de l'espace DG (1 ligne par utilisateur DG).
+// Les champs métier seront ajoutés au fil des fonctions livrées.
+model DgSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("dg_settings")
 }
 
 enum Role {

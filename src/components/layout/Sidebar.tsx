@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUiStore } from "@/stores/ui-store";
+import { useAuth } from "@/hooks/useAuth";
 import { clsx } from "clsx";
 import {
   LayoutDashboard,
@@ -22,6 +23,7 @@ import {
   CreditCard,
   MessageSquare,
   ChevronLeft,
+  Crown,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +38,15 @@ interface NavSection {
   title: string;
   items: NavItem[];
 }
+
+// Section exclusive au DG, prependée au-dessus de NAV quand l'utilisateur a Role.DG.
+const DG_SECTION: NavSection = {
+  title: "Espace DG",
+  items: [
+    { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
+    // Les fonctions DG seront ajoutées ici au fil des Blocs Phase 2.
+  ],
+};
 
 const NAV: NavSection[] = [
   {
@@ -84,6 +95,8 @@ const NAV: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCompact, toggleSidebarCompact, mobileSidebarOpen, closeMobileSidebar } = useUiStore();
+  const { user } = useAuth();
+  const sections: NavSection[] = user?.role === "DG" ? [DG_SECTION, ...NAV] : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
@@ -150,7 +163,7 @@ export function Sidebar() {
           </button>
         </div>
 
-        {NAV.map((section) => (
+        {sections.map((section) => (
           <div key={section.title}>
             <div
               className={clsx(

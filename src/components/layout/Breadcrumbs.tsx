@@ -6,7 +6,7 @@ import { ChevronRight } from "lucide-react";
 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Pilotage",
-  dg: "Direction générale",
+  dg: "Espace DG",
   daf: "Direction administrative et financière",
   sg: "Secrétariat général",
   hr: "Ressources humaines",
@@ -52,19 +52,26 @@ export function Breadcrumbs() {
   const items = parts.map((seg, i) => {
     const href = "/" + parts.slice(0, i + 1).join("/");
     const isLast = i === parts.length - 1;
-    return { seg, href, isLast };
+    // Le segment 'dg' a deux significations selon le contexte :
+    //   - /dashboard/dg → "Direction générale" (le tableau de bord du DG)
+    //   - /dg/<fonction>   → "Espace DG" (le namespace des fonctions DG, Phase 2)
+    const label =
+      seg === "dg" && parts[i - 1] === "dashboard"
+        ? "Direction générale"
+        : labelFor(seg);
+    return { seg, href, isLast, label };
   });
 
   return (
     <nav aria-label="Fil d'Ariane" className="flex items-center gap-1 text-[12.5px] text-ink-3">
-      {items.map(({ seg, href, isLast }, i) => (
+      {items.map(({ href, isLast, label }, i) => (
         <span key={href} className="flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3 w-3 text-ink-4" />}
           {isLast ? (
-            <span className="font-medium text-ink-2">{labelFor(seg)}</span>
+            <span className="font-medium text-ink-2">{label}</span>
           ) : (
             <Link href={href} className="hover:text-primary-700">
-              {labelFor(seg)}
+              {label}
             </Link>
           )}
         </span>
