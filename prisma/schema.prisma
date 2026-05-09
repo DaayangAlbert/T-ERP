@@ -151,6 +151,7 @@ model User {
   interestDeclarations  InterestDeclaration[]
   benefits              BenefitInKind[]
   performanceBonuses    PerformanceBonus[]
+  dafSettings           DafSettings?
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -658,6 +659,244 @@ model VoiceNote {
   createdAt   DateTime @default(now())
 
   @@map("voice_notes")
+}
+
+// ========================================
+// CYCLE DE PAIE DAF (Phase 2 / DAF Bloc 1 — fn 1.4)
+// ========================================
+// Pilote le cycle mensuel de paie : 7 statuts du calcul à la transmission DIPE.
+model PayrollCycle {
+  id              String   @id @default(cuid())
+  tenantId        String
+  period          String   // "2026-04"
+  status          PayrollCycleStatus @default(DRAFT)
+
+  totalBulletins  Int      @default(0)
+  grossAmount     BigInt   @default(0)
+  employerCharges BigInt   @default(0)
+  netToPay        BigInt   @default(0)
+
+  startedAt       DateTime
+  calculatedAt    DateTime?
+  n1ValidatedAt   DateTime?
+  n2ValidatedAt   DateTime?
+  n3ValidatedAt   DateTime?
+  paidAt          DateTime?
+  dipeSubmittedAt DateTime?
+
+  warnings        Json     @default("[]") // [{ severity, type, message, count? }]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, period])
+  @@index([tenantId, status])
+  @@map("payroll_cycles")
+}
+
+enum PayrollCycleStatus {
+  DRAFT
+  CALCULATING
+  CALCULATED
+  N1_PENDING
+  N2_PENDING
+  N3_PENDING
+  PAID
+  DIPE_SUBMITTED
+  CLOSED
+}
+
+// ========================================
+// RECOUVREMENT CLIENTS DAF (Phase 2 / DAF Bloc 1 — fn 1.5)
+// ========================================
+// Créances clients avec balance âgée + niveaux de relance R1/R2/R3.
+model Receivable {
+  id            String   @id @default(cuid())
+  tenantId      String
+  invoiceRef    String
+  clientName    String
+  clientId      String?
+  amount        BigInt
+  paidAmount    BigInt   @default(0)
+  issueDate     DateTime
+  dueDate       DateTime
+  status        ReceivableStatus @default(OPEN)
+  siteId        String?
+  daysOverdue   Int      @default(0)
+
+  reminders     Reminder[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, invoiceRef])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@map("receivables")
+}
+
+enum ReceivableStatus {
+  OPEN
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  LITIGATION
+  WRITEOFF
+}
+
+model Reminder {
+  id           String   @id @default(cuid())
+  receivableId String
+  receivable   Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+
+  level        ReminderLevel
+  channel      ReminderChannel
+  sentAt       DateTime
+  sentBy       String
+  responseReceived Boolean @default(false)
+  responseDate     DateTime?
+  responseNote     String?  @db.Text
+
+  createdAt    DateTime @default(now())
+
+  @@index([receivableId, sentAt])
+  @@map("reminders")
+}
+
+enum ReminderLevel {
+  R1_AMIABLE
+  R2_FIRM
+  R3_FORMAL_NOTICE
+  LITIGATION
+}
+
+enum ReminderChannel {
+  EMAIL
+  LETTER
+  REGISTERED_MAIL
+  PHONE
+  BAILIFF
+}
+
+// ========================================
+// FISCALITÉ DAF (Phase 2 / DAF Bloc 1 — fn 1.6)
+// ========================================
+// Échéances fiscales / sociales (TVA, IRPP, CNPS DIPE...) + audits.
+model TaxDeadline {
+  id                String   @id @default(cuid())
+  tenantId          String
+  type              TaxType
+  authority         TaxAuthority
+  period            String   // "2026-04" ou "2025"
+  dueDate           DateTime
+  amount            BigInt?
+  declarationStatus DeclarationStatus @default(PENDING)
+  paymentStatus     PaymentStatus     @default(PENDING)
+  declaredAt        DateTime?
+  paidAt            DateTime?
+  receiptUrl        String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, type, period])
+  @@index([tenantId, dueDate])
+  @@index([tenantId, type])
+  @@map("tax_deadlines")
+}
+
+enum TaxType {
+  VAT
+  IRPP
+  CNPS_DIPE
+  CFC
+  FNE
+  RAV
+  TC
+  CAC
+  IS_INSTALLMENT
+  IS_BALANCE
+  DSF_FILING
+  TAXES_ANNEXES
+  OTHER
+}
+
+enum TaxAuthority {
+  DGI
+  CNPS
+  COMMUNE
+  CNAM_OCCUPATIONAL
+  OTHER
+}
+
+enum DeclarationStatus {
+  PENDING
+  PREPARED
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SCHEDULED
+  PAID
+  OVERDUE
+}
+
+model TaxAudit {
+  id                String   @id @default(cuid())
+  tenantId          String
+  type              AuditType
+  authority         TaxAuthority
+  period            String
+  auditor           String?
+  status            AuditStatus @default(ANNOUNCED)
+  startDate         DateTime
+  endDate           DateTime?
+  opinion           String?  @db.Text
+  adjustmentsAmount BigInt?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("tax_audits")
+}
+
+enum AuditType {
+  TAX_VERIFICATION
+  CNPS_CONTROL
+  EXTERNAL_AUDIT
+  CAC
+  INTERNAL
+}
+
+enum AuditStatus {
+  ANNOUNCED
+  IN_PROGRESS
+  CONTRADICTORY
+  CLOSED
+  CHALLENGED
+}
+
+// ========================================
+// PRÉFÉRENCES DAF (Phase 2 — Bloc DAF, prompt 0)
+// ========================================
+// Stocke les préférences spécifiques au DAF (1 ligne par utilisateur DAF) :
+// seuils d'alertes personnalisés, layout du tableau de bord.
+model DafSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  alertsConfig    Json?    // { treasuryMin, dsoMax, validationOverdueDays, ... }
+  dashboardLayout Json?    // [{ widget, order, size }]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("daf_settings")
 }
 
 // ========================================
@@ -1262,6 +1501,7 @@ enum CommitmentStatus {
 }
 
 // Comptes bancaires : solde JJ + lignes accordées/utilisées + relation manager.
+// Étendu DAF (Bloc 1 / fn 1.2) : syncStatus + lastSyncAt + primaryColor + movements.
 model BankAccount {
   id                String   @id @default(cuid())
   tenantId          String
@@ -1269,7 +1509,7 @@ model BankAccount {
 
   bank              String   // UBA, BICEC, AFRILAND, ECOBANK, SGBC...
   accountNumber     String
-  accountType       String   @default("CURRENT") // CURRENT, ESCROW, SAVING
+  accountType       String   @default("CURRENT") // CURRENT, ESCROW, SAVING, GUARANTEE, FOREIGN_CURRENCY
   currency          String   @default("XAF")
   balance           BigInt
   creditLineGranted BigInt   @default(0)
@@ -1278,12 +1518,51 @@ model BankAccount {
   contact           Json?    // { name, phone, email }
   history12m        Json     @default("[]") // [{ month, balance }]
 
+  // DAF fn 1.2 — synchro temps réel
+  lastSyncAt        DateTime?
+  syncStatus        BankSyncStatus @default(MANUAL)
+  primaryColor      String?  // pour code couleur visuel UBA rouge, BICEC sarcelle...
+
+  movements         BankMovement[]
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   @@unique([tenantId, accountNumber])
   @@index([tenantId])
   @@map("bank_accounts")
+}
+
+enum BankSyncStatus {
+  LIVE
+  DELAYED
+  MANUAL
+  ERROR
+}
+
+// Mouvements bancaires (DAF Bloc 1 / fn 1.2). Trace des entrées / sorties par compte.
+model BankMovement {
+  id            String   @id @default(cuid())
+  bankAccountId String
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  direction     MovementDirection
+  amount        BigInt
+  label         String
+  reference     String?
+  counterparty  String?
+  siteId        String?
+  occurredAt    DateTime
+
+  createdAt     DateTime @default(now())
+
+  @@index([bankAccountId, occurredAt])
+  @@map("bank_movements")
+}
+
+enum MovementDirection {
+  INBOUND
+  OUTBOUND
 }
 
 // ========================================

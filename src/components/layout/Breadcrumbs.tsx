@@ -38,6 +38,9 @@ const SEGMENT_LABELS: Record<string, string> = {
   rapports: "Rapports consolidés",
   achats: "Achats",
   stocks: "Stocks & matériel",
+  tresorerie: "Trésorerie temps réel",
+  recouvrement: "Recouvrement",
+  fiscal: "Fiscalité",
   configuration: "Configuration",
   entreprise: "Identité entreprise",
   modules: "Modules",
@@ -68,7 +71,9 @@ export function Breadcrumbs() {
     const label =
       seg === "dg" && parts[i - 1] === "dashboard"
         ? "Direction générale"
-        : labelFor(seg);
+        : seg === "daf" && i === 0
+          ? "Espace DAF"
+          : labelFor(seg);
     return { seg, href, isLast, label };
   });
 

@@ -180,7 +180,7 @@ export function ProfileSwitcher({ open, onClose }: Props) {
 
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <a
-              href="http://admin.terp.local:3000"
+              href="http://admin.terp.local:5000"
               className="flex items-center gap-2 rounded-lg border border-line bg-[#0F172A] px-3 py-2.5 text-white transition hover:bg-[#1E293B]"
             >
               <span className="grid h-8 w-8 place-items-center rounded bg-cyan-400 text-[11px] font-bold text-[#0F172A]">
@@ -195,7 +195,7 @@ export function ProfileSwitcher({ open, onClose }: Props) {
               <ExternalLink className="h-4 w-4 text-white/65" />
             </a>
             <a
-              href="http://app.terp.local:3000"
+              href="http://app.terp.local:5000"
               className="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2.5 transition hover:border-primary-300"
             >
               <span className="grid h-8 w-8 place-items-center rounded bg-primary-100 text-primary-700">
