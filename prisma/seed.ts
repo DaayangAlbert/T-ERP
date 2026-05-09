@@ -40,6 +40,11 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.reminder.deleteMany();
+  await prisma.receivable.deleteMany();
+  await prisma.taxAudit.deleteMany();
+  await prisma.taxDeadline.deleteMany();
+  await prisma.bankMovement.deleteMany();
   await prisma.payrollCycle.deleteMany();
   await prisma.performanceBonus.deleteMany();
   await prisma.benefitInKind.deleteMany();
@@ -2258,6 +2263,73 @@ async function main() {
     },
   });
   console.log(`✓ Cycle de paie ${payrollPeriod} (N2_PENDING) créé`);
+
+  // ===== RECOUVREMENT CLIENTS (DAF Bloc 1 / fn 1.5) =====
+  const recoveryToday = new Date();
+  const receivablesSeeds: Array<{ ref: string; client: string; amount: bigint; daysOverdue: number; reminders?: Array<{ level: "R1_AMIABLE" | "R2_FIRM" | "R3_FORMAL_NOTICE" | "LITIGATION"; channel: "EMAIL" | "LETTER" | "REGISTERED_MAIL" | "PHONE" | "BAILIFF"; daysAgo: number }> }> = [
+    { ref: "FAC-2026-005", client: "SCI Bastos Plus", amount: 38_400_000n, daysOverdue: 68, reminders: [
+      { level: "R1_AMIABLE", channel: "EMAIL", daysAgo: 30 },
+      { level: "R2_FIRM", channel: "REGISTERED_MAIL", daysAgo: 10 },
+    ] },
+    { ref: "FAC-2026-012", client: "Commune Yaoundé I", amount: 28_500_000n, daysOverdue: 92, reminders: [
+      { level: "R1_AMIABLE", channel: "EMAIL", daysAgo: 60 },
+      { level: "R2_FIRM", channel: "REGISTERED_MAIL", daysAgo: 30 },
+      { level: "R3_FORMAL_NOTICE", channel: "REGISTERED_MAIL", daysAgo: 5 },
+    ] },
+    { ref: "FAC-2026-018", client: "Commune Douala IV", amount: 14_500_000n, daysOverdue: 45, reminders: [
+      { level: "R1_AMIABLE", channel: "EMAIL", daysAgo: 15 },
+    ] },
+    { ref: "FAC-2026-024", client: "MINTP — Direction routes", amount: 65_200_000n, daysOverdue: 78, reminders: [
+      { level: "R1_AMIABLE", channel: "EMAIL", daysAgo: 45 },
+      { level: "R2_FIRM", channel: "PHONE", daysAgo: 20 },
+    ] },
+    { ref: "FAC-2026-030", client: "SOCOPRIM Lotissement", amount: 22_800_000n, daysOverdue: 35, reminders: [
+      { level: "R1_AMIABLE", channel: "EMAIL", daysAgo: 10 },
+    ] },
+    { ref: "FAC-2026-036", client: "FEICOM Antenne Centre", amount: 18_400_000n, daysOverdue: 22 },
+    { ref: "FAC-2026-042", client: "CDE Régionale Yaoundé", amount: 8_900_000n, daysOverdue: 12 },
+    { ref: "FAC-2026-048", client: "MINHDU Cellule logements sociaux", amount: 41_200_000n, daysOverdue: 55, reminders: [
+      { level: "R2_FIRM", channel: "REGISTERED_MAIL", daysAgo: 25 },
+    ] },
+    // Quelques créances non échues
+    { ref: "FAC-2026-051", client: "BatimCAM Logistique (intragroupe)", amount: 32_000_000n, daysOverdue: -15 },
+    { ref: "FAC-2026-054", client: "Tour Mfoundi Promotion", amount: 88_000_000n, daysOverdue: -30 },
+  ];
+
+  const dafForReceivables = createdUsers.find((u) => u.role === Role.DAF) ?? createdUsers[0];
+  for (const r of receivablesSeeds) {
+    const dueDate = new Date(recoveryToday.getTime() - r.daysOverdue * 86_400_000);
+    const issueDate = new Date(dueDate.getTime() - 30 * 86_400_000);
+    const status = r.daysOverdue > 0 ? "OVERDUE" : "OPEN";
+
+    const created = await prisma.receivable.create({
+      data: {
+        tenantId: tenant.id,
+        invoiceRef: r.ref,
+        clientName: r.client,
+        amount: r.amount,
+        paidAmount: 0n,
+        issueDate,
+        dueDate,
+        daysOverdue: Math.max(0, r.daysOverdue),
+        status,
+      },
+    });
+    if (r.reminders) {
+      for (const rem of r.reminders) {
+        await prisma.reminder.create({
+          data: {
+            receivableId: created.id,
+            level: rem.level,
+            channel: rem.channel,
+            sentAt: new Date(recoveryToday.getTime() - rem.daysAgo * 86_400_000),
+            sentBy: dafForReceivables.id,
+          },
+        });
+      }
+    }
+  }
+  console.log(`✓ ${receivablesSeeds.length} créances créées (8 actives, 2 non échues)`);
 
   // 30 validations historiques (validées/rejetées dans les 60 derniers jours)
   const histTypes: ValidationType[] = [
