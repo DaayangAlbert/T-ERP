@@ -662,6 +662,128 @@ model VoiceNote {
 }
 
 // ========================================
+// COMPTABILITÉ DAF (Phase 2 / DAF Bloc 2 — fn 2.1)
+// ========================================
+// Rapprochements bancaires + checklist clôture mensuelle.
+model BankReconciliation {
+  id              String   @id @default(cuid())
+  tenantId        String
+  bankAccountId   String
+  period          String   // "2026-04"
+  bookBalance     BigInt
+  bankBalance     BigInt
+  gap             BigInt   @default(0)
+  reconciledItems Json     @default("[]") // ids des entries pointées
+  status          ReconciliationStatus @default(PENDING)
+  completedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, bankAccountId, period])
+  @@index([tenantId, status])
+  @@map("bank_reconciliations")
+}
+
+enum ReconciliationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  VALIDATED
+}
+
+model MonthlyClosingChecklist {
+  id        String   @id @default(cuid())
+  tenantId  String
+  period    String
+  items     Json     @default("[]") // [{ key, label, status, completedAt, by }]
+  status    ClosingStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, period])
+  @@map("monthly_closings")
+}
+
+enum ClosingStatus {
+  OPEN
+  IN_PROGRESS
+  READY
+  CLOSED
+}
+
+// ========================================
+// FINANCES DAF — Analyse profonde (DAF Bloc 2 / fn 2.2)
+// ========================================
+model BudgetVariance {
+  id              String   @id @default(cuid())
+  tenantId        String
+  period          String
+  costCenter      String   // "Achats matières", "Personnel", "Sous-traitance"...
+  budgetAmount    BigInt
+  actualAmount    BigInt
+  variance        BigInt   @default(0)
+  variancePercent Float    @default(0)
+  comment         String?  @db.Text
+  commentAuthor   String?
+  commentAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, period, costCenter])
+  @@index([tenantId, period])
+  @@map("budget_variances")
+}
+
+model FinancialScenario {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  description String?
+  parameters  Json     // hypothèses
+  results     Json     // P&L, BFR, treasury impact
+  authorId    String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("financial_scenarios")
+}
+
+// ========================================
+// ACHATS DAF — Engagements (DAF Bloc 2 / fn 2.3)
+// ========================================
+model SupplierCommitment {
+  id                   String   @id @default(cuid())
+  tenantId             String
+  supplierId           String
+  supplierObj          Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  poRef                String
+  amount               BigInt
+  deliveredAmount      BigInt   @default(0)
+  invoicedAmount       BigInt   @default(0)
+  expectedDeliveryDate DateTime?
+  status               SupplierCommitmentStatus @default(ACTIVE)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([supplierId])
+  @@map("supplier_commitments")
+}
+
+enum SupplierCommitmentStatus {
+  ACTIVE
+  PARTIAL_DELIVERY
+  FULFILLED
+  CANCELLED
+}
+
+// ========================================
 // CYCLE DE PAIE DAF (Phase 2 / DAF Bloc 1 — fn 1.4)
 // ========================================
 // Pilote le cycle mensuel de paie : 7 statuts du calcul à la transmission DIPE.
@@ -1612,12 +1734,28 @@ model AccountingEntry {
   totalDebit  BigInt
   totalCredit BigInt
 
+  // DAF Bloc 2 / fn 2.1 — supervision DAF
+  status                EntryStatus @default(VALIDATED)
+  validatedByDaf        Boolean     @default(true)
+  dafValidatedAt        DateTime?
+  dafValidatedBy        String?
+  requiresDafValidation Boolean     @default(false)
+  enteredBy             String?     // userId du saisisseur
+
   lines     AccountingLine[]
   createdAt DateTime @default(now())
 
   @@unique([tenantId, reference])
   @@index([tenantId, period])
+  @@index([tenantId, status])
   @@map("accounting_entries")
+}
+
+enum EntryStatus {
+  DRAFT
+  VALIDATED
+  LOCKED
+  REVERSED
 }
 
 model AccountingLine {
@@ -1692,9 +1830,17 @@ model Supplier {
   volumeYTD     BigInt   @default(0)
   poCount       Int      @default(0)
 
+  // DAF Bloc 2 / fn 2.3 — suivi financier fournisseur
+  paymentTermsContract  Int      @default(45)
+  paymentTermsActual    Int      @default(0)
+  financialRating       String?
+  financialRatingSource String?
+  incidentsCount        Int      @default(0)
+
   contracts     FrameworkContract[]
   evaluations   SupplierEvaluation[]
   purchaseOrders PurchaseOrder[]
+  commitments   SupplierCommitment[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

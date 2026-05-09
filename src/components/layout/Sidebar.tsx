@@ -68,6 +68,9 @@ const DAF_SECTION: NavSection = {
     { label: "Cycle de paie", href: "/daf/paie", icon: CreditCard },
     { label: "Recouvrement", href: "/daf/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
     { label: "Fiscalité", href: "/daf/fiscal", icon: ScrollText },
+    { label: "Comptabilité (DAF)", href: "/daf/comptabilite", icon: FileText },
+    { label: "Finances (DAF)", href: "/daf/finances", icon: Wallet },
+    { label: "Achats (DAF)", href: "/daf/achats", icon: ShoppingCart },
   ],
 };
 

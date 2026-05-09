@@ -40,6 +40,11 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.supplierCommitment.deleteMany();
+  await prisma.financialScenario.deleteMany();
+  await prisma.budgetVariance.deleteMany();
+  await prisma.monthlyClosingChecklist.deleteMany();
+  await prisma.bankReconciliation.deleteMany();
   await prisma.reminder.deleteMany();
   await prisma.receivable.deleteMany();
   await prisma.taxAudit.deleteMany();
@@ -1111,6 +1116,79 @@ async function main() {
     },
   });
   console.log(`✓ Clôture annuelle ${yearCurrentForAccounting - 1} en attente DG`);
+
+  // ===== COMPTABILITÉ DAF SUPERVISION (DAF Bloc 2 / fn 2.1) =====
+  // 3 écritures en brouillard à valider DAF (montants > 5M ou OD)
+  const accountantUserForAcc = createdUsers.find((u) => u.role === Role.ACCOUNTANT) ?? createdUsers[0];
+  const draftEntriesSeed = [
+    { ref: "OD-2026-001", journal: "OD", label: "Provision créance douteuse SCI Bastos", debit: 12_500_000n, credit: 12_500_000n },
+    { ref: "OD-2026-002", journal: "OD", label: "Charges constatées d'avance assurance Q3", debit: 8_400_000n, credit: 8_400_000n },
+    { ref: "AC-2026-DRAFT-01", journal: "AC", label: "Achat Bulldozer D6 (en cours validation N2)", debit: 180_000_000n, credit: 180_000_000n },
+  ];
+  const periodForAcc = new Date().toISOString().slice(0, 7);
+  for (const e of draftEntriesSeed) {
+    await prisma.accountingEntry.create({
+      data: {
+        tenantId: tenant.id,
+        period: periodForAcc,
+        reference: e.ref,
+        date: new Date(),
+        journal: e.journal,
+        label: e.label,
+        totalDebit: e.debit,
+        totalCredit: e.credit,
+        status: "DRAFT",
+        requiresDafValidation: true,
+        validatedByDaf: false,
+        enteredBy: accountantUserForAcc.id,
+        createdAt: new Date(Date.now() - Math.floor(Math.random() * 36) * 3_600_000),
+      },
+    });
+  }
+  console.log(`✓ ${draftEntriesSeed.length} écritures en brouillard à valider DAF`);
+
+  // Rapprochements bancaires : 2 sur 5 banques sont déjà rapprochés
+  const banksForReco = await prisma.bankAccount.findMany({
+    where: { tenantId: tenant.id },
+    select: { id: true, balance: true },
+  });
+  for (const [i, b] of banksForReco.entries()) {
+    const isReconciled = i < 2;
+    const gap = isReconciled ? 0n : i === 2 ? 2_100_000n : i === 3 ? -380_000n : 0n;
+    await prisma.bankReconciliation.create({
+      data: {
+        tenantId: tenant.id,
+        bankAccountId: b.id,
+        period: periodForAcc,
+        bookBalance: b.balance,
+        bankBalance: b.balance - gap,
+        gap,
+        status: isReconciled ? "VALIDATED" : gap !== 0n ? "IN_PROGRESS" : "PENDING",
+        completedAt: isReconciled ? new Date(Date.now() - 2 * 86_400_000) : null,
+      },
+    });
+  }
+  console.log(`✓ ${banksForReco.length} rapprochements bancaires (2 validés, 3 en attente)`);
+
+  // Checklist clôture mensuelle (mois courant — partiellement remplie)
+  await prisma.monthlyClosingChecklist.create({
+    data: {
+      tenantId: tenant.id,
+      period: periodForAcc,
+      items: [
+        { key: "invoices", label: "Toutes factures fournisseurs comptabilisées (142)", status: "DONE" },
+        { key: "salaries", label: "Salaires d'avril provisionnés (28 jours)", status: "DONE" },
+        { key: "social", label: "Charges sociales d'avril provisionnées", status: "PENDING" },
+        { key: "ccav", label: "Charges constatées d'avance (loyers, assurances)", status: "PENDING" },
+        { key: "amortissements", label: "Amortissements du mois calculés", status: "PENDING" },
+        { key: "depreciation", label: "Dépréciation créances douteuses (1 dossier > 90j)", status: "PENDING" },
+        { key: "stock", label: "Inventaire stock effectué", status: "DONE" },
+        { key: "cutoff", label: "Cut-off ventes (factures Avril émises avant 5 mai)", status: "PENDING" },
+      ] as object,
+      status: "IN_PROGRESS",
+    },
+  });
+  console.log(`✓ Checklist clôture mensuelle ${periodForAcc} initialisée (3/8)`);
 
   // ===== ACHATS / FOURNISSEURS (Phase 2 / Bloc 4 — fn 4.3) =====
   const supplierData: Array<{ name: string; category: string; strategic?: boolean; payment?: number }> = [
