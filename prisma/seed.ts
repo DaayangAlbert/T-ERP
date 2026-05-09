@@ -40,6 +40,10 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.purchaseOrder.deleteMany();
+  await prisma.supplierEvaluation.deleteMany();
+  await prisma.frameworkContract.deleteMany();
+  await prisma.supplier.deleteMany();
   await prisma.annualClosure.deleteMany();
   await prisma.accountingLine.deleteMany();
   await prisma.accountingEntry.deleteMany();
@@ -1064,6 +1068,143 @@ async function main() {
     },
   });
   console.log(`✓ Clôture annuelle ${yearCurrentForAccounting - 1} en attente DG`);
+
+  // ===== ACHATS / FOURNISSEURS (Phase 2 / Bloc 4 — fn 4.3) =====
+  const supplierData: Array<{ name: string; category: string; strategic?: boolean; payment?: number }> = [
+    // Stratégiques (10) — fournisseurs réels camerounais
+    { name: "CIMENCAM", category: "Ciment & granulats", strategic: true, payment: 60 },
+    { name: "SOCATAM", category: "Acier & ferraillage", strategic: true, payment: 45 },
+    { name: "METALCAM", category: "Métallurgie", strategic: true, payment: 45 },
+    { name: "Total Cameroun", category: "Carburant & lubrifiants", strategic: true, payment: 30 },
+    { name: "TRADEX", category: "Carburant & lubrifiants", strategic: true, payment: 30 },
+    { name: "CFAO Motors", category: "Engins & véhicules", strategic: true, payment: 90 },
+    { name: "Caterpillar Cameroun", category: "Engins TP", strategic: true, payment: 90 },
+    { name: "Tractafric Equipment", category: "Engins TP", strategic: true, payment: 90 },
+    { name: "ENEO", category: "Énergie", strategic: true, payment: 30 },
+    { name: "CDE", category: "Eau", strategic: true, payment: 30 },
+    // Autres fournisseurs (76) — répartition par catégorie
+    ...Array.from({ length: 8 }, (_, i) => ({ name: `Quincaillerie Centrale ${i + 1}`, category: "Quincaillerie", payment: 30 })),
+    ...Array.from({ length: 6 }, (_, i) => ({ name: `Sablière du ${["Nyong", "Wouri", "Sanaga", "Mbam", "Faro", "Dja"][i]}`, category: "Sable & gravier", payment: 30 })),
+    ...Array.from({ length: 5 }, (_, i) => ({ name: `Carrelage ${["Plus", "Pro", "Express", "Direct", "Premium"][i]}`, category: "Carrelage & faïence", payment: 45 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Plomberie ${["du Centre", "BTP", "Industrielle", "Pro"][i]}`, category: "Plomberie", payment: 45 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Électricité ${["Cameroun", "Pro", "Industrie", "Service"][i]}`, category: "Électricité bâtiment", payment: 45 })),
+    ...Array.from({ length: 6 }, (_, i) => ({ name: `Sous-traitant Coffrage ${i + 1}`, category: "Sous-traitance", payment: 60 })),
+    ...Array.from({ length: 5 }, (_, i) => ({ name: `Transport ${["Cameroun", "Express", "Logistic", "Premium", "Service"][i]}`, category: "Transport & logistique", payment: 30 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Assurance ${["AXA", "Activa", "Saham", "Allianz"][i]} Cameroun`, category: "Assurance", payment: 30 })),
+    ...Array.from({ length: 5 }, (_, i) => ({ name: `Bureau d'études ${i + 1}`, category: "Études techniques", payment: 60 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Sécurité ${["Pro", "Garde", "Watchman", "Patrol"][i]}`, category: "Sécurité chantier", payment: 30 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Restauration chantier ${i + 1}`, category: "Restauration", payment: 15 })),
+    ...Array.from({ length: 6 }, (_, i) => ({ name: `EPI Pro ${i + 1}`, category: "EPI & sécurité", payment: 45 })),
+    ...Array.from({ length: 5 }, (_, i) => ({ name: `Telecom ${["MTN", "Orange", "Camtel", "Nexttel", "Yoomee"][i]} Pro`, category: "Télécommunications", payment: 30 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Imprimerie ${["Universelle", "Saint-Paul", "Express", "Pro"][i]}`, category: "Impression & papeterie", payment: 30 })),
+    ...Array.from({ length: 4 }, (_, i) => ({ name: `Maintenance engins ${i + 1}`, category: "Maintenance", payment: 60 })),
+    ...Array.from({ length: 2 }, (_, i) => ({ name: `Location bungalows ${i + 1}`, category: "Hébergement chantier", payment: 30 })),
+  ];
+
+  const createdSuppliers: Array<{ id: string; name: string; volumeYTD: bigint; poCount: number }> = [];
+  for (const [i, s] of supplierData.entries()) {
+    const volumeYTD = BigInt(
+      s.strategic
+        ? 80_000_000 + Math.floor(Math.random() * 250_000_000)
+        : 5_000_000 + Math.floor(Math.random() * 60_000_000)
+    );
+    const poCount = s.strategic ? 12 + Math.floor(Math.random() * 25) : 2 + Math.floor(Math.random() * 12);
+    const created = await prisma.supplier.create({
+      data: {
+        tenantId: tenant.id,
+        name: s.name,
+        category: s.category,
+        taxId: `M${String(102316150000 + i)}L`,
+        rccm: `RC/DLA/2018/B/${String(1000 + i).padStart(5, "0")}`,
+        phone: `+237 6 ${78 + (i % 10)} ${10 + (i % 90)} ${20 + (i % 80)} ${30 + (i % 70)}`,
+        email: `contact@${s.name.toLowerCase().replace(/[^a-z0-9]/g, "")}.cm`,
+        address: ["Bonabéri, Douala", "Bastos, Yaoundé", "Akwa, Douala", "Mvan, Yaoundé"][i % 4],
+        paymentTerms: s.payment ?? 45,
+        ratingQuality: s.strategic ? 4 + Math.random() : 3 + Math.random() * 2,
+        ratingDelay: s.strategic ? 4 + Math.random() : 2.5 + Math.random() * 2.5,
+        ratingPrice: 3 + Math.random() * 2,
+        strategic: s.strategic ?? false,
+        blocked: i === 70, // 1 fournisseur bloqué
+        blockReason: i === 70 ? "Litige qualité 2025-Q4" : null,
+        volumeYTD,
+        poCount,
+      },
+    });
+    createdSuppliers.push({ id: created.id, name: s.name, volumeYTD, poCount });
+  }
+  console.log(`✓ ${createdSuppliers.length} fournisseurs créés (10 stratégiques)`);
+
+  // 5 contrats-cadres actifs sur les stratégiques
+  const strategicSuppliers = createdSuppliers.slice(0, 5);
+  for (const [i, s] of strategicSuppliers.entries()) {
+    const maxAmount = BigInt(500_000_000 + i * 200_000_000);
+    const usedAmount = (maxAmount * BigInt(20 + i * 12)) / 100n;
+    await prisma.frameworkContract.create({
+      data: {
+        tenantId: tenant.id,
+        supplierId: s.id,
+        reference: `CC-2026-${String(i + 1).padStart(3, "0")}`,
+        subject: ["Approvisionnement ciment groupe", "Acier HA 6-32 mm", "Carburant flotte travaux", "Location pelles 20T", "Maintenance engins TP"][i],
+        maxAmount,
+        usedAmount,
+        startDate: new Date(finToday.getFullYear(), 0, 1),
+        endDate: new Date(finToday.getFullYear(), 11, 31),
+        conditions: { paymentTerms: 60, penalties: "1‰/jour", revisionClause: "Indexation trimestrielle" } as object,
+        status: "ACTIVE",
+      },
+    });
+  }
+  console.log(`✓ 5 contrats-cadres actifs créés`);
+
+  // 30 évaluations historiques (sur les 20 plus gros)
+  const dgUserForEvals = createdUsers.find((u) => u.role === Role.DG) ?? createdUsers[0];
+  for (let i = 0; i < 30; i++) {
+    const s = createdSuppliers[i % 20];
+    const period = `${finToday.getFullYear()}-${String((i % 12) + 1).padStart(2, "0")}`;
+    await prisma.supplierEvaluation.create({
+      data: {
+        supplierId: s.id,
+        evaluatorId: dgUserForEvals.id,
+        period,
+        ratingQuality: 3 + Math.random() * 2,
+        ratingDelay: 3 + Math.random() * 2,
+        ratingPrice: 3 + Math.random() * 2,
+        comments: i % 3 === 0 ? "Évaluation routine — RAS." : null,
+      },
+    });
+  }
+  console.log(`✓ 30 évaluations historiques créées`);
+
+  // 5 BC en attente DG (montants > 50 M FCFA)
+  const pendingPos = [
+    { supplierIdx: 0, label: "Approvisionnement ciment Q2", amount: 85_000_000n, category: "Ciment", days: 2 },
+    { supplierIdx: 1, label: "Acier HA pour ponts", amount: 120_000_000n, category: "Acier", days: 5 },
+    { supplierIdx: 5, label: "Pelle hydraulique CAT 320", amount: 220_000_000n, category: "Engins", days: 8 },
+    { supplierIdx: 3, label: "Carburant gros chantiers Q2", amount: 95_000_000n, category: "Carburant", days: 3 },
+    { supplierIdx: 6, label: "Bulldozer D6 occasion", amount: 180_000_000n, category: "Engins", days: 11 },
+  ];
+  const dafUserForPos = createdUsers.find((u) => u.role === Role.DAF) ?? createdUsers[0];
+  const accountantUser = createdUsers.find((u) => u.role === Role.ACCOUNTANT) ?? createdUsers[0];
+  for (const [i, p] of pendingPos.entries()) {
+    const supplier = createdSuppliers[p.supplierIdx];
+    const created = new Date(finToday.getTime() - p.days * 86_400_000);
+    await prisma.purchaseOrder.create({
+      data: {
+        tenantId: tenant.id,
+        supplierId: supplier.id,
+        reference: `PO-${finToday.getFullYear()}-${String(1000 + i).padStart(4, "0")}`,
+        label: p.label,
+        amount: p.amount,
+        category: p.category,
+        initiatorId: accountantUser.id,
+        status: "PENDING_DG",
+        dafApprovedAt: new Date(created.getTime() + 86_400_000),
+        dafApprovedBy: dafUserForPos.id,
+        createdAt: created,
+      },
+    });
+  }
+  console.log(`✓ 5 BC en attente validation DG créés`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
