@@ -50,6 +50,7 @@ model Tenant {
   validations Validation[]
   delegations Delegation[]
   reports     Report[]
+  settings    TenantSettings?
 
   @@index([parentId])
   @@map("tenants")
@@ -826,4 +827,28 @@ enum ReportStatus {
   PUBLISHED
   ARCHIVED
   SCHEDULED
+}
+
+// ========================================
+// CONFIGURATION TENANT (Phase 2 / Bloc 2 — fn 2.3)
+// ========================================
+// Paramétrage du tenant par le DG : identité, modules actifs, plan
+// comptable, paramètres paie, workflows de validation, notifications,
+// intégrations API. Une seule ligne par tenant.
+model TenantSettings {
+  id            String   @id @default(cuid())
+  tenantId      String   @unique
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  identity      Json     // raison sociale, NIU, RCCM, capital, sièges, représentants
+  modules       Json     // { msg: true, payroll: true, ... }
+  payrollRates  Json     // barèmes IRPP + taux CNPS/CFC/FNE/RAV/TC/CAC/CFS
+  workflows     Json     // règles de validation par type
+  notifications Json     // matrice destinataires × événements × canaux
+  integrations  Json     // clés API (chiffrées) — banques, CNPS, MoMo, Resend
+
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@map("tenant_settings")
 }
