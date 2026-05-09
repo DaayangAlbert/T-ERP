@@ -49,6 +49,7 @@ model Tenant {
   boardReports BoardReport[]
   validations Validation[]
   delegations Delegation[]
+  reports     Report[]
 
   @@index([parentId])
   @@map("tenants")
@@ -120,6 +121,7 @@ model User {
   validationsDecided    Validation[] @relation("ValidationDecidedBy")
   delegationsGiven      Delegation[] @relation("DelegationFrom")
   delegationsReceived   Delegation[] @relation("DelegationTo")
+  reports               Report[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -775,4 +777,53 @@ model Delegation {
   @@index([tenantId, active])
   @@index([fromUserId, active])
   @@map("delegations")
+}
+
+// ========================================
+// RAPPORTS CONSOLIDÉS DG (Phase 2 / Bloc 2 — fn 2.2)
+// ========================================
+// Rapports stratégiques générés par le DG : synthèse exécutive, tableau
+// de bord mensuel, bilan annuel, note trimestrielle, rapport sur-mesure.
+// Le wizard permet de configurer les blocs (KPIs, graphes, tableaux) et
+// d'envoyer le rapport par email aux destinataires.
+model Report {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id])
+
+  type          ReportType
+  title         String
+  period        String   // "S18-2026", "2026-04", "2026-T1"...
+  parameters    Json     // { scope, start, end, ... }
+  blocks        Json     // [{ type, label, ... }] — bibliothèque de blocs
+  data          Json     // snapshot des données calculées au moment de la génération
+  pdfUrl        String?
+  status        ReportStatus @default(GENERATED)
+  scheduledRule String?  // cron-like si rapport planifié
+  recipients    Json?    // [{ email, name, sentAt }]
+  generatedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@map("reports")
+}
+
+enum ReportType {
+  EXECUTIVE_SUMMARY     // Synthèse exécutive hebdo
+  MONTHLY_DASHBOARD     // Tableau de bord stratégique mensuel
+  ANNUAL_GROUP          // Bilan annuel groupe
+  QUARTERLY_NOTE        // Note d'activité trimestrielle
+  CUSTOM                // Sur-mesure
+}
+
+enum ReportStatus {
+  DRAFT
+  GENERATED
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
 }

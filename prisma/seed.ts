@@ -23,8 +23,11 @@ import {
   ValidationType,
   ValidationStatus,
   ValidationPriority,
+  ReportType,
+  ReportStatus,
 } from "@prisma/client";
 import { buildDefaultWorkflow, approveCurrentStep } from "../src/lib/validation-workflow";
+import { TEMPLATE_BLOCKS } from "../src/lib/report-blocks";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -37,6 +40,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.report.deleteMany();
   await prisma.delegation.deleteMany();
   await prisma.validation.deleteMany();
   await prisma.boardReport.deleteMany();
@@ -1012,6 +1016,126 @@ async function main() {
     });
     console.log(`✓ 2 délégations actives créées`);
   }
+
+  // ===== RAPPORTS CONSOLIDÉS (Phase 2 / Bloc 2 — fn 2.2) =====
+  // 4 rapports historiques + 4 trimestriels + 2 planifiés
+  const reportSnapshot = {
+    generatedAt: new Date().toISOString(),
+    period: "—",
+    scope: "GROUP" as const,
+    kpis: {
+      revenue: 1_650_000_000,
+      margin: 17.4,
+      treasury: 482_000_000,
+      activeSites: 5,
+      headcount: 12,
+      backlog: 3_200_000_000,
+    },
+    topSites: [
+      { code: "BTM-DLA-01", name: "Pont sur le Wouri (lot 2)", progress: 62, margin: 18.4, budget: "1450000000" },
+      { code: "BTM-YDE-01", name: "Tour Mfoundi (gros œuvre)", progress: 48, margin: 16.1, budget: "980000000" },
+      { code: "BTM-LOG-01", name: "Plateforme logistique Bonabéri", progress: 75, margin: 22.0, budget: "650000000" },
+      { code: "BTM-YDE-02", name: "Réhabilitation lycée bilingue", progress: 88, margin: 14.5, budget: "320000000" },
+      { code: "BTM-DLA-02", name: "Voirie quartier Bonamoussadi", progress: 35, margin: 12.8, budget: "240000000" },
+    ],
+    subsidiaries: [
+      { name: "BatimCAM Yaoundé", revenue: 720_000_000, margin: 16.3, sites: 2 },
+      { name: "BatimCAM Douala", revenue: 615_000_000, margin: 17.8, sites: 2 },
+      { name: "BatimCAM Logistique", revenue: 315_000_000, margin: 22.0, sites: 1 },
+    ],
+  };
+
+  // 4 mensuels (3 derniers mois + courant)
+  const months = [
+    { period: "2026-01", title: "Tableau de bord stratégique — Janvier 2026" },
+    { period: "2026-02", title: "Tableau de bord stratégique — Février 2026" },
+    { period: "2026-03", title: "Tableau de bord stratégique — Mars 2026" },
+    { period: "2026-04", title: "Tableau de bord stratégique — Avril 2026" },
+  ];
+  for (const m of months) {
+    await prisma.report.create({
+      data: {
+        tenantId: tenant.id,
+        authorId: dgUser.id,
+        type: ReportType.MONTHLY_DASHBOARD,
+        title: m.title,
+        period: m.period,
+        parameters: { scope: "GROUP", signature: "Albert DAAYANG, DG" } as object,
+        blocks: TEMPLATE_BLOCKS.MONTHLY_DASHBOARD as object,
+        data: reportSnapshot as object,
+        status: ReportStatus.PUBLISHED,
+        recipients: [
+          { email: "ca@batimcam.cm", name: "Conseil d'administration", sentAt: new Date().toISOString() },
+        ] as object,
+        generatedAt: new Date(`${m.period}-05`),
+      },
+    });
+  }
+
+  // 4 trimestrielles (4 derniers trimestres)
+  const quarters = [
+    { period: "2025-T1", title: "Note d'activité — T1 2025" },
+    { period: "2025-T2", title: "Note d'activité — T2 2025" },
+    { period: "2025-T3", title: "Note d'activité — T3 2025" },
+    { period: "2025-T4", title: "Note d'activité — T4 2025" },
+  ];
+  for (const q of quarters) {
+    await prisma.report.create({
+      data: {
+        tenantId: tenant.id,
+        authorId: dgUser.id,
+        type: ReportType.QUARTERLY_NOTE,
+        title: q.title,
+        period: q.period,
+        parameters: { scope: "GROUP" } as object,
+        blocks: TEMPLATE_BLOCKS.QUARTERLY_NOTE as object,
+        data: reportSnapshot as object,
+        status: ReportStatus.PUBLISHED,
+        recipients: [
+          { email: "uba@partenaires.cm", name: "UBA Cameroun", sentAt: new Date().toISOString() },
+          { email: "bicec@partenaires.cm", name: "BICEC", sentAt: new Date().toISOString() },
+        ] as object,
+        generatedAt: new Date(),
+      },
+    });
+  }
+
+  // 2 rapports planifiés
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dgUser.id,
+      type: ReportType.EXECUTIVE_SUMMARY,
+      title: "Synthèse exécutive hebdomadaire",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.EXECUTIVE_SUMMARY as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "WEEKLY_MONDAY_06",
+      recipients: [
+        { email: "albert@batimcam.cm", name: "Albert DAAYANG" },
+        { email: "marie@batimcam.cm", name: "Marie NGONO (DAF)" },
+        { email: "daniel@batimcam.cm", name: "Daniel ESSOMBA (Dir. technique)" },
+      ] as object,
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dgUser.id,
+      type: ReportType.MONTHLY_DASHBOARD,
+      title: "Synthèse mensuelle CA",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.MONTHLY_DASHBOARD as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "MONTHLY_FIRST_08",
+      recipients: [{ email: "ca@batimcam.cm", name: "Conseil d'administration" }] as object,
+    },
+  });
+  console.log(`✓ 8 rapports historiques + 2 planifiés créés`);
 
   console.log("\n✅ Seed terminé.\n");
   console.log(`Login : albert@batimcam.cm / ${PWD}`);
