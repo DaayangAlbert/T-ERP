@@ -15,11 +15,14 @@ async function loadScopedSite(id: string, tenantIds: string[]) {
     where: { id, tenantId: { in: tenantIds } },
     include: {
       manager: { select: { id: true, firstName: true, lastName: true, email: true } },
+      contract: true,
+      _count: { select: { alerts: { where: { resolved: false } }, photos: true, decisions: true } },
     },
   });
 }
 
 function serialize(site: NonNullable<Awaited<ReturnType<typeof loadScopedSite>>>) {
+  // Le DG voit aussi le contrat (initial vs courant + nb d'avenants) inline.
   return {
     ...site,
     budget: site.budget.toString(),
@@ -28,6 +31,21 @@ function serialize(site: NonNullable<Awaited<ReturnType<typeof loadScopedSite>>>
     actualEndDate: site.actualEndDate?.toISOString() ?? null,
     createdAt: site.createdAt.toISOString(),
     updatedAt: site.updatedAt.toISOString(),
+    contract: site.contract
+      ? {
+          id: site.contract.id,
+          reference: site.contract.reference,
+          initialAmount: site.contract.initialAmount.toString(),
+          currentAmount: site.contract.currentAmount.toString(),
+          amendments: site.contract.amendments,
+          guarantees: site.contract.guarantees,
+          paymentTerms: site.contract.paymentTerms,
+          publicMarket: site.contract.publicMarket,
+          procuringEntity: site.contract.procuringEntity,
+          signedAt: site.contract.signedAt?.toISOString() ?? null,
+        }
+      : null,
+    counts: site._count,
   };
 }
 
@@ -55,7 +73,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const site = await loadScopedSite(params.id, await getTenantScopeIds(session.tenantId));
     if (!site) return NextResponse.json({ error: "Chantier introuvable" }, { status: 404 });
 
-    const updated = await prisma.site.update({
+    await prisma.site.update({
       where: { id: site.id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -70,11 +88,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         ...(data.status !== undefined && { status: data.status }),
         ...(data.managerId !== undefined && { managerId: data.managerId || null }),
       },
-      include: {
-        manager: { select: { id: true, firstName: true, lastName: true, email: true } },
-      },
     });
 
+    // Recharger avec le bon include pour rester cohérent avec serialize().
+    const updated = await loadScopedSite(site.id, await getTenantScopeIds(session.tenantId!));
+    if (!updated) return NextResponse.json({ error: "Erreur après mise à jour" }, { status: 500 });
     return NextResponse.json(serialize(updated));
   } catch (err) {
     if (err instanceof ZodError) {

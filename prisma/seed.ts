@@ -40,6 +40,10 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.siteDecision.deleteMany();
+  await prisma.siteAlert.deleteMany();
+  await prisma.sitePhoto.deleteMany();
+  await prisma.siteContract.deleteMany();
   await prisma.session.deleteMany();
   await prisma.customRole.deleteMany();
   await prisma.report.deleteMany();
@@ -367,6 +371,98 @@ async function main() {
     });
   }
   console.log(`✓ ${sites.length} chantiers créés (2 par filiale)`);
+
+  // ===== CONTRATS / PHOTOS / ALERTES (Phase 2 / Bloc 3 — fn 3.1) =====
+  const allSites = await prisma.site.findMany({
+    where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+    select: { id: true, code: true, name: true, client: true, status: true, budget: true, region: true },
+  });
+  // Coords approximatives par région
+  const regionCoords: Record<string, { lat: number; lng: number }> = {
+    Centre: { lat: 3.866667, lng: 11.516667 },
+    Littoral: { lat: 4.05, lng: 9.7 },
+    Ouest: { lat: 5.483333, lng: 10.416667 },
+    Nord: { lat: 9.3, lng: 13.4 },
+    Sud: { lat: 2.9, lng: 11.15 },
+  };
+  for (const s of allSites) {
+    const coords = (s.region ? regionCoords[s.region] : null) || regionCoords.Centre;
+    await prisma.site.update({
+      where: { id: s.id },
+      data: {
+        lat: coords.lat + (Math.random() - 0.5) * 0.08,
+        lng: coords.lng + (Math.random() - 0.5) * 0.08,
+      },
+    });
+    const isPublic = /MINTP|MINHDU|FEICOM|Commune|CDE/i.test(s.client);
+    const initialAmount = (s.budget * 9n) / 10n; // 10% d'avenants déjà passés
+    const amendments = [
+      { ref: `AV-${s.code}-01`, amount: ((s.budget - initialAmount) / 2n).toString(), date: "2025-09-15", reason: "Plus-value terrassements", validatedBy: "DG" },
+      { ref: `AV-${s.code}-02`, amount: ((s.budget - initialAmount) / 2n).toString(), date: "2026-01-08", reason: "Avenant études complémentaires", validatedBy: "DG" },
+    ];
+    await prisma.siteContract.create({
+      data: {
+        siteId: s.id,
+        reference: `MAR-${s.code}`,
+        initialAmount,
+        currentAmount: s.budget,
+        amendments: amendments as object,
+        guarantees: { caution: "5%", retention: "5%", penalties: "1‰/jour de retard plafonné à 10%" } as object,
+        paymentTerms: isPublic ? "Mensuel · 60 jours fin de mois" : "Mensuel · 30 jours fin de mois",
+        publicMarket: isPublic,
+        procuringEntity: isPublic ? (s.client.includes("MINTP") ? "MINTP" : s.client.includes("Commune") ? "Commune" : "FEICOM") : null,
+        signedAt: new Date("2025-01-10"),
+      },
+    });
+    // 2-4 photos par chantier (placeholders SVG via picsum)
+    const photoCount = 2 + Math.floor(Math.random() * 3);
+    for (let p = 0; p < photoCount; p++) {
+      await prisma.sitePhoto.create({
+        data: {
+          siteId: s.id,
+          url: `https://picsum.photos/seed/${s.code}-${p}/640/420`,
+          caption: ["Vue générale", "Avancement gros œuvre", "Pose ferraillage", "Coulage béton", "Réception lot"][p],
+          takenAt: new Date(Date.now() - (photoCount - p) * 30 * 86_400_000),
+          uploadedBy: dirTravaux?.id ?? createdUsers[0].id,
+        },
+      });
+    }
+  }
+  console.log(`✓ ${allSites.length} contrats + photos seedés`);
+
+  // 3 chantiers en alerte critique
+  const driftingSite = allSites.find((s) => s.status === "DRIFTING");
+  if (driftingSite) {
+    await prisma.siteAlert.create({
+      data: {
+        siteId: driftingSite.id,
+        severity: "CRITICAL",
+        type: "BUDGET_OVERRUN",
+        message: `Dépassement budgétaire estimé à 18 % sur ${driftingSite.name}. Marge prévue 12 % → réalisée 6 %.`,
+      },
+    });
+    await prisma.siteAlert.create({
+      data: {
+        siteId: driftingSite.id,
+        severity: "HIGH",
+        type: "MARGIN_DROP",
+        message: "Marge en chute libre depuis 3 mois — revue budgétaire urgente recommandée.",
+      },
+    });
+  }
+  // Quelques alertes mineures sur les autres
+  for (const s of allSites.slice(0, 3)) {
+    if (s.id === driftingSite?.id) continue;
+    await prisma.siteAlert.create({
+      data: {
+        siteId: s.id,
+        severity: "MEDIUM",
+        type: "DELAY",
+        message: "Retard de 5 jours sur le planning initial — à surveiller.",
+      },
+    });
+  }
+  console.log(`✓ Alertes chantiers créées`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [

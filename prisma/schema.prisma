@@ -358,8 +358,17 @@ model Site {
   managerId    String?  // directeur de travaux
   manager      User?    @relation("SiteManager", fields: [managerId], references: [id])
 
+  // Géoloc pour la vue carte (Phase 2 / Bloc 3 — fn 3.1)
+  lat          Float?
+  lng          Float?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  contract     SiteContract?
+  photos       SitePhoto[]
+  alerts       SiteAlert[]
+  decisions    SiteDecision[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -894,4 +903,80 @@ model CustomRole {
   @@unique([tenantId, name])
   @@index([tenantId])
   @@map("custom_roles")
+}
+
+// ========================================
+// CHANTIERS — VUE DG TRANSVERSE (Phase 2 / Bloc 3 — fn 3.1)
+// ========================================
+// Contrats de marché (initialAmount + avenants), photos chantier,
+// alertes (dérives budget, retards, HSE) et décisions DG enregistrées.
+model SiteContract {
+  id              String   @id @default(cuid())
+  siteId          String   @unique
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  reference       String
+  initialAmount   BigInt
+  currentAmount   BigInt
+  amendments      Json     @default("[]") // [{ ref, amount, date, reason, validatedBy }]
+  guarantees      Json     @default("{}") // { caution, retention, penalties }
+  paymentTerms    String?
+  publicMarket    Boolean  @default(false)
+  procuringEntity String?  // MINTP, MINHDU, FEICOM...
+  signedAt        DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("site_contracts")
+}
+
+model SitePhoto {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url         String
+  caption     String?
+  takenAt     DateTime
+  uploadedBy  String
+
+  createdAt   DateTime @default(now())
+
+  @@index([siteId, takenAt])
+  @@map("site_photos")
+}
+
+model SiteAlert {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  severity  AlertSeverity
+  type      String   // BUDGET_OVERRUN, DELAY, HSE_INCIDENT, MARGIN_DROP, ...
+  message   String
+  resolved  Boolean  @default(false)
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([siteId, resolved])
+  @@map("site_alerts")
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model SiteDecision {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  authorId  String
+  title     String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([siteId, createdAt])
+  @@map("site_decisions")
 }
