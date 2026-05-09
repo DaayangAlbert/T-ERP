@@ -59,6 +59,9 @@ model Tenant {
   financialPeriods FinancialPeriod[]
   financialCommitments FinancialCommitment[]
   bankAccounts BankAccount[]
+  accountingPeriods AccountingPeriod[]
+  accountingEntries AccountingEntry[]
+  annualClosures AnnualClosure[]
 
   @@index([parentId])
   @@map("tenants")
@@ -1234,4 +1237,105 @@ model BankAccount {
   @@unique([tenantId, accountNumber])
   @@index([tenantId])
   @@map("bank_accounts")
+}
+
+// ========================================
+// COMPTABILITÉ DG (Phase 2 / Bloc 4 — fn 4.2)
+// ========================================
+// Périodes comptables (mensuelles + clôture annuelle), écritures
+// SYSCOHADA. V1 : structure conforme, calcul brouillon — validation
+// expert-comptable agréé OHADA requise pour la prod.
+model AccountingPeriod {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  period        String   // "2026-04" ou "2026" pour annuel
+  status        PeriodStatus @default(OPEN)
+  closedAt      DateTime?
+  closedBy      String?
+  totalEntries  Int      @default(0)
+  totalDebit    BigInt   @default(0)
+  totalCredit   BigInt   @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, period])
+  @@map("accounting_periods")
+}
+
+enum PeriodStatus {
+  OPEN
+  CLOSING
+  CLOSED
+  LOCKED
+}
+
+// Écriture comptable simplifiée (V1) avec lignes débit/crédit.
+model AccountingEntry {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  period    String   // "2026-04"
+  reference String   // PIE-2026-001
+  date      DateTime
+  journal   String   // OD, AC, BQ, VE, OD
+  label     String
+  totalDebit  BigInt
+  totalCredit BigInt
+
+  lines     AccountingLine[]
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, reference])
+  @@index([tenantId, period])
+  @@map("accounting_entries")
+}
+
+model AccountingLine {
+  id        String   @id @default(cuid())
+  entryId   String
+  entry     AccountingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  account   String   // numéro SYSCOHADA (4 à 6 chiffres)
+  label     String
+  debit     BigInt   @default(0)
+  credit    BigInt   @default(0)
+
+  @@index([account])
+  @@map("accounting_lines")
+}
+
+// Clôture annuelle avec workflow DG en 5 étapes.
+model AnnualClosure {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  fiscalYear      Int
+  status          ClosureStatus @default(IN_PROGRESS)
+  pnlValidated    Boolean  @default(false)
+  balanceValidated Boolean @default(false)
+  adjustmentsValidated Boolean @default(false)
+  draftGenerated  Boolean  @default(false)
+  adjustments     Json     @default("[]")
+  dgValidatedAt   DateTime?
+  dgValidatedBy   String?
+  submittedToDgi  Boolean  @default(false)
+  dsfFileUrl      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, fiscalYear])
+  @@map("annual_closures")
+}
+
+enum ClosureStatus {
+  IN_PROGRESS
+  PENDING_DG_VALIDATION
+  VALIDATED
+  SUBMITTED
 }

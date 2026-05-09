@@ -40,6 +40,10 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.annualClosure.deleteMany();
+  await prisma.accountingLine.deleteMany();
+  await prisma.accountingEntry.deleteMany();
+  await prisma.accountingPeriod.deleteMany();
   await prisma.bankAccount.deleteMany();
   await prisma.financialCommitment.deleteMany();
   await prisma.financialPeriod.deleteMany();
@@ -884,6 +888,182 @@ async function main() {
     });
   }
   console.log(`✓ 5 comptes bancaires créés (UBA, BICEC, Afriland, Ecobank, SGBC)`);
+
+  // ===== COMPTABILITÉ (Phase 2 / Bloc 4 — fn 4.2) =====
+  // 12 mois ouverts pour 2026 + 4 derniers mois clôturés pour 2025
+  const yearCurrentForAccounting = finToday.getFullYear();
+  for (let m = 1; m <= 12; m++) {
+    await prisma.accountingPeriod.create({
+      data: {
+        tenantId: tenant.id,
+        period: `${yearCurrentForAccounting}-${String(m).padStart(2, "0")}`,
+        status: "OPEN",
+      },
+    });
+  }
+  for (let m = 9; m <= 12; m++) {
+    await prisma.accountingPeriod.create({
+      data: {
+        tenantId: tenant.id,
+        period: `${yearCurrentForAccounting - 1}-${String(m).padStart(2, "0")}`,
+        status: "CLOSED",
+        closedAt: new Date(yearCurrentForAccounting - 1, m, 5),
+        closedBy: createdUsers.find((u) => u.role === Role.DG)?.id ?? createdUsers[0].id,
+      },
+    });
+  }
+
+  // Écritures synthétiques sur les 4 derniers mois pour alimenter grand livre / balance.
+  // On crée des écritures équilibrées par paires : achat / vente / paie / banque.
+  const accountingPeriodsForEntries = [`${yearCurrentForAccounting - 1}-12`, `${yearCurrentForAccounting}-01`, `${yearCurrentForAccounting}-02`, `${yearCurrentForAccounting}-03`];
+  let entryCount = 0;
+
+  for (const acctPeriod of accountingPeriodsForEntries) {
+    const [yr, mo] = acctPeriod.split("-").map(Number);
+    const dateBase = new Date(yr, mo - 1, 1);
+
+    // 1. Achats fournisseurs (3 par mois)
+    for (let i = 0; i < 3; i++) {
+      const amount = BigInt(8_000_000 + i * 3_000_000);
+      const tva = (amount * 1925n) / 10000n; // ~19.25%
+      const ttc = amount + tva;
+      const date = new Date(yr, mo - 1, 5 + i * 8);
+      const ref = `AC-${acctPeriod}-${String(i + 1).padStart(3, "0")}`;
+      await prisma.accountingEntry.create({
+        data: {
+          tenantId: tenant.id,
+          period: acctPeriod,
+          reference: ref,
+          date,
+          journal: "AC",
+          label: `Achat matériaux fournisseur F${i + 1}`,
+          totalDebit: ttc,
+          totalCredit: ttc,
+          lines: {
+            create: [
+              { account: "604", label: "Achats matières", debit: amount, credit: 0n },
+              { account: "445", label: "TVA déductible", debit: tva, credit: 0n },
+              { account: "401", label: `Fournisseur F${i + 1}`, debit: 0n, credit: ttc },
+            ],
+          },
+        },
+      });
+      entryCount++;
+    }
+
+    // 2. Ventes clients (4 par mois)
+    for (let i = 0; i < 4; i++) {
+      const amount = BigInt(15_000_000 + i * 5_000_000);
+      const tva = (amount * 1925n) / 10000n;
+      const ttc = amount + tva;
+      const date = new Date(yr, mo - 1, 8 + i * 5);
+      const ref = `VE-${acctPeriod}-${String(i + 1).padStart(3, "0")}`;
+      await prisma.accountingEntry.create({
+        data: {
+          tenantId: tenant.id,
+          period: acctPeriod,
+          reference: ref,
+          date,
+          journal: "VE",
+          label: `Facture client C${i + 1} — Travaux`,
+          totalDebit: ttc,
+          totalCredit: ttc,
+          lines: {
+            create: [
+              { account: "411", label: `Client C${i + 1}`, debit: ttc, credit: 0n },
+              { account: "706", label: "Services vendus", debit: 0n, credit: amount },
+              { account: "443", label: "TVA collectée", debit: 0n, credit: tva },
+            ],
+          },
+        },
+      });
+      entryCount++;
+    }
+
+    // 3. Paie (1 OD par mois)
+    const grossSalaries = BigInt(142_000_000);
+    const cnps = (grossSalaries * 420n) / 10000n;
+    const irpp = (grossSalaries * 1500n) / 10000n;
+    const netToPay = grossSalaries - cnps - irpp;
+    await prisma.accountingEntry.create({
+      data: {
+        tenantId: tenant.id,
+        period: acctPeriod,
+        reference: `PA-${acctPeriod}-001`,
+        date: new Date(yr, mo - 1, 28),
+        journal: "PA",
+        label: `Paie mensuelle ${acctPeriod}`,
+        totalDebit: grossSalaries,
+        totalCredit: grossSalaries,
+        lines: {
+          create: [
+            { account: "661", label: "Salaires bruts", debit: grossSalaries, credit: 0n },
+            { account: "421", label: "Net à payer", debit: 0n, credit: netToPay },
+            { account: "431", label: "CNPS à payer", debit: 0n, credit: cnps },
+            { account: "442", label: "IRPP à reverser", debit: 0n, credit: irpp },
+          ],
+        },
+      },
+    });
+    entryCount++;
+
+    // 4. Règlements clients (encaissements via banque)
+    const enc = BigInt(45_000_000);
+    await prisma.accountingEntry.create({
+      data: {
+        tenantId: tenant.id,
+        period: acctPeriod,
+        reference: `BQ-${acctPeriod}-001`,
+        date: new Date(yr, mo - 1, 22),
+        journal: "BQ",
+        label: `Encaissement clients (virements ${acctPeriod})`,
+        totalDebit: enc,
+        totalCredit: enc,
+        lines: {
+          create: [
+            { account: "521", label: "Banque UBA", debit: enc, credit: 0n },
+            { account: "411", label: "Clients (encaissement)", debit: 0n, credit: enc },
+          ],
+        },
+      },
+    });
+    entryCount++;
+  }
+
+  // Mise à jour des compteurs sur les périodes
+  for (const acctPeriod of accountingPeriodsForEntries) {
+    const entries = await prisma.accountingEntry.findMany({
+      where: { tenantId: tenant.id, period: acctPeriod },
+    });
+    const totalDebit = entries.reduce((s, e) => s + e.totalDebit, 0n);
+    const totalCredit = entries.reduce((s, e) => s + e.totalCredit, 0n);
+    await prisma.accountingPeriod.update({
+      where: { tenantId_period: { tenantId: tenant.id, period: acctPeriod } },
+      data: {
+        totalEntries: entries.length,
+        totalDebit,
+        totalCredit,
+      },
+    });
+  }
+  console.log(`✓ ${entryCount} écritures comptables créées sur 4 périodes`);
+
+  // 1 clôture annuelle 2025 en attente DG
+  await prisma.annualClosure.create({
+    data: {
+      tenantId: tenant.id,
+      fiscalYear: yearCurrentForAccounting - 1,
+      status: "PENDING_DG_VALIDATION",
+      pnlValidated: true,
+      balanceValidated: true,
+      adjustmentsValidated: false,
+      adjustments: [
+        { ref: "OD-AJ-001", label: "Provision client douteux", amount: 12_500_000, validated: false },
+        { ref: "OD-AJ-002", label: "Charges constatées d'avance assurance", amount: 3_200_000, validated: true },
+      ] as object,
+    },
+  });
+  console.log(`✓ Clôture annuelle ${yearCurrentForAccounting - 1} en attente DG`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
