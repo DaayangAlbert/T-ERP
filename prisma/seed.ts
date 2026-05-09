@@ -1190,6 +1190,87 @@ async function main() {
   });
   console.log(`✓ Checklist clôture mensuelle ${periodForAcc} initialisée (3/8)`);
 
+  // ===== FINANCES DAF — Analyse profonde (DAF Bloc 2 / fn 2.2) =====
+  // Écarts budget vs réalisé du mois courant (auto-créés aussi par l'API si absents)
+  const variancesSeed: Array<{ costCenter: string; budget: bigint; actual: bigint }> = [
+    { costCenter: "Achats matières", budget: 580_000_000n, actual: 620_000_000n },
+    { costCenter: "Sous-traitance", budget: 320_000_000n, actual: 298_000_000n },
+    { costCenter: "Personnel direct", budget: 280_000_000n, actual: 295_000_000n },
+    { costCenter: "Carburant et énergie", budget: 95_000_000n, actual: 112_000_000n },
+    { costCenter: "Services extérieurs", budget: 78_000_000n, actual: 71_000_000n },
+    { costCenter: "Frais généraux", budget: 65_000_000n, actual: 68_500_000n },
+    { costCenter: "Frais financiers", budget: 32_000_000n, actual: 38_700_000n },
+  ];
+  for (const v of variancesSeed) {
+    const variance = v.actual - v.budget;
+    const variancePercent = v.budget === 0n ? 0 : (Number(variance) / Number(v.budget)) * 100;
+    await prisma.budgetVariance.upsert({
+      where: {
+        tenantId_period_costCenter: { tenantId: tenant.id, period: periodForAcc, costCenter: v.costCenter },
+      },
+      update: {},
+      create: {
+        tenantId: tenant.id,
+        period: periodForAcc,
+        costCenter: v.costCenter,
+        budgetAmount: v.budget,
+        actualAmount: v.actual,
+        variance,
+        variancePercent,
+        comment: v.costCenter === "Achats matières" ? "Hausse ciment +12% sur Q2 — analyse en cours avec CIMENCAM" : null,
+        commentAuthor: v.costCenter === "Achats matières" ? createdUsers[0]?.id ?? null : null,
+        commentAt: v.costCenter === "Achats matières" ? new Date() : null,
+      },
+    });
+  }
+  console.log(`✓ ${variancesSeed.length} écarts budget vs réalisé seedés pour ${periodForAcc}`);
+
+  // 2 scénarios financiers de référence
+  const scenarioAuthor = createdUsers.find((u) => u.role === Role.DAF)?.id ?? createdUsers[0].id;
+  await prisma.financialScenario.create({
+    data: {
+      tenantId: tenant.id,
+      name: "Hausse ciment +10%",
+      description: "Sensibilité matière première stratégique sur S2 2026",
+      authorId: scenarioAuthor,
+      parameters: { cementPriceVar: 10, ironPriceVar: 0, fuelPriceVar: 0, salaryVar: 0, delayDays: 0 },
+      results: {
+        plImpact: "-135000000",
+        bfrImpact: "20250000",
+        treasuryImpact: "-155250000",
+        breakdown: [
+          { key: "cement", label: "Variation prix ciment", impact: "-135000000" },
+          { key: "iron", label: "Variation prix fer", impact: "0" },
+          { key: "fuel", label: "Variation prix carburant", impact: "0" },
+          { key: "salary", label: "Revalorisation salariale", impact: "0" },
+          { key: "delay", label: "Retard livraison Pont Mfoundi", impact: "0" },
+        ],
+      },
+    },
+  });
+  await prisma.financialScenario.create({
+    data: {
+      tenantId: tenant.id,
+      name: "Retard 30j Pont Mfoundi + revalo 5%",
+      description: "Combinaison risque opérationnel + sociale Q3",
+      authorId: scenarioAuthor,
+      parameters: { cementPriceVar: 0, ironPriceVar: 0, fuelPriceVar: 0, salaryVar: 5, delayDays: 30 },
+      results: {
+        plImpact: "-187000000",
+        bfrImpact: "75600000",
+        treasuryImpact: "-262600000",
+        breakdown: [
+          { key: "cement", label: "Variation prix ciment", impact: "0" },
+          { key: "iron", label: "Variation prix fer", impact: "0" },
+          { key: "fuel", label: "Variation prix carburant", impact: "0" },
+          { key: "salary", label: "Revalorisation salariale", impact: "-109000000" },
+          { key: "delay", label: "Retard livraison Pont Mfoundi", impact: "-78000000" },
+        ],
+      },
+    },
+  });
+  console.log("✓ 2 scénarios financiers de référence créés");
+
   // ===== ACHATS / FOURNISSEURS (Phase 2 / Bloc 4 — fn 4.3) =====
   const supplierData: Array<{ name: string; category: string; strategic?: boolean; payment?: number }> = [
     // Stratégiques (10) — fournisseurs réels camerounais
