@@ -24,6 +24,16 @@ model Tenant {
   status      TenantStatus @default(ACTIVE)
   logoUrl     String?
   primaryColor String? @default("#A855F7")
+
+  // Hiérarchie de groupe (Phase 2 / fn 1.2)
+  // parentId pointe vers le tenant mère ; children est le côté inverse.
+  // isGroup = true sur la société mère pour permettre l'agrégation consolidée.
+  isGroup     Boolean  @default(false)
+  parentId    String?
+  parent      Tenant?  @relation("TenantGroup", fields: [parentId], references: [id])
+  children    Tenant[] @relation("TenantGroup")
+  sector      String?  // étiquette libre : "Bâtiment", "Routier", "Logistique"…
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -35,6 +45,7 @@ model Tenant {
   documents   Document[]
   auditLogs   AuditLog[]
 
+  @@index([parentId])
   @@map("tenants")
 }
 

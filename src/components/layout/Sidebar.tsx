@@ -44,6 +44,7 @@ const DG_SECTION: NavSection = {
   title: "Espace DG",
   items: [
     { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
+    { label: "Consolidation groupe", href: "/dg/consolidation", icon: Building2 },
     // Les fonctions DG seront ajoutées ici au fil des Blocs Phase 2.
   ],
 };

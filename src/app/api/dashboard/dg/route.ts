@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getTenantScopeIds } from "@/lib/tenant";
 import { PayslipStatus, SiteStatus, SiteType, ContractType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -67,10 +68,12 @@ export async function GET() {
   }
 
   const tenantId = session.tenantId;
+  // Phase 2 / fn 1.2 — si BatimCAM SA est un groupe, agréger sites + payslips sur la mère + ses filiales.
+  const scopeIds = await getTenantScopeIds(tenantId);
 
   const [sites, headcount, cddCount, payslipsToValidate, unreadNotifications] = await Promise.all([
     prisma.site.findMany({
-      where: { tenantId },
+      where: { tenantId: { in: scopeIds } },
       select: {
         id: true,
         code: true,
@@ -84,13 +87,13 @@ export async function GET() {
         status: true,
       },
     }),
-    prisma.user.count({ where: { tenantId, status: "ACTIVE" } }),
+    prisma.user.count({ where: { tenantId: { in: scopeIds }, status: "ACTIVE" } }),
     prisma.user.count({
-      where: { tenantId, status: "ACTIVE", contractType: ContractType.CDD },
+      where: { tenantId: { in: scopeIds }, status: "ACTIVE", contractType: ContractType.CDD },
     }),
     prisma.payslip.findMany({
       where: {
-        tenantId,
+        tenantId: { in: scopeIds },
         status: { not: PayslipStatus.PAID },
       },
       orderBy: { period: "desc" },
@@ -100,7 +103,7 @@ export async function GET() {
       },
     }),
     prisma.notification.count({
-      where: { user: { tenantId }, read: false },
+      where: { user: { tenantId: { in: scopeIds } }, read: false },
     }),
   ]);
 

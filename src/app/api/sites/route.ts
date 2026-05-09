@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { getTenantScopeIds } from "@/lib/tenant";
 import { canManageSites } from "@/lib/permissions";
 import { createSiteSchema } from "@/schemas/site";
 import { Role, SiteStatus, SiteType } from "@prisma/client";
@@ -21,8 +22,11 @@ export async function GET(req: Request) {
   const region = url.searchParams.get("region")?.trim() || undefined;
   const q = url.searchParams.get("q")?.trim() || undefined;
 
+  // Phase 2 / fn 1.2 — agréger les sites de la mère + filiales si tenant isGroup.
+  const scopeIds = await getTenantScopeIds(session.tenantId);
+
   const where = {
-    tenantId: session.tenantId,
+    tenantId: { in: scopeIds },
     ...(status ? { status } : { status: { not: SiteStatus.ARCHIVED } }),
     ...(type ? { type } : {}),
     ...(region ? { region: { contains: region, mode: "insensitive" as const } } : {}),
@@ -52,7 +56,7 @@ export async function GET(req: Request) {
 
   // Pre-compute page-level stats so the listing page can render KPIs without a 2nd round-trip.
   const aggregate = await prisma.site.aggregate({
-    where: { tenantId: session.tenantId, status: { not: SiteStatus.ARCHIVED } },
+    where: { tenantId: { in: scopeIds }, status: { not: SiteStatus.ARCHIVED } },
     _count: { _all: true },
     _sum: { budget: true },
     _avg: { margin: true },
@@ -60,7 +64,7 @@ export async function GET(req: Request) {
 
   const alertsCount = await prisma.site.count({
     where: {
-      tenantId: session.tenantId,
+      tenantId: { in: scopeIds },
       status: { in: [SiteStatus.DRIFTING, SiteStatus.AT_RISK] },
     },
   });

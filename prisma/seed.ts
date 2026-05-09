@@ -33,6 +33,7 @@ async function main() {
   await prisma.tenant.deleteMany();
 
   // ===== TENANT =====
+  // ===== TENANT MÈRE (BatimCAM SA = holding) =====
   const tenant = await prisma.tenant.create({
     data: {
       slug: "batimcam",
@@ -41,9 +42,53 @@ async function main() {
       cnpsId: "10-1000001",
       plan: Plan.BUSINESS,
       primaryColor: "#A855F7",
+      isGroup: true, // Phase 2 / fn 1.2 — société mère du groupe
+      sector: "Holding",
     },
   });
-  console.log(`✓ Tenant : ${tenant.name} (${tenant.slug})`);
+  console.log(`✓ Tenant mère : ${tenant.name} (${tenant.slug}) · isGroup=true`);
+
+  // ===== FILIALES (Phase 2 / fn 1.2) =====
+  const subsidiaries = await Promise.all([
+    prisma.tenant.create({
+      data: {
+        slug: "batimcam-yaounde",
+        name: "BatimCAM Yaoundé",
+        taxId: "M102316152502L-Y",
+        cnpsId: "10-1000002",
+        plan: Plan.STANDARD,
+        primaryColor: "#15803D",
+        parentId: tenant.id,
+        sector: "Bâtiment",
+      },
+    }),
+    prisma.tenant.create({
+      data: {
+        slug: "batimcam-douala",
+        name: "BatimCAM Douala",
+        taxId: "M102316152502L-D",
+        cnpsId: "10-1000003",
+        plan: Plan.STANDARD,
+        primaryColor: "#B45309",
+        parentId: tenant.id,
+        sector: "Routier",
+      },
+    }),
+    prisma.tenant.create({
+      data: {
+        slug: "batimcam-logistique",
+        name: "BatimCAM Logistique",
+        taxId: "M102316152502L-L",
+        cnpsId: "10-1000004",
+        plan: Plan.STARTER,
+        primaryColor: "#7C3AED",
+        parentId: tenant.id,
+        sector: "Logistique",
+      },
+    }),
+  ]);
+  const [yaounde, douala, logistique] = subsidiaries;
+  console.log(`✓ 3 filiales créées : ${subsidiaries.map((s) => s.slug).join(", ")}`);
 
   // ===== UTILISATEURS (12 profils) =====
   const users = [
@@ -266,18 +311,32 @@ async function main() {
   ];
 
   const dirTravaux = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
-  for (const s of sites) {
+
+  // Phase 2 / fn 1.2 — distribution des 6 chantiers entre les 3 filiales (2 chacune).
+  // BatimCAM SA reste une holding pure (0 chantier). L'API /api/dashboard/dg
+  // utilise getTenantScopeIds() pour agréger sur la mère + ses enfants.
+  const siteAssignments = [
+    yaounde.id,    // CHT-2025-018  Route Yaoundé–Nsimalen (atypique pour Yaoundé mais OK pour la démo)
+    yaounde.id,    // CHT-2025-024  Immeuble R+8 Bastos
+    douala.id,     // CHT-2025-031  Pont Mfoundi (rebasculé Douala : génie civil)
+    douala.id,     // CHT-2026-003  Lotissement Odza phase 2
+    logistique.id, // CHT-2026-014  Voirie Bonabéri (Logistique gère la flotte travaux)
+    logistique.id, // CHT-2026-018  Forage AEP Mbalmayo
+  ];
+
+  for (let i = 0; i < sites.length; i++) {
+    const s = sites[i];
     await prisma.site.create({
       data: {
         ...s,
-        tenantId: tenant.id,
+        tenantId: siteAssignments[i],
         startDate: new Date("2025-01-15"),
         plannedEndDate: new Date("2026-12-31"),
-        managerId: dirTravaux?.id,
+        managerId: dirTravaux?.id, // le manager reste un user de la holding (cross-tenant en démo)
       },
     });
   }
-  console.log(`✓ ${sites.length} chantiers créés`);
+  console.log(`✓ ${sites.length} chantiers créés (2 par filiale)`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
