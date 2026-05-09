@@ -45,6 +45,7 @@ model Tenant {
   documents   Document[]
   auditLogs   AuditLog[]
   objectives  Objective[]
+  cashFlowProjections CashFlowProjection[]
 
   @@index([parentId])
   @@map("tenants")
@@ -172,6 +173,43 @@ enum ObjectiveStatus {
   ACHIEVED
   MISSED
   CANCELLED
+}
+
+// ========================================
+// TRÉSORERIE PRÉVISIONNELLE DG (Phase 2 / fn 1.4)
+// ========================================
+// Projections de flux de trésorerie sur les semaines à venir, alimentées
+// soit automatiquement (factures, BC, paie, fiscalité) soit manuellement.
+model CashFlowProjection {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type          CashFlowType
+  category      String   // CLIENT_PAYMENT, SUPPLIER, SALARY, TAX_VAT, TAX_CNPS, TAX_IRPP, OTHER
+  label         String
+  amount        BigInt   // toujours positif ; le signe est porté par `type`
+  expectedDate  DateTime
+  probability   Int      @default(100) // 0..100, pondération de la prévision
+
+  sourceType    String?  // INVOICE | PURCHASE_ORDER | PAYROLL | TAX | MANUAL
+  sourceId      String?
+
+  realized      Boolean  @default(false)
+  realizedDate  DateTime?
+  realizedAmount BigInt?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId, expectedDate])
+  @@index([tenantId, type, expectedDate])
+  @@map("cashflow_projections")
+}
+
+enum CashFlowType {
+  INCOME
+  EXPENSE
 }
 
 // ========================================

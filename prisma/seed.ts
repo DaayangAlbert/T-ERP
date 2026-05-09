@@ -17,6 +17,7 @@ import {
   ObjectiveCategory,
   ObjectivePeriod,
   ObjectiveStatus,
+  CashFlowType,
 } from "@prisma/client";
 import bcrypt from "bcrypt";
 
@@ -30,6 +31,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.cashFlowProjection.deleteMany();
+  await prisma.objective.deleteMany();
   await prisma.payslipLine.deleteMany();
   await prisma.payslip.deleteMany();
   await prisma.application.deleteMany();
@@ -562,6 +565,134 @@ async function main() {
     });
   }
   console.log(`✓ ${objectives.length} objectifs DG 2026 créés`);
+
+  // ===== TRÉSORERIE PRÉVISIONNELLE 12 SEMAINES (Phase 2 / fn 1.4) =====
+  const now = new Date();
+  const seedDate = (offset: number) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() + offset);
+    return d;
+  };
+
+  const cashflows: Array<{
+    type: CashFlowType;
+    category: string;
+    label: string;
+    amount: bigint;
+    expectedDate: Date;
+    probability: number;
+    sourceType: string;
+  }> = [];
+
+  // 1) Encaissements clients étalés (12 lignes, prob variable selon client)
+  const clientPayments = [
+    { client: "MINTP", amount: 142_000_000n, week: 0, prob: 95 },
+    { client: "SCI Bastos Plus", amount: 68_000_000n, week: 1, prob: 90 },
+    { client: "Commune Yaoundé I", amount: 38_500_000n, week: 1, prob: 70 },
+    { client: "MINTP", amount: 95_000_000n, week: 2, prob: 80 },
+    { client: "SOCOPRIM", amount: 120_000_000n, week: 3, prob: 85 },
+    { client: "Commune Douala IV", amount: 54_000_000n, week: 4, prob: 60 },
+    { client: "MINTP", amount: 85_000_000n, week: 5, prob: 75 },
+    { client: "CDE", amount: 28_000_000n, week: 6, prob: 90 },
+    { client: "SCI Bastos Plus", amount: 92_000_000n, week: 6, prob: 85 },
+    { client: "MINTP", amount: 110_000_000n, week: 8, prob: 65 },
+    { client: "SOCOPRIM", amount: 75_000_000n, week: 10, prob: 70 },
+    { client: "Commune Yaoundé I", amount: 42_000_000n, week: 11, prob: 55 },
+  ];
+  for (const p of clientPayments) {
+    cashflows.push({
+      type: CashFlowType.INCOME,
+      category: "CLIENT_PAYMENT",
+      label: `Encaissement ${p.client}`,
+      amount: p.amount,
+      expectedDate: seedDate(p.week * 7 + 3),
+      probability: p.prob,
+      sourceType: "INVOICE",
+    });
+  }
+
+  // 2) Décaissements fournisseurs (8 lignes)
+  const suppliers = [
+    { name: "CIMENCAM", amount: 38_500_000n, week: 1 },
+    { name: "Sotrabat (acier)", amount: 22_000_000n, week: 2 },
+    { name: "Total Carburants", amount: 18_500_000n, week: 2 },
+    { name: "CCBM (béton)", amount: 27_000_000n, week: 4 },
+    { name: "Lubrifiants Cameroun", amount: 12_000_000n, week: 5 },
+    { name: "CIMENCAM", amount: 41_000_000n, week: 7 },
+    { name: "Loueur Bobcat", amount: 14_500_000n, week: 8 },
+    { name: "Sotrabat (acier)", amount: 24_000_000n, week: 10 },
+  ];
+  for (const s of suppliers) {
+    cashflows.push({
+      type: CashFlowType.EXPENSE,
+      category: "SUPPLIER",
+      label: `Règlement ${s.name}`,
+      amount: s.amount,
+      expectedDate: seedDate(s.week * 7 + 5),
+      probability: 100,
+      sourceType: "PURCHASE_ORDER",
+    });
+  }
+
+  // 3) Salaires + charges sociales (3 mois × 186 M)
+  for (let m = 0; m < 3; m++) {
+    const payDate = new Date(now.getFullYear(), now.getMonth() + m, 5);
+    cashflows.push({
+      type: CashFlowType.EXPENSE,
+      category: "SALARY",
+      label: `Paie nette ${payDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`,
+      amount: 186_000_000n,
+      expectedDate: payDate,
+      probability: 100,
+      sourceType: "PAYROLL",
+    });
+  }
+
+  // 4) Échéances fiscales (3 mois × TVA + CNPS + IRPP au 15)
+  const taxes = [
+    { code: "TAX_VAT", label: "TVA mensuelle", amount: 28_400_000n },
+    { code: "TAX_CNPS", label: "Cotisations CNPS", amount: 28_100_000n },
+    { code: "TAX_IRPP", label: "IRPP retenu", amount: 14_200_000n },
+  ];
+  for (let m = 0; m < 3; m++) {
+    const due = new Date(now.getFullYear(), now.getMonth() + m, 15);
+    for (const t of taxes) {
+      cashflows.push({
+        type: CashFlowType.EXPENSE,
+        category: t.code,
+        label: `${t.label} ${due.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`,
+        amount: t.amount,
+        expectedDate: due,
+        probability: 100,
+        sourceType: "TAX",
+      });
+    }
+  }
+
+  // 5) Quelques entrées "autres"
+  cashflows.push({
+    type: CashFlowType.INCOME,
+    category: "OTHER",
+    label: "Loyer matériel à filiale Logistique",
+    amount: 8_500_000n,
+    expectedDate: seedDate(20),
+    probability: 100,
+    sourceType: "MANUAL",
+  });
+  cashflows.push({
+    type: CashFlowType.INCOME,
+    category: "OTHER",
+    label: "Intérêts placement BICEC",
+    amount: 3_200_000n,
+    expectedDate: seedDate(45),
+    probability: 100,
+    sourceType: "MANUAL",
+  });
+
+  await prisma.cashFlowProjection.createMany({
+    data: cashflows.map((c) => ({ ...c, tenantId: tenant.id })),
+  });
+  console.log(`✓ ${cashflows.length} projections de trésorerie créées`);
 
   // ===== CONVERSATION DÉMO =====
   const conv = await prisma.conversation.create({

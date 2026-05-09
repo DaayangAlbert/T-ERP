@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   Crown,
   Target,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ const DG_SECTION: NavSection = {
     { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
     { label: "Consolidation groupe", href: "/dg/consolidation", icon: Building2 },
     { label: "Mes objectifs", href: "/dg/objectifs", icon: Target },
+    { label: "Trésorerie prévisionnelle", href: "/dg/tresorerie-previsionnelle", icon: TrendingUp },
     // Les fonctions DG seront ajoutées ici au fil des Blocs Phase 2.
   ],
 };

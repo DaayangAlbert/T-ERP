@@ -23,6 +23,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   employee: "Mon espace",
   consolidation: "Consolidation groupe",
   objectifs: "Mes objectifs",
+  "tresorerie-previsionnelle": "Trésorerie prévisionnelle",
   chantiers: "Chantiers",
   finances: "Finances",
   comptabilite: "Comptabilité",
