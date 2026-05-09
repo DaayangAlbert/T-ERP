@@ -869,14 +869,15 @@ async function main() {
   }
   console.log(`✓ 8 engagements actifs créés`);
 
-  // 5 comptes bancaires
-  const bankSeed = [
-    { bank: "UBA Cameroun", balance: 482_000_000n, granted: 1_500_000_000n, used: 920_000_000n, manager: "Patrick MBALLA" },
-    { bank: "BICEC", balance: 215_000_000n, granted: 800_000_000n, used: 320_000_000n, manager: "Estelle FOTSING" },
-    { bank: "Afriland First Bank", balance: 168_000_000n, granted: 500_000_000n, used: 180_000_000n, manager: "Sandrine MEKA" },
-    { bank: "Ecobank", balance: 95_000_000n, granted: 400_000_000n, used: 280_000_000n, manager: "Jean TCHOFFO" },
-    { bank: "SGBC", balance: 312_000_000n, granted: 1_200_000_000n, used: 640_000_000n, manager: "Roland NJOYA" },
+  // 5 comptes bancaires (DAF Bloc 1 / fn 1.2 — couleurs + sync)
+  const bankSeed: Array<{ bank: string; balance: bigint; granted: bigint; used: bigint; manager: string; color: string; sync: "LIVE" | "DELAYED" | "MANUAL" | "ERROR" }> = [
+    { bank: "UBA Cameroun", balance: 482_000_000n, granted: 1_500_000_000n, used: 920_000_000n, manager: "Patrick MBALLA", color: "#B91C1C", sync: "LIVE" },
+    { bank: "BICEC", balance: 215_000_000n, granted: 800_000_000n, used: 320_000_000n, manager: "Estelle FOTSING", color: "#0F766E", sync: "LIVE" },
+    { bank: "Afriland First Bank", balance: 168_000_000n, granted: 500_000_000n, used: 180_000_000n, manager: "Sandrine MEKA", color: "#A855F7", sync: "DELAYED" },
+    { bank: "Ecobank", balance: 95_000_000n, granted: 400_000_000n, used: 280_000_000n, manager: "Jean TCHOFFO", color: "#1D4ED8", sync: "MANUAL" },
+    { bank: "SGBC", balance: 312_000_000n, granted: 1_200_000_000n, used: 640_000_000n, manager: "Roland NJOYA", color: "#DC2626", sync: "LIVE" },
   ];
+  const createdBankIds: string[] = [];
   for (const [i, b] of bankSeed.entries()) {
     const history = Array.from({ length: 12 }, (_, j) => {
       const d = new Date(finToday.getFullYear(), finToday.getMonth() - 11 + j, 1);
@@ -886,7 +887,7 @@ async function main() {
         balance: Math.round(Number(b.balance) * wave),
       };
     });
-    await prisma.bankAccount.create({
+    const created = await prisma.bankAccount.create({
       data: {
         tenantId: tenant.id,
         bank: b.bank,
@@ -898,10 +899,36 @@ async function main() {
         renewalDate: new Date(finToday.getFullYear() + 1, (i * 2) % 12, 15),
         contact: { name: b.manager, phone: `+237 6 ${78 + i} ${10 + i}${i + 5} ${20 + i}${i} ${30 + i}${i}`, email: `${b.manager.toLowerCase().replace(/\s+/g, ".")}@${b.bank.split(" ")[0].toLowerCase()}.cm` } as object,
         history12m: history as object,
+        primaryColor: b.color,
+        syncStatus: b.sync,
+        lastSyncAt: b.sync === "LIVE" ? new Date(Date.now() - 30_000) : b.sync === "DELAYED" ? new Date(Date.now() - 3 * 60_000) : null,
+      },
+    });
+    createdBankIds.push(created.id);
+  }
+  console.log(`✓ 5 comptes bancaires créés (UBA, BICEC, Afriland, Ecobank, SGBC)`);
+
+  // Mouvements bancaires récents (DAF fn 1.2)
+  const movementSeeds = [
+    { bankIdx: 0, dir: "INBOUND" as const, amount: 45_000_000n, label: "Virement client SCI Bastos Plus", counter: "SCI Bastos Plus", hoursAgo: 2 },
+    { bankIdx: 1, dir: "OUTBOUND" as const, amount: 28_500_000n, label: "BC Carburant Total Cameroun", counter: "Total Cameroun", hoursAgo: 4 },
+    { bankIdx: 0, dir: "INBOUND" as const, amount: 18_200_000n, label: "Acompte Voirie Bonabéri", counter: "Commune Douala IV", hoursAgo: 6 },
+    { bankIdx: 2, dir: "OUTBOUND" as const, amount: 12_350_000n, label: "Paiement fournisseur CIMENCAM", counter: "CIMENCAM", hoursAgo: 8 },
+    { bankIdx: 4, dir: "OUTBOUND" as const, amount: 8_400_000n, label: "Acompte CNPS Avril", counter: "CNPS Cameroun", hoursAgo: 22 },
+  ];
+  for (const m of movementSeeds) {
+    await prisma.bankMovement.create({
+      data: {
+        bankAccountId: createdBankIds[m.bankIdx],
+        direction: m.dir,
+        amount: m.amount,
+        label: m.label,
+        counterparty: m.counter,
+        occurredAt: new Date(Date.now() - m.hoursAgo * 3_600_000),
       },
     });
   }
-  console.log(`✓ 5 comptes bancaires créés (UBA, BICEC, Afriland, Ecobank, SGBC)`);
+  console.log(`✓ ${movementSeeds.length} mouvements bancaires récents créés`);
 
   // ===== COMPTABILITÉ (Phase 2 / Bloc 4 — fn 4.2) =====
   // 12 mois ouverts pour 2026 + 4 derniers mois clôturés pour 2025
