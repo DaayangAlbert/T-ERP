@@ -40,6 +40,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.payrollCycle.deleteMany();
   await prisma.performanceBonus.deleteMany();
   await prisma.benefitInKind.deleteMany();
   await prisma.interestDeclaration.deleteMany();
@@ -2233,6 +2234,30 @@ async function main() {
     });
   }
   console.log(`✓ ${dafPendingValidations.length} validations DAF (étape N2) en attente`);
+
+  // ===== CYCLE DE PAIE EN COURS (DAF Bloc 1 / fn 1.4) =====
+  const payrollPeriod = new Date().toISOString().slice(0, 7);
+  await prisma.payrollCycle.create({
+    data: {
+      tenantId: tenant.id,
+      period: payrollPeriod,
+      status: "N2_PENDING",
+      totalBulletins: 487,
+      grossAmount: 186_420_000n,
+      employerCharges: 67_320_000n,
+      netToPay: 124_650_000n,
+      startedAt: new Date(Date.now() - 5 * 86_400_000),
+      calculatedAt: new Date(Date.now() - 4 * 86_400_000),
+      n1ValidatedAt: new Date(Date.now() - 2 * 86_400_000),
+      warnings: [
+        { severity: "WARNING", type: "MISSING_CNPS", message: "12 employés sans n° CNPS valide", count: 12 },
+        { severity: "WARNING", type: "OVERTIME_THRESHOLD", message: "8 heures sup > 60h sur Pont Mfoundi", count: 8 },
+        { severity: "INFO", type: "NEW_HIRES", message: "3 nouveaux embauchés en prorata", count: 3 },
+        { severity: "OK", type: "VARIANCE", message: "Écarts vs M-1 cohérents (+1.2 %)" },
+      ] as object,
+    },
+  });
+  console.log(`✓ Cycle de paie ${payrollPeriod} (N2_PENDING) créé`);
 
   // 30 validations historiques (validées/rejetées dans les 60 derniers jours)
   const histTypes: ValidationType[] = [
