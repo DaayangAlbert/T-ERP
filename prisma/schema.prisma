@@ -56,6 +56,9 @@ model Tenant {
   successionPlans SuccessionPlan[]
   trainings   Training[]
   socialIndicators SocialIndicator[]
+  financialPeriods FinancialPeriod[]
+  financialCommitments FinancialCommitment[]
+  bankAccounts BankAccount[]
 
   @@index([parentId])
   @@map("tenants")
@@ -1143,4 +1146,92 @@ model SocialIndicator {
 
   @@unique([tenantId, period])
   @@map("social_indicators")
+}
+
+// ========================================
+// FINANCES DG (Phase 2 / Bloc 4 — fn 4.1)
+// ========================================
+// Snapshot mensuel : compte de résultat (P&L), bilan synthétique, BFR.
+// Une ligne par mois. Verrouillage après clôture comptable.
+model FinancialPeriod {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  period    String   // "2026-04" ou "2026-BUDGET" pour budget
+  pnl       Json     // { products: {...}, expenses: {...}, results: {...} }
+  balance   Json     // { actif: {...}, passif: {...}, ratios: {...} }
+  bfr       Json     // { dso, dpo, stockRotation, bfr, treasury }
+  locked    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, period])
+  @@index([tenantId, period])
+  @@map("financial_periods")
+}
+
+// Engagements financiers : cautions, GAPD, lettres de crédit, BC long terme.
+model FinancialCommitment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  type        CommitmentType
+  reference   String?
+  bank        String?
+  beneficiary String?
+  amount      BigInt
+  siteId      String?
+  issueDate   DateTime
+  maturityDate DateTime
+  status      CommitmentStatus @default(ACTIVE)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@map("financial_commitments")
+}
+
+enum CommitmentType {
+  BANK_GUARANTEE
+  FIRST_DEMAND_GUARANTEE
+  LETTER_CREDIT
+  PURCHASE_COMMITMENT
+}
+
+enum CommitmentStatus {
+  ACTIVE
+  EXPIRED
+  RELEASED
+  CALLED
+}
+
+// Comptes bancaires : solde JJ + lignes accordées/utilisées + relation manager.
+model BankAccount {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  bank              String   // UBA, BICEC, AFRILAND, ECOBANK, SGBC...
+  accountNumber     String
+  accountType       String   @default("CURRENT") // CURRENT, ESCROW, SAVING
+  currency          String   @default("XAF")
+  balance           BigInt
+  creditLineGranted BigInt   @default(0)
+  creditLineUsed    BigInt   @default(0)
+  renewalDate       DateTime?
+  contact           Json?    // { name, phone, email }
+  history12m        Json     @default("[]") // [{ month, balance }]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, accountNumber])
+  @@index([tenantId])
+  @@map("bank_accounts")
 }

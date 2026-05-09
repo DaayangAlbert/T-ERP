@@ -40,6 +40,9 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.bankAccount.deleteMany();
+  await prisma.financialCommitment.deleteMany();
+  await prisma.financialPeriod.deleteMany();
   await prisma.training.deleteMany();
   await prisma.successionPlan.deleteMany();
   await prisma.socialIndicator.deleteMany();
@@ -730,6 +733,157 @@ async function main() {
     });
   }
   console.log(`✓ 12 mois d'indicateurs sociaux créés`);
+
+  // ===== FINANCES (Phase 2 / Bloc 4 — fn 4.1) =====
+  // 24 mois historiques + budget annuel
+  const baseRevenue = 142_000_000; // mensuel
+  const finToday = new Date();
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(finToday.getFullYear(), finToday.getMonth() - 23 + i, 1);
+    const period = d.toISOString().slice(0, 7);
+    const seasonal = 1 + Math.sin((i / 12) * Math.PI * 2) * 0.07;
+    const trend = 1 + (i / 24) * 0.05;
+    const revenue = Math.round(baseRevenue * seasonal * trend);
+    const purchases = Math.round(revenue * 0.42);
+    const personnel = Math.round(revenue * 0.28);
+    const subcontracting = Math.round(revenue * 0.08);
+    const depreciation = Math.round(revenue * 0.04);
+    const otherExpenses = Math.round(revenue * 0.06);
+    const operatingResult = revenue + Math.round(revenue * 0.01) - (purchases + personnel + subcontracting + depreciation + otherExpenses);
+    const financialResult = -Math.round(revenue * 0.015);
+    const exceptionalResult = i % 6 === 0 ? Math.round(revenue * 0.01) : 0;
+    const netResult = Math.round((operatingResult + financialResult + exceptionalResult) * 0.7); // après IS
+
+    // Bilan synthétique : valeurs cumulées approximatives
+    const cumulated = baseRevenue * (i + 1);
+    const immo = Math.round(cumulated * 1.2);
+    const stocks = Math.round(revenue * 0.15);
+    const receivables = Math.round(revenue * 1.8);
+    const treasury = Math.round(revenue * 0.5 + i * 5_000_000);
+    const equity = Math.round(cumulated * 0.6);
+    const financialDebts = Math.round(cumulated * 0.4);
+    const suppliers = Math.round(revenue * 1.4);
+    const otherLiab = Math.round(revenue * 0.5);
+    const totalActif = immo + stocks + receivables + treasury;
+
+    await prisma.financialPeriod.create({
+      data: {
+        tenantId: tenant.id,
+        period,
+        pnl: {
+          products: { revenue, otherProducts: Math.round(revenue * 0.01) },
+          expenses: { purchases, personnel, subcontracting, depreciation, other: otherExpenses },
+          operatingResult,
+          financialResult,
+          exceptionalResult,
+          netResult,
+        } as object,
+        balance: {
+          actif: { immobilisations: immo, stocks, receivables, treasury },
+          passif: { equity, financialDebts, suppliers, other: otherLiab },
+          ratios: {
+            autonomy: Number(((equity / totalActif) * 100).toFixed(1)),
+            liquidity: Number(((stocks + receivables + treasury) / (suppliers + otherLiab)).toFixed(2)),
+            leverage: Number((financialDebts / equity).toFixed(2)),
+          },
+        } as object,
+        bfr: {
+          dso: 50 + Math.floor(Math.random() * 30), // 50-80
+          dpo: 40 + Math.floor(Math.random() * 20), // 40-60
+          stockRotation: 14 + Math.floor(Math.random() * 8),
+          bfr: stocks + receivables - suppliers,
+          treasury,
+        } as object,
+        locked: i < 22, // les 2 derniers mois ouverts
+      },
+    });
+  }
+  // Budget de l'année courante
+  const yearCur = finToday.getFullYear();
+  const budgetRevenue = baseRevenue * 12 * 1.08;
+  await prisma.financialPeriod.create({
+    data: {
+      tenantId: tenant.id,
+      period: `${yearCur}-BUDGET`,
+      pnl: {
+        products: { revenue: budgetRevenue, otherProducts: budgetRevenue * 0.01 },
+        expenses: {
+          purchases: budgetRevenue * 0.4,
+          personnel: budgetRevenue * 0.27,
+          subcontracting: budgetRevenue * 0.08,
+          depreciation: budgetRevenue * 0.04,
+          other: budgetRevenue * 0.05,
+        },
+        operatingResult: budgetRevenue * 0.17,
+        financialResult: -budgetRevenue * 0.015,
+        exceptionalResult: 0,
+        netResult: budgetRevenue * 0.105,
+      } as object,
+      balance: {} as object,
+      bfr: {} as object,
+      locked: false,
+    },
+  });
+  console.log(`✓ 24 mois de FinancialPeriod + budget créés`);
+
+  // 8 engagements actifs (cautions sur les chantiers)
+  const sitesForCommitments = await prisma.site.findMany({
+    where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+    select: { id: true, code: true, budget: true, client: true },
+  });
+  const banks = ["UBA Cameroun", "BICEC", "Afriland First Bank", "Ecobank", "SGBC"];
+  for (let i = 0; i < 8; i++) {
+    const site = sitesForCommitments[i % sitesForCommitments.length];
+    await prisma.financialCommitment.create({
+      data: {
+        tenantId: tenant.id,
+        type: i < 5 ? "BANK_GUARANTEE" : i < 7 ? "FIRST_DEMAND_GUARANTEE" : "PURCHASE_COMMITMENT",
+        reference: `CAU-2026-${String(i + 1).padStart(3, "0")}`,
+        bank: banks[i % banks.length],
+        beneficiary: site.client,
+        amount: BigInt(Math.round(Number(site.budget) * 0.05)),
+        siteId: site.id,
+        issueDate: new Date(finToday.getTime() - 60 * 86_400_000),
+        maturityDate: new Date(finToday.getTime() + (180 + i * 30) * 86_400_000),
+        status: "ACTIVE",
+      },
+    });
+  }
+  console.log(`✓ 8 engagements actifs créés`);
+
+  // 5 comptes bancaires
+  const bankSeed = [
+    { bank: "UBA Cameroun", balance: 482_000_000n, granted: 1_500_000_000n, used: 920_000_000n, manager: "Patrick MBALLA" },
+    { bank: "BICEC", balance: 215_000_000n, granted: 800_000_000n, used: 320_000_000n, manager: "Estelle FOTSING" },
+    { bank: "Afriland First Bank", balance: 168_000_000n, granted: 500_000_000n, used: 180_000_000n, manager: "Sandrine MEKA" },
+    { bank: "Ecobank", balance: 95_000_000n, granted: 400_000_000n, used: 280_000_000n, manager: "Jean TCHOFFO" },
+    { bank: "SGBC", balance: 312_000_000n, granted: 1_200_000_000n, used: 640_000_000n, manager: "Roland NJOYA" },
+  ];
+  for (const [i, b] of bankSeed.entries()) {
+    const history = Array.from({ length: 12 }, (_, j) => {
+      const d = new Date(finToday.getFullYear(), finToday.getMonth() - 11 + j, 1);
+      const wave = 1 + Math.sin((j / 12) * Math.PI * 2) * 0.15;
+      return {
+        month: d.toISOString().slice(0, 7),
+        balance: Math.round(Number(b.balance) * wave),
+      };
+    });
+    await prisma.bankAccount.create({
+      data: {
+        tenantId: tenant.id,
+        bank: b.bank,
+        accountNumber: `${10005 + i}-00012-${String(i).padStart(2, "0")}5678901-${42 + i}`,
+        accountType: i === 3 ? "ESCROW" : "CURRENT",
+        balance: b.balance,
+        creditLineGranted: b.granted,
+        creditLineUsed: b.used,
+        renewalDate: new Date(finToday.getFullYear() + 1, (i * 2) % 12, 15),
+        contact: { name: b.manager, phone: `+237 6 ${78 + i} ${10 + i}${i + 5} ${20 + i}${i} ${30 + i}${i}`, email: `${b.manager.toLowerCase().replace(/\s+/g, ".")}@${b.bank.split(" ")[0].toLowerCase()}.cm` } as object,
+        history12m: history as object,
+      },
+    });
+  }
+  console.log(`✓ 5 comptes bancaires créés (UBA, BICEC, Afriland, Ecobank, SGBC)`);
 
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
