@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #a855f7;
+  --primary-600: #9333ea;
+  --primary-700: #7e22ce;
+  --sidebar-bg: #2a1b3d;
+  --ink: #1f2a3d;
+  --line: #e5e7eb;
+  --surface: #ffffff;
+  --surface-alt: #f9fafb;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--surface-alt);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono,
+.tabular {
+  font-family: var(--font-plex-mono), "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}

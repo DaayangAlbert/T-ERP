@@ -1,0 +1,495 @@
+// T-ERP — Schéma Prisma MVP
+// Base PostgreSQL · multi-tenant par champ tenantId (sera évolué en schémas séparés en phase 2)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// MULTI-TENANT : table globale des tenants
+// ========================================
+
+model Tenant {
+  id          String   @id @default(cuid())
+  slug        String   @unique // batimcam, njoya, socabtp...
+  name        String
+  taxId       String?  // N° contribuable
+  cnpsId      String?  // N° employeur CNPS
+  plan        Plan     @default(STARTER)
+  status      TenantStatus @default(ACTIVE)
+  logoUrl     String?
+  primaryColor String? @default("#A855F7")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  sites       Site[]
+  jobOffers   JobOffer[]
+  payslips    Payslip[]
+  conversations Conversation[]
+  documents   Document[]
+  auditLogs   AuditLog[]
+
+  @@map("tenants")
+}
+
+enum Plan {
+  STARTER
+  STANDARD
+  BUSINESS
+  ENTERPRISE
+}
+
+enum TenantStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  ARCHIVED
+}
+
+// ========================================
+// UTILISATEURS ET RÔLES
+// ========================================
+
+model User {
+  id           String    @id @default(cuid())
+  tenantId     String?   // null pour candidats externes et super-admin
+  tenant       Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  email        String    @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  avatarUrl    String?
+
+  // Si employé du tenant
+  employeeId   String?   @unique // ex: EMP-2018-00001
+  hireDate     DateTime?
+  position     String?   // intitulé du poste
+  category     String?   // catégorie pro (Cadre HC, ETAM, OQ, OS...)
+  cnpsNumber   String?
+  contractType ContractType?
+
+  // Sécurité
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+  emailVerified    Boolean @default(false)
+  lastLoginAt      DateTime?
+
+  // Rôle principal (MVP — rôles avancés en phase 2)
+  role         Role     @default(EMPLOYEE)
+
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  payslips     Payslip[]
+  applications Application[]
+  sentMessages Message[] @relation("SentMessages")
+  conversationParticipants ConversationParticipant[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  managedSites Site[]   @relation("SiteManager")
+
+  @@index([tenantId, email])
+  @@index([tenantId, role])
+  @@map("users")
+}
+
+enum Role {
+  // Direction
+  DG               // Directeur Général
+  DAF              // Directeur Administratif et Financier
+  SG               // Secrétaire Générale
+  HR               // Responsable RH
+
+  // Production
+  TECH_DIRECTOR    // Directeur technique
+  WORKS_DIRECTOR   // Directeur de travaux (projet)
+  WORKS_MANAGER    // Conducteur de travaux
+  SITE_MANAGER     // Chef de chantier
+  WORKER           // Ouvrier
+
+  // Support
+  ACCOUNTANT
+  LOGISTICS
+  WAREHOUSE        // Magasinier
+  GED              // Gestionnaire documentaire
+  EMPLOYEE         // Employé bureau
+
+  // Externe
+  CANDIDATE        // Candidat portail emploi
+
+  // Admin
+  TENANT_ADMIN     // Informaticien d'entreprise
+  SUPER_ADMIN      // Anthropic-style super-admin SaaS
+}
+
+enum ContractType {
+  CDI
+  CDD
+  STAGE
+  JOURNALIER
+  PRESTATAIRE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ========================================
+// CHANTIERS
+// ========================================
+
+model Site {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code         String   // CHT-2025-031
+  name         String   // Pont Mfoundi
+  client       String   // Commune Yaoundé I
+  type         SiteType
+  region       String?  // Yaoundé, Douala, Bafoussam...
+
+  budget       BigInt   // FCFA
+  startDate    DateTime
+  plannedEndDate DateTime
+  actualEndDate  DateTime?
+
+  progress     Int      @default(0) // 0-100
+  margin       Float    @default(0) // pourcentage
+  status       SiteStatus @default(PLANNED)
+
+  managerId    String?  // directeur de travaux
+  manager      User?    @relation("SiteManager", fields: [managerId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@map("sites")
+}
+
+enum SiteType {
+  ROAD            // BTP routier
+  BUILDING        // Bâtiment
+  CIVIL_ENG       // Génie civil
+  DEVELOPMENT     // Aménagement
+  HYDRAULIC       // Forage / AEP
+}
+
+enum SiteStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  AT_RISK         // Vigilance
+  DRIFTING        // Dérive
+  COMPLETED
+  ARCHIVED
+}
+
+// ========================================
+// PAIE
+// ========================================
+
+model Payslip {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  period        DateTime // 1er du mois (ex: 2025-09-01)
+  paymentDate   DateTime
+  paymentMode   String   @default("VIREMENT") // VIREMENT, ESPECES, CHEQUE, MOMO
+
+  // Totaux pré-calculés (calcul détaillé en phase 2)
+  grossAmount   BigInt   // Brut
+  taxableGross  BigInt   // Brut imposable
+  netAmount     BigInt   // Net à payer
+  socialCharges BigInt   @default(0)
+  fiscalCharges BigInt   @default(0)
+  employerCharges BigInt @default(0)
+
+  status        PayslipStatus @default(DRAFT)
+
+  // Workflow validation
+  validatedN1At DateTime?
+  validatedN2At DateTime?
+  validatedN3At DateTime?
+  paidAt        DateTime?
+
+  pdfUrl        String?
+
+  lines         PayslipLine[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, userId, period])
+  @@index([tenantId, period])
+  @@map("payslips")
+}
+
+enum PayslipStatus {
+  DRAFT
+  CALCULATED
+  VALIDATED_N1     // RH
+  VALIDATED_N2     // DAF
+  VALIDATED_N3     // DG
+  PAID
+  CANCELLED
+}
+
+model PayslipLine {
+  id        String  @id @default(cuid())
+  payslipId String
+  payslip   Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+
+  code      String  // A001, A045, A050, A056-A072
+  label     String  // "Salaire de base", "IRPP", etc.
+  quantity  Float?  // 30 (jours)
+  base      BigInt? // 6667
+  rate      Float?  // 4.20 pour CNPS
+  amountPlus  BigInt? // colonne MONTANT+
+  amountMinus BigInt? // colonne MONTANT-
+  employerAmount BigInt? // RET PATRON
+
+  order     Int     @default(0)
+
+  @@index([payslipId])
+  @@map("payslip_lines")
+}
+
+// ========================================
+// PORTAIL EMPLOI
+// ========================================
+
+model JobOffer {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  reference     String   // REC-2026-008
+  title         String   // Ingénieur travaux BTP
+  department    String?  // Direction Technique
+  contractType  ContractType
+  category      String   // Cadre, ETAM, OQ...
+  positions     Int      @default(1)
+
+  description   String   @db.Text
+  requirements  String   @db.Text
+
+  salaryMin     BigInt?
+  salaryMax     BigInt?
+
+  region        String?
+  publishedAt   DateTime?
+  expiresAt     DateTime?
+  status        JobStatus @default(DRAFT)
+
+  applications  Application[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, reference])
+  @@index([status, publishedAt])
+  @@map("job_offers")
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  jobOfferId  String
+  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  userId      String   // candidat (User avec role=CANDIDATE)
+  user        User     @relation(fields: [userId], references: [id])
+
+  cvUrl       String?
+  coverLetter String?  @db.Text
+  score       Int?     // 0-100, calculé par tri auto
+  stage       AppStage @default(RECEIVED)
+  notes       String?  @db.Text
+
+  appliedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([jobOfferId, userId])
+  @@map("applications")
+}
+
+enum AppStage {
+  RECEIVED
+  SHORTLISTED
+  INTERVIEW
+  TECHNICAL_TEST
+  OFFER
+  HIRED
+  REJECTED
+}
+
+// ========================================
+// MESSAGERIE
+// ========================================
+
+model Conversation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String?  // null pour DM, défini pour groupes
+  isGroup     Boolean  @default(false)
+  avatarUrl   String?
+
+  lastMessageAt DateTime?
+
+  participants ConversationParticipant[]
+  messages    Message[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt       DateTime @default(now())
+  lastReadAt     DateTime?
+  isPinned       Boolean  @default(false)
+  isMuted        Boolean  @default(false)
+
+  @@id([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User     @relation("SentMessages", fields: [senderId], references: [id])
+
+  content         String   @db.Text
+  attachmentUrl   String?
+  attachmentName  String?
+  attachmentSize  Int?
+
+  isSystem        Boolean  @default(false) // messages système type "X a partagé un document"
+
+  createdAt       DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+// ========================================
+// GED
+// ========================================
+
+model Document {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String
+  category    String?  // Marché, Plan, Décompte, PV, Photo...
+  folder      String?  // chemin virtuel
+  mimeType    String
+  sizeBytes   BigInt
+  url         String   // URL stockage (S3 ou local)
+
+  // Liens contextuels (optionnels)
+  siteId      String?
+  authorId    String
+
+  // OCR (phase 2)
+  ocrContent  String?  @db.Text
+
+  status      DocStatus @default(DRAFT)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, folder])
+  @@index([tenantId, siteId])
+  @@map("documents")
+}
+
+enum DocStatus {
+  DRAFT
+  PUBLISHED
+  SIGNED
+  ARCHIVED
+}
+
+// ========================================
+// NOTIFICATIONS
+// ========================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      String   // payslip_ready, validation_required, message_received...
+  title     String
+  body      String?
+  link      String?  // chemin app à ouvrir
+
+  read      Boolean  @default(false)
+  readAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+// ========================================
+// AUDIT TRAIL
+// ========================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  action      String   // user.login, payslip.validate, site.update...
+  entityType  String?
+  entityId    String?
+  metadata    Json?    // données contextuelles (avant/après, IP, user-agent...)
+
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
