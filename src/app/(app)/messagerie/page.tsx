@@ -1,13 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
+import { AlertOctagon } from "lucide-react";
 import { useConversations } from "@/hooks/useMessaging";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
+import { StrategicGroupsSection } from "@/components/messaging/StrategicGroupsSection";
+import { useProfile } from "@/hooks/useProfile";
+import { usePriorityInbox } from "@/hooks/useDgMessaging";
 
 export default function MessageriePage() {
   const { data, isLoading } = useConversations();
+  const { data: profile } = useProfile();
+  const { data: priority } = usePriorityInbox();
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Auto-select first conversation on desktop once loaded
@@ -19,17 +26,33 @@ export default function MessageriePage() {
   }, [data?.items, activeId]);
 
   const active = data?.items.find((c) => c.id === activeId) ?? null;
+  const isDg = profile?.role === "DG";
 
   return (
     <div className="-m-5 h-[calc(100vh-3.5rem-2.5rem)] overflow-hidden border border-line bg-white">
       <div className="grid h-full grid-cols-1 md:grid-cols-[340px_1fr]">
         <aside
           className={clsx(
-            "h-full border-r border-line",
-            // Mobile: show list only when no conversation is active
+            "h-full overflow-y-auto border-r border-line",
             active ? "hidden md:block" : "block"
           )}
         >
+          {isDg && (
+            <>
+              <div className="p-2">
+                <StrategicGroupsSection />
+                {priority && priority.summary.total > 0 && (
+                  <Link
+                    href="/messagerie/prioritaires"
+                    className="mb-2 flex items-center gap-2 rounded-md border border-danger/30 bg-danger/5 px-3 py-2 text-[12.5px] font-medium text-danger hover:border-danger/50"
+                  >
+                    <AlertOctagon className="h-4 w-4" />
+                    {priority.summary.total} message{priority.summary.total > 1 ? "s" : ""} prioritaire{priority.summary.total > 1 ? "s" : ""}
+                  </Link>
+                )}
+              </div>
+            </>
+          )}
           <ConversationList
             items={data?.items ?? []}
             activeId={activeId}

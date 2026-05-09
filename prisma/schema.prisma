@@ -578,6 +578,9 @@ model Conversation {
   name        String?  // null pour DM, défini pour groupes
   isGroup     Boolean  @default(false)
   avatarUrl   String?
+  // Phase 2 / Bloc 5 — fn 5.4
+  isStrategic Boolean  @default(false)
+  pinnedAt    DateTime?
 
   lastMessageAt DateTime?
 
@@ -588,6 +591,7 @@ model Conversation {
   updatedAt   DateTime @updatedAt
 
   @@index([tenantId, lastMessageAt])
+  @@index([tenantId, isStrategic])
   @@map("conversations")
 }
 
@@ -620,10 +624,40 @@ model Message {
 
   isSystem        Boolean  @default(false) // messages système type "X a partagé un document"
 
+  // Phase 2 / Bloc 5 — fn 5.4
+  priority            MessagePriority @default(NORMAL)
+  mentions            String[] // userIds mentionnés
+  attachedDocumentIds String[] // depuis GED
+  pollData            Json?    // { question, options: [{ label, votes: [userId] }] }
+
+  voiceNote       VoiceNote?
+
   createdAt       DateTime @default(now())
 
   @@index([conversationId, createdAt])
+  @@index([conversationId, priority])
   @@map("messages")
+}
+
+enum MessagePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model VoiceNote {
+  id          String   @id @default(cuid())
+  messageId   String   @unique
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  audioUrl    String
+  durationSec Int
+  transcript  String?  @db.Text
+
+  createdAt   DateTime @default(now())
+
+  @@map("voice_notes")
 }
 
 // ========================================

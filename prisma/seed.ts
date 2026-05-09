@@ -1951,6 +1951,119 @@ async function main() {
   });
   console.log(`✓ Conversation démo créée`);
 
+  // ===== MESSAGERIE DG (Phase 2 / Bloc 5 — fn 5.4) =====
+  const dgForMsg = createdUsers.find((u) => u.role === Role.DG)!;
+  const dafForMsg = createdUsers.find((u) => u.role === Role.DAF)!;
+  const hrForMsg = createdUsers.find((u) => u.role === Role.HR);
+  const techForMsg = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
+  const worksForMsg = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
+  const sgForMsg = createdUsers.find((u) => u.role === Role.SG);
+
+  const strategicGroups = [
+    {
+      name: "Comité de direction",
+      members: [dgForMsg, dafForMsg, hrForMsg, techForMsg, worksForMsg].filter(Boolean),
+      pinned: true,
+      messages: [
+        { sender: dafForMsg.id, content: "RAPPEL : Comité demain 9h. Ordre du jour envoyé.", priority: "NORMAL" as const },
+        { sender: techForMsg?.id ?? dgForMsg.id, content: "Validation marché Bonabéri en attente. Retour DG impératif aujourd'hui.", priority: "URGENT" as const, mentions: [dgForMsg.id] },
+        { sender: dgForMsg.id, content: "Vu, je valide cet après-midi après échange avec MINTP.", priority: "NORMAL" as const },
+      ],
+    },
+    {
+      name: "Conseil d'administration",
+      members: [dgForMsg, dafForMsg, sgForMsg].filter(Boolean),
+      pinned: true,
+      messages: [
+        { sender: sgForMsg?.id ?? dgForMsg.id, content: "Ordre du jour CA du 25 mai diffusé. Documents préparatoires sur GED.", priority: "NORMAL" as const },
+        { sender: dgForMsg.id, content: "Merci, je reviens vers vous mercredi sur les arbitrages stratégiques.", priority: "NORMAL" as const },
+      ],
+    },
+    {
+      name: "Cellule de crise",
+      members: [dgForMsg, dafForMsg, techForMsg].filter(Boolean),
+      pinned: false,
+      messages: [
+        { sender: techForMsg?.id ?? dgForMsg.id, content: "Incident Pont Mfoundi : dérive budget 18%. Réunion à 16h en visio.", priority: "URGENT" as const, mentions: [dgForMsg.id, dafForMsg.id] },
+      ],
+    },
+    {
+      name: "Banques relations",
+      members: [dgForMsg, dafForMsg].filter(Boolean),
+      pinned: false,
+      messages: [
+        { sender: dafForMsg.id, content: "RDV UBA fixé jeudi 14h pour le renouvellement de la ligne 1.5 Md FCFA.", priority: "HIGH" as const, mentions: [dgForMsg.id] },
+        { sender: dgForMsg.id, content: "OK. Préparons le dossier financier consolidé en amont.", priority: "NORMAL" as const },
+      ],
+    },
+  ];
+
+  let strategicMsgCount = 0;
+  for (const g of strategicGroups) {
+    const conv = await prisma.conversation.create({
+      data: {
+        tenantId: tenant.id,
+        name: g.name,
+        isGroup: true,
+        isStrategic: true,
+        pinnedAt: g.pinned ? new Date() : null,
+        lastMessageAt: new Date(),
+        participants: {
+          create: g.members.map((u) => ({ userId: u!.id, isPinned: g.pinned })),
+        },
+      },
+    });
+    for (const m of g.messages) {
+      await prisma.message.create({
+        data: {
+          conversationId: conv.id,
+          senderId: m.sender,
+          content: m.content,
+          priority: m.priority,
+          mentions: (m as { mentions?: string[] }).mentions ?? [],
+        },
+      });
+      strategicMsgCount++;
+    }
+  }
+  console.log(`✓ ${strategicGroups.length} groupes stratégiques créés (${strategicMsgCount} messages dont 5 HIGH/URGENT)`);
+
+  // 2 sondages historiques
+  const polls = [
+    {
+      conv: 0,
+      sender: dafForMsg.id,
+      question: "Date préférée pour la prochaine revue budgétaire ?",
+      options: ["Lundi 15 mai 14h", "Mardi 16 mai 9h", "Mercredi 17 mai 16h"],
+    },
+    {
+      conv: 1,
+      sender: sgForMsg?.id ?? dgForMsg.id,
+      question: "Format AG annuelle 2026 ?",
+      options: ["Présentiel siège", "Hybride (présentiel + visio)", "100% visio"],
+    },
+  ];
+  const allConvs = await prisma.conversation.findMany({
+    where: { tenantId: tenant.id, isStrategic: true },
+    orderBy: { createdAt: "asc" },
+  });
+  for (const p of polls) {
+    if (allConvs[p.conv]) {
+      await prisma.message.create({
+        data: {
+          conversationId: allConvs[p.conv].id,
+          senderId: p.sender,
+          content: `📊 Sondage : ${p.question}`,
+          pollData: {
+            question: p.question,
+            options: p.options.map((label) => ({ label, votes: [] as string[] })),
+          } as object,
+        },
+      });
+    }
+  }
+  console.log(`✓ ${polls.length} sondages historiques créés`);
+
   // ===== VALIDATIONS DG (Phase 2 / Bloc 2 — fn 2.1) =====
   const dgUser = createdUsers.find((u) => u.role === Role.DG)!;
   const dafUser = createdUsers.find((u) => u.role === Role.DAF)!;
