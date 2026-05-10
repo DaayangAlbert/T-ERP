@@ -829,6 +829,70 @@ enum PayrollCycleStatus {
 }
 
 // ========================================
+// RH DAF — Provisions sociales et départs (DAF Bloc 3 / fn 3.3)
+// ========================================
+model SocialProvision {
+  id           String   @id @default(cuid())
+  tenantId     String
+  type         ProvisionType
+  amount       BigInt
+  calculatedAt DateTime @default(now())
+  periodEnd    String   // exercice concerné
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, periodEnd])
+  @@map("social_provisions")
+}
+
+enum ProvisionType {
+  PAID_LEAVE       // Congés payés
+  END_OF_CAREER    // Indemnités fin de carrière (IFC)
+  BONUSES          // Primes
+  MUTUAL           // Mutuelle / prévoyance
+  OTHER
+}
+
+model EmployeeDeparture {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String
+  employeeName   String   // snapshot du nom au moment du départ
+  position       String?
+  departureType  DepartureType
+  departureDate  DateTime
+  severancePay   BigInt   @default(0)
+  unusedLeavePay BigInt   @default(0)
+  bonusProrata   BigInt   @default(0)
+  totalCost      BigInt   @default(0)
+  status         DepartureStatus @default(PROVISIONED)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId, departureDate])
+  @@index([tenantId, status])
+  @@map("employee_departures")
+}
+
+enum DepartureType {
+  RESIGNATION           // Démission
+  DISMISSAL_INDIVIDUAL  // Licenciement individuel
+  DISMISSAL_ECONOMIC    // Licenciement économique
+  RETIREMENT            // Départ retraite
+  END_OF_CONTRACT       // Fin de CDD
+  NEGOTIATED            // Rupture conventionnelle
+}
+
+enum DepartureStatus {
+  PROVISIONED
+  PAID
+  DISPUTED
+}
+
+// ========================================
 // RECOUVREMENT CLIENTS DAF (Phase 2 / DAF Bloc 1 — fn 1.5)
 // ========================================
 // Créances clients avec balance âgée + niveaux de relance R1/R2/R3.

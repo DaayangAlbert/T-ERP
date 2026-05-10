@@ -40,6 +40,8 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.employeeDeparture.deleteMany();
+  await prisma.socialProvision.deleteMany();
   await prisma.supplierCommitment.deleteMany();
   await prisma.financialScenario.deleteMany();
   await prisma.budgetVariance.deleteMany();
@@ -2906,6 +2908,57 @@ async function main() {
     },
   });
   console.log(`✓ 2 rapports DAF historiques + 3 planifiés créés`);
+
+  // ===== RH DAF — Provisions + départs (DAF Bloc 3 / fn 3.3) =====
+  const fyEnd = `${new Date().getFullYear()}-12`;
+  const provisionsSeed: Array<{ type: "PAID_LEAVE" | "END_OF_CAREER" | "BONUSES" | "MUTUAL" | "OTHER"; amount: bigint; notes?: string }> = [
+    { type: "PAID_LEAVE", amount: 87_500_000n, notes: "Stock CP au 30/04/2026 — 290 jours moyens" },
+    { type: "END_OF_CAREER", amount: 142_000_000n, notes: "IFC actuariel salariés ≥ 5 ans d'ancienneté" },
+    { type: "BONUSES", amount: 38_400_000n, notes: "Primes annuelles cadres et maîtrise" },
+    { type: "MUTUAL", amount: 12_800_000n, notes: "Régularisation prévoyance Q4 2025" },
+    { type: "OTHER", amount: 6_300_000n, notes: "Provision contentieux prud'hommal en cours" },
+  ];
+  for (const p of provisionsSeed) {
+    await prisma.socialProvision.create({
+      data: {
+        tenantId: tenant.id,
+        type: p.type,
+        amount: p.amount,
+        periodEnd: fyEnd,
+        notes: p.notes ?? null,
+      },
+    });
+  }
+  console.log(`✓ ${provisionsSeed.length} provisions sociales créées`);
+
+  // 6 départs sur 18 derniers mois
+  const departuresSeed = [
+    { name: "Jean-Baptiste KAMGA", position: "Conducteur travaux", type: "RESIGNATION" as const, daysAgo: 45, severance: 0, leave: 1_200_000, bonus: 850_000, status: "PAID" as const },
+    { name: "Esther MBELI", position: "Secrétaire RH", type: "RETIREMENT" as const, daysAgo: 120, severance: 18_500_000, leave: 2_400_000, bonus: 1_100_000, status: "PAID" as const },
+    { name: "François TCHINDA", position: "Chef chantier", type: "DISMISSAL_INDIVIDUAL" as const, daysAgo: 90, severance: 7_800_000, leave: 1_750_000, bonus: 0, status: "PAID" as const },
+    { name: "Aristide ZOA", position: "Comptable junior", type: "END_OF_CONTRACT" as const, daysAgo: 30, severance: 0, leave: 950_000, bonus: 480_000, status: "PROVISIONED" as const },
+    { name: "Marguerite BIYA", position: "Manœuvre", type: "DISMISSAL_ECONOMIC" as const, daysAgo: 60, severance: 4_200_000, leave: 680_000, bonus: 0, status: "DISPUTED" as const },
+    { name: "Daniel ONANA", position: "Magasinier", type: "NEGOTIATED" as const, daysAgo: 15, severance: 11_400_000, leave: 1_580_000, bonus: 720_000, status: "PROVISIONED" as const },
+  ];
+  for (const d of departuresSeed) {
+    const total = BigInt(d.severance) + BigInt(d.leave) + BigInt(d.bonus);
+    await prisma.employeeDeparture.create({
+      data: {
+        tenantId: tenant.id,
+        userId: createdUsers[0].id, // référence symbolique
+        employeeName: d.name,
+        position: d.position,
+        departureType: d.type,
+        departureDate: new Date(Date.now() - d.daysAgo * 86_400_000),
+        severancePay: BigInt(d.severance),
+        unusedLeavePay: BigInt(d.leave),
+        bonusProrata: BigInt(d.bonus),
+        totalCost: total,
+        status: d.status,
+      },
+    });
+  }
+  console.log(`✓ ${departuresSeed.length} départs salariés créés`);
 
   // ===== SESSIONS ACTIVES (Phase 2 / Bloc 2 — fn 2.4) =====
   // 20 sessions simulées (IPs variées, dont 2 suspectes)

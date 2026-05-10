@@ -72,6 +72,7 @@ const DAF_SECTION: NavSection = {
     { label: "Finances (DAF)", href: "/daf/finances", icon: Wallet },
     { label: "Achats (DAF)", href: "/daf/achats", icon: ShoppingCart },
     { label: "Rapports financiers", href: "/daf/rapports", icon: BarChart3 },
+    { label: "RH financier", href: "/daf/rh", icon: Users },
   ],
 };
 
