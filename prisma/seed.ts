@@ -219,9 +219,39 @@ async function main() {
       lastName: "ETOUNDI",
       role: Role.WORKS_DIRECTOR,
       employeeId: "EMP-2021-00086",
-      position: "Directeur de travaux Pont Mfoundi",
+      position: "Directeur de travaux — Génie civil",
       category: "Cadre 11",
       hireDate: new Date("2021-09-01"),
+    },
+    {
+      email: "louis@batimcam.cm",
+      firstName: "Louis",
+      lastName: "NDONGO",
+      role: Role.WORKS_DIRECTOR,
+      employeeId: "EMP-2021-00091",
+      position: "Directeur de travaux — Bâtiment",
+      category: "Cadre 11",
+      hireDate: new Date("2021-11-15"),
+    },
+    {
+      email: "raoul@batimcam.cm",
+      firstName: "Raoul",
+      lastName: "KOMTCHOU",
+      role: Role.WORKS_DIRECTOR,
+      employeeId: "EMP-2022-00123",
+      position: "Directeur de travaux — Routier",
+      category: "Cadre 11",
+      hireDate: new Date("2022-03-08"),
+    },
+    {
+      email: "francois@batimcam.cm",
+      firstName: "François",
+      lastName: "MENDOMO",
+      role: Role.WORKS_DIRECTOR,
+      employeeId: "EMP-2022-00148",
+      position: "Directeur de travaux — VRD/Hydraulique",
+      category: "Cadre 11",
+      hireDate: new Date("2022-06-20"),
     },
     {
       email: "samuel@batimcam.cm",
@@ -314,103 +344,89 @@ async function main() {
   });
   console.log(`✓ Super-admin SaaS créé (superadmin@terp.cm / ${PWD})`);
 
-  // ===== CHANTIERS =====
+  // ===== CHANTIERS (23 chantiers actifs — DT cockpit) =====
+  // Ratio cible : production cumulée YTD ≈ 2,84 Md FCFA (somme financialProgress*budget)
+  // Marge moyenne ≈ 18,4 %.
+  // Distribution : 4 directeurs travaux pour 23 chantiers.
   const sites = [
-    {
-      code: "CHT-2025-018",
-      name: "Route Yaoundé–Nsimalen",
-      client: "MINTP",
-      type: SiteType.ROAD,
-      region: "Centre",
-      budget: 840_000_000n,
-      progress: 82,
-      margin: 23.4,
-      status: SiteStatus.ACTIVE,
-    },
-    {
-      code: "CHT-2025-024",
-      name: "Immeuble R+8 Bastos",
-      client: "SCI Bastos Plus",
-      type: SiteType.BUILDING,
-      region: "Centre",
-      budget: 520_000_000n,
-      progress: 64,
-      margin: 20.1,
-      status: SiteStatus.ACTIVE,
-    },
-    {
-      code: "CHT-2025-031",
-      name: "Pont Mfoundi",
-      client: "Commune Yaoundé I",
-      type: SiteType.CIVIL_ENG,
-      region: "Centre",
-      budget: 280_000_000n,
-      progress: 78,
-      margin: 6.0,
-      status: SiteStatus.DRIFTING,
-    },
-    {
-      code: "CHT-2026-003",
-      name: "Lotissement Odza phase 2",
-      client: "SOCOPRIM",
-      type: SiteType.DEVELOPMENT,
-      region: "Centre",
-      budget: 1_200_000_000n,
-      progress: 42,
-      margin: 17.2,
-      status: SiteStatus.ACTIVE,
-    },
-    {
-      code: "CHT-2026-014",
-      name: "Voirie Bonabéri",
-      client: "Commune Douala IV",
-      type: SiteType.ROAD,
-      region: "Littoral",
-      budget: 460_000_000n,
-      progress: 8,
-      margin: 18.5,
-      status: SiteStatus.ACTIVE,
-    },
-    {
-      code: "CHT-2026-018",
-      name: "Forage AEP Mbalmayo",
-      client: "CDE",
-      type: SiteType.HYDRAULIC,
-      region: "Centre",
-      budget: 95_000_000n,
-      progress: 55,
-      margin: 22.1,
-      status: SiteStatus.ACTIVE,
-    },
+    // ETOUNDI — Génie civil (5 chantiers, ~700 M)
+    { code: "CHT-2025-018", name: "Route Yaoundé–Nsimalen", client: "MINTP", moa: "MINTP", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Centre", budget: 840_000_000n, progress: 82, physical: 82, financial: 80, margin: 23.4, marginT: 22, dev: -2.5, status: SiteStatus.ACTIVE, dir: "ETOUNDI" },
+    { code: "CHT-2025-031", name: "Pont Mfoundi", client: "Commune Yaoundé I", moa: "Commune de Yaoundé I", moaT: "PUBLIC", ct: "FIRM_PRICE", type: SiteType.CIVIL_ENG, region: "Centre", budget: 280_000_000n, progress: 78, physical: 78, financial: 92, margin: 6.0, marginT: 18, dev: 16.0, status: SiteStatus.DRIFTING, dir: "ETOUNDI" },
+    { code: "CHT-2026-007", name: "Pont Wouri annexe", client: "Port Autonome Douala", moa: "PAD", moaT: "PARAPUBLIC", ct: "UNIT_PRICE", type: SiteType.CIVIL_ENG, region: "Littoral", budget: 1_450_000_000n, progress: 38, physical: 38, financial: 35, margin: 19.4, marginT: 20, dev: 1.2, status: SiteStatus.ACTIVE, dir: "ETOUNDI" },
+    { code: "CHT-2026-022", name: "Échangeur Olembé", client: "MINHDU", moa: "MINHDU", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.CIVIL_ENG, region: "Centre", budget: 720_000_000n, progress: 55, physical: 55, financial: 52, margin: 17.8, marginT: 18, dev: 2.1, status: SiteStatus.ACTIVE, dir: "ETOUNDI" },
+    { code: "CHT-2026-031", name: "Réhabilitation Pont Sanaga", client: "MINTP", moa: "MINTP", moaT: "PUBLIC", ct: "FIRM_PRICE", type: SiteType.CIVIL_ENG, region: "Centre", budget: 320_000_000n, progress: 22, physical: 22, financial: 20, margin: 21.0, marginT: 20, dev: 0.8, status: SiteStatus.ACTIVE, dir: "ETOUNDI" },
+    // NDONGO — Bâtiment (6 chantiers, ~1.2 Md)
+    { code: "CHT-2025-024", name: "Immeuble R+8 Bastos", client: "SCI Bastos Plus", moa: "SCI Bastos Plus", moaT: "PRIVATE", ct: "FIRM_PRICE", type: SiteType.BUILDING, region: "Centre", budget: 520_000_000n, progress: 64, physical: 64, financial: 68, margin: 12.0, marginT: 18, dev: 6.5, status: SiteStatus.AT_RISK, dir: "NDONGO" },
+    { code: "CHT-2025-042", name: "Centre commercial Akwa", client: "SCI AKWA Mall", moa: "SCI AKWA Mall", moaT: "PRIVATE", ct: "DESIGN_BUILD", type: SiteType.BUILDING, region: "Littoral", budget: 1_800_000_000n, progress: 71, physical: 71, financial: 69, margin: 22.5, marginT: 20, dev: -1.5, status: SiteStatus.ACTIVE, dir: "NDONGO" },
+    { code: "CHT-2026-001", name: "Hôpital de référence Garoua", client: "MINSANTE", moa: "MINSANTE", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.BUILDING, region: "Nord", budget: 2_400_000_000n, progress: 28, physical: 28, financial: 25, margin: 18.0, marginT: 19, dev: 1.0, status: SiteStatus.ACTIVE, dir: "NDONGO" },
+    { code: "CHT-2026-009", name: "Immeuble bureau Bonanjo", client: "SCI Wouri Tower", moa: "SCI Wouri Tower", moaT: "PRIVATE", ct: "FIRM_PRICE", type: SiteType.BUILDING, region: "Littoral", budget: 1_100_000_000n, progress: 47, physical: 47, financial: 50, margin: 17.5, marginT: 18, dev: 3.2, status: SiteStatus.ACTIVE, dir: "NDONGO" },
+    { code: "CHT-2026-019", name: "Lycée bilingue Sangmélima", client: "MINEDUB", moa: "MINEDUB", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.BUILDING, region: "Sud", budget: 480_000_000n, progress: 58, physical: 58, financial: 56, margin: 19.2, marginT: 19, dev: 0.6, status: SiteStatus.ACTIVE, dir: "NDONGO" },
+    { code: "CHT-2026-027", name: "Logements sociaux Yaoundé Nord", client: "FEICOM", moa: "FEICOM", moaT: "PARAPUBLIC", ct: "UNIT_PRICE", type: SiteType.BUILDING, region: "Centre", budget: 980_000_000n, progress: 18, physical: 18, financial: 15, margin: 20.5, marginT: 20, dev: 1.8, status: SiteStatus.ACTIVE, dir: "NDONGO" },
+    // KOMTCHOU — Routier (6 chantiers, ~1.5 Md)
+    { code: "CHT-2026-014", name: "Voirie Bonabéri", client: "Commune Douala IV", moa: "Commune de Douala IV", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Littoral", budget: 460_000_000n, progress: 8, physical: 8, financial: 25, margin: 18.5, marginT: 18, dev: 14.0, status: SiteStatus.AT_RISK, dir: "KOMTCHOU" },
+    { code: "CHT-2025-035", name: "Réhabilitation N3 Yaoundé–Bafia", client: "MINTP", moa: "MINTP", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Centre", budget: 2_100_000_000n, progress: 76, physical: 76, financial: 74, margin: 21.8, marginT: 20, dev: -1.0, status: SiteStatus.ACTIVE, dir: "KOMTCHOU" },
+    { code: "CHT-2026-005", name: "Voirie urbaine Bafoussam", client: "Communauté urbaine Bafoussam", moa: "CUB", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Ouest", budget: 870_000_000n, progress: 51, physical: 51, financial: 49, margin: 19.5, marginT: 19, dev: 0.5, status: SiteStatus.ACTIVE, dir: "KOMTCHOU" },
+    { code: "CHT-2026-016", name: "Pénétrante Sud Edéa", client: "MINTP", moa: "MINTP", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Littoral", budget: 1_350_000_000n, progress: 33, physical: 33, financial: 31, margin: 18.2, marginT: 19, dev: 1.5, status: SiteStatus.ACTIVE, dir: "KOMTCHOU" },
+    { code: "CHT-2026-024", name: "Asphaltage Mbankomo", client: "Commune de Mbankomo", moa: "Commune de Mbankomo", moaT: "PUBLIC", ct: "FIRM_PRICE", type: SiteType.ROAD, region: "Centre", budget: 240_000_000n, progress: 64, physical: 64, financial: 62, margin: 17.0, marginT: 17, dev: 0.2, status: SiteStatus.ACTIVE, dir: "KOMTCHOU" },
+    { code: "CHT-2026-029", name: "Élargissement Av. Kennedy", client: "Communauté urbaine Yaoundé", moa: "CUY", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.ROAD, region: "Centre", budget: 580_000_000n, progress: 12, physical: 12, financial: 10, margin: 19.8, marginT: 19, dev: 0.4, status: SiteStatus.ACTIVE, dir: "KOMTCHOU" },
+    // MENDOMO — VRD / Hydraulique / Aménagement (6 chantiers, ~1 Md)
+    { code: "CHT-2026-003", name: "Lotissement Odza phase 2", client: "SOCOPRIM", moa: "SOCOPRIM", moaT: "PRIVATE", ct: "DESIGN_BUILD", type: SiteType.DEVELOPMENT, region: "Centre", budget: 1_200_000_000n, progress: 42, physical: 42, financial: 165, margin: 17.2, marginT: 20, dev: 4.5, status: SiteStatus.AT_RISK, dir: "MENDOMO" },
+    { code: "CHT-2026-018", name: "Forage AEP Mbalmayo", client: "CDE", moa: "CDE", moaT: "PARAPUBLIC", ct: "FIRM_PRICE", type: SiteType.HYDRAULIC, region: "Centre", budget: 95_000_000n, progress: 55, physical: 55, financial: 53, margin: 22.1, marginT: 22, dev: 0.3, status: SiteStatus.ACTIVE, dir: "MENDOMO" },
+    { code: "CHT-2026-006", name: "AEP rural Mbouda", client: "MINEE", moa: "MINEE", moaT: "PUBLIC", ct: "UNIT_PRICE", type: SiteType.HYDRAULIC, region: "Ouest", budget: 320_000_000n, progress: 67, physical: 67, financial: 65, margin: 18.7, marginT: 18, dev: -0.5, status: SiteStatus.ACTIVE, dir: "MENDOMO" },
+    { code: "CHT-2026-012", name: "Lotissement Souza phase 1", client: "SCI Souza Habitat", moa: "SCI Souza Habitat", moaT: "PRIVATE", ct: "DESIGN_BUILD", type: SiteType.DEVELOPMENT, region: "Littoral", budget: 760_000_000n, progress: 24, physical: 24, financial: 21, margin: 19.0, marginT: 19, dev: 1.0, status: SiteStatus.ACTIVE, dir: "MENDOMO" },
+    { code: "CHT-2026-021", name: "Aménagement zone industrielle Bonabéri", client: "MAGZI", moa: "MAGZI", moaT: "PARAPUBLIC", ct: "UNIT_PRICE", type: SiteType.DEVELOPMENT, region: "Littoral", budget: 1_050_000_000n, progress: 31, physical: 31, financial: 28, margin: 20.8, marginT: 20, dev: 0.9, status: SiteStatus.ACTIVE, dir: "MENDOMO" },
+    { code: "CHT-2026-026", name: "Forage industriel Eseka", client: "CIMENCAM", moa: "CIMENCAM", moaT: "PRIVATE", ct: "FIRM_PRICE", type: SiteType.HYDRAULIC, region: "Centre", budget: 145_000_000n, progress: 78, physical: 78, financial: 76, margin: 23.5, marginT: 22, dev: -1.2, status: SiteStatus.ACTIVE, dir: "MENDOMO" },
   ];
 
-  const dirTravaux = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
+  const dirByName = new Map(
+    createdUsers
+      .filter((u) => u.role === Role.WORKS_DIRECTOR)
+      .map((u) => [u.lastName, u.id])
+  );
 
-  // Phase 2 / fn 1.2 — distribution des 6 chantiers entre les 3 filiales (2 chacune).
-  // BatimCAM SA reste une holding pure (0 chantier). L'API /api/dashboard/dg
-  // utilise getTenantScopeIds() pour agréger sur la mère + ses enfants.
-  const siteAssignments = [
-    yaounde.id,    // CHT-2025-018  Route Yaoundé–Nsimalen (atypique pour Yaoundé mais OK pour la démo)
-    yaounde.id,    // CHT-2025-024  Immeuble R+8 Bastos
-    douala.id,     // CHT-2025-031  Pont Mfoundi (rebasculé Douala : génie civil)
-    douala.id,     // CHT-2026-003  Lotissement Odza phase 2
-    logistique.id, // CHT-2026-014  Voirie Bonabéri (Logistique gère la flotte travaux)
-    logistique.id, // CHT-2026-018  Forage AEP Mbalmayo
-  ];
-
+  // Distribution des 23 chantiers : 6 par filiale principale, le reste sur la holding.
+  // Les 4 directeurs travaux sont des users de BatimCAM SA (cross-tenant en démo).
+  const subsidiaryIds = [yaounde.id, douala.id, logistique.id];
   for (let i = 0; i < sites.length; i++) {
     const s = sites[i];
+    const tenantIdForSite = subsidiaryIds[i % subsidiaryIds.length];
+    const managerId = dirByName.get(s.dir) ?? createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR)?.id;
+    const startDate = new Date(2025, 0, 15 + (i % 18) * 7);
+    const plannedEndDate = new Date(2026, 6 + (i % 6), 30);
+
+    const actualSpentBig = BigInt(Math.round(Number(s.budget) * (s.financial / 100)));
+
     await prisma.site.create({
       data: {
-        ...s,
-        tenantId: siteAssignments[i],
-        startDate: new Date("2025-01-15"),
-        plannedEndDate: new Date("2026-12-31"),
-        managerId: dirTravaux?.id, // le manager reste un user de la holding (cross-tenant en démo)
+        code: s.code,
+        name: s.name,
+        client: s.client,
+        type: s.type,
+        region: s.region,
+        budget: s.budget,
+        progress: s.progress,
+        margin: s.margin,
+        status: s.status,
+        actualSpentAmount: actualSpentBig,
+        deviationPercent: s.dev,
+        physicalProgress: s.physical,
+        financialProgress: s.financial,
+        marginTarget: s.marginT,
+        moaName: s.moa,
+        moaTypeKind: s.moaT as any,
+        contractTypeKind: s.ct as any,
+        tenantId: tenantIdForSite,
+        startDate,
+        plannedEndDate,
+        managerId,
       },
     });
   }
-  console.log(`✓ ${sites.length} chantiers créés (2 par filiale)`);
+  console.log(`✓ ${sites.length} chantiers créés (4 directeurs travaux, 23 chantiers actifs)`);
+
+  // Alias rétro-compatible : certaines sections du seed utilisent encore `dirTravaux`.
+  const dirTravaux = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
+  void dirTravaux;
 
   // ===== CONTRATS / PHOTOS / ALERTES (Phase 2 / Bloc 3 — fn 3.1) =====
   const allSites = await prisma.site.findMany({

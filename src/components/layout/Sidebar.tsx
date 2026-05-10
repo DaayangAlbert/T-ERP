@@ -32,6 +32,12 @@ import {
   ScrollText,
   Receipt,
   GraduationCap,
+  HardHat,
+  ListChecks,
+  Wrench,
+  ClipboardCheck,
+  Network,
+  ShieldAlert,
   type LucideIcon,
 } from "lucide-react";
 
@@ -56,6 +62,21 @@ const DG_SECTION: NavSection = {
     { label: "Mes objectifs", href: "/dg/objectifs", icon: Target },
     { label: "Trésorerie prévisionnelle", href: "/dg/tresorerie-previsionnelle", icon: TrendingUp },
     { label: "Reporting CA", href: "/dg/reporting-ca", icon: ClipboardList },
+  ],
+};
+
+// Section exclusive à la Direction Technique (Daniel ESSOMBA).
+const DT_SECTION: NavSection = {
+  title: "Espace Direction Technique",
+  items: [
+    { label: "Tableau de bord", href: "/dt", icon: LayoutDashboard },
+    { label: "Portefeuille chantiers", href: "/dt/portefeuille", icon: Building2, badge: { value: "23" } },
+    { label: "Études et offres", href: "/dt/etudes", icon: ClipboardList, badge: { value: "8" } },
+    { label: "Méthodes et planification", href: "/dt/methodes", icon: Wrench },
+    { label: "Validation marchés", href: "/dt/validations", icon: ClipboardCheck, badge: { value: "5", alert: true } },
+    { label: "Plan de charge équipes", href: "/dt/charge", icon: Network },
+    { label: "Sous-traitance", href: "/dt/sous-traitance", icon: HardHat, badge: { value: "42" } },
+    { label: "QHSE", href: "/dt/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
   ],
 };
 
@@ -144,8 +165,13 @@ export function Sidebar() {
   // Pour le DG, on retire "Tableau de bord" (PILOTAGE) car il fait doublon avec "Tableau de bord DG" (ESPACE DG).
   // Le DG voit aussi l'Espace DAF (lecture seule). Le DAF voit son espace en haut (action).
   // La RH (Sandrine) a son propre espace "Espace RH" prepended.
+  // Le DT (Daniel ESSOMBA) a son propre espace "Espace Direction Technique" prepended.
   const cleanedNav = NAV.map((section) =>
-    section.title === "Pilotage" && (user?.role === "DG" || user?.role === "DAF" || user?.role === "HR")
+    section.title === "Pilotage" &&
+    (user?.role === "DG" ||
+      user?.role === "DAF" ||
+      user?.role === "HR" ||
+      user?.role === "TECH_DIRECTOR")
       ? { ...section, items: section.items.filter((i) => i.href !== "/dashboard") }
       : section
   );
@@ -156,7 +182,9 @@ export function Sidebar() {
         ? [DAF_SECTION, ...cleanedNav]
         : user?.role === "DG"
           ? [DG_SECTION, DAF_SECTION, ...cleanedNav]
-          : NAV;
+          : user?.role === "TECH_DIRECTOR"
+            ? [DT_SECTION, ...cleanedNav]
+            : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
