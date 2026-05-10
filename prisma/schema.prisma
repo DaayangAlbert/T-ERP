@@ -1093,6 +1093,29 @@ model DafSettings {
 // ========================================
 // RH — Préférences & alertes (RH Bloc 0)
 // ========================================
+model RhAlert {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      RhAlertType
+  severity  AlertSeverity
+  title     String
+  details   String?
+  link      String?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, resolved])
+  @@map("rh_alerts")
+}
+
+enum RhAlertType {
+  MEDICAL_VISIT_DUE
+  TRAINING_RECYCLE_DUE
+  CDD_ENDING
+  LEAVE_REQUEST_PENDING
+  PAYROLL_INPUT_DEADLINE
+}
+
 model RhSettings {
   id           String   @id @default(cuid())
   userId       String   @unique

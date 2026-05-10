@@ -9,6 +9,12 @@ import { SuccessionOrgChart } from "@/components/hr/SuccessionOrgChart";
 import { SocialIndicatorsDashboard } from "@/components/hr/SocialIndicatorsDashboard";
 import { TrainingsCalendar } from "@/components/hr/TrainingsCalendar";
 import { useAuth } from "@/hooks/useAuth";
+import { useRhDashboard } from "@/hooks/useRhDashboard";
+import { RhKpiRow } from "@/components/rh/dashboard/RhKpiRow";
+import { RhAlertsList } from "@/components/rh/dashboard/RhAlertsList";
+import { HeadcountEvolutionChart } from "@/components/rh/dashboard/HeadcountEvolutionChart";
+import { CategoryDonut } from "@/components/rh/dashboard/CategoryDonut";
+import { HiringPipelineTable } from "@/components/rh/dashboard/HiringPipelineTable";
 import { clsx } from "clsx";
 
 type Tab = "overview" | "payroll" | "succession" | "social" | "trainings";
@@ -21,18 +27,40 @@ const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
   { key: "trainings", label: "Formations", icon: <GraduationCap className="h-3.5 w-3.5" /> },
 ];
 
-function RhDashboardPlaceholder() {
+function RhDashboardScreen() {
+  const { data, isLoading } = useRhDashboard();
+
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Tableau de bord RH</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Bienvenue Sandrine. Le tableau de bord complet sera livré à la prochaine fonction (1.1).
-        </p>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Tableau de bord RH</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Vue d&apos;ensemble pour Sandrine ONANA, Responsable RH.
+          </p>
+        </div>
       </header>
-      <div className="rounded-xl border border-dashed border-line bg-white p-4 text-[12.5px] text-ink-3">
-        Bootstrap Espace RH terminé. Sidebar enrichie avec 8 entrées.
-      </div>
+
+      {isLoading || !data ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-surface-alt" />
+            ))}
+          </div>
+          <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />
+        </div>
+      ) : (
+        <>
+          <RhKpiRow kpis={data.kpis} />
+          <RhAlertsList items={data.alerts} />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <HeadcountEvolutionChart data={data.headcountEvolution12m} />
+            <CategoryDonut data={data.categoryBreakdown} />
+          </div>
+          <HiringPipelineTable items={data.hiringPipeline} />
+        </>
+      )}
     </div>
   );
 }
@@ -41,7 +69,7 @@ export default function RhPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("overview");
 
-  if (user?.role === "HR") return <RhDashboardPlaceholder />;
+  if (user?.role === "HR") return <RhDashboardScreen />;
 
   return (
     <>

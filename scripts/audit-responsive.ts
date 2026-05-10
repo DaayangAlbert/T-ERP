@@ -13,7 +13,7 @@
  *   AUDIT_EMAIL=sandrine@batimcam.cm (par défaut)
  *   AUDIT_PASSWORD=Demo2026!
  */
-import { chromium } from "playwright";
+import { chromium } from "@playwright/test";
 import path from "node:path";
 import { existsSync, mkdirSync } from "node:fs";
 
