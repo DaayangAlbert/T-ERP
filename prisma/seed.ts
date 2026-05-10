@@ -1761,6 +1761,57 @@ async function main() {
   }
   console.log(`✓ ${bonusSeed.length} bonus de performance DG créés (3 ans)`);
 
+  // ===== PAIE DAF (DAF Bloc 4 / fn 4.2) =====
+  const dafForPayroll = createdUsers.find((u) => u.role === Role.DAF);
+  if (dafForPayroll) {
+    // 4 avantages spécifiques DAF
+    const dafBenefits: Array<{ type: "VEHICLE" | "PHONE" | "INSURANCE" | "OTHER"; desc: string; monthly: bigint; fiscal: bigint }> = [
+      { type: "VEHICLE", desc: "Toyota Prado de fonction (sans chauffeur)", monthly: 320_000n, fiscal: 130_000n },
+      { type: "PHONE", desc: "iPhone Pro + forfait 30 GB", monthly: 22_000n, fiscal: 11_000n },
+      { type: "INSURANCE", desc: "Mutuelle santé famille (4 personnes) — gamme premium", monthly: 65_000n, fiscal: 32_500n },
+      { type: "OTHER", desc: "Cotisation expert-comptable / formation continue DAF", monthly: 35_000n, fiscal: 0n },
+    ];
+    for (const b of dafBenefits) {
+      await prisma.benefitInKind.create({
+        data: {
+          userId: dafForPayroll.id,
+          type: b.type,
+          description: b.desc,
+          monthlyValue: b.monthly,
+          fiscalValue: b.fiscal,
+          startDate: new Date("2020-09-01"),
+        },
+      });
+    }
+    // 9 bonus DAF sur 3 ans (3 mécanismes financiers × 3 années)
+    const dafBonusSeed = [
+      { year: 2024, type: "ANNUAL_RESULT" as const, formula: "1% du résultat net si > seuil 500 M FCFA", target: 14_000_000n, actual: 11_500_000n, status: "PAID" as const, paid: new Date("2025-04-15") },
+      { year: 2024, type: "OBJECTIVES" as const, formula: "Réduction DSO : 100 K / jour gagné (max 8 jours)", target: 8_000_000n, actual: 5_400_000n, status: "PAID" as const, paid: new Date("2025-04-15") },
+      { year: 2024, type: "OBJECTIVES" as const, formula: "Conformité fiscale 100% dépôts à temps", target: 2_500_000n, actual: 2_500_000n, status: "PAID" as const, paid: new Date("2025-04-15") },
+      { year: 2025, type: "ANNUAL_RESULT" as const, formula: "1% du résultat net si > seuil 500 M FCFA", target: 18_000_000n, actual: 16_200_000n, status: "PAID" as const, paid: new Date("2026-04-15") },
+      { year: 2025, type: "OBJECTIVES" as const, formula: "Réduction DSO : 100 K / jour gagné (max 8 jours)", target: 8_000_000n, actual: 6_800_000n, status: "PAID" as const, paid: new Date("2026-04-15") },
+      { year: 2025, type: "OBJECTIVES" as const, formula: "Conformité fiscale 100% dépôts à temps", target: 2_500_000n, actual: 1_875_000n, status: "PAID" as const, paid: new Date("2026-04-15") },
+      { year: 2026, type: "ANNUAL_RESULT" as const, formula: "1% du résultat net si > seuil 500 M FCFA", target: 20_000_000n, actual: 8_400_000n, status: "PROVISIONED" as const, paid: null },
+      { year: 2026, type: "OBJECTIVES" as const, formula: "Réduction DSO : 100 K / jour gagné (max 8 jours)", target: 8_000_000n, actual: 3_200_000n, status: "PROVISIONED" as const, paid: null },
+      { year: 2026, type: "OBJECTIVES" as const, formula: "Conformité fiscale 100% dépôts à temps", target: 2_500_000n, actual: null, status: "TARGETED" as const, paid: null },
+    ];
+    for (const b of dafBonusSeed) {
+      await prisma.performanceBonus.create({
+        data: {
+          userId: dafForPayroll.id,
+          fiscalYear: b.year,
+          bonusType: b.type,
+          formula: b.formula,
+          targetAmount: b.target,
+          actualAmount: b.actual,
+          status: b.status,
+          paidAt: b.paid,
+        },
+      });
+    }
+    console.log(`✓ Paie DAF Marie : ${dafBenefits.length} avantages + ${dafBonusSeed.length} bonus financiers (3 ans)`);
+  }
+
   // ===== OFFRES D'EMPLOI =====
   const jobs = [
     {
