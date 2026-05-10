@@ -154,6 +154,8 @@ model User {
   dafSettings           DafSettings?
   signaturePower        UserSignaturePower?
   rhSettings            RhSettings?
+  employeeProfile       EmployeeProfile?
+  employeeDocuments     EmployeeDocument[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -1093,6 +1095,52 @@ model DafSettings {
 // ========================================
 // RH — Préférences & alertes (RH Bloc 0)
 // ========================================
+// ========================================
+// RH — Personnel enrichi (RH Bloc 1 / fn 1.2)
+// ========================================
+model EmployeeProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  identityCard     String?  // CNI
+  familyStatus     String?  // SINGLE / MARRIED / WIDOWED / DIVORCED / FREE_UNION
+  childrenCount    Int      @default(0)
+  address          Json?    // { city, neighborhood, line1 }
+  emergencyContact Json?    // { name, phone, relation }
+  bankAccount      Json?    // { bank, iban, swift }
+  cnpsNumber       String?  // surcharge si distinct du User.cnpsNumber
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("employee_profiles")
+}
+
+model EmployeeDocument {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       EmployeeDocumentType
+  title      String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+  uploadedBy String
+
+  @@index([userId, uploadedAt])
+  @@map("employee_documents")
+}
+
+enum EmployeeDocumentType {
+  CNI
+  CONTRACT
+  MEDICAL_CERT
+  TRAINING_CERT
+  BANK_RIB
+  CV
+  OTHER
+}
+
 model RhAlert {
   id        String   @id @default(cuid())
   tenantId  String
