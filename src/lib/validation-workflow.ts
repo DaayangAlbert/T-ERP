@@ -70,6 +70,30 @@ const TEMPLATES: Record<ValidationType, Array<{ key: string; label: string; role
   OTHER: [
     { key: "DG", label: "Validation DG", role: "DG" },
   ],
+  // DT — Bloc 1.4 : workflow technique avec étape DT puis DAF puis DG
+  AMENDMENT: [
+    { key: "DT", label: "Validation DT", role: "TECH_DIRECTOR" },
+    { key: "DAF", label: "Validation DAF", role: "DAF" },
+    { key: "DG", label: "Validation DG", role: "DG" },
+  ],
+  SUBCONTRACTING: [
+    { key: "DT", label: "Validation DT", role: "TECH_DIRECTOR" },
+    { key: "DAF", label: "Validation DAF", role: "DAF" },
+    { key: "DG", label: "Validation DG", role: "DG" },
+  ],
+  EQUIPMENT: [
+    { key: "DT", label: "Validation DT", role: "TECH_DIRECTOR" },
+    { key: "DAF", label: "Validation DAF", role: "DAF" },
+    { key: "DG", label: "Validation DG", role: "DG" },
+  ],
+  SPECIAL_METHOD: [
+    { key: "DT", label: "Validation DT", role: "TECH_DIRECTOR" },
+    { key: "DG", label: "Validation DG", role: "DG" },
+  ],
+  TECHNICAL_HANDOVER: [
+    { key: "DT", label: "Validation DT", role: "TECH_DIRECTOR" },
+    { key: "DG", label: "Validation DG", role: "DG" },
+  ],
 };
 
 export function buildDefaultWorkflow(type: ValidationType): Workflow {

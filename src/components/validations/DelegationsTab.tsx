@@ -15,6 +15,11 @@ const TYPE_LABEL: Record<ValidationType, string> = {
   CONTRACT: "Marché",
   LEAVE: "Congé",
   OTHER: "Autre",
+  AMENDMENT: "Avenant marché",
+  SUBCONTRACTING: "Sous-traitance",
+  EQUIPMENT: "Acquisition matériel",
+  SPECIAL_METHOD: "Méthode spéciale",
+  TECHNICAL_HANDOVER: "Mise en service",
 };
 
 export function DelegationsTab() {
