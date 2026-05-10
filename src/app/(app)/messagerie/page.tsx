@@ -8,6 +8,7 @@ import { useConversations } from "@/hooks/useMessaging";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationView } from "@/components/messaging/ConversationView";
 import { StrategicGroupsSection } from "@/components/messaging/StrategicGroupsSection";
+import { DafExternalContactsCompact } from "@/components/daf/messaging/DafExternalContacts";
 import { useProfile } from "@/hooks/useProfile";
 import { usePriorityInbox } from "@/hooks/useDgMessaging";
 
@@ -27,6 +28,7 @@ export default function MessageriePage() {
 
   const active = data?.items.find((c) => c.id === activeId) ?? null;
   const isDg = profile?.role === "DG";
+  const isDaf = profile?.role === "DAF";
 
   return (
     <div className="-m-5 h-[calc(100vh-3.5rem-2.5rem)] overflow-hidden border border-line bg-white">
@@ -37,10 +39,11 @@ export default function MessageriePage() {
             active ? "hidden md:block" : "block"
           )}
         >
-          {isDg && (
+          {(isDg || isDaf) && (
             <>
               <div className="p-2">
-                <StrategicGroupsSection />
+                <StrategicGroupsSection variant={isDaf ? "daf" : "dg"} />
+                {isDaf && <DafExternalContactsCompact />}
                 {priority && priority.summary.total > 0 && (
                   <Link
                     href="/messagerie/prioritaires"

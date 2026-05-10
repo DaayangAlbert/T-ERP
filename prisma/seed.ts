@@ -2384,6 +2384,100 @@ async function main() {
   }
   console.log(`✓ ${polls.length} sondages historiques créés`);
 
+  // ===== MESSAGERIE DAF — Groupes financiers (DAF Bloc 4 / fn 4.3) =====
+  const accountantForMsg = createdUsers.find((u) => u.role === Role.ACCOUNTANT);
+  const sitMgrForMsg = createdUsers.find((u) => u.role === Role.SITE_MANAGER);
+
+  const dafGroups = [
+    {
+      name: "Cellule trésorerie DAF",
+      members: [dafForMsg, accountantForMsg, hrForMsg].filter(Boolean),
+      pinned: true,
+      messages: [
+        { sender: dafForMsg.id, content: "Solde consolidé ce matin : 412 M FCFA. Pic de décaissement vendredi (paie + Total).", priority: "HIGH" as const },
+        { sender: accountantForMsg?.id ?? dafForMsg.id, content: "Confirmé. Virement Total programmé à 14h, paie à 16h.", priority: "NORMAL" as const },
+      ],
+    },
+    {
+      name: "Banques relationship managers",
+      members: [dafForMsg, dgForMsg].filter(Boolean),
+      pinned: true,
+      messages: [
+        { sender: dafForMsg.id, content: "Reporting Q1 envoyé aux 5 RM. UBA accuse réception et propose RDV jeudi 14h.", priority: "NORMAL" as const, mentions: [dgForMsg.id] },
+      ],
+    },
+    {
+      name: "Comité d'audit (DAF + DG + CAC)",
+      members: [dafForMsg, dgForMsg].filter(Boolean),
+      pinned: true,
+      messages: [
+        { sender: dafForMsg.id, content: "Pré-audit T2 chez PwC le 24 mai. Documents préparatoires partagés sur la GED.", priority: "HIGH" as const, mentions: [dgForMsg.id] },
+      ],
+    },
+    {
+      name: "Recouvrement (DAF + commerciaux)",
+      members: [dafForMsg, worksForMsg, sitMgrForMsg].filter(Boolean),
+      pinned: false,
+      messages: [
+        { sender: dafForMsg.id, content: "5 créances > 90j à relancer cette semaine. Commune Yaoundé I prioritaire (180 M).", priority: "URGENT" as const, mentions: [worksForMsg?.id ?? dgForMsg.id] },
+        { sender: worksForMsg?.id ?? dgForMsg.id, content: "Je passe au siège jeudi pour faire signer la situation 8.", priority: "NORMAL" as const },
+      ],
+    },
+  ];
+
+  let dafMsgCount = 0;
+  for (const g of dafGroups) {
+    if (g.members.length === 0) continue;
+    const conv = await prisma.conversation.create({
+      data: {
+        tenantId: tenant.id,
+        name: g.name,
+        isGroup: true,
+        isStrategic: true,
+        pinnedAt: g.pinned ? new Date() : null,
+        lastMessageAt: new Date(),
+        participants: {
+          create: g.members.map((u) => ({ userId: u!.id, isPinned: g.pinned })),
+        },
+      },
+    });
+    for (const m of g.messages) {
+      await prisma.message.create({
+        data: {
+          conversationId: conv.id,
+          senderId: m.sender,
+          content: m.content,
+          priority: m.priority,
+          mentions: (m as { mentions?: string[] }).mentions ?? [],
+        },
+      });
+      dafMsgCount++;
+    }
+  }
+
+  // Sondage DAF pré-prêt : "Validation paie ce mois ?"
+  const cellulConv = await prisma.conversation.findFirst({
+    where: { tenantId: tenant.id, name: "Cellule trésorerie DAF" },
+  });
+  if (cellulConv) {
+    await prisma.message.create({
+      data: {
+        conversationId: cellulConv.id,
+        senderId: dafForMsg.id,
+        content: "📊 Sondage : Validation paie ce mois ?",
+        pollData: {
+          question: "Validation paie mai 2026 ?",
+          options: [
+            { label: "OK pour valider", votes: [] },
+            { label: "Besoin ajustements", votes: [] },
+            { label: "À reporter", votes: [] },
+          ],
+        } as object,
+      },
+    });
+  }
+  console.log(`✓ ${dafGroups.length} groupes financiers DAF créés (${dafMsgCount} messages + 1 sondage)`);
+
   // ===== VALIDATIONS DG (Phase 2 / Bloc 2 — fn 2.1) =====
   const dgUser = createdUsers.find((u) => u.role === Role.DG)!;
   const dafUser = createdUsers.find((u) => u.role === Role.DAF)!;
