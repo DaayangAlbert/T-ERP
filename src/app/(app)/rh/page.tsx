@@ -8,6 +8,7 @@ import { TopSalariesTable } from "@/components/hr/TopSalariesTable";
 import { SuccessionOrgChart } from "@/components/hr/SuccessionOrgChart";
 import { SocialIndicatorsDashboard } from "@/components/hr/SocialIndicatorsDashboard";
 import { TrainingsCalendar } from "@/components/hr/TrainingsCalendar";
+import { useAuth } from "@/hooks/useAuth";
 import { clsx } from "clsx";
 
 type Tab = "overview" | "payroll" | "succession" | "social" | "trainings";
@@ -20,8 +21,27 @@ const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
   { key: "trainings", label: "Formations", icon: <GraduationCap className="h-3.5 w-3.5" /> },
 ];
 
+function RhDashboardPlaceholder() {
+  return (
+    <div className="space-y-3">
+      <header className="border-b border-line pb-3">
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Tableau de bord RH</h1>
+        <p className="mt-1 text-[12.5px] text-ink-3">
+          Bienvenue Sandrine. Le tableau de bord complet sera livré à la prochaine fonction (1.1).
+        </p>
+      </header>
+      <div className="rounded-xl border border-dashed border-line bg-white p-4 text-[12.5px] text-ink-3">
+        Bootstrap Espace RH terminé. Sidebar enrichie avec 8 entrées.
+      </div>
+    </div>
+  );
+}
+
 export default function RhPage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("overview");
+
+  if (user?.role === "HR") return <RhDashboardPlaceholder />;
 
   return (
     <>

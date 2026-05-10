@@ -153,6 +153,7 @@ model User {
   performanceBonuses    PerformanceBonus[]
   dafSettings           DafSettings?
   signaturePower        UserSignaturePower?
+  rhSettings            RhSettings?
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -1089,6 +1090,20 @@ model DafSettings {
 // ========================================
 // PROFIL DAF — Pouvoirs de signature (DAF Bloc 4 / fn 4.1)
 // ========================================
+// ========================================
+// RH — Préférences & alertes (RH Bloc 0)
+// ========================================
+model RhSettings {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertsConfig Json?    // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("rh_settings")
+}
+
 model UserSignaturePower {
   id              String   @id @default(cuid())
   userId          String   @unique

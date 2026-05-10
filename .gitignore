@@ -54,3 +54,6 @@ public/uploads/
 
 # OS
 Thumbs.db
+
+# RH protocol responsive
+.audit-screens/

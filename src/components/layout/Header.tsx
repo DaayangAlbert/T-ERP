@@ -27,7 +27,7 @@ export function Header({ onProfileClick, onTenantClick }: Props) {
         <Menu className="h-5 w-5" />
       </button>
 
-      <div className="flex h-full min-w-[220px] items-center gap-2.5 border-r border-[#1F1230] px-4 flex-shrink-0">
+      <div className="flex h-full min-w-0 md:min-w-[220px] items-center gap-2 md:gap-2.5 border-r border-[#1F1230] px-2 md:px-4 flex-shrink min-w-0">
         <Logo className="h-7 w-7 flex-shrink-0" />
         <span className="text-sm font-bold whitespace-nowrap flex-shrink-0">T-ERP</span>
         <TenantBadge tenant={tenant} onClick={onTenantClick} />

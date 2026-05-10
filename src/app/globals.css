@@ -31,3 +31,27 @@ body {
   font-family: var(--font-plex-mono), "IBM Plex Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
+
+/* Espace RH — protection débordements horizontaux (RH Bloc 0) */
+[data-rh-screen] {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+[data-rh-screen] .rh-page {
+  max-width: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 16px;
+}
+@media (max-width: 768px) {
+  [data-rh-screen] .rh-page {
+    padding: 12px;
+  }
+}
+[data-rh-screen] .rh-page > * {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}

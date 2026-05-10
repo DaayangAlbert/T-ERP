@@ -31,6 +31,7 @@ import {
   Coins,
   ScrollText,
   Receipt,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,21 @@ const DG_SECTION: NavSection = {
     { label: "Mes objectifs", href: "/dg/objectifs", icon: Target },
     { label: "Trésorerie prévisionnelle", href: "/dg/tresorerie-previsionnelle", icon: TrendingUp },
     { label: "Reporting CA", href: "/dg/reporting-ca", icon: ClipboardList },
+  ],
+};
+
+// Section exclusive à la RH (Sandrine ONANA).
+const RH_SECTION: NavSection = {
+  title: "Espace RH",
+  items: [
+    { label: "Tableau de bord RH", href: "/rh", icon: LayoutDashboard },
+    { label: "Personnel", href: "/rh/personnel", icon: Users, badge: { value: "487" } },
+    { label: "Saisie de paie", href: "/rh/paie", icon: CreditCard, badge: { value: "Avr", alert: true } },
+    { label: "Recrutement", href: "/rh/recrutement", icon: Briefcase, badge: { value: "12" } },
+    { label: "Congés & absences", href: "/rh/conges", icon: Calendar, badge: { value: "7", alert: true } },
+    { label: "Formations", href: "/rh/formations", icon: GraduationCap },
+    { label: "Visites médicales", href: "/rh/medical", icon: ScrollText, badge: { value: "5", alert: true } },
+    { label: "Disciplinaire", href: "/rh/disciplinaire", icon: Shield, badge: { value: "3" } },
   ],
 };
 
@@ -127,17 +143,20 @@ export function Sidebar() {
   const { user } = useAuth();
   // Pour le DG, on retire "Tableau de bord" (PILOTAGE) car il fait doublon avec "Tableau de bord DG" (ESPACE DG).
   // Le DG voit aussi l'Espace DAF (lecture seule). Le DAF voit son espace en haut (action).
+  // La RH (Sandrine) a son propre espace "Espace RH" prepended.
   const cleanedNav = NAV.map((section) =>
-    section.title === "Pilotage" && (user?.role === "DG" || user?.role === "DAF")
+    section.title === "Pilotage" && (user?.role === "DG" || user?.role === "DAF" || user?.role === "HR")
       ? { ...section, items: section.items.filter((i) => i.href !== "/dashboard") }
       : section
   );
   const sections: NavSection[] =
-    user?.role === "DAF"
-      ? [DAF_SECTION, ...cleanedNav]
-      : user?.role === "DG"
-        ? [DG_SECTION, DAF_SECTION, ...cleanedNav]
-        : NAV;
+    user?.role === "HR"
+      ? [RH_SECTION, ...cleanedNav]
+      : user?.role === "DAF"
+        ? [DAF_SECTION, ...cleanedNav]
+        : user?.role === "DG"
+          ? [DG_SECTION, DAF_SECTION, ...cleanedNav]
+          : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
