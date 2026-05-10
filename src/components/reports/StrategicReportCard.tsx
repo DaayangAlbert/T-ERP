@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReportType } from "@prisma/client";
-import { ArrowRight, FileText, Calendar, BookOpen, FileBarChart } from "lucide-react";
+import { ArrowRight, FileText, Calendar, BookOpen, FileBarChart, Wallet, ClipboardList, Landmark, ShieldCheck, FileSpreadsheet, type LucideIcon } from "lucide-react";
 
 interface Props {
   type: ReportType;
@@ -12,12 +12,17 @@ interface Props {
   pages: number;
 }
 
-const ICON: Record<ReportType, typeof FileText> = {
+const ICON: Record<ReportType, LucideIcon> = {
   EXECUTIVE_SUMMARY: FileText,
   MONTHLY_DASHBOARD: FileBarChart,
   ANNUAL_GROUP: BookOpen,
   QUARTERLY_NOTE: Calendar,
   CUSTOM: FileText,
+  DAF_TREASURY_WEEKLY: Wallet,
+  DAF_FINANCIAL_MONTHLY: ClipboardList,
+  DAF_BANKING_QUARTERLY: Landmark,
+  DAF_CAC_QUARTERLY: ShieldCheck,
+  DAF_DSF_PREP: FileSpreadsheet,
 };
 
 export function StrategicReportCard({ type, title, description, features, pages }: Props) {

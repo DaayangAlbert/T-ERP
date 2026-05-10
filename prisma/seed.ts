@@ -2823,6 +2823,90 @@ async function main() {
   });
   console.log(`✓ 8 rapports historiques + 2 planifiés créés`);
 
+  // ===== RAPPORTS DAF (DAF Bloc 3 / fn 3.2) =====
+  const dafReportAuthor = createdUsers.find((u) => u.role === Role.DAF) ?? createdUsers[0];
+
+  // 2 rapports DAF historiques
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dafReportAuthor.id,
+      type: ReportType.DAF_TREASURY_WEEKLY,
+      title: "Tréso hebdo S18-2026",
+      period: "S18-2026",
+      parameters: { scope: "GROUP", signature: "Marie NGONO, DAF" } as object,
+      blocks: TEMPLATE_BLOCKS.DAF_TREASURY_WEEKLY as object,
+      data: {} as object,
+      status: ReportStatus.GENERATED,
+      generatedAt: new Date(Date.now() - 7 * 86_400_000),
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dafReportAuthor.id,
+      type: ReportType.DAF_FINANCIAL_MONTHLY,
+      title: "Synthèse financière avril 2026",
+      period: "2026-04",
+      parameters: { scope: "GROUP", signature: "Marie NGONO, DAF" } as object,
+      blocks: TEMPLATE_BLOCKS.DAF_FINANCIAL_MONTHLY as object,
+      data: {} as object,
+      status: ReportStatus.GENERATED,
+      generatedAt: new Date(Date.now() - 4 * 86_400_000),
+    },
+  });
+
+  // 3 rapports DAF planifiés
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dafReportAuthor.id,
+      type: ReportType.DAF_TREASURY_WEEKLY,
+      title: "Tréso hebdo (auto lundi)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.DAF_TREASURY_WEEKLY as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "WEEKLY_MONDAY_06",
+      recipients: [{ email: "albert@batimcam.cm", name: "Albert DAAYANG (DG)" }] as object,
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dafReportAuthor.id,
+      type: ReportType.DAF_FINANCIAL_MONTHLY,
+      title: "Synthèse mensuelle COMEX (le 5)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.DAF_FINANCIAL_MONTHLY as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "MONTHLY_FIFTH_06",
+      recipients: [
+        { email: "albert@batimcam.cm", name: "Albert DAAYANG (DG)" },
+        { email: "comex@batimcam.cm", name: "COMEX" },
+      ] as object,
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: dafReportAuthor.id,
+      type: ReportType.DAF_CAC_QUARTERLY,
+      title: "Reporting CAC (J-15 réunion)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.DAF_CAC_QUARTERLY as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "CAC_15D_BEFORE",
+      recipients: [{ email: "cac@cabinet-audit.cm", name: "Cabinet CAC référent" }] as object,
+    },
+  });
+  console.log(`✓ 2 rapports DAF historiques + 3 planifiés créés`);
+
   // ===== SESSIONS ACTIVES (Phase 2 / Bloc 2 — fn 2.4) =====
   // 20 sessions simulées (IPs variées, dont 2 suspectes)
   const ipPool = ["41.205.18.42", "154.0.5.111", "92.184.108.5", "185.220.101.8", "154.0.5.99", "169.255.58.220"];

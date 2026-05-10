@@ -36,6 +36,16 @@ export const REPORT_BLOCKS: ReportBlock[] = [
   // Textes
   { key: "text.summary", label: "Synthèse exécutive (rédigée)", category: "TEXT", description: "Texte libre du DG" },
   { key: "text.actions", label: "Plan d'actions", category: "TEXT", description: "Décisions et arbitrages" },
+  // DAF Bloc 3 / fn 3.2 — Blocs financiers DAF
+  { key: "kpi.dso", label: "DSO (jours)", category: "KPI", description: "Délai moyen d'encaissement clients" },
+  { key: "kpi.bfr", label: "BFR", category: "KPI", description: "Besoin en fonds de roulement" },
+  { key: "kpi.netResult", label: "Résultat net YTD", category: "KPI", description: "Cumul depuis le 1er janvier" },
+  { key: "kpi.payrollMass", label: "Masse salariale chargée", category: "KPI", description: "Total mensuel" },
+  { key: "chart.banks", label: "Soldes bancaires multi-banques", category: "CHART", description: "Histogramme par banque" },
+  { key: "chart.aging_balance", label: "Balance âgée", category: "CHART", description: "Créances par tranche d'âge" },
+  { key: "table.pnl", label: "Compte de résultat", category: "TABLE", description: "P&L synthétique du mois" },
+  { key: "table.balance", label: "Bilan synthétique", category: "TABLE", description: "Actif/passif au format DAF" },
+  { key: "table.tax_deadlines", label: "Échéances fiscales", category: "TABLE", description: "Calendrier DGI/CNPS" },
 ];
 
 export const REPORT_TYPE_LABEL: Record<string, string> = {
@@ -44,6 +54,11 @@ export const REPORT_TYPE_LABEL: Record<string, string> = {
   ANNUAL_GROUP: "Bilan annuel groupe",
   QUARTERLY_NOTE: "Note trimestrielle",
   CUSTOM: "Sur-mesure",
+  DAF_TREASURY_WEEKLY: "Tréso hebdo DAF",
+  DAF_FINANCIAL_MONTHLY: "Synthèse financière DAF",
+  DAF_BANKING_QUARTERLY: "Reporting bancaire DAF",
+  DAF_CAC_QUARTERLY: "Reporting CAC",
+  DAF_DSF_PREP: "Préparation DSF",
 };
 
 // Templates pré-configurés : quels blocs sont inclus pour chaque type stratégique
@@ -61,4 +76,9 @@ export const TEMPLATE_BLOCKS: Record<string, string[]> = {
   ],
   QUARTERLY_NOTE: ["kpi.revenue", "kpi.margin", "kpi.treasury", "chart.revenue_trend", "table.subsidiaries", "text.summary"],
   CUSTOM: [],
+  DAF_TREASURY_WEEKLY: ["kpi.treasury", "kpi.dso", "kpi.bfr", "chart.banks", "chart.cashflow", "text.summary"],
+  DAF_FINANCIAL_MONTHLY: ["kpi.revenue", "kpi.netResult", "kpi.bfr", "kpi.treasury", "table.pnl", "chart.cashflow", "text.summary"],
+  DAF_BANKING_QUARTERLY: ["kpi.treasury", "kpi.bfr", "chart.banks", "table.balance", "table.pnl", "text.summary"],
+  DAF_CAC_QUARTERLY: ["kpi.revenue", "kpi.netResult", "table.pnl", "table.balance", "table.tax_deadlines", "text.summary", "text.actions"],
+  DAF_DSF_PREP: ["table.pnl", "table.balance", "kpi.payrollMass", "table.tax_deadlines", "text.summary"],
 };

@@ -1246,11 +1246,17 @@ model Report {
 }
 
 enum ReportType {
-  EXECUTIVE_SUMMARY     // Synthèse exécutive hebdo
-  MONTHLY_DASHBOARD     // Tableau de bord stratégique mensuel
-  ANNUAL_GROUP          // Bilan annuel groupe
-  QUARTERLY_NOTE        // Note d'activité trimestrielle
-  CUSTOM                // Sur-mesure
+  EXECUTIVE_SUMMARY     // Synthèse exécutive hebdo (DG)
+  MONTHLY_DASHBOARD     // Tableau de bord stratégique mensuel (DG)
+  ANNUAL_GROUP          // Bilan annuel groupe (DG)
+  QUARTERLY_NOTE        // Note d'activité trimestrielle (DG)
+  CUSTOM                // Sur-mesure (DG/DAF)
+  // DAF Bloc 3 / fn 3.2 — Reportings financiers DAF
+  DAF_TREASURY_WEEKLY     // Tableau de bord trésorerie envoyé chaque lundi 6h au DG
+  DAF_FINANCIAL_MONTHLY   // Synthèse mensuelle (P&L + BFR + Tréso) le 5 du mois
+  DAF_BANKING_QUARTERLY   // Reporting bancaire trimestriel (relationship managers)
+  DAF_CAC_QUARTERLY       // Reporting CAC trimestriel (commissaires aux comptes)
+  DAF_DSF_PREP            // Préparation DSF (états financiers OHADA annuels)
 }
 
 enum ReportStatus {

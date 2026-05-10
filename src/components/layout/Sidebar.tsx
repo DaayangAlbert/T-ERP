@@ -71,6 +71,7 @@ const DAF_SECTION: NavSection = {
     { label: "Comptabilité (DAF)", href: "/daf/comptabilite", icon: FileText },
     { label: "Finances (DAF)", href: "/daf/finances", icon: Wallet },
     { label: "Achats (DAF)", href: "/daf/achats", icon: ShoppingCart },
+    { label: "Rapports financiers", href: "/daf/rapports", icon: BarChart3 },
   ],
 };
 
