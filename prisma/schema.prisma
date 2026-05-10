@@ -15,60 +15,69 @@ datasource db {
 // ========================================
 
 model Tenant {
-  id          String   @id @default(cuid())
-  slug        String   @unique // batimcam, njoya, socabtp...
-  name        String
-  taxId       String?  // N° contribuable
-  cnpsId      String?  // N° employeur CNPS
-  plan        Plan     @default(STARTER)
-  status      TenantStatus @default(ACTIVE)
-  logoUrl     String?
-  primaryColor String? @default("#A855F7")
+  id           String       @id @default(cuid())
+  slug         String       @unique // batimcam, njoya, socabtp...
+  name         String
+  taxId        String? // N° contribuable
+  cnpsId       String? // N° employeur CNPS
+  plan         Plan         @default(STARTER)
+  status       TenantStatus @default(ACTIVE)
+  logoUrl      String?
+  primaryColor String?      @default("#A855F7")
 
   // Hiérarchie de groupe (Phase 2 / fn 1.2)
   // parentId pointe vers le tenant mère ; children est le côté inverse.
   // isGroup = true sur la société mère pour permettre l'agrégation consolidée.
-  isGroup     Boolean  @default(false)
-  parentId    String?
-  parent      Tenant?  @relation("TenantGroup", fields: [parentId], references: [id])
-  children    Tenant[] @relation("TenantGroup")
-  sector      String?  // étiquette libre : "Bâtiment", "Routier", "Logistique"…
+  isGroup  Boolean  @default(false)
+  parentId String?
+  parent   Tenant?  @relation("TenantGroup", fields: [parentId], references: [id])
+  children Tenant[] @relation("TenantGroup")
+  sector   String? // étiquette libre : "Bâtiment", "Routier", "Logistique"…
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  users       User[]
-  sites       Site[]
-  jobOffers   JobOffer[]
-  payslips    Payslip[]
-  conversations Conversation[]
-  documents   Document[]
-  auditLogs   AuditLog[]
-  objectives  Objective[]
-  cashFlowProjections CashFlowProjection[]
-  boardReports BoardReport[]
-  validations Validation[]
-  delegations Delegation[]
-  reports     Report[]
-  settings    TenantSettings?
-  milestones  Milestone[]
-  resourceConflicts ResourceConflict[]
-  successionPlans SuccessionPlan[]
-  trainings   Training[]
-  socialIndicators SocialIndicator[]
-  financialPeriods FinancialPeriod[]
+  users                User[]
+  sites                Site[]
+  jobOffers            JobOffer[]
+  payslips             Payslip[]
+  conversations        Conversation[]
+  documents            Document[]
+  auditLogs            AuditLog[]
+  objectives           Objective[]
+  cashFlowProjections  CashFlowProjection[]
+  boardReports         BoardReport[]
+  validations          Validation[]
+  delegations          Delegation[]
+  reports              Report[]
+  settings             TenantSettings?
+  milestones           Milestone[]
+  resourceConflicts    ResourceConflict[]
+  successionPlans      SuccessionPlan[]
+  trainings            Training[]
+  socialIndicators     SocialIndicator[]
+  financialPeriods     FinancialPeriod[]
   financialCommitments FinancialCommitment[]
-  bankAccounts BankAccount[]
-  accountingPeriods AccountingPeriod[]
-  accountingEntries AccountingEntry[]
-  annualClosures AnnualClosure[]
-  suppliers   Supplier[]
-  frameworkContracts FrameworkContract[]
-  purchaseOrders PurchaseOrder[]
-  fixedAssets FixedAsset[]
-  stockMovements StockMovement[]
-  inventories Inventory[]
-  losses      Loss[]
+  bankAccounts         BankAccount[]
+  accountingPeriods    AccountingPeriod[]
+  accountingEntries    AccountingEntry[]
+  annualClosures       AnnualClosure[]
+  suppliers            Supplier[]
+  frameworkContracts   FrameworkContract[]
+  purchaseOrders       PurchaseOrder[]
+  fixedAssets          FixedAsset[]
+  stockMovements       StockMovement[]
+  inventories          Inventory[]
+  losses               Loss[]
+  // DT — Espace Direction Technique
+  dtAlerts             DtAlert[]
+  tenders              Tender[]
+  competitors          Competitor[]
+  operatingMethods     OperatingMethod[]
+  templatePlannings    TemplatePlanning[]
+  referenceRatios      ReferenceRatio[]
+  crews                Crew[]
+  certifications       Certification[]
 
   @@index([parentId])
   @@map("tenants")
@@ -93,11 +102,11 @@ enum TenantStatus {
 // ========================================
 
 model User {
-  id           String    @id @default(cuid())
-  tenantId     String?   // null pour candidats externes et super-admin
-  tenant       Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String  @id @default(cuid())
+  tenantId String? // null pour candidats externes et super-admin
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  email        String    @unique
+  email        String  @unique
   passwordHash String
   firstName    String
   lastName     String
@@ -105,57 +114,78 @@ model User {
   avatarUrl    String?
 
   // Si employé du tenant
-  employeeId   String?   @unique // ex: EMP-2018-00001
+  employeeId   String?       @unique // ex: EMP-2018-00001
   hireDate     DateTime?
-  position     String?   // intitulé du poste
-  category     String?   // catégorie pro (Cadre HC, ETAM, OQ, OS...)
+  position     String? // intitulé du poste
+  category     String? // catégorie pro (Cadre HC, ETAM, OQ, OS...)
   cnpsNumber   String?
   contractType ContractType?
 
   // Sécurité
-  twoFactorEnabled Boolean @default(false)
+  twoFactorEnabled Boolean   @default(false)
   twoFactorSecret  String?
-  emailVerified    Boolean @default(false)
+  emailVerified    Boolean   @default(false)
   lastLoginAt      DateTime?
 
   // Rôle principal (MVP — rôles avancés en phase 2)
-  role         Role     @default(EMPLOYEE)
+  role Role @default(EMPLOYEE)
 
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  // Périmètre de chantiers (Comptable Bloc 0). Vide = vue Direction (accès tous chantiers
+  // pour ACCOUNTANT) ; peuplé = restriction au sous-ensemble.
+  assignedSiteIds String[] @default([])
 
-  payslips     Payslip[]
-  applications Application[]
-  sentMessages Message[] @relation("SentMessages")
-  conversationParticipants ConversationParticipant[]
-  notifications Notification[]
-  auditLogs    AuditLog[]
-  managedSites Site[]   @relation("SiteManager")
-  dgSettings   DgSettings?
-  objectives   Objective[]
-  boardReports BoardReport[]
-  validationsInitiated  Validation[] @relation("ValidationInitiator")
-  validationsAssigned   Validation[] @relation("ValidationCurrentApprover")
-  validationsDecided    Validation[] @relation("ValidationDecidedBy")
-  delegationsGiven      Delegation[] @relation("DelegationFrom")
-  delegationsReceived   Delegation[] @relation("DelegationTo")
-  reports               Report[]
-  sessions              Session[]
-  trainings             Training[]
-  successionsAsIncumbent SuccessionPlan[] @relation("SuccessionIncumbent")
-  successionsAsSuccessor SuccessionPlan[] @relation("SuccessionSuccessor")
-  preferences           UserPreferences?
-  signature             UserSignature?
-  agendaEvents          AgendaEvent[]
-  interestDeclarations  InterestDeclaration[]
-  benefits              BenefitInKind[]
-  performanceBonuses    PerformanceBonus[]
-  dafSettings           DafSettings?
-  signaturePower        UserSignaturePower?
-  rhSettings            RhSettings?
-  employeeProfile       EmployeeProfile?
-  employeeDocuments     EmployeeDocument[]
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  payslips                     Payslip[]
+  applications                 Application[]
+  sentMessages                 Message[]                 @relation("SentMessages")
+  conversationParticipants     ConversationParticipant[]
+  notifications                Notification[]
+  auditLogs                    AuditLog[]
+  managedSites                 Site[]                    @relation("SiteManager")
+  dgSettings                   DgSettings?
+  objectives                   Objective[]
+  boardReports                 BoardReport[]
+  validationsInitiated         Validation[]              @relation("ValidationInitiator")
+  validationsAssigned          Validation[]              @relation("ValidationCurrentApprover")
+  validationsDecided           Validation[]              @relation("ValidationDecidedBy")
+  delegationsGiven             Delegation[]              @relation("DelegationFrom")
+  delegationsReceived          Delegation[]              @relation("DelegationTo")
+  reports                      Report[]
+  sessions                     Session[]
+  trainings                    Training[]
+  successionsAsIncumbent       SuccessionPlan[]          @relation("SuccessionIncumbent")
+  successionsAsSuccessor       SuccessionPlan[]          @relation("SuccessionSuccessor")
+  preferences                  UserPreferences?
+  signature                    UserSignature?
+  agendaEvents                 AgendaEvent[]
+  interestDeclarations         InterestDeclaration[]
+  benefits                     BenefitInKind[]
+  performanceBonuses           PerformanceBonus[]
+  dafSettings                  DafSettings?
+  signaturePower               UserSignaturePower?
+  rhSettings                   RhSettings?
+  employeeProfile              EmployeeProfile?
+  employeeDocuments            EmployeeDocument[]
+  // Bloc 0 Comptable — workflow promotion + écritures + factures
+  promotionRequestsAsTarget    RolePromotionRequest[]    @relation("PromotionTarget")
+  promotionRequestsAsRequester RolePromotionRequest[]    @relation("PromotionRequester")
+  cptEntriesCreated            Entry[]                   @relation("EntryCreator")
+  cptEntriesValidated          Entry[]                   @relation("EntryValidator")
+  cashboxMovements             CashboxMovement[]
+  // DT — Espace Direction Technique (Bloc 0+)
+  dtSettings                   DtSettings?
+  managedTenders               Tender[]                  @relation("TenderStudyOwner")
+  dtIncidentReports            HseIncident[]             @relation("IncidentReporter")
+  dtAuditsLed                  SiteAudit[]               @relation("AuditAuditor")
+  dtNcOwned                    NonConformity[]           @relation("NcOwner")
+  dtSubcontractorEvals         SubcontractorEvaluation[] @relation("SubEvaluator")
+  dtCrewsLed                   Crew[]                    @relation("CrewLeader")
+  dtMethodsAuthored            OperatingMethod[]         @relation("MethodAuthor")
+  dtTemplatePlannings          TemplatePlanning[]        @relation("TemplatePlanningAuthor")
+  dtRexAuthored                SiteRex[]                 @relation("RexAuthor")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -167,31 +197,31 @@ model User {
 // ========================================
 // Objectifs annuels / trimestriels suivis par le DG.
 model Objective {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ownerId  String
+  owner    User   @relation(fields: [ownerId], references: [id])
 
   category    ObjectiveCategory
   title       String
-  description String?  @db.Text
+  description String?           @db.Text
 
   targetValue Float
-  actualValue Float    @default(0)
-  unit        String   // "FCFA", "%", "jours", "unités", "M FCFA", etc.
+  actualValue Float  @default(0)
+  unit        String // "FCFA", "%", "jours", "unités", "M FCFA", etc.
 
-  period      ObjectivePeriod
-  year        Int
-  quarter     Int?     // 1..4 si period = QUARTERLY ou MONTHLY ; null si ANNUAL
-  weight      Int      @default(1) // pondération sur la note globale
+  period  ObjectivePeriod
+  year    Int
+  quarter Int? // 1..4 si period = QUARTERLY ou MONTHLY ; null si ANNUAL
+  weight  Int             @default(1) // pondération sur la note globale
 
-  status      ObjectiveStatus @default(IN_PROGRESS)
-  startDate   DateTime
-  endDate     DateTime
+  status    ObjectiveStatus @default(IN_PROGRESS)
+  startDate DateTime
+  endDate   DateTime
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, year, period])
   @@index([ownerId, year])
@@ -227,26 +257,26 @@ enum ObjectiveStatus {
 // extraordinaire). Le contenu (KPIs agrégés, chantiers, RH…) est
 // matérialisé au moment de la génération via lib/board-report-generator.
 model BoardReport {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id])
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
-  type        BoardReportType
-  period      String   // "2026-04", "2026-T1", "2026"
-  boardDate   DateTime
+  type      BoardReportType
+  period    String // "2026-04", "2026-T1", "2026"
+  boardDate DateTime
 
-  chapters    Json     // { financial: true, operational: true, ... }
-  comments    Json     // { financial: "...", operational: "...", ... }
-  data        Json     // snapshot des KPIs au moment de la génération
+  chapters Json // { financial: true, operational: true, ... }
+  comments Json // { financial: "...", operational: "...", ... }
+  data     Json // snapshot des KPIs au moment de la génération
 
-  pdfUrl      String?
-  status      BoardReportStatus @default(DRAFT)
-  sentTo      Json?    // [{ email, name, sentAt }]
+  pdfUrl String?
+  status BoardReportStatus @default(DRAFT)
+  sentTo Json? // [{ email, name, sentAt }]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, type, period])
   @@index([tenantId, status])
@@ -273,26 +303,26 @@ enum BoardReportStatus {
 // Projections de flux de trésorerie sur les semaines à venir, alimentées
 // soit automatiquement (factures, BC, paie, fiscalité) soit manuellement.
 model CashFlowProjection {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  type          CashFlowType
-  category      String   // CLIENT_PAYMENT, SUPPLIER, SALARY, TAX_VAT, TAX_CNPS, TAX_IRPP, OTHER
-  label         String
-  amount        BigInt   // toujours positif ; le signe est porté par `type`
-  expectedDate  DateTime
-  probability   Int      @default(100) // 0..100, pondération de la prévision
+  type         CashFlowType
+  category     String // CLIENT_PAYMENT, SUPPLIER, SALARY, TAX_VAT, TAX_CNPS, TAX_IRPP, OTHER
+  label        String
+  amount       BigInt // toujours positif ; le signe est porté par `type`
+  expectedDate DateTime
+  probability  Int          @default(100) // 0..100, pondération de la prévision
 
-  sourceType    String?  // INVOICE | PURCHASE_ORDER | PAYROLL | TAX | MANUAL
-  sourceId      String?
+  sourceType String? // INVOICE | PURCHASE_ORDER | PAYROLL | TAX | MANUAL
+  sourceId   String?
 
-  realized      Boolean  @default(false)
-  realizedDate  DateTime?
+  realized       Boolean   @default(false)
+  realizedDate   DateTime?
   realizedAmount BigInt?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, expectedDate])
   @@index([tenantId, type, expectedDate])
@@ -310,9 +340,9 @@ enum CashFlowType {
 // Stocke les préférences de l'espace DG (1 ligne par utilisateur DG).
 // Les champs métier seront ajoutés au fil des fonctions livrées.
 model DgSettings {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
@@ -322,31 +352,31 @@ model DgSettings {
 
 enum Role {
   // Direction
-  DG               // Directeur Général
-  DAF              // Directeur Administratif et Financier
-  SG               // Secrétaire Générale
-  HR               // Responsable RH
+  DG // Directeur Général
+  DAF // Directeur Administratif et Financier
+  SG // Secrétaire Générale
+  HR // Responsable RH
 
   // Production
-  TECH_DIRECTOR    // Directeur technique
-  WORKS_DIRECTOR   // Directeur de travaux (projet)
-  WORKS_MANAGER    // Conducteur de travaux
-  SITE_MANAGER     // Chef de chantier
-  WORKER           // Ouvrier
+  TECH_DIRECTOR // Directeur technique
+  WORKS_DIRECTOR // Directeur de travaux (projet)
+  WORKS_MANAGER // Conducteur de travaux
+  SITE_MANAGER // Chef de chantier
+  WORKER // Ouvrier
 
   // Support
   ACCOUNTANT
   LOGISTICS
-  WAREHOUSE        // Magasinier
-  GED              // Gestionnaire documentaire
-  EMPLOYEE         // Employé bureau
+  WAREHOUSE // Magasinier
+  GED // Gestionnaire documentaire
+  EMPLOYEE // Employé bureau
 
   // Externe
-  CANDIDATE        // Candidat portail emploi
+  CANDIDATE // Candidat portail emploi
 
   // Admin
-  TENANT_ADMIN     // Informaticien d'entreprise
-  SUPER_ADMIN      // Anthropic-style super-admin SaaS
+  TENANT_ADMIN // Informaticien d'entreprise
+  SUPER_ADMIN // Anthropic-style super-admin SaaS
 }
 
 enum ContractType {
@@ -368,59 +398,98 @@ enum UserStatus {
 // ========================================
 
 model Site {
-  id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  code         String   // CHT-2025-031
-  name         String   // Pont Mfoundi
-  client       String   // Commune Yaoundé I
-  type         SiteType
-  region       String?  // Yaoundé, Douala, Bafoussam...
+  code   String // CHT-2025-031
+  name   String // Pont Mfoundi
+  client String // Commune Yaoundé I
+  type   SiteType
+  region String? // Yaoundé, Douala, Bafoussam...
 
-  budget       BigInt   // FCFA
-  startDate    DateTime
+  budget         BigInt // FCFA
+  startDate      DateTime
   plannedEndDate DateTime
   actualEndDate  DateTime?
 
-  progress     Int      @default(0) // 0-100
-  margin       Float    @default(0) // pourcentage
-  status       SiteStatus @default(PLANNED)
+  progress Int        @default(0) // 0-100
+  margin   Float      @default(0) // pourcentage
+  status   SiteStatus @default(PLANNED)
 
-  managerId    String?  // directeur de travaux
-  manager      User?    @relation("SiteManager", fields: [managerId], references: [id])
+  managerId String? // directeur de travaux
+  manager   User?   @relation("SiteManager", fields: [managerId], references: [id])
 
   // Géoloc pour la vue carte (Phase 2 / Bloc 3 — fn 3.1)
-  lat          Float?
-  lng          Float?
+  lat Float?
+  lng Float?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  contract     SiteContract?
-  photos       SitePhoto[]
-  alerts       SiteAlert[]
-  decisions    SiteDecision[]
+  // DT — fn 1.1 : suivi technique avancé (déviation coût, avancement physique vs financier)
+  actualSpentAmount BigInt            @default(0)
+  deviationPercent  Float             @default(0)
+  physicalProgress  Float             @default(0)
+  financialProgress Float             @default(0)
+  marginTarget      Float             @default(20)
+  // DT — fn 1.2 : qualification MOA + contrat
+  moaName           String?
+  moaTypeKind       MoaType?
+  contractTypeKind  ContractTypeSite?
+
+  contract                 SiteContract?
+  photos                   SitePhoto[]
+  alerts                   SiteAlert[]
+  decisions                SiteDecision[]
+  // Bloc 0 Comptable — relations comptables analytiques + caisse chantier
+  entries                  Entry[]                   @relation("EntrySite")
+  entryLines               EntryLine[]               @relation("EntryLineSite")
+  supplierInvoices         SupplierInvoice[]         @relation("InvoiceSite")
+  progressBillings         ProgressBilling[]         @relation("BillingSite")
+  cashbox                  SiteCashbox?
+  // DT — relations
+  rex                      SiteRex[]
+  hseIncidents             HseIncident[]
+  audits                   SiteAudit[]
+  ncs                      NonConformity[]
+  subcontractorEvaluations SubcontractorEvaluation[]
+  crewAssignments          CrewAssignment[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
   @@map("sites")
 }
 
+// DT — fn 1.2 : type de maître d'ouvrage et nature du contrat
+enum MoaType {
+  PUBLIC
+  PRIVATE
+  PARAPUBLIC
+  INTERNATIONAL
+}
+
+enum ContractTypeSite {
+  FIRM_PRICE
+  UNIT_PRICE
+  COST_PLUS
+  DESIGN_BUILD
+}
+
 enum SiteType {
-  ROAD            // BTP routier
-  BUILDING        // Bâtiment
-  CIVIL_ENG       // Génie civil
-  DEVELOPMENT     // Aménagement
-  HYDRAULIC       // Forage / AEP
+  ROAD // BTP routier
+  BUILDING // Bâtiment
+  CIVIL_ENG // Génie civil
+  DEVELOPMENT // Aménagement
+  HYDRAULIC // Forage / AEP
 }
 
 enum SiteStatus {
   PLANNED
   ACTIVE
   ON_HOLD
-  AT_RISK         // Vigilance
-  DRIFTING        // Dérive
+  AT_RISK // Vigilance
+  DRIFTING // Dérive
   COMPLETED
   ARCHIVED
 }
@@ -430,25 +499,25 @@ enum SiteStatus {
 // ========================================
 
 model Payslip {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
 
-  period        DateTime // 1er du mois (ex: 2025-09-01)
-  paymentDate   DateTime
-  paymentMode   String   @default("VIREMENT") // VIREMENT, ESPECES, CHEQUE, MOMO
+  period      DateTime // 1er du mois (ex: 2025-09-01)
+  paymentDate DateTime
+  paymentMode String   @default("VIREMENT") // VIREMENT, ESPECES, CHEQUE, MOMO
 
   // Totaux pré-calculés (calcul détaillé en phase 2)
-  grossAmount   BigInt   // Brut
-  taxableGross  BigInt   // Brut imposable
-  netAmount     BigInt   // Net à payer
-  socialCharges BigInt   @default(0)
-  fiscalCharges BigInt   @default(0)
+  grossAmount     BigInt // Brut
+  taxableGross    BigInt // Brut imposable
+  netAmount       BigInt // Net à payer
+  socialCharges   BigInt @default(0)
+  fiscalCharges   BigInt @default(0)
   employerCharges BigInt @default(0)
 
-  status        PayslipStatus @default(DRAFT)
+  status PayslipStatus @default(DRAFT)
 
   // Workflow validation
   validatedN1At DateTime?
@@ -456,11 +525,11 @@ model Payslip {
   validatedN3At DateTime?
   paidAt        DateTime?
 
-  pdfUrl        String?
+  pdfUrl String?
 
-  lines         PayslipLine[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  lines     PayslipLine[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@unique([tenantId, userId, period])
   @@index([tenantId, period])
@@ -470,9 +539,9 @@ model Payslip {
 enum PayslipStatus {
   DRAFT
   CALCULATED
-  VALIDATED_N1     // RH
-  VALIDATED_N2     // DAF
-  VALIDATED_N3     // DG
+  VALIDATED_N1 // RH
+  VALIDATED_N2 // DAF
+  VALIDATED_N3 // DG
   PAID
   CANCELLED
 }
@@ -482,16 +551,16 @@ model PayslipLine {
   payslipId String
   payslip   Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
 
-  code      String  // A001, A045, A050, A056-A072
-  label     String  // "Salaire de base", "IRPP", etc.
-  quantity  Float?  // 30 (jours)
-  base      BigInt? // 6667
-  rate      Float?  // 4.20 pour CNPS
-  amountPlus  BigInt? // colonne MONTANT+
-  amountMinus BigInt? // colonne MONTANT-
+  code           String // A001, A045, A050, A056-A072
+  label          String // "Salaire de base", "IRPP", etc.
+  quantity       Float? // 30 (jours)
+  base           BigInt? // 6667
+  rate           Float? // 4.20 pour CNPS
+  amountPlus     BigInt? // colonne MONTANT+
+  amountMinus    BigInt? // colonne MONTANT-
   employerAmount BigInt? // RET PATRON
 
-  order     Int     @default(0)
+  order Int @default(0)
 
   @@index([payslipId])
   @@map("payslip_lines")
@@ -502,32 +571,32 @@ model PayslipLine {
 // ========================================
 
 model JobOffer {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  reference     String   // REC-2026-008
-  title         String   // Ingénieur travaux BTP
-  department    String?  // Direction Technique
-  contractType  ContractType
-  category      String   // Cadre, ETAM, OQ...
-  positions     Int      @default(1)
+  reference    String // REC-2026-008
+  title        String // Ingénieur travaux BTP
+  department   String? // Direction Technique
+  contractType ContractType
+  category     String // Cadre, ETAM, OQ...
+  positions    Int          @default(1)
 
-  description   String   @db.Text
-  requirements  String   @db.Text
+  description  String @db.Text
+  requirements String @db.Text
 
-  salaryMin     BigInt?
-  salaryMax     BigInt?
+  salaryMin BigInt?
+  salaryMax BigInt?
 
-  region        String?
-  publishedAt   DateTime?
-  expiresAt     DateTime?
-  status        JobStatus @default(DRAFT)
+  region      String?
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  status      JobStatus @default(DRAFT)
 
-  applications  Application[]
+  applications Application[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, reference])
   @@index([status, publishedAt])
@@ -542,20 +611,20 @@ enum JobStatus {
 }
 
 model Application {
-  id          String   @id @default(cuid())
-  jobOfferId  String
-  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
-  userId      String   // candidat (User avec role=CANDIDATE)
-  user        User     @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  jobOfferId String
+  jobOffer   JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  userId     String // candidat (User avec role=CANDIDATE)
+  user       User     @relation(fields: [userId], references: [id])
 
   cvUrl       String?
   coverLetter String?  @db.Text
-  score       Int?     // 0-100, calculé par tri auto
+  score       Int? // 0-100, calculé par tri auto
   stage       AppStage @default(RECEIVED)
   notes       String?  @db.Text
 
-  appliedAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([jobOfferId, userId])
   @@map("applications")
@@ -572,28 +641,63 @@ enum AppStage {
 }
 
 // ========================================
+// RH — Entretiens recrutement (RH Bloc 1 / fn 1.4)
+// ========================================
+model Interview {
+  id            String             @id @default(cuid())
+  applicationId String
+  scheduledAt   DateTime
+  duration      Int                @default(60) // minutes
+  interviewers  String[] // userIds
+  mode          InterviewMode      @default(ONSITE)
+  location      String?
+  completed     Boolean            @default(false)
+  feedback      String?            @db.Text
+  score         Int? // 1-5
+  decision      InterviewDecision?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([applicationId, scheduledAt])
+  @@map("interviews")
+}
+
+enum InterviewMode {
+  ONSITE
+  PHONE
+  VIDEO
+}
+
+enum InterviewDecision {
+  GO
+  NO_GO
+  PENDING
+}
+
+// ========================================
 // MESSAGERIE
 // ========================================
 
 model Conversation {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name        String?  // null pour DM, défini pour groupes
-  isGroup     Boolean  @default(false)
+  name        String? // null pour DM, défini pour groupes
+  isGroup     Boolean   @default(false)
   avatarUrl   String?
   // Phase 2 / Bloc 5 — fn 5.4
-  isStrategic Boolean  @default(false)
+  isStrategic Boolean   @default(false)
   pinnedAt    DateTime?
 
   lastMessageAt DateTime?
 
   participants ConversationParticipant[]
-  messages    Message[]
+  messages     Message[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, lastMessageAt])
   @@index([tenantId, isStrategic])
@@ -606,38 +710,38 @@ model ConversationParticipant {
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  joinedAt       DateTime @default(now())
-  lastReadAt     DateTime?
-  isPinned       Boolean  @default(false)
-  isMuted        Boolean  @default(false)
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+  isPinned   Boolean   @default(false)
+  isMuted    Boolean   @default(false)
 
   @@id([conversationId, userId])
   @@map("conversation_participants")
 }
 
 model Message {
-  id              String   @id @default(cuid())
-  conversationId  String
-  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderId        String
-  sender          User     @relation("SentMessages", fields: [senderId], references: [id])
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
 
-  content         String   @db.Text
-  attachmentUrl   String?
-  attachmentName  String?
-  attachmentSize  Int?
+  content        String  @db.Text
+  attachmentUrl  String?
+  attachmentName String?
+  attachmentSize Int?
 
-  isSystem        Boolean  @default(false) // messages système type "X a partagé un document"
+  isSystem Boolean @default(false) // messages système type "X a partagé un document"
 
   // Phase 2 / Bloc 5 — fn 5.4
   priority            MessagePriority @default(NORMAL)
   mentions            String[] // userIds mentionnés
   attachedDocumentIds String[] // depuis GED
-  pollData            Json?    // { question, options: [{ label, votes: [userId] }] }
+  pollData            Json? // { question, options: [{ label, votes: [userId] }] }
 
-  voiceNote       VoiceNote?
+  voiceNote VoiceNote?
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([conversationId, createdAt])
   @@index([conversationId, priority])
@@ -652,15 +756,15 @@ enum MessagePriority {
 }
 
 model VoiceNote {
-  id          String   @id @default(cuid())
-  messageId   String   @unique
-  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  messageId String  @unique
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   audioUrl    String
   durationSec Int
-  transcript  String?  @db.Text
+  transcript  String? @db.Text
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("voice_notes")
 }
@@ -670,19 +774,19 @@ model VoiceNote {
 // ========================================
 // Rapprochements bancaires + checklist clôture mensuelle.
 model BankReconciliation {
-  id              String   @id @default(cuid())
+  id              String               @id @default(cuid())
   tenantId        String
   bankAccountId   String
-  period          String   // "2026-04"
+  period          String // "2026-04"
   bookBalance     BigInt
   bankBalance     BigInt
-  gap             BigInt   @default(0)
-  reconciledItems Json     @default("[]") // ids des entries pointées
+  gap             BigInt               @default(0)
+  reconciledItems Json                 @default("[]") // ids des entries pointées
   status          ReconciliationStatus @default(PENDING)
   completedAt     DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, bankAccountId, period])
   @@index([tenantId, status])
@@ -697,11 +801,11 @@ enum ReconciliationStatus {
 }
 
 model MonthlyClosingChecklist {
-  id        String   @id @default(cuid())
-  tenantId  String
-  period    String
-  items     Json     @default("[]") // [{ key, label, status, completedAt, by }]
-  status    ClosingStatus @default(OPEN)
+  id       String        @id @default(cuid())
+  tenantId String
+  period   String
+  items    Json          @default("[]") // [{ key, label, status, completedAt, by }]
+  status   ClosingStatus @default(OPEN)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -721,20 +825,20 @@ enum ClosingStatus {
 // FINANCES DAF — Analyse profonde (DAF Bloc 2 / fn 2.2)
 // ========================================
 model BudgetVariance {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   tenantId        String
   period          String
-  costCenter      String   // "Achats matières", "Personnel", "Sous-traitance"...
+  costCenter      String // "Achats matières", "Personnel", "Sous-traitance"...
   budgetAmount    BigInt
   actualAmount    BigInt
-  variance        BigInt   @default(0)
-  variancePercent Float    @default(0)
-  comment         String?  @db.Text
+  variance        BigInt    @default(0)
+  variancePercent Float     @default(0)
+  comment         String?   @db.Text
   commentAuthor   String?
   commentAt       DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, period, costCenter])
   @@index([tenantId, period])
@@ -742,16 +846,16 @@ model BudgetVariance {
 }
 
 model FinancialScenario {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   tenantId    String
   name        String
   description String?
-  parameters  Json     // hypothèses
-  results     Json     // P&L, BFR, treasury impact
+  parameters  Json // hypothèses
+  results     Json // P&L, BFR, treasury impact
   authorId    String
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
   @@map("financial_scenarios")
@@ -761,19 +865,19 @@ model FinancialScenario {
 // ACHATS DAF — Engagements (DAF Bloc 2 / fn 2.3)
 // ========================================
 model SupplierCommitment {
-  id                   String   @id @default(cuid())
+  id                   String                   @id @default(cuid())
   tenantId             String
   supplierId           String
-  supplierObj          Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierObj          Supplier                 @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   poRef                String
   amount               BigInt
-  deliveredAmount      BigInt   @default(0)
-  invoicedAmount       BigInt   @default(0)
+  deliveredAmount      BigInt                   @default(0)
+  invoicedAmount       BigInt                   @default(0)
   expectedDeliveryDate DateTime?
   status               SupplierCommitmentStatus @default(ACTIVE)
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, status])
   @@index([supplierId])
@@ -792,15 +896,15 @@ enum SupplierCommitmentStatus {
 // ========================================
 // Pilote le cycle mensuel de paie : 7 statuts du calcul à la transmission DIPE.
 model PayrollCycle {
-  id              String   @id @default(cuid())
-  tenantId        String
-  period          String   // "2026-04"
-  status          PayrollCycleStatus @default(DRAFT)
+  id       String             @id @default(cuid())
+  tenantId String
+  period   String // "2026-04"
+  status   PayrollCycleStatus @default(DRAFT)
 
-  totalBulletins  Int      @default(0)
-  grossAmount     BigInt   @default(0)
-  employerCharges BigInt   @default(0)
-  netToPay        BigInt   @default(0)
+  totalBulletins  Int    @default(0)
+  grossAmount     BigInt @default(0)
+  employerCharges BigInt @default(0)
+  netToPay        BigInt @default(0)
 
   startedAt       DateTime
   calculatedAt    DateTime?
@@ -810,12 +914,12 @@ model PayrollCycle {
   paidAt          DateTime?
   dipeSubmittedAt DateTime?
 
-  warnings        Json     @default("[]") // [{ severity, type, message, count? }]
+  warnings Json @default("[]") // [{ severity, type, message, count? }]
 
-  inputs          PayrollInput[]
+  inputs PayrollInput[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, period])
   @@index([tenantId, status])
@@ -838,45 +942,45 @@ enum PayrollCycleStatus {
 // RH DAF — Provisions sociales et départs (DAF Bloc 3 / fn 3.3)
 // ========================================
 model SocialProvision {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   tenantId     String
   type         ProvisionType
   amount       BigInt
-  calculatedAt DateTime @default(now())
-  periodEnd    String   // exercice concerné
+  calculatedAt DateTime      @default(now())
+  periodEnd    String // exercice concerné
   notes        String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, periodEnd])
   @@map("social_provisions")
 }
 
 enum ProvisionType {
-  PAID_LEAVE       // Congés payés
-  END_OF_CAREER    // Indemnités fin de carrière (IFC)
-  BONUSES          // Primes
-  MUTUAL           // Mutuelle / prévoyance
+  PAID_LEAVE // Congés payés
+  END_OF_CAREER // Indemnités fin de carrière (IFC)
+  BONUSES // Primes
+  MUTUAL // Mutuelle / prévoyance
   OTHER
 }
 
 model EmployeeDeparture {
-  id             String   @id @default(cuid())
+  id             String          @id @default(cuid())
   tenantId       String
   userId         String
-  employeeName   String   // snapshot du nom au moment du départ
+  employeeName   String // snapshot du nom au moment du départ
   position       String?
   departureType  DepartureType
   departureDate  DateTime
-  severancePay   BigInt   @default(0)
-  unusedLeavePay BigInt   @default(0)
-  bonusProrata   BigInt   @default(0)
-  totalCost      BigInt   @default(0)
+  severancePay   BigInt          @default(0)
+  unusedLeavePay BigInt          @default(0)
+  bonusProrata   BigInt          @default(0)
+  totalCost      BigInt          @default(0)
   status         DepartureStatus @default(PROVISIONED)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, departureDate])
   @@index([tenantId, status])
@@ -884,12 +988,12 @@ model EmployeeDeparture {
 }
 
 enum DepartureType {
-  RESIGNATION           // Démission
-  DISMISSAL_INDIVIDUAL  // Licenciement individuel
-  DISMISSAL_ECONOMIC    // Licenciement économique
-  RETIREMENT            // Départ retraite
-  END_OF_CONTRACT       // Fin de CDD
-  NEGOTIATED            // Rupture conventionnelle
+  RESIGNATION // Démission
+  DISMISSAL_INDIVIDUAL // Licenciement individuel
+  DISMISSAL_ECONOMIC // Licenciement économique
+  RETIREMENT // Départ retraite
+  END_OF_CONTRACT // Fin de CDD
+  NEGOTIATED // Rupture conventionnelle
 }
 
 enum DepartureStatus {
@@ -903,23 +1007,23 @@ enum DepartureStatus {
 // ========================================
 // Créances clients avec balance âgée + niveaux de relance R1/R2/R3.
 model Receivable {
-  id            String   @id @default(cuid())
-  tenantId      String
-  invoiceRef    String
-  clientName    String
-  clientId      String?
-  amount        BigInt
-  paidAmount    BigInt   @default(0)
-  issueDate     DateTime
-  dueDate       DateTime
-  status        ReceivableStatus @default(OPEN)
-  siteId        String?
-  daysOverdue   Int      @default(0)
+  id          String           @id @default(cuid())
+  tenantId    String
+  invoiceRef  String
+  clientName  String
+  clientId    String?
+  amount      BigInt
+  paidAmount  BigInt           @default(0)
+  issueDate   DateTime
+  dueDate     DateTime
+  status      ReceivableStatus @default(OPEN)
+  siteId      String?
+  daysOverdue Int              @default(0)
 
-  reminders     Reminder[]
+  reminders Reminder[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, invoiceRef])
   @@index([tenantId, status])
@@ -937,19 +1041,19 @@ enum ReceivableStatus {
 }
 
 model Reminder {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   receivableId String
   receivable   Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
 
-  level        ReminderLevel
-  channel      ReminderChannel
-  sentAt       DateTime
-  sentBy       String
-  responseReceived Boolean @default(false)
+  level            ReminderLevel
+  channel          ReminderChannel
+  sentAt           DateTime
+  sentBy           String
+  responseReceived Boolean         @default(false)
   responseDate     DateTime?
-  responseNote     String?  @db.Text
+  responseNote     String?         @db.Text
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([receivableId, sentAt])
   @@map("reminders")
@@ -975,11 +1079,11 @@ enum ReminderChannel {
 // ========================================
 // Échéances fiscales / sociales (TVA, IRPP, CNPS DIPE...) + audits.
 model TaxDeadline {
-  id                String   @id @default(cuid())
+  id                String            @id @default(cuid())
   tenantId          String
   type              TaxType
   authority         TaxAuthority
-  period            String   // "2026-04" ou "2025"
+  period            String // "2026-04" ou "2025"
   dueDate           DateTime
   amount            BigInt?
   declarationStatus DeclarationStatus @default(PENDING)
@@ -988,8 +1092,8 @@ model TaxDeadline {
   paidAt            DateTime?
   receiptUrl        String?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, type, period])
   @@index([tenantId, dueDate])
@@ -1037,20 +1141,20 @@ enum PaymentStatus {
 }
 
 model TaxAudit {
-  id                String   @id @default(cuid())
+  id                String       @id @default(cuid())
   tenantId          String
   type              AuditType
   authority         TaxAuthority
   period            String
   auditor           String?
-  status            AuditStatus @default(ANNOUNCED)
+  status            AuditStatus  @default(ANNOUNCED)
   startDate         DateTime
   endDate           DateTime?
-  opinion           String?  @db.Text
+  opinion           String?      @db.Text
   adjustmentsAmount BigInt?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, status])
   @@map("tax_audits")
@@ -1078,15 +1182,15 @@ enum AuditStatus {
 // Stocke les préférences spécifiques au DAF (1 ligne par utilisateur DAF) :
 // seuils d'alertes personnalisés, layout du tableau de bord.
 model DafSettings {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  alertsConfig    Json?    // { treasuryMin, dsoMax, validationOverdueDays, ... }
-  dashboardLayout Json?    // [{ widget, order, size }]
+  alertsConfig    Json? // { treasuryMin, dsoMax, validationOverdueDays, ... }
+  dashboardLayout Json? // [{ widget, order, size }]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("daf_settings")
 }
@@ -1104,8 +1208,8 @@ model PayrollInput {
   id             String       @id @default(cuid())
   payrollCycleId String
   payrollCycle   PayrollCycle @relation(fields: [payrollCycleId], references: [id], onDelete: Cascade)
-  employeeKey    String       // userId réel ou id synthétique "syn_*"
-  category       String       // pour filtres (Journaliers, OQ, OS, etc.)
+  employeeKey    String // userId réel ou id synthétique "syn_*"
+  category       String // pour filtres (Journaliers, OQ, OS, etc.)
   daysWorked     Int          @default(0)
   hoursWorked    Float        @default(0)
   overtimeHours  Float        @default(0)
@@ -1124,32 +1228,32 @@ model PayrollInput {
 // RH — Personnel enrichi (RH Bloc 1 / fn 1.2)
 // ========================================
 model EmployeeProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  identityCard     String?  // CNI
-  familyStatus     String?  // SINGLE / MARRIED / WIDOWED / DIVORCED / FREE_UNION
-  childrenCount    Int      @default(0)
-  address          Json?    // { city, neighborhood, line1 }
-  emergencyContact Json?    // { name, phone, relation }
-  bankAccount      Json?    // { bank, iban, swift }
-  cnpsNumber       String?  // surcharge si distinct du User.cnpsNumber
+  identityCard     String? // CNI
+  familyStatus     String? // SINGLE / MARRIED / WIDOWED / DIVORCED / FREE_UNION
+  childrenCount    Int     @default(0)
+  address          Json? // { city, neighborhood, line1 }
+  emergencyContact Json? // { name, phone, relation }
+  bankAccount      Json? // { bank, iban, swift }
+  cnpsNumber       String? // surcharge si distinct du User.cnpsNumber
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("employee_profiles")
 }
 
 model EmployeeDocument {
-  id         String   @id @default(cuid())
+  id         String               @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   type       EmployeeDocumentType
   title      String
   fileUrl    String
-  uploadedAt DateTime @default(now())
+  uploadedAt DateTime             @default(now())
   uploadedBy String
 
   @@index([userId, uploadedAt])
@@ -1167,15 +1271,15 @@ enum EmployeeDocumentType {
 }
 
 model RhAlert {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   tenantId  String
   type      RhAlertType
   severity  AlertSeverity
   title     String
   details   String?
   link      String?
-  resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  resolved  Boolean       @default(false)
+  createdAt DateTime      @default(now())
 
   @@index([tenantId, resolved])
   @@map("rh_alerts")
@@ -1193,7 +1297,7 @@ model RhSettings {
   id           String   @id @default(cuid())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  alertsConfig Json?    // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
+  alertsConfig Json? // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -1201,18 +1305,18 @@ model RhSettings {
 }
 
 model UserSignaturePower {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  soloLimit       BigInt   @default(5000000)   // FCFA — plafond signature seul
-  coSignLimit     BigInt   @default(50000000)  // FCFA — plafond cosignature
-  coSigners       String[] @default([])        // userIds des cosignataires
-  banksRegistered String[] @default([])        // codes banques où la signature est déposée (UBA, BICEC, AFRILAND, ECOBANK, SGBC)
-  proxyHolders    Json     @default("[]")      // [{ id, toUserId, name, position, scope, maxAmount, startDate, endDate, active }]
+  soloLimit       BigInt   @default(5000000) // FCFA — plafond signature seul
+  coSignLimit     BigInt   @default(50000000) // FCFA — plafond cosignature
+  coSigners       String[] @default([]) // userIds des cosignataires
+  banksRegistered String[] @default([]) // codes banques où la signature est déposée (UBA, BICEC, AFRILAND, ECOBANK, SGBC)
+  proxyHolders    Json     @default("[]") // [{ id, toUserId, name, position, scope, maxAmount, startDate, endDate, active }]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_signature_powers")
 }
@@ -1222,28 +1326,28 @@ model UserSignaturePower {
 // ========================================
 
 model Document {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name        String
-  category    String?  // Marché, Plan, Décompte, PV, Photo...
-  folder      String?  // chemin virtuel
-  mimeType    String
-  sizeBytes   BigInt
-  url         String   // URL stockage (S3 ou local)
+  name      String
+  category  String? // Marché, Plan, Décompte, PV, Photo...
+  folder    String? // chemin virtuel
+  mimeType  String
+  sizeBytes BigInt
+  url       String // URL stockage (S3 ou local)
 
   // Liens contextuels (optionnels)
-  siteId      String?
-  authorId    String
+  siteId   String?
+  authorId String
 
   // OCR (phase 2)
-  ocrContent  String?  @db.Text
+  ocrContent String? @db.Text
 
-  status      DocStatus @default(DRAFT)
+  status DocStatus @default(DRAFT)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, folder])
   @@index([tenantId, siteId])
@@ -1262,17 +1366,17 @@ enum DocStatus {
 // ========================================
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      String   // payslip_ready, validation_required, message_received...
-  title     String
-  body      String?
-  link      String?  // chemin app à ouvrir
+  type  String // payslip_ready, validation_required, message_received...
+  title String
+  body  String?
+  link  String? // chemin app à ouvrir
 
-  read      Boolean  @default(false)
-  readAt    DateTime?
+  read   Boolean   @default(false)
+  readAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -1285,21 +1389,21 @@ model Notification {
 // ========================================
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  tenantId    String?
-  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id])
+  id       String  @id @default(cuid())
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id])
 
-  action      String   // user.login, payslip.validate, site.update...
-  entityType  String?
-  entityId    String?
-  metadata    Json?    // données contextuelles (avant/après, IP, user-agent...)
+  action     String // user.login, payslip.validate, site.update...
+  entityType String?
+  entityId   String?
+  metadata   Json? // données contextuelles (avant/après, IP, user-agent...)
 
-  ipAddress   String?
-  userAgent   String?
+  ipAddress String?
+  userAgent String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId, createdAt])
   @@index([userId, createdAt])
@@ -1314,40 +1418,47 @@ model AuditLog {
 // embauche, marché, congé). Chaque demande porte un workflow JSON avec
 // les étapes (initiateur → N1 → N2 → N3) et leurs dates de validation.
 model Validation {
-  id              String   @id @default(cuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  type            ValidationType
-  reference       String   // VAL-2026-0042
-  title           String
-  description     String?  @db.Text
-  amount          BigInt?  // FCFA si applicable
+  type        ValidationType
+  reference   String // VAL-2026-0042
+  title       String
+  description String?        @db.Text
+  amount      BigInt? // FCFA si applicable
 
-  initiatorId     String
-  initiator       User     @relation("ValidationInitiator", fields: [initiatorId], references: [id])
+  initiatorId String
+  initiator   User   @relation("ValidationInitiator", fields: [initiatorId], references: [id])
 
   // Étape courante du workflow (par convention : "RH" | "DAF" | "DG")
-  currentStep     String?
+  currentStep       String?
   currentApproverId String?
-  currentApprover User?    @relation("ValidationCurrentApprover", fields: [currentApproverId], references: [id])
+  currentApprover   User?   @relation("ValidationCurrentApprover", fields: [currentApproverId], references: [id])
 
   // Workflow complet (étapes + dates) — { steps: [{ key, label, role, status, decidedBy?, decidedAt? }] }
-  workflow        Json
+  workflow Json
   // Historique commentaires + demandes justification + délégations
-  comments        Json     @default("[]")
+  comments Json @default("[]")
 
-  status          ValidationStatus @default(PENDING)
-  priority        ValidationPriority @default(NORMAL)
+  status   ValidationStatus   @default(PENDING)
+  priority ValidationPriority @default(NORMAL)
 
-  decidedById     String?
-  decidedBy       User?    @relation("ValidationDecidedBy", fields: [decidedById], references: [id])
-  decisionAt      DateTime?
-  decisionReason  String?  @db.Text
+  decidedById    String?
+  decidedBy      User?     @relation("ValidationDecidedBy", fields: [decidedById], references: [id])
+  decisionAt     DateTime?
+  decisionReason String?   @db.Text
 
-  dueDate         DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  dueDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // DT — fn 1.4 : N2 technique (avenants, sous-traitance > 30 M, marchés méthode spéciale...)
+  dtValidationRequired Boolean   @default(false)
+  dtValidatedAt        DateTime?
+  dtValidatedBy        String?
+  dtComments           String?   @db.Text
+  dtAttachments        String[]  @default([])
 
   @@unique([tenantId, reference])
   @@index([tenantId, status])
@@ -1364,6 +1475,12 @@ enum ValidationType {
   CONTRACT
   LEAVE
   OTHER
+  // DT — fn 1.4 : types techniques validés en N2 par le DT
+  AMENDMENT // avenant marché client
+  SUBCONTRACTING // sous-traitance > 30 M
+  EQUIPMENT // acquisition matériel > 30 M
+  SPECIAL_METHOD // méthode spéciale (coffrage glissant, technique non-standard)
+  TECHNICAL_HANDOVER // mise en service technique (essais, réceptions)
 }
 
 enum ValidationStatus {
@@ -1384,24 +1501,24 @@ enum ValidationPriority {
 // Délégations ponctuelles ou permanentes : un cadre délègue ses pouvoirs
 // d'approbation à un autre, pour certains types et jusqu'à un montant max.
 model Delegation {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  fromUserId  String
-  fromUser    User     @relation("DelegationFrom", fields: [fromUserId], references: [id])
-  toUserId    String
-  toUser      User     @relation("DelegationTo", fields: [toUserId], references: [id])
+  fromUserId String
+  fromUser   User   @relation("DelegationFrom", fields: [fromUserId], references: [id])
+  toUserId   String
+  toUser     User   @relation("DelegationTo", fields: [toUserId], references: [id])
 
-  types       ValidationType[]
-  maxAmount   BigInt?
-  startDate   DateTime
-  endDate     DateTime?
-  active      Boolean  @default(true)
-  reason      String?
+  types     ValidationType[]
+  maxAmount BigInt?
+  startDate DateTime
+  endDate   DateTime?
+  active    Boolean          @default(true)
+  reason    String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, active])
   @@index([fromUserId, active])
@@ -1416,25 +1533,25 @@ model Delegation {
 // Le wizard permet de configurer les blocs (KPIs, graphes, tableaux) et
 // d'envoyer le rapport par email aux destinataires.
 model Report {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  authorId      String
-  author        User     @relation(fields: [authorId], references: [id])
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
 
   type          ReportType
   title         String
-  period        String   // "S18-2026", "2026-04", "2026-T1"...
-  parameters    Json     // { scope, start, end, ... }
-  blocks        Json     // [{ type, label, ... }] — bibliothèque de blocs
-  data          Json     // snapshot des données calculées au moment de la génération
+  period        String // "S18-2026", "2026-04", "2026-T1"...
+  parameters    Json // { scope, start, end, ... }
+  blocks        Json // [{ type, label, ... }] — bibliothèque de blocs
+  data          Json // snapshot des données calculées au moment de la génération
   pdfUrl        String?
   status        ReportStatus @default(GENERATED)
-  scheduledRule String?  // cron-like si rapport planifié
-  recipients    Json?    // [{ email, name, sentAt }]
+  scheduledRule String? // cron-like si rapport planifié
+  recipients    Json? // [{ email, name, sentAt }]
   generatedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([tenantId, type])
   @@index([tenantId, status])
@@ -1442,17 +1559,41 @@ model Report {
 }
 
 enum ReportType {
-  EXECUTIVE_SUMMARY     // Synthèse exécutive hebdo (DG)
-  MONTHLY_DASHBOARD     // Tableau de bord stratégique mensuel (DG)
-  ANNUAL_GROUP          // Bilan annuel groupe (DG)
-  QUARTERLY_NOTE        // Note d'activité trimestrielle (DG)
-  CUSTOM                // Sur-mesure (DG/DAF)
+  EXECUTIVE_SUMMARY // Synthèse exécutive hebdo (DG)
+  MONTHLY_DASHBOARD // Tableau de bord stratégique mensuel (DG)
+  ANNUAL_GROUP // Bilan annuel groupe (DG)
+  QUARTERLY_NOTE // Note d'activité trimestrielle (DG)
+  CUSTOM // Sur-mesure (DG/DAF)
   // DAF Bloc 3 / fn 3.2 — Reportings financiers DAF
-  DAF_TREASURY_WEEKLY     // Tableau de bord trésorerie envoyé chaque lundi 6h au DG
-  DAF_FINANCIAL_MONTHLY   // Synthèse mensuelle (P&L + BFR + Tréso) le 5 du mois
-  DAF_BANKING_QUARTERLY   // Reporting bancaire trimestriel (relationship managers)
-  DAF_CAC_QUARTERLY       // Reporting CAC trimestriel (commissaires aux comptes)
-  DAF_DSF_PREP            // Préparation DSF (états financiers OHADA annuels)
+  DAF_TREASURY_WEEKLY // Tableau de bord trésorerie envoyé chaque lundi 6h au DG
+  DAF_FINANCIAL_MONTHLY // Synthèse mensuelle (P&L + BFR + Tréso) le 5 du mois
+  DAF_BANKING_QUARTERLY // Reporting bancaire trimestriel (relationship managers)
+  DAF_CAC_QUARTERLY // Reporting CAC trimestriel (commissaires aux comptes)
+  DAF_DSF_PREP // Préparation DSF (états financiers OHADA annuels)
+  // Comptable Bloc 2 / fn 2.2 — Rapports comptables (Direction + Chantier)
+  CPT_GENERAL_LEDGER
+  CPT_BALANCE_GENERAL
+  CPT_BALANCE_AUX_SUPPLIERS
+  CPT_BALANCE_AUX_CUSTOMERS
+  CPT_JOURNAL_CENTRALIZER
+  CPT_MONTHLY_SYNTHESIS
+  CPT_DSF_PREP
+  CPT_AGED_BALANCE_SUPPLIERS
+  CPT_AGED_BALANCE_CUSTOMERS
+  CPT_ANALYTICAL_CONSOLIDATED
+  CPT_SITE_LEDGER
+  CPT_SITE_BALANCE
+  CPT_SITE_EXPENSES
+  CPT_SITE_BILLINGS
+  CPT_SITE_MONTHLY
+  // DT Bloc 2 / fn 2.2 — Rapports techniques DT
+  DT_WEEKLY_TECHNICAL // Reporting hebdo technique (lundi 7h au DG)
+  DT_MONTHLY_PRODUCTION // Reporting mensuel production (tableau comparatif chantiers)
+  DT_QUARTERLY_TECHNICAL // Bilan technique trimestriel (COMEX + CA)
+  DT_HSE_MONTHLY // Rapport sinistralité HSE (CHSCT)
+  DT_TENDERS_QUARTERLY // Études et taux de transformation
+  DT_ISO_ANNUAL // Bilan certifications ISO
+  DT_MOA_MONTHLY // Reporting MOA par chantier
 }
 
 enum ReportStatus {
@@ -1470,19 +1611,19 @@ enum ReportStatus {
 // comptable, paramètres paie, workflows de validation, notifications,
 // intégrations API. Une seule ligne par tenant.
 model TenantSettings {
-  id            String   @id @default(cuid())
-  tenantId      String   @unique
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  identity      Json     // raison sociale, NIU, RCCM, capital, sièges, représentants
-  modules       Json     // { msg: true, payroll: true, ... }
-  payrollRates  Json     // barèmes IRPP + taux CNPS/CFC/FNE/RAV/TC/CAC/CFS
-  workflows     Json     // règles de validation par type
-  notifications Json     // matrice destinataires × événements × canaux
-  integrations  Json     // clés API (chiffrées) — banques, CNPS, MoMo, Resend
+  identity      Json // raison sociale, NIU, RCCM, capital, sièges, représentants
+  modules       Json // { msg: true, payroll: true, ... }
+  payrollRates  Json // barèmes IRPP + taux CNPS/CFC/FNE/RAV/TC/CAC/CFS
+  workflows     Json // règles de validation par type
+  notifications Json // matrice destinataires × événements × canaux
+  integrations  Json // clés API (chiffrées) — banques, CNPS, MoMo, Resend
 
-  updatedAt     DateTime @updatedAt
-  createdAt     DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   @@map("tenant_settings")
 }
@@ -1494,17 +1635,17 @@ model TenantSettings {
 // et déconnecter à distance. Une session ≠ un JWT : c'est une trace
 // d'identification (IP, user-agent, géoloc).
 model Session {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ipAddress       String?
-  userAgent       String?
-  location        String?  // résolu via API IP geolocation
-  suspicious      Boolean  @default(false)
-  lastActivityAt  DateTime @default(now())
-  expiresAt       DateTime
-  revokedAt       DateTime?
-  createdAt       DateTime @default(now())
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress      String?
+  userAgent      String?
+  location       String? // résolu via API IP geolocation
+  suspicious     Boolean   @default(false)
+  lastActivityAt DateTime  @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
 
   @@index([userId, expiresAt])
   @@map("sessions")
@@ -1520,7 +1661,7 @@ model CustomRole {
   tenantId    String
   name        String
   basedOn     Role
-  permissions Json     // { sites: ["read"], payroll: ["read", "write"], ... }
+  permissions Json // { sites: ["read"], payroll: ["read", "write"], ... }
   userCount   Int      @default(0)
   createdAt   DateTime @default(now())
 
@@ -1535,51 +1676,51 @@ model CustomRole {
 // Contrats de marché (initialAmount + avenants), photos chantier,
 // alertes (dérives budget, retards, HSE) et décisions DG enregistrées.
 model SiteContract {
-  id              String   @id @default(cuid())
-  siteId          String   @unique
-  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  siteId String @unique
+  site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   reference       String
   initialAmount   BigInt
   currentAmount   BigInt
-  amendments      Json     @default("[]") // [{ ref, amount, date, reason, validatedBy }]
-  guarantees      Json     @default("{}") // { caution, retention, penalties }
+  amendments      Json      @default("[]") // [{ ref, amount, date, reason, validatedBy }]
+  guarantees      Json      @default("{}") // { caution, retention, penalties }
   paymentTerms    String?
-  publicMarket    Boolean  @default(false)
-  procuringEntity String?  // MINTP, MINHDU, FEICOM...
+  publicMarket    Boolean   @default(false)
+  procuringEntity String? // MINTP, MINHDU, FEICOM...
   signedAt        DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("site_contracts")
 }
 
 model SitePhoto {
-  id          String   @id @default(cuid())
-  siteId      String
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  url         String
-  caption     String?
-  takenAt     DateTime
-  uploadedBy  String
+  id         String   @id @default(cuid())
+  siteId     String
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  takenAt    DateTime
+  uploadedBy String
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([siteId, takenAt])
   @@map("site_photos")
 }
 
 model SiteAlert {
-  id        String   @id @default(cuid())
-  siteId    String
-  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  severity  AlertSeverity
-  type      String   // BUDGET_OVERRUN, DELAY, HSE_INCIDENT, MARGIN_DROP, ...
-  message   String
-  resolved  Boolean  @default(false)
+  id         String        @id @default(cuid())
+  siteId     String
+  site       Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  severity   AlertSeverity
+  type       String // BUDGET_OVERRUN, DELAY, HSE_INCIDENT, MARGIN_DROP, ...
+  message    String
+  resolved   Boolean       @default(false)
   resolvedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt  DateTime      @default(now())
 
   @@index([siteId, resolved])
   @@map("site_alerts")
@@ -1611,17 +1752,17 @@ model SiteDecision {
 // Jalons stratégiques (réceptions, lancements, échéances fiscales, AG…)
 // + conflits ressources détectés (surcharges) à arbitrer par le DG.
 model Milestone {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  siteId    String?  // optionnel : jalon d'un chantier précis
-  type      MilestoneType
-  title     String
-  date      DateTime
-  critical  Boolean  @default(false)
-  status    MilestoneStatus @default(PLANNED)
-  notes     String?  @db.Text
+  siteId   String? // optionnel : jalon d'un chantier précis
+  type     MilestoneType
+  title    String
+  date     DateTime
+  critical Boolean         @default(false)
+  status   MilestoneStatus @default(PLANNED)
+  notes    String?         @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1649,24 +1790,24 @@ enum MilestoneStatus {
 }
 
 model ResourceConflict {
-  id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  resourceType String   // CREW, EQUIPMENT
-  resourceLabel String  // "Maçons coffreurs", "Pelle hydraulique 20T"...
-  periodStart  DateTime
-  periodEnd    DateTime
-  demandLevel  Int      // % de surcharge (>100 = saturé)
-  siteIds      String[] // chantiers concernés
-  resolved     Boolean  @default(false)
-  resolution   String?  @db.Text
-  arbitration  Boolean  @default(false) // demande arbitrage DG
+  resourceType      String // CREW, EQUIPMENT
+  resourceLabel     String // "Maçons coffreurs", "Pelle hydraulique 20T"...
+  periodStart       DateTime
+  periodEnd         DateTime
+  demandLevel       Int // % de surcharge (>100 = saturé)
+  siteIds           String[] // chantiers concernés
+  resolved          Boolean           @default(false)
+  resolution        String?           @db.Text
+  arbitration       Boolean           @default(false) // demande arbitrage DG
   arbitrationStatus ArbitrationStatus @default(PENDING)
   arbitrationNote   String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, resolved])
   @@index([tenantId, arbitration])
@@ -1686,21 +1827,21 @@ enum ArbitrationStatus {
 // Plan de succession pour les postes clés, formations historiques /
 // planifiées (avec recyclages CACES), indicateurs sociaux mensuels.
 model SuccessionPlan {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  positionTitle String   // "Directeur de travaux", "DAF"...
+  positionTitle String // "Directeur de travaux", "DAF"...
   incumbentId   String
-  incumbent     User     @relation("SuccessionIncumbent", fields: [incumbentId], references: [id])
+  incumbent     User             @relation("SuccessionIncumbent", fields: [incumbentId], references: [id])
   successorId   String?
-  successor     User?    @relation("SuccessionSuccessor", fields: [successorId], references: [id])
+  successor     User?            @relation("SuccessionSuccessor", fields: [successorId], references: [id])
   readyInMonths Int?
   status        SuccessionStatus @default(NONE)
-  notes         String?  @db.Text
+  notes         String?          @db.Text
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, positionTitle])
   @@index([tenantId, status])
@@ -1715,24 +1856,24 @@ enum SuccessionStatus {
 }
 
 model Training {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  title         String
-  category      String   // CACES, sécurité, métier, management...
-  provider      String?
-  startDate     DateTime
-  endDate       DateTime
-  cost          BigInt?
-  status        TrainingStatus @default(PLANNED)
+  title          String
+  category       String // CACES, sécurité, métier, management...
+  provider       String?
+  startDate      DateTime
+  endDate        DateTime
+  cost           BigInt?
+  status         TrainingStatus @default(PLANNED)
   certificateUrl String?
-  expiresAt     DateTime? // pour recyclage obligatoire
+  expiresAt      DateTime? // pour recyclage obligatoire
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, status])
   @@index([tenantId, expiresAt])
@@ -1747,11 +1888,11 @@ enum TrainingStatus {
 }
 
 model SocialIndicator {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  period    String   // "2026-04"
+  period     String // "2026-04"
   // Stocké en JSON pour souplesse : turnover, absenteeism, climate, conflicts...
   indicators Json
 
@@ -1767,15 +1908,15 @@ model SocialIndicator {
 // Snapshot mensuel : compte de résultat (P&L), bilan synthétique, BFR.
 // Une ligne par mois. Verrouillage après clôture comptable.
 model FinancialPeriod {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  period    String   // "2026-04" ou "2026-BUDGET" pour budget
-  pnl       Json     // { products: {...}, expenses: {...}, results: {...} }
-  balance   Json     // { actif: {...}, passif: {...}, ratios: {...} }
-  bfr       Json     // { dso, dpo, stockRotation, bfr, treasury }
-  locked    Boolean  @default(false)
+  period  String // "2026-04" ou "2026-BUDGET" pour budget
+  pnl     Json // { products: {...}, expenses: {...}, results: {...} }
+  balance Json // { actif: {...}, passif: {...}, ratios: {...} }
+  bfr     Json // { dso, dpo, stockRotation, bfr, treasury }
+  locked  Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1787,23 +1928,23 @@ model FinancialPeriod {
 
 // Engagements financiers : cautions, GAPD, lettres de crédit, BC long terme.
 model FinancialCommitment {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  type        CommitmentType
-  reference   String?
-  bank        String?
-  beneficiary String?
-  amount      BigInt
-  siteId      String?
-  issueDate   DateTime
+  type         CommitmentType
+  reference    String?
+  bank         String?
+  beneficiary  String?
+  amount       BigInt
+  siteId       String?
+  issueDate    DateTime
   maturityDate DateTime
-  status      CommitmentStatus @default(ACTIVE)
-  notes       String?
+  status       CommitmentStatus @default(ACTIVE)
+  notes        String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, status])
   @@index([tenantId, type])
@@ -1827,30 +1968,30 @@ enum CommitmentStatus {
 // Comptes bancaires : solde JJ + lignes accordées/utilisées + relation manager.
 // Étendu DAF (Bloc 1 / fn 1.2) : syncStatus + lastSyncAt + primaryColor + movements.
 model BankAccount {
-  id                String   @id @default(cuid())
-  tenantId          String
-  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  bank              String   // UBA, BICEC, AFRILAND, ECOBANK, SGBC...
+  bank              String // UBA, BICEC, AFRILAND, ECOBANK, SGBC...
   accountNumber     String
-  accountType       String   @default("CURRENT") // CURRENT, ESCROW, SAVING, GUARANTEE, FOREIGN_CURRENCY
-  currency          String   @default("XAF")
+  accountType       String    @default("CURRENT") // CURRENT, ESCROW, SAVING, GUARANTEE, FOREIGN_CURRENCY
+  currency          String    @default("XAF")
   balance           BigInt
-  creditLineGranted BigInt   @default(0)
-  creditLineUsed    BigInt   @default(0)
+  creditLineGranted BigInt    @default(0)
+  creditLineUsed    BigInt    @default(0)
   renewalDate       DateTime?
-  contact           Json?    // { name, phone, email }
-  history12m        Json     @default("[]") // [{ month, balance }]
+  contact           Json? // { name, phone, email }
+  history12m        Json      @default("[]") // [{ month, balance }]
 
   // DAF fn 1.2 — synchro temps réel
-  lastSyncAt        DateTime?
-  syncStatus        BankSyncStatus @default(MANUAL)
-  primaryColor      String?  // pour code couleur visuel UBA rouge, BICEC sarcelle...
+  lastSyncAt   DateTime?
+  syncStatus   BankSyncStatus @default(MANUAL)
+  primaryColor String? // pour code couleur visuel UBA rouge, BICEC sarcelle...
 
-  movements         BankMovement[]
+  movements BankMovement[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, accountNumber])
   @@index([tenantId])
@@ -1866,19 +2007,19 @@ enum BankSyncStatus {
 
 // Mouvements bancaires (DAF Bloc 1 / fn 1.2). Trace des entrées / sorties par compte.
 model BankMovement {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   bankAccountId String
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
 
-  direction     MovementDirection
-  amount        BigInt
-  label         String
-  reference     String?
-  counterparty  String?
-  siteId        String?
-  occurredAt    DateTime
+  direction    MovementDirection
+  amount       BigInt
+  label        String
+  reference    String?
+  counterparty String?
+  siteId       String?
+  occurredAt   DateTime
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([bankAccountId, occurredAt])
   @@map("bank_movements")
@@ -1896,20 +2037,20 @@ enum MovementDirection {
 // SYSCOHADA. V1 : structure conforme, calcul brouillon — validation
 // expert-comptable agréé OHADA requise pour la prod.
 model AccountingPeriod {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  period        String   // "2026-04" ou "2026" pour annuel
-  status        PeriodStatus @default(OPEN)
-  closedAt      DateTime?
-  closedBy      String?
-  totalEntries  Int      @default(0)
-  totalDebit    BigInt   @default(0)
-  totalCredit   BigInt   @default(0)
+  period       String // "2026-04" ou "2026" pour annuel
+  status       PeriodStatus @default(OPEN)
+  closedAt     DateTime?
+  closedBy     String?
+  totalEntries Int          @default(0)
+  totalDebit   BigInt       @default(0)
+  totalCredit  BigInt       @default(0)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, period])
   @@map("accounting_periods")
@@ -1924,15 +2065,15 @@ enum PeriodStatus {
 
 // Écriture comptable simplifiée (V1) avec lignes débit/crédit.
 model AccountingEntry {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  period    String   // "2026-04"
-  reference String   // PIE-2026-001
-  date      DateTime
-  journal   String   // OD, AC, BQ, VE, OD
-  label     String
+  period      String // "2026-04"
+  reference   String // PIE-2026-001
+  date        DateTime
+  journal     String // OD, AC, BQ, VE, OD
+  label       String
   totalDebit  BigInt
   totalCredit BigInt
 
@@ -1942,10 +2083,10 @@ model AccountingEntry {
   dafValidatedAt        DateTime?
   dafValidatedBy        String?
   requiresDafValidation Boolean     @default(false)
-  enteredBy             String?     // userId du saisisseur
+  enteredBy             String? // userId du saisisseur
 
   lines     AccountingLine[]
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   @@unique([tenantId, reference])
   @@index([tenantId, period])
@@ -1961,14 +2102,14 @@ enum EntryStatus {
 }
 
 model AccountingLine {
-  id        String   @id @default(cuid())
-  entryId   String
-  entry     AccountingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  id      String          @id @default(cuid())
+  entryId String
+  entry   AccountingEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
-  account   String   // numéro SYSCOHADA (4 à 6 chiffres)
-  label     String
-  debit     BigInt   @default(0)
-  credit    BigInt   @default(0)
+  account String // numéro SYSCOHADA (4 à 6 chiffres)
+  label   String
+  debit   BigInt @default(0)
+  credit  BigInt @default(0)
 
   @@index([account])
   @@map("accounting_lines")
@@ -1976,24 +2117,24 @@ model AccountingLine {
 
 // Clôture annuelle avec workflow DG en 5 étapes.
 model AnnualClosure {
-  id              String   @id @default(cuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  fiscalYear      Int
-  status          ClosureStatus @default(IN_PROGRESS)
-  pnlValidated    Boolean  @default(false)
-  balanceValidated Boolean @default(false)
-  adjustmentsValidated Boolean @default(false)
-  draftGenerated  Boolean  @default(false)
-  adjustments     Json     @default("[]")
-  dgValidatedAt   DateTime?
-  dgValidatedBy   String?
-  submittedToDgi  Boolean  @default(false)
-  dsfFileUrl      String?
+  fiscalYear           Int
+  status               ClosureStatus @default(IN_PROGRESS)
+  pnlValidated         Boolean       @default(false)
+  balanceValidated     Boolean       @default(false)
+  adjustmentsValidated Boolean       @default(false)
+  draftGenerated       Boolean       @default(false)
+  adjustments          Json          @default("[]")
+  dgValidatedAt        DateTime?
+  dgValidatedBy        String?
+  submittedToDgi       Boolean       @default(false)
+  dsfFileUrl           String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, fiscalYear])
   @@map("annual_closures")
@@ -2011,66 +2152,96 @@ enum ClosureStatus {
 // ========================================
 // Fournisseurs, contrats-cadres, BC en attente validation DG, évaluations.
 model Supplier {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   name          String
-  category      String   // Ciment, Acier, Carburant, Engins, Sous-traitance...
-  taxId         String?  // NIU
+  category      String // Ciment, Acier, Carburant, Engins, Sous-traitance...
+  taxId         String? // NIU
   rccm          String?
   phone         String?
   email         String?
   address       String?
-  paymentTerms  Int      @default(45) // jours
-  ratingQuality Float?   // 1-5
+  paymentTerms  Int     @default(45) // jours
+  ratingQuality Float? // 1-5
   ratingDelay   Float?
   ratingPrice   Float?
-  strategic     Boolean  @default(false)
-  blocked       Boolean  @default(false)
+  strategic     Boolean @default(false)
+  blocked       Boolean @default(false)
   blockReason   String?
-  volumeYTD     BigInt   @default(0)
-  poCount       Int      @default(0)
+  volumeYTD     BigInt  @default(0)
+  poCount       Int     @default(0)
 
   // DAF Bloc 2 / fn 2.3 — suivi financier fournisseur
-  paymentTermsContract  Int      @default(45)
-  paymentTermsActual    Int      @default(0)
+  paymentTermsContract  Int     @default(45)
+  paymentTermsActual    Int     @default(0)
   financialRating       String?
   financialRatingSource String?
-  incidentsCount        Int      @default(0)
+  incidentsCount        Int     @default(0)
 
-  contracts     FrameworkContract[]
-  evaluations   SupplierEvaluation[]
+  // DT — fn 1.7 : sous-traitance technique
+  isSubcontractor  Boolean        @default(false)
+  specialties      SubSpecialty[] @default([])
+  agreements       String[]       @default([]) // certifications, agréments métier
+  internalRating   Float          @default(0) // 0-5 (moyenne SubcontractorEvaluation.overallScore)
+  ratingsCount     Int            @default(0)
+  fiscalCompliance Json? // { cnps: 'OK'|'KO'|'PENDING', dgi: '...', lastChecked: ISO }
+  alertNotes       String?
+
+  contracts      FrameworkContract[]
+  evaluations    SupplierEvaluation[]
   purchaseOrders PurchaseOrder[]
-  commitments   SupplierCommitment[]
+  commitments    SupplierCommitment[]
+  invoices       SupplierInvoice[]
+  // DT — relations sous-traitance
+  subEvaluations SubcontractorEvaluation[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, name])
   @@index([tenantId, strategic])
   @@index([tenantId, category])
+  @@index([tenantId, isSubcontractor])
   @@map("suppliers")
 }
 
+// DT — fn 1.7 : spécialités sous-traitance technique
+enum SubSpecialty {
+  EARTHWORKS_HEAVY
+  ROOFING_WATERPROOFING
+  ELECTRICAL
+  PLUMBING
+  HVAC
+  PAINTING
+  TILING
+  JOINERY
+  METALWORK
+  GLAZING
+  DEMOLITION
+  CRANE
+  OTHER
+}
+
 model FrameworkContract {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
-  reference   String
-  subject     String
-  maxAmount   BigInt
-  usedAmount  BigInt   @default(0)
-  startDate   DateTime
-  endDate     DateTime
-  conditions  Json?
-  status      ContractStatus @default(DRAFT)
+  reference  String
+  subject    String
+  maxAmount  BigInt
+  usedAmount BigInt         @default(0)
+  startDate  DateTime
+  endDate    DateTime
+  conditions Json?
+  status     ContractStatus @default(DRAFT)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, reference])
   @@index([tenantId, status])
@@ -2085,16 +2256,16 @@ enum ContractStatus {
 }
 
 model SupplierEvaluation {
-  id           String   @id @default(cuid())
-  supplierId   String
-  supplier     Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  evaluatorId  String
-  period       String
+  id            String   @id @default(cuid())
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  evaluatorId   String
+  period        String
   ratingQuality Float
   ratingDelay   Float
   ratingPrice   Float
-  comments     String?  @db.Text
-  createdAt    DateTime @default(now())
+  comments      String?  @db.Text
+  createdAt     DateTime @default(now())
 
   @@index([supplierId, createdAt])
   @@map("supplier_evaluations")
@@ -2102,27 +2273,27 @@ model SupplierEvaluation {
 
 // Bons de commande avec workflow validation DG (montant > seuil)
 model PurchaseOrder {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
 
-  reference   String
-  label       String
-  amount      BigInt
-  category    String
-  initiatorId String
-  status      PoStatus @default(PENDING_DAF)
-  dafApprovedAt DateTime?
-  dafApprovedBy String?
-  dgDecisionAt DateTime?
-  dgDecisionBy String?
-  dgDecisionNote String?
+  reference       String
+  label           String
+  amount          BigInt
+  category        String
+  initiatorId     String
+  status          PoStatus  @default(PENDING_DAF)
+  dafApprovedAt   DateTime?
+  dafApprovedBy   String?
+  dgDecisionAt    DateTime?
+  dgDecisionBy    String?
+  dgDecisionNote  String?
   rejectionReason String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, reference])
   @@index([tenantId, status])
@@ -2144,25 +2315,25 @@ enum PoStatus {
 // Immobilisations significatives, mouvements de stock (avec détection
 // d'anomalies), inventaires et sinistres.
 model FixedAsset {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  code          String
-  description   String
-  category      AssetCategory
-  acquisitionDate DateTime
-  grossValue    BigInt
-  accumulatedDepreciation BigInt @default(0)
-  netValue      BigInt   // VNC = grossValue - accumulatedDepreciation
-  usefulLifeMonths Int
-  siteId        String?
-  condition     String   @default("GOOD") // EXCELLENT, GOOD, FAIR, POOR
-  insurance     Json?    // { company, policyRef, expiresAt, coveredAmount }
-  lastRevaluedAt DateTime?
+  code                    String
+  description             String
+  category                AssetCategory
+  acquisitionDate         DateTime
+  grossValue              BigInt
+  accumulatedDepreciation BigInt        @default(0)
+  netValue                BigInt // VNC = grossValue - accumulatedDepreciation
+  usefulLifeMonths        Int
+  siteId                  String?
+  condition               String        @default("GOOD") // EXCELLENT, GOOD, FAIR, POOR
+  insurance               Json? // { company, policyRef, expiresAt, coveredAmount }
+  lastRevaluedAt          DateTime?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, category])
@@ -2180,24 +2351,24 @@ enum AssetCategory {
 }
 
 model StockMovement {
-  id           String   @id @default(cuid())
-  tenantId     String
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  type         MovementType
-  itemCode     String
-  itemLabel    String
-  quantity     Float
-  unitValue    BigInt
-  totalValue   BigInt
-  fromSiteId   String?
-  toSiteId     String?
-  reason       String?
-  initiatorId  String
-  anomalous    Boolean  @default(false)
+  type          MovementType
+  itemCode      String
+  itemLabel     String
+  quantity      Float
+  unitValue     BigInt
+  totalValue    BigInt
+  fromSiteId    String?
+  toSiteId      String?
+  reason        String?
+  initiatorId   String
+  anomalous     Boolean      @default(false)
   anomalyReason String?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId, anomalous])
   @@index([tenantId, createdAt])
@@ -2213,23 +2384,23 @@ enum MovementType {
 }
 
 model Inventory {
-  id            String   @id @default(cuid())
-  tenantId      String
-  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  siteId        String?
-  period        String // "2026-04"
-  items         Json     @default("[]") // [{ code, label, theoretical, counted, gap }]
-  itemsCount    Int      @default(0)
-  gapsCount     Int      @default(0)
-  gapsValue     BigInt   @default(0)
-  status        InventoryStatus @default(PLANNED)
-  dgValidated   Boolean  @default(false)
-  startDate     DateTime
-  endDate       DateTime?
+  siteId      String?
+  period      String // "2026-04"
+  items       Json            @default("[]") // [{ code, label, theoretical, counted, gap }]
+  itemsCount  Int             @default(0)
+  gapsCount   Int             @default(0)
+  gapsValue   BigInt          @default(0)
+  status      InventoryStatus @default(PLANNED)
+  dgValidated Boolean         @default(false)
+  startDate   DateTime
+  endDate     DateTime?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, status])
   @@map("inventories")
@@ -2243,22 +2414,22 @@ enum InventoryStatus {
 }
 
 model Loss {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  type        LossType
-  itemDescription String
-  value       BigInt
-  siteId      String?
-  occurredAt  DateTime
-  declaredToInsurance Boolean @default(false)
-  declaredAt  DateTime?
-  indemnification BigInt?
-  correctiveActions String? @db.Text
+  type                LossType
+  itemDescription     String
+  value               BigInt
+  siteId              String?
+  occurredAt          DateTime
+  declaredToInsurance Boolean   @default(false)
+  declaredAt          DateTime?
+  indemnification     BigInt?
+  correctiveActions   String?   @db.Text
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, type])
   @@map("losses")
@@ -2276,27 +2447,35 @@ enum LossType {
 // ========================================
 // Préférences DG, signature numérique, agenda, déclarations d'intérêts.
 model UserPreferences {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  dashboardWidgets     Json     @default("[]")
-  alertThresholds      Json     @default("{}")
-  notificationChannels Json     @default("{}")
-  dailyReportEnabled   Boolean  @default(false)
-  dailyReportTime      String?  // "07:00"
-  numberFormat         String   @default("M_FCFA") // M_FCFA, MD_FCFA, RAW
+  dashboardWidgets     Json    @default("[]")
+  alertThresholds      Json    @default("{}")
+  notificationChannels Json    @default("{}")
+  dailyReportEnabled   Boolean @default(false)
+  dailyReportTime      String? // "07:00"
+  numberFormat         String  @default("M_FCFA") // M_FCFA, MD_FCFA, RAW
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Bloc 2 / fn 2.3 — préférences alertes Comptable
+  // { draftEntriesAlert?: bool, invoiceDueAlert?: bool, bankReconciliationAlert?: bool, channel?: 'email'|'push'|'in-app' }
+  cptAlerts Json?
+
+  // DT Bloc 2 / fn 2.3 — préférences alertes techniques
+  // { costDeviationThreshold, delayThresholdDays, marginThresholdPercent, crewLoadThresholdPercent, channel: 'email'|'push'|'in-app' }
+  dtAlerts Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_preferences")
 }
 
 model UserSignature {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   signatureUrl String?
   initialsUrl  String?
@@ -2306,20 +2485,20 @@ model UserSignature {
 }
 
 model AgendaEvent {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title       String
-  description String?  @db.Text
+  description String?   @db.Text
   startAt     DateTime
   endAt       DateTime
   location    String?
   type        EventType @default(MEETING)
-  externalId  String?  // pour sync Google/Outlook
+  externalId  String? // pour sync Google/Outlook
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, startAt])
   @@map("agenda_events")
@@ -2335,9 +2514,9 @@ enum EventType {
 }
 
 model InterestDeclaration {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   year                Int
   mandates            Json     @default("[]") // [{ entity, role, since, end? }]
@@ -2346,8 +2525,8 @@ model InterestDeclaration {
   declaredAt          DateTime
   validUntil          DateTime
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, year])
   @@map("interest_declarations")
@@ -2359,19 +2538,19 @@ model InterestDeclaration {
 // Avantages en nature et bonus de performance pour le DG (et autres
 // cadres dirigeants). Évaluation conforme barème CNPS Cameroun.
 model BenefitInKind {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   type         BenefitType
   description  String
-  monthlyValue BigInt   // valeur réelle
-  fiscalValue  BigInt   // selon barème CNPS
+  monthlyValue BigInt // valeur réelle
+  fiscalValue  BigInt // selon barème CNPS
   startDate    DateTime
   endDate      DateTime?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, type])
   @@map("benefits_in_kind")
@@ -2387,9 +2566,9 @@ enum BenefitType {
 }
 
 model PerformanceBonus {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   fiscalYear   Int
   bonusType    BonusType
@@ -2399,8 +2578,8 @@ model PerformanceBonus {
   status       BonusStatus @default(TARGETED)
   paidAt       DateTime?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, fiscalYear])
   @@map("performance_bonuses")
@@ -2418,4 +2597,725 @@ enum BonusStatus {
   PROVISIONED
   VALIDATED
   PAID
+}
+
+// ========================================
+// COMPTABLE — BLOC 0 : WORKFLOW PROMOTION RÔLES
+// ========================================
+// Permet à un RH de demander la promotion d'un utilisateur vers un rôle
+// nécessitant validation (ACCOUNTANT, WORKS_DIRECTOR, etc.). La demande
+// transite par 1..n validateurs (DAF + DT selon le rôle visé).
+model RolePromotionRequest {
+  id               String   @id @default(cuid())
+  tenantId         String
+  targetUserId     String
+  targetUser       User     @relation("PromotionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  fromRole         Role
+  toRole           Role
+  requestedSiteIds String[] @default([])
+  justification    String   @db.Text
+
+  requestedById String
+  requestedBy   User     @relation("PromotionRequester", fields: [requestedById], references: [id])
+  requestedAt   DateTime @default(now())
+
+  validatorRoles Role[] // ex: [DAF] ou [DAF, TECH_DIRECTOR]
+  validations    Json   @default("[]") // [{ validatorId, validatorRole, validatedAt, decision, comment }]
+
+  status     PromotionStatus @default(PENDING)
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([targetUserId])
+  @@map("role_promotion_requests")
+}
+
+enum PromotionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// ========================================
+// COMPTABLE — BLOC 1 fn 1.1/1.2 : ÉCRITURES COMPTABLES + PLAN SYSCOHADA
+// ========================================
+model Entry {
+  id       String  @id @default(cuid())
+  tenantId String
+  siteId   String?
+  site     Site?   @relation("EntrySite", fields: [siteId], references: [id])
+
+  journalCode String // "ACH", "VTE", "BQ", "OD", "PAIE", "CAI"
+  entryDate   DateTime
+  reference   String
+  description String
+
+  status CptEntryStatus @default(DRAFT)
+
+  createdById   String
+  createdBy     User      @relation("EntryCreator", fields: [createdById], references: [id])
+  validatedById String?
+  validatedBy   User?     @relation("EntryValidator", fields: [validatedById], references: [id])
+  validatedAt   DateTime?
+
+  lines EntryLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, journalCode, reference])
+  @@index([tenantId, journalCode, entryDate])
+  @@index([siteId])
+  @@map("cpt_entries")
+}
+
+enum CptEntryStatus {
+  DRAFT
+  VALIDATED
+  CANCELLED
+}
+
+model EntryLine {
+  id      String @id @default(cuid())
+  entryId String
+  entry   Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  accountCode  String
+  thirdPartyId String?
+  description  String
+  debit        BigInt  @default(0)
+  credit       BigInt  @default(0)
+  siteId       String?
+  site         Site?   @relation("EntryLineSite", fields: [siteId], references: [id])
+  lettering    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([accountCode])
+  @@index([entryId])
+  @@index([siteId])
+  @@map("cpt_entry_lines")
+}
+
+model ChartOfAccounts {
+  id                 String      @id @default(cuid())
+  tenantId           String
+  code               String
+  name               String
+  class              Int // 1-9 SYSCOHADA
+  type               AccountType
+  requiresThirdParty Boolean     @default(false)
+  active             Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, class])
+  @@map("cpt_chart_of_accounts")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+  OFF_BALANCE
+}
+
+// ========================================
+// COMPTABLE — BLOC 1 fn 1.3 : FACTURES FOURNISSEURS
+// ========================================
+model SupplierInvoice {
+  id         String   @id @default(cuid())
+  tenantId   String
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  invoiceNumber String
+  invoiceDate   DateTime
+  dueDate       DateTime
+  amountHt      BigInt
+  vatAmount     BigInt
+  amountTtc     BigInt
+
+  siteId      String?
+  site        Site?   @relation("InvoiceSite", fields: [siteId], references: [id])
+  poRef       String?
+  deliveryRef String?
+
+  status      InvoiceStatus @default(RECEIVED)
+  entryId     String?
+  attachments String[]      @default([])
+
+  receivedAt    DateTime  @default(now())
+  accountedAt   DateTime?
+  accountedBy   String?
+  paidAt        DateTime?
+  disputeReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([siteId])
+  @@map("cpt_supplier_invoices")
+}
+
+enum InvoiceStatus {
+  RECEIVED
+  PENDING_3WAY_MATCH
+  ACCOUNTED
+  PENDING_PAYMENT
+  PAID
+  DISPUTED
+  REJECTED
+}
+
+// ========================================
+// COMPTABLE — BLOC 1 fn 1.4 : SITUATIONS DE TRAVAUX (FACTURES CLIENTS)
+// ========================================
+model ProgressBilling {
+  id       String @id @default(cuid())
+  tenantId String
+  siteId   String
+  site     Site   @relation("BillingSite", fields: [siteId], references: [id])
+
+  billingNumber      String   @unique
+  period             String
+  amountHt           BigInt
+  vatAmount          BigInt
+  amountTtc          BigInt
+  guaranteeRetention BigInt   @default(0)
+  sourceWithholding  BigInt   @default(0)
+  netToReceive       BigInt
+  dueDate            DateTime
+
+  status     BillingStatus @default(DRAFT)
+  items      Json          @default("[]")
+  pdfUrl     String?
+  paidAt     DateTime?
+  paidAmount BigInt?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("cpt_progress_billings")
+}
+
+enum BillingStatus {
+  DRAFT
+  VALIDATED
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  DISPUTED
+}
+
+// ========================================
+// COMPTABLE — BLOC 1 fn 1.5 : CAISSES CHANTIER
+// ========================================
+model SiteCashbox {
+  id          String @id @default(cuid())
+  siteId      String @unique
+  site        Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  balance     BigInt @default(0)
+  custodianId String
+
+  movements CashboxMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cpt_site_cashboxes")
+}
+
+model CashboxMovement {
+  id        String      @id @default(cuid())
+  cashboxId String
+  cashbox   SiteCashbox @relation(fields: [cashboxId], references: [id], onDelete: Cascade)
+
+  direction   CashDirection
+  amount      BigInt
+  reason      String
+  reference   String?
+  attachments String[]      @default([])
+  occurredAt  DateTime
+
+  recordedById String
+  recordedBy   User   @relation(fields: [recordedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([cashboxId, occurredAt])
+  @@map("cpt_cashbox_movements")
+}
+
+enum CashDirection {
+  IN
+  OUT
+}
+
+// ============================================================
+// DT — DIRECTION TECHNIQUE (Bloc 0 + 1 + 2)
+// ============================================================
+// Daniel ESSOMBA — supervise 23 chantiers, 4 directeurs travaux,
+// pipeline d'études, méthodes, plan de charge, sous-traitance, QHSE.
+// ============================================================
+
+// Bloc 0 — Préférences personnelles DT (alertes, layout)
+model DtSettings {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  alertsConfig    Json? // { costDeviationThreshold, delayThresholdDays, marginThresholdPercent, ... }
+  dashboardLayout Json? // [{ widget, order, size }]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("dt_settings")
+}
+
+// Bloc 0 — Alertes techniques transverses (dérive coût, retard, surcharge équipe…)
+model DtAlert {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type       DtAlertType
+  severity   AlertSeverity
+  title      String
+  details    String?
+  link       String?
+  siteId     String?
+  resolved   Boolean       @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([tenantId, resolved])
+  @@index([tenantId, type])
+  @@map("dt_alerts")
+}
+
+enum DtAlertType {
+  SITE_BUDGET_DEVIATION
+  SITE_DELIVERY_DELAY
+  MARGIN_BELOW_TARGET
+  TEAM_CAPACITY_OVERLOAD
+  MARKET_VALIDATION_PENDING
+  HSE_INCIDENT
+  QUALITY_NON_CONFORMITY
+}
+
+// Bloc 1 / fn 1.3 — Études et offres : pipeline AO
+model Tender {
+  id                 String      @id @default(cuid())
+  tenantId           String
+  tenant             Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reference          String      @unique
+  title              String
+  moaName            String
+  moaType            MoaType
+  workType           WorkType
+  estimatedBudget    BigInt
+  submissionDeadline DateTime
+  stage              TenderStage @default(OPPORTUNITY)
+  probability        Int         @default(0) // 0-100
+  studyCost          BigInt      @default(0)
+  ourBidAmount       BigInt?
+  ourMargin          Float?
+  awarded            Boolean?
+  awardedTo          String? // si attribué à un concurrent
+  studyOwnerId       String
+  studyOwner         User        @relation("TenderStudyOwner", fields: [studyOwnerId], references: [id])
+  documents          String[]    @default([]) // URLs DCE / mémoire technique / etc.
+
+  items TenderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, stage])
+  @@index([tenantId, submissionDeadline])
+  @@map("tenders")
+}
+
+enum TenderStage {
+  OPPORTUNITY
+  DCE_ANALYSIS
+  SITE_VISIT
+  TECHNICAL_STUDY
+  PRICING
+  SUBCONTRACTOR_QUOTES
+  INTERNAL_VALIDATION
+  SUBMITTED
+  RESULTS_PENDING
+  WON
+  LOST
+}
+
+enum WorkType {
+  BUILDING
+  ROADWORK
+  CIVIL_ENGINEERING
+  HYDRAULIC
+  LAYOUT
+  INDUSTRIAL
+  OTHER
+}
+
+// Bloc 1 / fn 1.3 — Articles BPU/DQE d'un AO
+model TenderItem {
+  id          String @id @default(cuid())
+  tenderId    String
+  tender      Tender @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  code        String // BPU code (ex: 02.01.03)
+  designation String
+  unit        String // m³, m², ml, u, ...
+  quantity    Float
+  unitPrice   BigInt
+  totalPrice  BigInt // calculé = quantity * unitPrice
+
+  @@index([tenderId])
+  @@map("tender_items")
+}
+
+// Bloc 1 / fn 1.3 — Concurrents observés (post-attribution)
+model Competitor {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name     String
+  stats    Json? // { totalParticipations, wins, avgGap, ... }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@map("competitors")
+}
+
+// Bloc 1 / fn 1.5 — Bibliothèque modes opératoires
+model OperatingMethod {
+  id             String         @id @default(cuid())
+  tenantId       String
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category       MethodCategory
+  title          String
+  version        String         @default("1.0")
+  description    String?        @db.Text
+  procedure      String         @db.Text // markdown
+  attachments    String[]       @default([])
+  authorId       String
+  author         User           @relation("MethodAuthor", fields: [authorId], references: [id])
+  status         MethodStatus   @default(ACTIVE)
+  usageCount     Int            @default(0)
+  lastReviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, category])
+  @@map("operating_methods")
+}
+
+enum MethodCategory {
+  EARTHWORKS
+  FOUNDATIONS
+  STRUCTURE
+  FORMWORK
+  REBAR
+  FINISHING
+  ROADWORK
+  HYDRAULIC
+  SAFETY
+  OTHER
+}
+
+enum MethodStatus {
+  DRAFT
+  ACTIVE
+  OBSOLETE
+  UNDER_REVIEW
+}
+
+// Bloc 1 / fn 1.5 — Plannings types
+model TemplatePlanning {
+  id            String @id @default(cuid())
+  tenantId      String
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  siteTypology  String // "R+8", "voirie urbaine 2 km", "AEP forage 50 m"
+  totalDuration Int // jours
+  phases        Json // [{ name, durationDays, dependencies }]
+  authorId      String
+  author        User   @relation("TemplatePlanningAuthor", fields: [authorId], references: [id])
+  usageCount    Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("template_plannings")
+}
+
+// Bloc 1 / fn 1.5 — Ratios de référence (h/m², kg/m³…)
+model ReferenceRatio {
+  id                String @id @default(cuid())
+  tenantId          String
+  tenant            Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  workItem          String // "Ferraillage HA poteaux"
+  unit              String // "kg/m³", "h/m²"
+  refValue          Float
+  observedValue     Float  @default(0)
+  observationsCount Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, workItem])
+  @@map("reference_ratios")
+}
+
+// Bloc 1 / fn 1.5 — Retours d'expérience post-chantier
+model SiteRex {
+  id              String   @id @default(cuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User     @relation("RexAuthor", fields: [authorId], references: [id])
+  issues          String   @db.Text
+  solutions       String   @db.Text
+  recommendations String   @db.Text
+  keywords        String[] @default([])
+  closedAt        DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([siteId])
+  @@map("site_rex")
+}
+
+// Bloc 1 / fn 1.6 — Équipes ouvrières
+model Crew {
+  id                   String        @id @default(cuid())
+  tenantId             String
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                 String // "GO Pont Mfoundi", "VRD Bonabéri"
+  specialty            CrewSpecialty
+  capacityHoursPerWeek Float         @default(40)
+  leaderId             String?
+  leader               User?         @relation("CrewLeader", fields: [leaderId], references: [id])
+  active               Boolean       @default(true)
+
+  assignments CrewAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, active])
+  @@map("crews")
+}
+
+enum CrewSpecialty {
+  CONCRETE
+  FORMWORK
+  REBAR
+  FINISHING
+  ROADWORK
+  HYDRAULIC
+  ELECTRICAL
+  OTHER
+}
+
+// Bloc 1 / fn 1.6 — Affectations chantier × semaine
+model CrewAssignment {
+  id              String @id @default(cuid())
+  crewId          String
+  crew            Crew   @relation(fields: [crewId], references: [id], onDelete: Cascade)
+  siteId          String
+  site            Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  weekIso         String // "2026-W21"
+  plannedHours    Float
+  actualHours     Float?
+  overloadPercent Float? // calculé si > 100
+
+  createdAt DateTime @default(now())
+
+  @@unique([crewId, siteId, weekIso])
+  @@index([crewId, weekIso])
+  @@map("crew_assignments")
+}
+
+// Bloc 1 / fn 1.7 — Évaluations sous-traitants (note 4 critères)
+model SubcontractorEvaluation {
+  id            String   @id @default(cuid())
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  siteId        String
+  site          Site     @relation(fields: [siteId], references: [id])
+  evaluatorId   String
+  evaluator     User     @relation("SubEvaluator", fields: [evaluatorId], references: [id])
+  qualityScore  Int // 1-5
+  delayScore    Int // 1-5
+  safetyScore   Int // 1-5
+  behaviorScore Int // 1-5
+  overallScore  Float // calculé = moyenne pondérée
+  comments      String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([supplierId, createdAt])
+  @@map("subcontractor_evaluations")
+}
+
+// Bloc 1 / fn 1.8 — Incidents et accidents HSE
+model HseIncident {
+  id                String           @id @default(cuid())
+  siteId            String
+  site              Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  occurredAt        DateTime
+  type              IncidentType
+  severity          IncidentSeverity
+  victimsCount      Int              @default(0)
+  workdaysLost      Int              @default(0)
+  description       String           @db.Text
+  immediateActions  String?          @db.Text
+  rootCause         String?          @db.Text
+  correctiveActions Json             @default("[]") // [{ action, owner, dueDate, done }]
+  reportedById      String
+  reportedBy        User             @relation("IncidentReporter", fields: [reportedById], references: [id])
+  status            IncidentStatus   @default(OPEN)
+  declaredCnps      Boolean          @default(false)
+  declaredCnpsAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId, occurredAt])
+  @@index([severity, status])
+  @@map("hse_incidents")
+}
+
+enum IncidentType {
+  NEAR_MISS
+  MINOR_INJURY
+  MAJOR_INJURY
+  FATAL_ACCIDENT
+  MATERIAL_DAMAGE
+  ENVIRONMENT_INCIDENT
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  UNDER_INVESTIGATION
+  ACTIONS_DEFINED
+  ACTIONS_IN_PROGRESS
+  CLOSED
+}
+
+// Bloc 1 / fn 1.8 — Audits chantiers
+model SiteAudit {
+  id          String        @id @default(cuid())
+  siteId      String
+  site        Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  auditType   AuditCategory
+  scheduledAt DateTime
+  completedAt DateTime?
+  auditorId   String
+  auditor     User          @relation("AuditAuditor", fields: [auditorId], references: [id])
+  score       Float? // 0-100
+  findings    Json          @default("[]") // [{ severity, description, recommendation }]
+  reportUrl   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([siteId, scheduledAt])
+  @@map("site_audits")
+}
+
+enum AuditCategory {
+  INTERNAL_QHSE
+  EXTERNAL_ISO
+  MOA_INSPECTION
+  REGULATORY
+}
+
+// Bloc 1 / fn 1.8 — Non-conformités qualité / sécurité / environnement
+model NonConformity {
+  id               String      @id @default(cuid())
+  siteId           String?
+  site             Site?       @relation(fields: [siteId], references: [id])
+  auditId          String?
+  category         NcCategory
+  criticality      Criticality
+  description      String      @db.Text
+  correctiveAction String?     @db.Text
+  ownerId          String
+  owner            User        @relation("NcOwner", fields: [ownerId], references: [id])
+  dueDate          DateTime?
+  status           NcStatus    @default(OPEN)
+  closedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId, status])
+  @@map("non_conformities")
+}
+
+enum NcCategory {
+  QUALITY
+  SAFETY
+  ENVIRONMENT
+  REGULATORY
+  DOCUMENTATION
+}
+
+enum Criticality {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+enum NcStatus {
+  OPEN
+  ACTION_PLANNED
+  IN_PROGRESS
+  CLOSED
+  REJECTED
+}
+
+// Bloc 1 / fn 1.8 — Certifications ISO 9001 / 14001 / 45001
+model Certification {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  standard              String // "ISO 9001", "ISO 14001", "ISO 45001"
+  scope                 String?
+  issuedBy              String
+  issuedAt              DateTime
+  validUntil            DateTime
+  surveillanceAuditDate DateTime?
+  openNcCount           Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, standard])
+  @@map("certifications")
 }
