@@ -26,10 +26,14 @@ import { PreferencesForm } from "@/components/profile/PreferencesForm";
 import { AgendaCalendar } from "@/components/profile/AgendaCalendar";
 import { InterestDeclarationForm } from "@/components/profile/InterestDeclarationForm";
 import { ActivityTimeline } from "@/components/profile/ActivityTimeline";
+import { SignaturePowerCard } from "@/components/daf/profile/SignaturePowerCard";
+import { ProxiesCard } from "@/components/daf/profile/ProxiesCard";
+import { AlertPreferencesCard } from "@/components/daf/profile/AlertPreferencesCard";
+import { DafAgendaCard } from "@/components/daf/profile/DafAgendaCard";
 
-type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests";
+type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests" | "daf-signature" | "daf-alerts" | "daf-agenda";
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean }[] = [
+const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean; dafOnly?: boolean }[] = [
   { id: "info", label: "Informations", icon: <UserIcon className="h-3.5 w-3.5" /> },
   { id: "documents", label: "Documents", icon: <FileText className="h-3.5 w-3.5" /> },
   { id: "activity", label: "Activité", icon: <ActIcon className="h-3.5 w-3.5" /> },
@@ -39,6 +43,9 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean 
   { id: "dg-prefs", label: "Préférences DG", icon: <Sliders className="h-3.5 w-3.5" />, dgOnly: true },
   { id: "agenda", label: "Agenda", icon: <CalIcon className="h-3.5 w-3.5" />, dgOnly: true },
   { id: "interests", label: "Déclarations", icon: <Briefcase className="h-3.5 w-3.5" />, dgOnly: true },
+  { id: "daf-signature", label: "Signature & procurations", icon: <Pen className="h-3.5 w-3.5" />, dafOnly: true },
+  { id: "daf-alerts", label: "Alertes financières", icon: <Sliders className="h-3.5 w-3.5" />, dafOnly: true },
+  { id: "daf-agenda", label: "Agenda DAF", icon: <CalIcon className="h-3.5 w-3.5" />, dafOnly: true },
 ];
 
 export default function ProfilePage() {
@@ -47,7 +54,11 @@ export default function ProfilePage() {
 
   if (isLoading || !profile) return <ProfileSkeleton />;
 
-  const visibleTabs = TABS.filter((t) => !t.dgOnly || profile.role === "DG");
+  const visibleTabs = TABS.filter((t) => {
+    if (t.dgOnly) return profile.role === "DG";
+    if (t.dafOnly) return profile.role === "DAF";
+    return true;
+  });
 
   return (
     <>
@@ -86,6 +97,14 @@ export default function ProfilePage() {
           {tab === "dg-prefs" && <PreferencesForm />}
           {tab === "agenda" && <AgendaCalendar />}
           {tab === "interests" && <InterestDeclarationForm />}
+          {tab === "daf-signature" && (
+            <>
+              <SignaturePowerCard />
+              <ProxiesCard />
+            </>
+          )}
+          {tab === "daf-alerts" && <AlertPreferencesCard />}
+          {tab === "daf-agenda" && <DafAgendaCard />}
         </div>
         <div className="space-y-4">
           <SidePanel profile={profile} />

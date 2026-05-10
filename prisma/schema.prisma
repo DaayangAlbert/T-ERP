@@ -152,6 +152,7 @@ model User {
   benefits              BenefitInKind[]
   performanceBonuses    PerformanceBonus[]
   dafSettings           DafSettings?
+  signaturePower        UserSignaturePower?
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -1083,6 +1084,26 @@ model DafSettings {
   updatedAt       DateTime @updatedAt
 
   @@map("daf_settings")
+}
+
+// ========================================
+// PROFIL DAF — Pouvoirs de signature (DAF Bloc 4 / fn 4.1)
+// ========================================
+model UserSignaturePower {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  soloLimit       BigInt   @default(5000000)   // FCFA — plafond signature seul
+  coSignLimit     BigInt   @default(50000000)  // FCFA — plafond cosignature
+  coSigners       String[] @default([])        // userIds des cosignataires
+  banksRegistered String[] @default([])        // codes banques où la signature est déposée (UBA, BICEC, AFRILAND, ECOBANK, SGBC)
+  proxyHolders    Json     @default("[]")      // [{ id, toUserId, name, position, scope, maxAmount, startDate, endDate, active }]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("user_signature_powers")
 }
 
 // ========================================

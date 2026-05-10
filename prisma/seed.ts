@@ -40,6 +40,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(PWD, 12);
 
   // Nettoyer (dev seulement)
+  await prisma.userSignaturePower.deleteMany();
   await prisma.employeeDeparture.deleteMany();
   await prisma.socialProvision.deleteMany();
   await prisma.supplierCommitment.deleteMany();
@@ -2959,6 +2960,63 @@ async function main() {
     });
   }
   console.log(`✓ ${departuresSeed.length} départs salariés créés`);
+
+  // ===== PROFIL DAF — Pouvoirs de signature (DAF Bloc 4 / fn 4.1) =====
+  const dafForSignature = createdUsers.find((u) => u.role === Role.DAF);
+  const dgForCoSign = createdUsers.find((u) => u.role === Role.DG);
+  const sgForCoSign = createdUsers.find((u) => u.role === Role.SG);
+  if (dafForSignature) {
+    const coSigners = [dgForCoSign?.id, sgForCoSign?.id].filter((x): x is string => Boolean(x));
+    await prisma.userSignaturePower.upsert({
+      where: { userId: dafForSignature.id },
+      update: {},
+      create: {
+        userId: dafForSignature.id,
+        soloLimit: 5_000_000n,
+        coSignLimit: 50_000_000n,
+        coSigners,
+        banksRegistered: ["UBA", "BICEC", "AFRILAND", "ECOBANK", "SGBC"],
+        proxyHolders: [
+          {
+            id: "prx_demo_001",
+            toUserId: createdUsers.find((u) => u.role === Role.ACCOUNTANT)?.id ?? createdUsers[0].id,
+            name: "Sandrine NDONGO (Comptable)",
+            position: "Comptable principale",
+            scope: "Signature chèques courants UBA / BICEC ≤ 2 M FCFA",
+            maxAmount: "2000000",
+            startDate: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+            endDate: new Date(Date.now() + 60 * 86_400_000).toISOString(),
+            active: true,
+          },
+        ] as object,
+      },
+    });
+
+    // Préférences alertes par défaut
+    await prisma.dafSettings.upsert({
+      where: { userId: dafForSignature.id },
+      update: {
+        alertsConfig: {
+          treasuryThreshold: 80_000_000,
+          dsoIncreaseAlert: true,
+          poAlertThreshold: 25_000_000,
+          taxDeadlineDaysBefore: 5,
+          channels: ["IN_APP", "EMAIL"],
+        } as object,
+      },
+      create: {
+        userId: dafForSignature.id,
+        alertsConfig: {
+          treasuryThreshold: 80_000_000,
+          dsoIncreaseAlert: true,
+          poAlertThreshold: 25_000_000,
+          taxDeadlineDaysBefore: 5,
+          channels: ["IN_APP", "EMAIL"],
+        } as object,
+      },
+    });
+    console.log("✓ Profil DAF Marie : pouvoirs signature + 1 procuration + alertes");
+  }
 
   // ===== SESSIONS ACTIVES (Phase 2 / Bloc 2 — fn 2.4) =====
   // 20 sessions simulées (IPs variées, dont 2 suspectes)
