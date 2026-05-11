@@ -1221,6 +1221,29 @@ model DafSettings {
 // ========================================
 
 // ========================================
+// RH — Certifications employés (RH Bloc 1 / fn 1.6)
+// ========================================
+// Distinct du modèle Certification (ISO entreprise) — ici par salarié.
+model EmployeeCertification {
+  id             String   @id @default(cuid())
+  tenantId       String
+  employeeKey    String   // userId réel ou syn_*
+  employeeName   String
+  type           String   // "CACES R482 cat B1", "Travail en hauteur", "SST"
+  issuedAt       DateTime
+  expiresAt      DateTime
+  issuedBy       String
+  certificateUrl String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId, expiresAt])
+  @@index([employeeKey])
+  @@map("employee_certifications")
+}
+
+// ========================================
 // RH — Congés et absences (RH Bloc 1 / fn 1.5)
 // ========================================
 model LeaveRequest {
