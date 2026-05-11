@@ -80,6 +80,36 @@ const DT_SECTION: NavSection = {
   ],
 };
 
+// Section exclusive au Chef de Chantier (Jean KAMGA · PWA offline-first absolu).
+const CC_SECTION: NavSection = {
+  title: "Espace Chef Chantier",
+  items: [
+    { label: "Tableau de bord", href: "/cc", icon: LayoutDashboard },
+    { label: "Pointage équipes", href: "/cc/pointage", icon: ClipboardCheck },
+    { label: "Production", href: "/cc/production", icon: ClipboardList },
+    { label: "Réceptions", href: "/cc/livraisons", icon: Package },
+    { label: "HSE & incidents", href: "/cc/hse", icon: ShieldAlert },
+    { label: "Mes équipes", href: "/cc/equipes", icon: Users },
+  ],
+};
+
+// Section exclusive au Directeur de Travaux (Paul ETOUNDI · terrain mobile-first).
+const DTRAV_SECTION: NavSection = {
+  title: "Espace Directeur Travaux",
+  items: [
+    { label: "Tableau de bord chantier", href: "/dtrav", icon: LayoutDashboard },
+    { label: "Production journalière", href: "/dtrav/production", icon: ClipboardList },
+    { label: "Équipe chantier", href: "/dtrav/equipe", icon: Users },
+    { label: "Planning", href: "/dtrav/planning", icon: Calendar },
+    { label: "Marché et avenants", href: "/dtrav/marche", icon: FileText },
+    { label: "Approvisionnements", href: "/dtrav/appros", icon: Package },
+    { label: "Documents chantier", href: "/dtrav/documents", icon: FileText },
+    { label: "Validations N1", href: "/dtrav/validations", icon: CheckCircle2 },
+    { label: "Reporting MOA", href: "/dtrav/reporting", icon: BarChart3 },
+    { label: "Mon espace", href: "/dtrav/profil", icon: User },
+  ],
+};
+
 // Section exclusive à la RH (Sandrine ONANA).
 const RH_SECTION: NavSection = {
   title: "Espace RH",
@@ -92,6 +122,26 @@ const RH_SECTION: NavSection = {
     { label: "Formations", href: "/rh/formations", icon: GraduationCap },
     { label: "Visites médicales", href: "/rh/medical", icon: ScrollText, badge: { value: "5", alert: true } },
     { label: "Disciplinaire", href: "/rh/disciplinaire", icon: Shield, badge: { value: "3" } },
+    { label: "Validations N1 RH", href: "/rh/validations", icon: CheckCircle2 },
+    { label: "Rapports RH", href: "/rh/rapports", icon: BarChart3 },
+  ],
+};
+
+// Section exclusive au Comptable (Direction OU Chantier — adapté côté UI via assignedSiteIds).
+const CPT_SECTION: NavSection = {
+  title: "Espace Comptabilité",
+  items: [
+    { label: "Tableau de bord", href: "/comptable", icon: LayoutDashboard },
+    { label: "Saisie d'écritures", href: "/comptable/ecritures", icon: ClipboardList },
+    { label: "Factures fournisseurs", href: "/comptable/factures-frns", icon: Receipt },
+    { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
+    { label: "Trésorerie", href: "/comptable/tresorerie", icon: Coins },
+    { label: "Actifs", href: "/comptable/actifs", icon: Package },
+    { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText },
+    { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
+    { label: "Validations N1", href: "/comptable/validations", icon: CheckCircle2 },
+    { label: "Rapports comptables", href: "/comptable/rapports", icon: FileText },
+    { label: "Mon espace", href: "/comptable/profil", icon: User },
   ],
 };
 
@@ -179,12 +229,18 @@ export function Sidebar() {
     user?.role === "HR"
       ? [RH_SECTION, ...cleanedNav]
       : user?.role === "DAF"
-        ? [DAF_SECTION, ...cleanedNav]
+        ? [DAF_SECTION, CPT_SECTION, ...cleanedNav]
         : user?.role === "DG"
-          ? [DG_SECTION, DAF_SECTION, ...cleanedNav]
+          ? [DG_SECTION, DAF_SECTION, CPT_SECTION, DTRAV_SECTION, CC_SECTION, ...cleanedNav]
           : user?.role === "TECH_DIRECTOR"
-            ? [DT_SECTION, ...cleanedNav]
-            : NAV;
+            ? [DT_SECTION, DTRAV_SECTION, CC_SECTION, ...cleanedNav]
+            : user?.role === "ACCOUNTANT"
+              ? [CPT_SECTION, ...cleanedNav]
+              : user?.role === "WORKS_DIRECTOR"
+                ? [DTRAV_SECTION, CC_SECTION, ...cleanedNav]
+                : user?.role === "SITE_MANAGER"
+                  ? [CC_SECTION, ...cleanedNav]
+                  : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
@@ -196,8 +252,9 @@ export function Sidebar() {
   }, []);
 
   const isMobile = windowWidth !== null && windowWidth < 768;
-  const isWide = windowWidth === null || windowWidth >= 1280;
-  const visualCompact = !isMobile && (!isWide || sidebarCompact);
+  // Sidebar toujours étendue par défaut sur md+ ; mode compact uniquement si l'utilisateur
+  // l'a explicitement activé via le toggle (visible sur xl+).
+  const visualCompact = !isMobile && sidebarCompact;
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -226,17 +283,16 @@ export function Sidebar() {
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
           // md+ : sticky, never translated
           "md:sticky md:top-14 md:translate-x-0 md:h-[calc(100vh-3.5rem)]",
-          // md to xl: always compact 64px
-          "md:w-16",
-          // xl+: respect toggle
-          sidebarCompact ? "xl:w-16" : "xl:w-[220px]"
+          // md+ : largeur pleine par défaut (libellés visibles)
+          // xl+ : respecte le toggle compact si l'utilisateur l'active
+          sidebarCompact ? "md:w-16" : "md:w-[220px]"
         )}
         aria-label="Navigation principale"
       >
-        {/* Toggle (desktop only — useless on tablet auto-compact) */}
+        {/* Toggle disponible dès md+ (la sidebar n'est plus auto-compactée) */}
         <div
           className={clsx(
-            "hidden items-center border-b border-white/8 py-1.5 px-2.5 xl:flex",
+            "hidden items-center border-b border-white/8 py-1.5 px-2.5 md:flex",
             sidebarCompact && "justify-center px-0"
           )}
         >
@@ -253,15 +309,19 @@ export function Sidebar() {
 
         {sections.map((section) => (
           <div key={section.title}>
-            <div
-              className={clsx(
-                "px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[.1em] text-white/45",
-                visualCompact &&
-                  "border-t border-white/8 mt-2 pt-2 text-transparent text-[0px] px-0 first:border-t-0 first:mt-0"
-              )}
-            >
-              {section.title}
-            </div>
+            {visualCompact ? (
+              // Mode compact (64 px) : on remplace le titre par un simple séparateur
+              // (les classes text-[0px]/text-transparent étaient écrasées par
+              // text-[10px]/text-white/45 — les libellés restaient tronqués).
+              <div
+                className="mt-2 border-t border-white/8 first:mt-0 first:border-t-0"
+                aria-label={section.title}
+              />
+            ) : (
+              <div className="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[.1em] text-white/45">
+                {section.title}
+              </div>
+            )}
             {section.items.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               const Icon = item.icon;

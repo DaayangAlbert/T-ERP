@@ -46,6 +46,17 @@ export const REPORT_BLOCKS: ReportBlock[] = [
   { key: "table.pnl", label: "Compte de résultat", category: "TABLE", description: "P&L synthétique du mois" },
   { key: "table.balance", label: "Bilan synthétique", category: "TABLE", description: "Actif/passif au format DAF" },
   { key: "table.tax_deadlines", label: "Échéances fiscales", category: "TABLE", description: "Calendrier DGI/CNPS" },
+  // RH Bloc 2 / fn 2.2 — Blocs RH
+  { key: "kpi.totalHeadcount", label: "Effectif total", category: "KPI", description: "Tous statuts confondus" },
+  { key: "kpi.turnover", label: "Taux de turnover", category: "KPI", description: "Départs / effectif moyen" },
+  { key: "kpi.absenteeism", label: "Taux d'absentéisme", category: "KPI", description: "Jours d'absence / théoriques" },
+  { key: "kpi.genderRatio", label: "Ratio femmes / hommes", category: "KPI", description: "Effectif F / H total" },
+  { key: "chart.headcount_trend", label: "Évolution des effectifs", category: "CHART", description: "12 mois glissants" },
+  { key: "chart.category_breakdown", label: "Répartition par catégorie", category: "CHART", description: "Cadres / ETAM / OQ / OS / Journaliers" },
+  { key: "chart.recruitment_funnel", label: "Entonnoir recrutement", category: "CHART", description: "Reçues → Embauchées" },
+  { key: "table.pending_leaves", label: "Demandes de congés en attente", category: "TABLE", description: "Filtrées N1 RH" },
+  { key: "table.expiring_certs", label: "Certifications expirant 60j", category: "TABLE", description: "Recyclages à programmer" },
+  { key: "table.disciplinary_active", label: "Procédures disciplinaires actives", category: "TABLE", description: "Toutes étapes" },
 ];
 
 export const REPORT_TYPE_LABEL: Record<string, string> = {
@@ -59,6 +70,12 @@ export const REPORT_TYPE_LABEL: Record<string, string> = {
   DAF_BANKING_QUARTERLY: "Reporting bancaire DAF",
   DAF_CAC_QUARTERLY: "Reporting CAC",
   DAF_DSF_PREP: "Préparation DSF",
+  RH_MONTHLY: "Rapport mensuel RH",
+  RH_SOCIAL_ANNUAL: "Bilan social annuel",
+  RH_GENDER_EQUALITY: "Rapport égalité H/F",
+  RH_WEEKLY_DASHBOARD: "TDB RH hebdomadaire",
+  RH_RECRUITMENT_QUARTERLY: "Stats recrutement T",
+  RH_SOCIAL_INDICATORS: "Indicateurs sociaux",
 };
 
 // Templates pré-configurés : quels blocs sont inclus pour chaque type stratégique
@@ -81,4 +98,10 @@ export const TEMPLATE_BLOCKS: Record<string, string[]> = {
   DAF_BANKING_QUARTERLY: ["kpi.treasury", "kpi.bfr", "chart.banks", "table.balance", "table.pnl", "text.summary"],
   DAF_CAC_QUARTERLY: ["kpi.revenue", "kpi.netResult", "table.pnl", "table.balance", "table.tax_deadlines", "text.summary", "text.actions"],
   DAF_DSF_PREP: ["table.pnl", "table.balance", "kpi.payrollMass", "table.tax_deadlines", "text.summary"],
+  RH_MONTHLY: ["kpi.totalHeadcount", "kpi.turnover", "kpi.absenteeism", "chart.headcount_trend", "table.pending_leaves", "text.summary"],
+  RH_SOCIAL_ANNUAL: ["kpi.totalHeadcount", "kpi.payrollMass", "kpi.turnover", "kpi.absenteeism", "chart.category_breakdown", "chart.headcount_trend", "text.summary", "text.actions"],
+  RH_GENDER_EQUALITY: ["kpi.totalHeadcount", "kpi.genderRatio", "chart.category_breakdown", "text.summary", "text.actions"],
+  RH_WEEKLY_DASHBOARD: ["kpi.totalHeadcount", "kpi.absenteeism", "table.pending_leaves", "table.expiring_certs", "text.summary"],
+  RH_RECRUITMENT_QUARTERLY: ["chart.recruitment_funnel", "kpi.totalHeadcount", "text.summary"],
+  RH_SOCIAL_INDICATORS: ["kpi.turnover", "kpi.absenteeism", "kpi.genderRatio", "chart.category_breakdown", "table.disciplinary_active", "text.summary"],
 };

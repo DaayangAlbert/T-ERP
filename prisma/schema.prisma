@@ -140,24 +140,24 @@ model User {
 
   payslips                     Payslip[]
   applications                 Application[]
-  sentMessages                 Message[]                 @relation("SentMessages")
+  sentMessages                 Message[]                     @relation("SentMessages")
   conversationParticipants     ConversationParticipant[]
   notifications                Notification[]
   auditLogs                    AuditLog[]
-  managedSites                 Site[]                    @relation("SiteManager")
+  managedSites                 Site[]                        @relation("SiteManager")
   dgSettings                   DgSettings?
   objectives                   Objective[]
   boardReports                 BoardReport[]
-  validationsInitiated         Validation[]              @relation("ValidationInitiator")
-  validationsAssigned          Validation[]              @relation("ValidationCurrentApprover")
-  validationsDecided           Validation[]              @relation("ValidationDecidedBy")
-  delegationsGiven             Delegation[]              @relation("DelegationFrom")
-  delegationsReceived          Delegation[]              @relation("DelegationTo")
+  validationsInitiated         Validation[]                  @relation("ValidationInitiator")
+  validationsAssigned          Validation[]                  @relation("ValidationCurrentApprover")
+  validationsDecided           Validation[]                  @relation("ValidationDecidedBy")
+  delegationsGiven             Delegation[]                  @relation("DelegationFrom")
+  delegationsReceived          Delegation[]                  @relation("DelegationTo")
   reports                      Report[]
   sessions                     Session[]
   trainings                    Training[]
-  successionsAsIncumbent       SuccessionPlan[]          @relation("SuccessionIncumbent")
-  successionsAsSuccessor       SuccessionPlan[]          @relation("SuccessionSuccessor")
+  successionsAsIncumbent       SuccessionPlan[]              @relation("SuccessionIncumbent")
+  successionsAsSuccessor       SuccessionPlan[]              @relation("SuccessionSuccessor")
   preferences                  UserPreferences?
   signature                    UserSignature?
   agendaEvents                 AgendaEvent[]
@@ -170,29 +170,35 @@ model User {
   employeeProfile              EmployeeProfile?
   employeeDocuments            EmployeeDocument[]
   // Bloc 0 Comptable — workflow promotion + écritures + factures
-  promotionRequestsAsTarget    RolePromotionRequest[]    @relation("PromotionTarget")
-  promotionRequestsAsRequester RolePromotionRequest[]    @relation("PromotionRequester")
-  cptEntriesCreated            Entry[]                   @relation("EntryCreator")
-  cptEntriesValidated          Entry[]                   @relation("EntryValidator")
+  promotionRequestsAsTarget    RolePromotionRequest[]        @relation("PromotionTarget")
+  promotionRequestsAsRequester RolePromotionRequest[]        @relation("PromotionRequester")
+  cptEntriesCreated            Entry[]                       @relation("EntryCreator")
+  cptEntriesValidated          Entry[]                       @relation("EntryValidator")
   cashboxMovements             CashboxMovement[]
   // DTrav — relations chantier
-  dailyReportsSubmitted        SiteDailyReport[]         @relation("DailyReportAuthor")
-  dailyReportsValidated        SiteDailyReport[]         @relation("DailyReportValidator")
+  dailyReportsSubmitted        SiteDailyReport[]             @relation("DailyReportAuthor")
+  dailyReportsValidated        SiteDailyReport[]             @relation("DailyReportValidator")
   workforceMemberships         SiteWorkforceMember[]
-  amendmentsInitiated          ContractAmendment[]       @relation("AmendmentInitiator")
-  documentsUploaded            SiteDocument[]            @relation("DocumentUploader")
-  moaReportsAuthored           MoaReport[]               @relation("MoaReportAuthor")
+  amendmentsInitiated          ContractAmendment[]           @relation("AmendmentInitiator")
+  documentsUploaded            SiteDocument[]                @relation("DocumentUploader")
+  moaReportsAuthored           MoaReport[]                   @relation("MoaReportAuthor")
+  // CC — relations
+  attendancesAsWorker          Attendance[]                  @relation("AttendanceWorker")
+  attendancesRecorded          Attendance[]                  @relation("AttendanceRecorder")
+  attendanceSessionsCompleted  AttendanceSessionCompletion[]
+  deliveryReceiptsRecorded     DeliveryReceipt[]
+  safetyTalksCompleted         HseSafetyTalk[]
   // DT — Espace Direction Technique (Bloc 0+)
   dtSettings                   DtSettings?
-  managedTenders               Tender[]                  @relation("TenderStudyOwner")
-  dtIncidentReports            HseIncident[]             @relation("IncidentReporter")
-  dtAuditsLed                  SiteAudit[]               @relation("AuditAuditor")
-  dtNcOwned                    NonConformity[]           @relation("NcOwner")
-  dtSubcontractorEvals         SubcontractorEvaluation[] @relation("SubEvaluator")
-  dtCrewsLed                   Crew[]                    @relation("CrewLeader")
-  dtMethodsAuthored            OperatingMethod[]         @relation("MethodAuthor")
-  dtTemplatePlannings          TemplatePlanning[]        @relation("TemplatePlanningAuthor")
-  dtRexAuthored                SiteRex[]                 @relation("RexAuthor")
+  managedTenders               Tender[]                      @relation("TenderStudyOwner")
+  dtIncidentReports            HseIncident[]                 @relation("IncidentReporter")
+  dtAuditsLed                  SiteAudit[]                   @relation("AuditAuditor")
+  dtNcOwned                    NonConformity[]               @relation("NcOwner")
+  dtSubcontractorEvals         SubcontractorEvaluation[]     @relation("SubEvaluator")
+  dtCrewsLed                   Crew[]                        @relation("CrewLeader")
+  dtMethodsAuthored            OperatingMethod[]             @relation("MethodAuthor")
+  dtTemplatePlannings          TemplatePlanning[]            @relation("TemplatePlanningAuthor")
+  dtRexAuthored                SiteRex[]                     @relation("RexAuthor")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -450,10 +456,10 @@ model Site {
   alerts                   SiteAlert[]
   decisions                SiteDecision[]
   // Bloc 0 Comptable — relations comptables analytiques + caisse chantier
-  entries                  Entry[]                   @relation("EntrySite")
-  entryLines               EntryLine[]               @relation("EntryLineSite")
-  supplierInvoices         SupplierInvoice[]         @relation("InvoiceSite")
-  progressBillings         ProgressBilling[]         @relation("BillingSite")
+  entries                  Entry[]                       @relation("EntrySite")
+  entryLines               EntryLine[]                   @relation("EntryLineSite")
+  supplierInvoices         SupplierInvoice[]             @relation("InvoiceSite")
+  progressBillings         ProgressBilling[]             @relation("BillingSite")
   cashbox                  SiteCashbox?
   // DT — relations
   rex                      SiteRex[]
@@ -473,6 +479,10 @@ model Site {
   deliveries               Delivery[]
   documents                SiteDocument[]
   moaReports               MoaReport[]
+  // CC — relations chantier
+  attendances              Attendance[]
+  attendanceCompletions    AttendanceSessionCompletion[]
+  hseSafetyTalks           HseSafetyTalk[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -1226,7 +1236,7 @@ model DafSettings {
 model DisciplinaryCase {
   id           String                @id @default(cuid())
   tenantId     String
-  employeeKey  String                // userId réel ou syn_*
+  employeeKey  String // userId réel ou syn_*
   employeeName String
   reason       String
   severity     DisciplinarySeverity
@@ -1787,6 +1797,13 @@ enum ReportType {
   DAF_BANKING_QUARTERLY // Reporting bancaire trimestriel (relationship managers)
   DAF_CAC_QUARTERLY // Reporting CAC trimestriel (commissaires aux comptes)
   DAF_DSF_PREP // Préparation DSF (états financiers OHADA annuels)
+  // RH Bloc 2 / fn 2.2 — Reportings RH
+  RH_MONTHLY               // Rapport mensuel d'activité RH (pour le DG)
+  RH_SOCIAL_ANNUAL         // Bilan social annuel (obligation légale)
+  RH_GENDER_EQUALITY       // Rapport égalité H/F (obligation légale)
+  RH_WEEKLY_DASHBOARD      // Tableau de bord RH hebdomadaire (interne)
+  RH_RECRUITMENT_QUARTERLY // Statistiques recrutement trimestriel
+  RH_SOCIAL_INDICATORS     // Indicateurs sociaux (turnover, absentéisme, climat)
   // Comptable Bloc 2 / fn 2.2 — Rapports comptables (Direction + Chantier)
   CPT_GENERAL_LEDGER
   CPT_BALANCE_GENERAL
@@ -3435,13 +3452,13 @@ model HseIncident {
   declaredCnpsAt    DateTime?
 
   // CC fn 1.5 — déclaration mobile par chef de chantier
-  declaredByFieldUserId  String?
-  declaredViaApp         Boolean   @default(false)
-  bodyPartAffected       String?
-  geoLocation            Json?     // { lat, lng, accuracy }
-  immediateActionsList   String[]  @default([])
-  photoUrls              String[]  @default([])
-  clientUuid             String?   // pour dédoublonner saisies offline
+  declaredByFieldUserId String?
+  declaredViaApp        Boolean  @default(false)
+  bodyPartAffected      String?
+  geoLocation           Json? // { lat, lng, accuracy }
+  immediateActionsList  String[] @default([])
+  photoUrls             String[] @default([])
+  clientUuid            String? // pour dédoublonner saisies offline
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3596,8 +3613,11 @@ model SiteDailyReport {
   validatedAt   DateTime?
   rejectReason  String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  // CC fn 1.3 — réalisations et consommations détaillées
+  tasksRealizations    SiteTaskRealization[]
+  materialConsumptions SiteMaterialConsumption[]
 
   @@unique([siteId, reportDate])
   @@index([siteId, reportDate])
@@ -3659,8 +3679,9 @@ model SiteTeam {
   headcountTarget Int                   @default(0)
   members         SiteWorkforceMember[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  SiteTaskRealization SiteTaskRealization[]
 
   @@index([siteId])
   @@map("site_teams")
@@ -3860,8 +3881,9 @@ model Delivery {
   deliveryNoteRef String?
   items           Json           @default("[]") // [{ articleCode, label, expectedQty, receivedQty, gap }]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  DeliveryReceipt DeliveryReceipt?
 
   @@index([siteId, status])
   @@index([siteId, scheduledAt])
@@ -3955,24 +3977,24 @@ enum MoaReportType {
 // CHEF CHANTIER — BLOC 1 fn 1.2 : POINTAGE OFFLINE-FIRST
 // ========================================
 model Attendance {
-  id          String   @id @default(cuid())
-  siteId      String
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User     @relation("AttendanceWorker", fields: [userId], references: [id], onDelete: Cascade)
-  date        DateTime @db.Date
-  session     AttendanceSession
-  status      AttendanceStatus
-  checkedInAt DateTime?
-  reason      String?
-  recordedById String
-  recordedBy  User     @relation("AttendanceRecorder", fields: [recordedById], references: [id])
-  recordedAt  DateTime @default(now())
-  syncedFromOffline Boolean @default(false)
-  clientUuid  String?
+  id                String            @id @default(cuid())
+  siteId            String
+  site              Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User              @relation("AttendanceWorker", fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime          @db.Date
+  session           AttendanceSession
+  status            AttendanceStatus
+  checkedInAt       DateTime?
+  reason            String?
+  recordedById      String
+  recordedBy        User              @relation("AttendanceRecorder", fields: [recordedById], references: [id])
+  recordedAt        DateTime          @default(now())
+  syncedFromOffline Boolean           @default(false)
+  clientUuid        String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([siteId, userId, date, session])
   @@index([siteId, date])
@@ -3980,23 +4002,33 @@ model Attendance {
   @@map("cc_attendances")
 }
 
-enum AttendanceSession { MORNING EVENING }
-enum AttendanceStatus  { PRESENT ABSENT JUSTIFIED_ABSENT LATE LEFT_EARLY }
+enum AttendanceSession {
+  MORNING
+  EVENING
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  JUSTIFIED_ABSENT
+  LATE
+  LEFT_EARLY
+}
 
 model AttendanceSessionCompletion {
-  id          String   @id @default(cuid())
-  siteId      String
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  date        DateTime @db.Date
-  session     AttendanceSession
+  id            String            @id @default(cuid())
+  siteId        String
+  site          Site              @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  date          DateTime          @db.Date
+  session       AttendanceSession
   completedById String
-  completedBy User     @relation(fields: [completedById], references: [id])
-  completedAt DateTime
-  presentCount Int
-  absentCount Int
-  totalCount  Int
+  completedBy   User              @relation(fields: [completedById], references: [id])
+  completedAt   DateTime
+  presentCount  Int
+  absentCount   Int
+  totalCount    Int
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([siteId, date, session])
   @@map("cc_attendance_completions")
@@ -4006,37 +4038,37 @@ model AttendanceSessionCompletion {
 // CHEF CHANTIER — BLOC 1 fn 1.3 : RÉALISATIONS + CONSOMMATIONS
 // ========================================
 model SiteTaskRealization {
-  id          String   @id @default(cuid())
+  id            String          @id @default(cuid())
   dailyReportId String
-  dailyReport SiteDailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
-  taskId      String?
-  designation String
-  quantity    Float
-  unit        String
-  unitPrice   BigInt   @default(0)
-  totalValue  BigInt   @default(0)
-  teamId      String?
-  team        SiteTeam? @relation(fields: [teamId], references: [id])
-  clientUuid  String?
+  dailyReport   SiteDailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  taskId        String?
+  designation   String
+  quantity      Float
+  unit          String
+  unitPrice     BigInt          @default(0)
+  totalValue    BigInt          @default(0)
+  teamId        String?
+  team          SiteTeam?       @relation(fields: [teamId], references: [id])
+  clientUuid    String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([dailyReportId])
   @@map("cc_task_realizations")
 }
 
 model SiteMaterialConsumption {
-  id          String   @id @default(cuid())
+  id            String          @id @default(cuid())
   dailyReportId String
-  dailyReport SiteDailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
-  articleCode String
-  articleLabel String
-  quantity    Float
-  unit        String
-  source      String?
+  dailyReport   SiteDailyReport @relation(fields: [dailyReportId], references: [id], onDelete: Cascade)
+  articleCode   String
+  articleLabel  String
+  quantity      Float
+  unit          String
+  source        String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([dailyReportId])
   @@map("cc_material_consumptions")
@@ -4046,21 +4078,21 @@ model SiteMaterialConsumption {
 // CHEF CHANTIER — BLOC 1 fn 1.4 : RÉCEPTION LIVRAISONS
 // ========================================
 model DeliveryReceipt {
-  id            String   @id @default(cuid())
-  deliveryId    String   @unique
-  delivery      Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  deliveryId    String        @unique
+  delivery      Delivery      @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
   receivedAt    DateTime
   receivedById  String
-  receivedBy    User     @relation(fields: [receivedById], references: [id])
+  receivedBy    User          @relation(fields: [receivedById], references: [id])
   blPhotoUrl    String?
   blNumber      String?
-  items         Json     @default("[]") // [{ articleCode, label, expectedQty, receivedQty, gap, accepted }]
+  items         Json          @default("[]") // [{ articleCode, label, expectedQty, receivedQty, gap, accepted }]
   overallStatus ReceiptStatus @default(CONFORM)
   notes         String?
   signature     String?
   clientUuid    String?
 
-  createdAt     DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("cc_delivery_receipts")
 }
@@ -4076,22 +4108,213 @@ enum ReceiptStatus {
 // CHEF CHANTIER — BLOC 1 fn 1.5 : CAUSERIES SÉCURITÉ
 // ========================================
 model HseSafetyTalk {
-  id            String   @id @default(cuid())
-  siteId        String
-  site          Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  weekIso       String   // "2026-W19"
-  theme         String
-  description   String   @db.Text
-  completedAt   DateTime?
-  completedById String?
-  completedBy   User?    @relation(fields: [completedById], references: [id])
+  id             String    @id @default(cuid())
+  siteId         String
+  site           Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  weekIso        String // "2026-W19"
+  theme          String
+  description    String    @db.Text
+  completedAt    DateTime?
+  completedById  String?
+  completedBy    User?     @relation(fields: [completedById], references: [id])
   attendeesCount Int?
-  attendeesIds  String[] @default([])
+  attendeesIds   String[]  @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, weekIso])
+  @@map("cc_hse_safety_talks")
+}
+
+// ========================================
+// MAGASINIER — BLOC 0 + 1 : ARTICLES, MAGASIN, STOCKS, MOUVEMENTS, INVENTAIRES
+// ========================================
+model Article {
+  id                String   @id @default(cuid())
+  tenantId          String
+  code              String
+  name              String
+  category          ArticleCategory
+  unit              String
+  conversionUnit    String?
+  defaultSupplierId String?
+  active            Boolean  @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  warehouseStocks   WarehouseStock[]
+  warehouseMovements WarehouseMovement[]
+  inventoryLines    WarehouseInventoryLine[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, category])
+  @@map("articles")
+}
+
+enum ArticleCategory {
+  CEMENT_CONCRETE
+  STEEL_REBAR
+  AGGREGATES
+  FORMWORK
+  FUEL
+  CONSUMABLES
+  TOOLS
+  PPE
+  OTHER
+}
+
+model Warehouse {
+  id          String   @id @default(cuid())
+  tenantId    String
+  siteId      String   @unique
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  code        String
+  name        String
+  keeperId    String?
+  keeper      User?    @relation("WarehouseKeeper", fields: [keeperId], references: [id])
+
+  stocks      WarehouseStock[]
+  movements   WarehouseMovement[]
+  inventories WarehouseInventory[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@map("warehouses")
+}
+
+model WarehouseStock {
+  id            String   @id @default(cuid())
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  articleId     String
+  article       Article  @relation(fields: [articleId], references: [id])
+  quantity      Float    @default(0)
+  pmpUnitPrice  BigInt   @default(0)
+  totalValue    BigInt   @default(0)
+  minThreshold  Float?
+  lastInAt      DateTime?
+  lastOutAt     DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([siteId, weekIso])
-  @@map("cc_hse_safety_talks")
+  @@unique([warehouseId, articleId])
+  @@index([warehouseId])
+  @@map("warehouse_stocks")
+}
+
+model WarehouseMovement {
+  id                String   @id @default(cuid())
+  warehouseId       String
+  warehouse         Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  articleId         String
+  article           Article  @relation(fields: [articleId], references: [id])
+  direction         WarehouseMovementDirection
+  quantity          Float
+  unitPrice         BigInt
+  totalValue        BigInt
+  reference         String
+  reason            WarehouseMovementReason
+  supplierId        String?
+  deliveryId        String?
+  destinationTeamId String?
+  destinationUserId String?
+  signaturePhoto    String?
+  blPhoto           String?
+  notes             String?
+  recordedById      String
+  recordedBy        User     @relation("WarehouseMovementRecorder", fields: [recordedById], references: [id])
+  occurredAt        DateTime
+  syncedFromOffline Boolean  @default(false)
+  clientUuid        String?
+
+  createdAt         DateTime @default(now())
+
+  @@index([warehouseId, occurredAt])
+  @@index([articleId])
+  @@index([direction])
+  @@map("warehouse_movements")
+}
+
+enum WarehouseMovementDirection {
+  IN
+  OUT
+  ADJUSTMENT_PLUS
+  ADJUSTMENT_MINUS
+}
+
+enum WarehouseMovementReason {
+  PURCHASE_DELIVERY
+  RETURN
+  CONSUMPTION_TEAM
+  CONSUMPTION_ENGINE
+  INVENTORY_ADJUSTMENT
+  DAMAGE_LOSS
+  TRANSFER_OUT
+  TRANSFER_IN
+}
+
+model WarehouseInventory {
+  id            String   @id @default(cuid())
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  type          WarehouseInventoryType
+  scope         String
+  plannedDate   DateTime
+  startedAt     DateTime?
+  completedAt   DateTime?
+  completedById String?
+  completedBy   User?    @relation(fields: [completedById], references: [id])
+  totalGapValue BigInt   @default(0)
+  status        WarehouseInventoryStatus @default(PLANNED)
+  lines         WarehouseInventoryLine[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([warehouseId, status])
+  @@map("warehouse_inventories")
+}
+
+enum WarehouseInventoryType {
+  MONTHLY
+  ROLLING_WEEKLY
+  ROLLING_BIWEEKLY
+  ROLLING_MONTHLY
+  ANNUAL
+  ADHOC
+}
+
+enum WarehouseInventoryStatus {
+  PLANNED
+  IN_PROGRESS
+  PENDING_VALIDATION
+  COMPLETED
+  CANCELLED
+}
+
+model WarehouseInventoryLine {
+  id             String   @id @default(cuid())
+  inventoryId    String
+  inventory      WarehouseInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  articleId      String
+  article        Article  @relation(fields: [articleId], references: [id])
+  theoreticalQty Float
+  countedQty     Float    @default(0)
+  gap            Float    @default(0)
+  gapValue       BigInt   @default(0)
+  justification  String?
+  countedAt      DateTime?
+  countedById    String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([inventoryId])
+  @@map("warehouse_inventory_lines")
 }
 

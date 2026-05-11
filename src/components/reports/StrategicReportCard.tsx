@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ReportType } from "@prisma/client";
-import { ArrowRight, FileText, Calendar, BookOpen, FileBarChart, Wallet, ClipboardList, Landmark, ShieldCheck, FileSpreadsheet, type LucideIcon } from "lucide-react";
+import { ArrowRight, FileText, Calendar, BookOpen, FileBarChart, Wallet, ClipboardList, Landmark, ShieldCheck, FileSpreadsheet, Users, Activity, UserPlus, Scale, type LucideIcon } from "lucide-react";
 
 interface Props {
   type: ReportType;
@@ -23,6 +23,37 @@ const ICON: Record<ReportType, LucideIcon> = {
   DAF_BANKING_QUARTERLY: Landmark,
   DAF_CAC_QUARTERLY: ShieldCheck,
   DAF_DSF_PREP: FileSpreadsheet,
+  // Comptable Bloc 2 / fn 2.2 — rapports comptables
+  CPT_GENERAL_LEDGER: BookOpen,
+  CPT_BALANCE_GENERAL: ClipboardList,
+  CPT_BALANCE_AUX_SUPPLIERS: ClipboardList,
+  CPT_BALANCE_AUX_CUSTOMERS: ClipboardList,
+  CPT_JOURNAL_CENTRALIZER: FileText,
+  CPT_MONTHLY_SYNTHESIS: FileBarChart,
+  CPT_DSF_PREP: FileSpreadsheet,
+  CPT_AGED_BALANCE_SUPPLIERS: ClipboardList,
+  CPT_AGED_BALANCE_CUSTOMERS: ClipboardList,
+  CPT_ANALYTICAL_CONSOLIDATED: FileBarChart,
+  CPT_SITE_LEDGER: BookOpen,
+  CPT_SITE_BALANCE: ClipboardList,
+  CPT_SITE_EXPENSES: FileText,
+  CPT_SITE_BILLINGS: FileText,
+  CPT_SITE_MONTHLY: FileBarChart,
+  // DT Bloc 2 / fn 2.2 — pré-existants dans le schema, ajoutés ici pour exhaustivité Record
+  DT_WEEKLY_TECHNICAL: ClipboardList,
+  DT_MONTHLY_PRODUCTION: FileBarChart,
+  DT_QUARTERLY_TECHNICAL: FileText,
+  DT_HSE_MONTHLY: ShieldCheck,
+  DT_TENDERS_QUARTERLY: ClipboardList,
+  DT_ISO_ANNUAL: ShieldCheck,
+  DT_MOA_MONTHLY: FileText,
+  // RH Bloc 2 / fn 2.2 — Reportings RH
+  RH_MONTHLY: Users,
+  RH_SOCIAL_ANNUAL: BookOpen,
+  RH_GENDER_EQUALITY: Scale,
+  RH_WEEKLY_DASHBOARD: Activity,
+  RH_RECRUITMENT_QUARTERLY: UserPlus,
+  RH_SOCIAL_INDICATORS: FileBarChart,
 };
 
 export function StrategicReportCard({ type, title, description, features, pages }: Props) {

@@ -3088,6 +3088,90 @@ async function main() {
   });
   console.log(`✓ 2 rapports DAF historiques + 3 planifiés créés`);
 
+  // ===== RH — Rapports (RH Bloc 2 / fn 2.2) =====
+  const rhUser = createdUsers.find((u) => u.role === Role.HR) ?? createdUsers[0];
+
+  // 2 historiques
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: rhUser.id,
+      type: ReportType.RH_MONTHLY,
+      title: "Rapport mensuel RH — avril 2026",
+      period: "2026-04",
+      parameters: { scope: "GROUP", signature: "Sandrine ONANA, RH" } as object,
+      blocks: TEMPLATE_BLOCKS.RH_MONTHLY as object,
+      data: {} as object,
+      status: ReportStatus.GENERATED,
+      generatedAt: new Date(Date.now() - 6 * 86_400_000),
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: rhUser.id,
+      type: ReportType.RH_WEEKLY_DASHBOARD,
+      title: "TDB RH S18-2026",
+      period: "S18-2026",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.RH_WEEKLY_DASHBOARD as object,
+      data: {} as object,
+      status: ReportStatus.GENERATED,
+      generatedAt: new Date(Date.now() - 3 * 86_400_000),
+    },
+  });
+
+  // 3 planifiés
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: rhUser.id,
+      type: ReportType.RH_WEEKLY_DASHBOARD,
+      title: "TDB RH (auto lundi 8h)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.RH_WEEKLY_DASHBOARD as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "WEEKLY_MONDAY_08",
+      recipients: [{ email: "albert@batimcam.cm", name: "Albert DAAYANG (DG)" }] as object,
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: rhUser.id,
+      type: ReportType.RH_MONTHLY,
+      title: "Rapport mensuel RH (le 5)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.RH_MONTHLY as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "MONTHLY_FIFTH_06",
+      recipients: [
+        { email: "albert@batimcam.cm", name: "Albert DAAYANG (DG)" },
+        { email: "marie@batimcam.cm", name: "Marie NGONO (DAF)" },
+      ] as object,
+    },
+  });
+  await prisma.report.create({
+    data: {
+      tenantId: tenant.id,
+      authorId: rhUser.id,
+      type: ReportType.RH_SOCIAL_ANNUAL,
+      title: "Bilan social annuel (fin février)",
+      period: "scheduled",
+      parameters: { scope: "GROUP" } as object,
+      blocks: TEMPLATE_BLOCKS.RH_SOCIAL_ANNUAL as object,
+      data: {} as object,
+      status: ReportStatus.SCHEDULED,
+      scheduledRule: "YEARLY_FEB",
+      recipients: [{ email: "delegues@batimcam.cm", name: "Représentants du personnel" }] as object,
+    },
+  });
+  console.log("✓ 2 rapports RH historiques + 3 planifiés créés");
+
   // ===== RH DAF — Provisions + départs (DAF Bloc 3 / fn 3.3) =====
   const fyEnd = `${new Date().getFullYear()}-12`;
   const provisionsSeed: Array<{ type: "PAID_LEAVE" | "END_OF_CAREER" | "BONUSES" | "MUTUAL" | "OTHER"; amount: bigint; notes?: string }> = [
