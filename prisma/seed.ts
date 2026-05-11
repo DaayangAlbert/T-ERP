@@ -3599,6 +3599,52 @@ async function main() {
       });
     }
     console.log(`✓ DT : ${methodCount} méthodes, ${templates.length} plannings types, ${ratios.length} ratios, ${sitesForRex.length} REX`);
+
+    // ===== DT BLOC 1.6 — Équipes ouvrières + plan de charge =====
+    const allDtSites = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 23,
+    });
+    const sitesForCrews = allDtSites.slice(0, 18);
+    const specialties = [
+      "CONCRETE", "FORMWORK", "REBAR", "FINISHING", "ROADWORK",
+      "HYDRAULIC", "ELECTRICAL", "CONCRETE", "FORMWORK", "FINISHING",
+      "ROADWORK", "REBAR", "CONCRETE", "FINISHING", "HYDRAULIC",
+      "FORMWORK", "ROADWORK", "ELECTRICAL",
+    ];
+    const wd = createdUsers.filter((u) => u.role === Role.WORKS_DIRECTOR);
+    for (let i = 0; i < sitesForCrews.length; i++) {
+      const s = sitesForCrews[i];
+      const crew = await prisma.crew.create({
+        data: {
+          tenantId: tenant.id,
+          name: `${specialties[i]} ${s.code.slice(-3)}`,
+          specialty: specialties[i] as any,
+          capacityHoursPerWeek: 40,
+          leaderId: wd[i % wd.length]?.id ?? null,
+          active: true,
+        },
+      });
+      // 20 semaines d'affectation
+      const baseWeek = 18; // début mai 2026
+      for (let w = 0; w < 20; w++) {
+        const weekIso = `2026-W${String(baseWeek + w).padStart(2, "0")}`;
+        // 4 équipes surchargées (>100 %) sur la semaine 21
+        const overload = w === 3 && i < 4 ? 1.4 + (i * 0.04) : 0.75 + Math.random() * 0.3;
+        const planned = 40 * overload;
+        await prisma.crewAssignment.create({
+          data: {
+            crewId: crew.id,
+            siteId: s.id,
+            weekIso,
+            plannedHours: planned,
+            actualHours: w < 1 ? planned : null,
+            overloadPercent: planned > 40 ? (planned / 40) * 100 : null,
+          },
+        });
+      }
+    }
+    console.log(`✓ DT : ${sitesForCrews.length} équipes + 20 semaines d'affectations seedées`);
   }
 
   console.log("\n✅ Seed terminé.\n");
