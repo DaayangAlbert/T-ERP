@@ -3482,6 +3482,123 @@ async function main() {
       }
       console.log(`✓ DT : 5 validations N2 en attente + 38 historiques approuvées`);
     }
+
+    // ===== DT BLOC 1.5 — Méthodes, plannings types, ratios, REX =====
+    const methodCategories = [
+      "EARTHWORKS",
+      "FOUNDATIONS",
+      "STRUCTURE",
+      "FORMWORK",
+      "REBAR",
+      "FINISHING",
+      "ROADWORK",
+      "HYDRAULIC",
+      "SAFETY",
+      "OTHER",
+    ] as const;
+    let methodCount = 0;
+    for (const cat of methodCategories.slice(0, 5)) {
+      for (let i = 1; i <= 4; i++) {
+        await prisma.operatingMethod.create({
+          data: {
+            tenantId: tenant.id,
+            category: cat as any,
+            title: `MO ${cat} #${i} — procédure standard`,
+            version: "1.0",
+            description: `Mode opératoire ${cat.toLowerCase()} v1.0`,
+            procedure: `## Étapes\n1. Préparation\n2. Exécution\n3. Contrôle\n4. Réception`,
+            authorId: dt!.id,
+            status: "ACTIVE" as any,
+            usageCount: Math.floor(Math.random() * 25) + 5,
+            lastReviewedAt: new Date(Date.now() - Math.floor(Math.random() * 180) * 86400_000),
+          },
+        });
+        methodCount++;
+      }
+    }
+    // 5 plannings types
+    const templates = [
+      { siteTypology: "Bâtiment R+8 (Bastos type)", totalDuration: 540, usageCount: 8 },
+      { siteTypology: "Voirie urbaine 2 km", totalDuration: 240, usageCount: 12 },
+      { siteTypology: "AEP forage 50 m + château", totalDuration: 180, usageCount: 6 },
+      { siteTypology: "Pont béton précontraint 25 m", totalDuration: 420, usageCount: 4 },
+      { siteTypology: "Lotissement 50 lots VRD", totalDuration: 360, usageCount: 5 },
+    ];
+    for (const t of templates) {
+      await prisma.templatePlanning.create({
+        data: {
+          tenantId: tenant.id,
+          siteTypology: t.siteTypology,
+          totalDuration: t.totalDuration,
+          phases: [
+            { name: "Études et préparation", durationDays: Math.round(t.totalDuration * 0.1), dependencies: [] },
+            { name: "Installation chantier", durationDays: Math.round(t.totalDuration * 0.05), dependencies: ["Études et préparation"] },
+            { name: "Gros œuvre", durationDays: Math.round(t.totalDuration * 0.45), dependencies: ["Installation chantier"] },
+            { name: "Second œuvre", durationDays: Math.round(t.totalDuration * 0.25), dependencies: ["Gros œuvre"] },
+            { name: "Finitions et réception", durationDays: Math.round(t.totalDuration * 0.15), dependencies: ["Second œuvre"] },
+          ],
+          authorId: dt!.id,
+          usageCount: t.usageCount,
+        },
+      });
+    }
+    // 30 ratios de référence
+    const ratios = [
+      { workItem: "Ferraillage HA poteaux", unit: "kg/m³", refValue: 95, observedValue: 102, observationsCount: 24 },
+      { workItem: "Ferraillage HA poutres", unit: "kg/m³", refValue: 110, observedValue: 118, observationsCount: 18 },
+      { workItem: "Ferraillage HA dalles", unit: "kg/m³", refValue: 85, observedValue: 88, observationsCount: 22 },
+      { workItem: "Coffrage poteaux", unit: "h/m²", refValue: 1.2, observedValue: 1.35, observationsCount: 15 },
+      { workItem: "Coffrage poutres", unit: "h/m²", refValue: 1.5, observedValue: 1.6, observationsCount: 12 },
+      { workItem: "Coffrage dalles", unit: "h/m²", refValue: 1.0, observedValue: 1.1, observationsCount: 28 },
+      { workItem: "Coulage béton manuel", unit: "h/m³", refValue: 4.5, observedValue: 5.2, observationsCount: 19 },
+      { workItem: "Coulage béton pompé", unit: "h/m³", refValue: 1.8, observedValue: 1.9, observationsCount: 14 },
+      { workItem: "Maçonnerie blocs 15", unit: "h/m²", refValue: 1.2, observedValue: 1.25, observationsCount: 32 },
+      { workItem: "Maçonnerie blocs 20", unit: "h/m²", refValue: 1.4, observedValue: 1.45, observationsCount: 28 },
+      { workItem: "Terrassement excavé", unit: "h/m³", refValue: 0.08, observedValue: 0.09, observationsCount: 16 },
+      { workItem: "Terrassement remblai compacté", unit: "h/m³", refValue: 0.12, observedValue: 0.13, observationsCount: 14 },
+      { workItem: "Enrobé bitumineux pose", unit: "h/t", refValue: 0.25, observedValue: 0.28, observationsCount: 11 },
+      { workItem: "GNT compacté", unit: "h/m³", refValue: 0.15, observedValue: 0.16, observationsCount: 13 },
+      { workItem: "Bordure T2 pose", unit: "h/ml", refValue: 0.35, observedValue: 0.38, observationsCount: 9 },
+      { workItem: "Pavés autobloquants pose", unit: "h/m²", refValue: 0.85, observedValue: 0.9, observationsCount: 8 },
+      { workItem: "Crépi taloché", unit: "h/m²", refValue: 0.5, observedValue: 0.55, observationsCount: 17 },
+      { workItem: "Peinture intérieure 2 couches", unit: "h/m²", refValue: 0.25, observedValue: 0.27, observationsCount: 20 },
+      { workItem: "Carrelage gres-cérame", unit: "h/m²", refValue: 0.6, observedValue: 0.65, observationsCount: 15 },
+      { workItem: "Étanchéité bicouche", unit: "h/m²", refValue: 0.4, observedValue: 0.45, observationsCount: 10 },
+      { workItem: "Forage rotation tubé", unit: "h/ml", refValue: 2.5, observedValue: 2.8, observationsCount: 6 },
+      { workItem: "Tubage acier 6'' pose", unit: "h/ml", refValue: 0.5, observedValue: 0.55, observationsCount: 5 },
+      { workItem: "Câblage électrique CR1", unit: "h/ml", refValue: 0.08, observedValue: 0.09, observationsCount: 7 },
+      { workItem: "Charpente bois pose", unit: "h/m²", refValue: 0.9, observedValue: 0.95, observationsCount: 11 },
+      { workItem: "Bac alu pose", unit: "h/m²", refValue: 0.3, observedValue: 0.32, observationsCount: 13 },
+      { workItem: "Menuiserie alu pose", unit: "h/u", refValue: 1.8, observedValue: 2.0, observationsCount: 9 },
+      { workItem: "VRD assainissement pose", unit: "h/ml", refValue: 0.8, observedValue: 0.85, observationsCount: 8 },
+      { workItem: "Bordure CS3 pose", unit: "h/ml", refValue: 0.42, observedValue: 0.45, observationsCount: 7 },
+      { workItem: "Béton de propreté", unit: "h/m³", refValue: 2.0, observedValue: 2.1, observationsCount: 14 },
+      { workItem: "Fouilles en rigole", unit: "h/m³", refValue: 0.18, observedValue: 0.2, observationsCount: 12 },
+    ];
+    for (const r of ratios) {
+      await prisma.referenceRatio.create({
+        data: { ...r, tenantId: tenant.id },
+      });
+    }
+    // 8 REX
+    const sitesForRex = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 8,
+    });
+    for (const s of sitesForRex.slice(0, 8)) {
+      await prisma.siteRex.create({
+        data: {
+          siteId: s.id,
+          authorId: dt!.id,
+          issues: `Difficulté principale rencontrée sur ${s.name}: aléas terrain et coordination sous-traitants.`,
+          solutions: `Mise en place d'un poste planning dédié et révision des cadences.`,
+          recommendations: `Renforcer la phase études préalable et les visites de site avant remise d'offre.`,
+          keywords: ["planning", "coordination", "sous-traitance"],
+          closedAt: new Date(Date.now() - Math.floor(Math.random() * 365) * 86400_000),
+        },
+      });
+    }
+    console.log(`✓ DT : ${methodCount} méthodes, ${templates.length} plannings types, ${ratios.length} ratios, ${sitesForRex.length} REX`);
   }
 
   console.log("\n✅ Seed terminé.\n");
