@@ -30,10 +30,12 @@ import { SignaturePowerCard } from "@/components/daf/profile/SignaturePowerCard"
 import { ProxiesCard } from "@/components/daf/profile/ProxiesCard";
 import { AlertPreferencesCard } from "@/components/daf/profile/AlertPreferencesCard";
 import { DafAgendaCard } from "@/components/daf/profile/DafAgendaCard";
+import { RhSignatureCard } from "@/components/rh/profile/RhSignatureCard";
+import { RhAlertsCard } from "@/components/rh/profile/RhAlertsCard";
 
-type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests" | "daf-signature" | "daf-alerts" | "daf-agenda";
+type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests" | "daf-signature" | "daf-alerts" | "daf-agenda" | "rh-signature" | "rh-alerts";
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean; dafOnly?: boolean }[] = [
+const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean; dafOnly?: boolean; hrOnly?: boolean }[] = [
   { id: "info", label: "Informations", icon: <UserIcon className="h-3.5 w-3.5" /> },
   { id: "documents", label: "Documents", icon: <FileText className="h-3.5 w-3.5" /> },
   { id: "activity", label: "Activité", icon: <ActIcon className="h-3.5 w-3.5" /> },
@@ -46,6 +48,8 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; dgOnly?: boolean;
   { id: "daf-signature", label: "Signature & procurations", icon: <Pen className="h-3.5 w-3.5" />, dafOnly: true },
   { id: "daf-alerts", label: "Alertes financières", icon: <Sliders className="h-3.5 w-3.5" />, dafOnly: true },
   { id: "daf-agenda", label: "Agenda DAF", icon: <CalIcon className="h-3.5 w-3.5" />, dafOnly: true },
+  { id: "rh-signature", label: "Signature RH", icon: <Pen className="h-3.5 w-3.5" />, hrOnly: true },
+  { id: "rh-alerts", label: "Alertes RH", icon: <Sliders className="h-3.5 w-3.5" />, hrOnly: true },
 ];
 
 export default function ProfilePage() {
@@ -57,6 +61,7 @@ export default function ProfilePage() {
   const visibleTabs = TABS.filter((t) => {
     if (t.dgOnly) return profile.role === "DG";
     if (t.dafOnly) return profile.role === "DAF";
+    if (t.hrOnly) return profile.role === "HR";
     return true;
   });
 
@@ -105,6 +110,8 @@ export default function ProfilePage() {
           )}
           {tab === "daf-alerts" && <AlertPreferencesCard />}
           {tab === "daf-agenda" && <DafAgendaCard />}
+          {tab === "rh-signature" && <RhSignatureCard />}
+          {tab === "rh-alerts" && <RhAlertsCard />}
         </div>
         <div className="space-y-4">
           <SidePanel profile={profile} />

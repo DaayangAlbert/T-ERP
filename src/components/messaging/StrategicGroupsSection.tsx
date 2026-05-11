@@ -1,21 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Pin, Crown, Wallet } from "lucide-react";
+import { Pin, Crown, Wallet, Users } from "lucide-react";
 import { useStrategicGroups } from "@/hooks/useDgMessaging";
 import { formatRelativeDate } from "@/lib/format";
 import { clsx } from "clsx";
 
 interface Props {
-  variant?: "dg" | "daf";
+  variant?: "dg" | "daf" | "rh";
 }
 
 export function StrategicGroupsSection({ variant = "dg" }: Props) {
   const { data, isLoading } = useStrategicGroups();
   if (isLoading || !data || data.items.length === 0) return null;
 
-  const Icon = variant === "daf" ? Wallet : Crown;
-  const title = variant === "daf" ? "Groupes financiers DAF" : "Groupes stratégiques DG";
+  const Icon = variant === "daf" ? Wallet : variant === "rh" ? Users : Crown;
+  const title = variant === "daf" ? "Groupes financiers DAF" : variant === "rh" ? "Groupes RH" : "Groupes stratégiques DG";
 
   return (
     <section className="mb-3 rounded-lg border border-primary-200 bg-primary-50/40 p-2">

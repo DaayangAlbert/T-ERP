@@ -2511,6 +2511,138 @@ async function main() {
   }
   console.log(`✓ ${dafGroups.length} groupes financiers DAF créés (${dafMsgCount} messages + 1 sondage)`);
 
+  // ===== MESSAGERIE RH — Groupes (RH Bloc 2 / fn 2.3) =====
+  const rhForMsg = createdUsers.find((u) => u.role === Role.HR);
+  if (rhForMsg) {
+    const sgForMsgRh = createdUsers.find((u) => u.role === Role.SG);
+    const accForRh = createdUsers.find((u) => u.role === Role.ACCOUNTANT);
+    const techDirForRh = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
+    const rhGroups = [
+      {
+        name: "Cellule RH (Sandrine + assistante)",
+        members: [rhForMsg, sgForMsgRh].filter(Boolean),
+        pinned: true,
+        messages: [
+          { sender: rhForMsg.id, content: "Paie d'avril : 142 / 175 saisies journaliers. Deadline saisie demain 18h.", priority: "HIGH" as const },
+          { sender: sgForMsgRh?.id ?? rhForMsg.id, content: "Reçu. Je relance les chefs de chantier pour les retardataires.", priority: "NORMAL" as const },
+        ],
+      },
+      {
+        name: "Représentants du personnel",
+        members: [rhForMsg, dgForMsg].filter(Boolean),
+        pinned: true,
+        messages: [
+          { sender: rhForMsg.id, content: "Réunion DP du 15 mai : ordre du jour partagé sur GED. 3 points à arbitrer.", priority: "NORMAL" as const, mentions: [dgForMsg.id] },
+        ],
+      },
+      {
+        name: "Médecine du travail (Sandrine + Dr NGOUFO)",
+        members: [rhForMsg].filter(Boolean),
+        pinned: true,
+        messages: [
+          { sender: rhForMsg.id, content: "Dr Pierre : merci de programmer les 5 visites de reprise sur la semaine 20. Liste partagée sur Drive.", priority: "HIGH" as const },
+        ],
+      },
+      {
+        name: "Recrutement (RH + managers)",
+        members: [rhForMsg, techDirForRh, accForRh].filter(Boolean),
+        pinned: false,
+        messages: [
+          { sender: rhForMsg.id, content: "5 entretiens cette semaine : 2 conducteurs travaux (mardi), 1 comptable (mercredi), 2 chefs chantier (vendredi).", priority: "NORMAL" as const, mentions: [techDirForRh?.id ?? dgForMsg.id] },
+          { sender: techDirForRh?.id ?? dgForMsg.id, content: "OK pour mardi. J'apporte la grille technique.", priority: "NORMAL" as const },
+        ],
+      },
+    ];
+
+    let rhMsgCount = 0;
+    for (const g of rhGroups) {
+      if (g.members.length === 0) continue;
+      const conv = await prisma.conversation.create({
+        data: {
+          tenantId: tenant.id,
+          name: g.name,
+          isGroup: true,
+          isStrategic: true,
+          pinnedAt: g.pinned ? new Date() : null,
+          lastMessageAt: new Date(),
+          participants: {
+            create: g.members.map((u) => ({ userId: u!.id, isPinned: g.pinned })),
+          },
+        },
+      });
+      for (const m of g.messages) {
+        await prisma.message.create({
+          data: {
+            conversationId: conv.id,
+            senderId: m.sender,
+            content: m.content,
+            priority: m.priority,
+            mentions: (m as { mentions?: string[] }).mentions ?? [],
+          },
+        });
+        rhMsgCount++;
+      }
+    }
+
+    // Sondage RH : "Disponibilité réunion CSE"
+    const rhFirstConv = await prisma.conversation.findFirst({
+      where: { tenantId: tenant.id, name: "Représentants du personnel" },
+    });
+    if (rhFirstConv) {
+      await prisma.message.create({
+        data: {
+          conversationId: rhFirstConv.id,
+          senderId: rhForMsg.id,
+          content: "📊 Sondage : Disponibilité prochaine réunion CSE ?",
+          pollData: {
+            question: "Date prochaine réunion CSE ?",
+            options: [
+              { label: "Lundi 19 mai 14h", votes: [] },
+              { label: "Mardi 20 mai 9h", votes: [] },
+              { label: "Vendredi 23 mai 16h", votes: [] },
+            ],
+          } as object,
+        },
+      });
+    }
+
+    // RhSettings init
+    await prisma.rhSettings.upsert({
+      where: { userId: rhForMsg.id },
+      update: {
+        signatureConfig: {
+          authorizedDocs: ["HIRING_CONTRACT_CDI", "HIRING_CONTRACT_CDD", "DPAE", "WARNING_LETTER", "REPRIMAND_LETTER", "RETURN_TO_WORK_LETTER", "INTERNSHIP_AGREEMENT"],
+          delegates: [],
+        } as object,
+        alertsConfig: {
+          medicalVisitDaysBefore: 30,
+          trainingRecycleDaysBefore: 60,
+          cddEndingDaysBefore: 30,
+          leaveAccumulationThreshold: 10,
+          payrollInputDeadlineDays: 3,
+          channels: ["IN_APP", "EMAIL"],
+        } as object,
+      },
+      create: {
+        userId: rhForMsg.id,
+        signatureConfig: {
+          authorizedDocs: ["HIRING_CONTRACT_CDI", "HIRING_CONTRACT_CDD", "DPAE", "WARNING_LETTER", "REPRIMAND_LETTER", "RETURN_TO_WORK_LETTER", "INTERNSHIP_AGREEMENT"],
+          delegates: [],
+        } as object,
+        alertsConfig: {
+          medicalVisitDaysBefore: 30,
+          trainingRecycleDaysBefore: 60,
+          cddEndingDaysBefore: 30,
+          leaveAccumulationThreshold: 10,
+          payrollInputDeadlineDays: 3,
+          channels: ["IN_APP", "EMAIL"],
+        } as object,
+      },
+    });
+
+    console.log(`✓ ${rhGroups.length} groupes RH créés (${rhMsgCount} messages + 1 sondage) + RhSettings init`);
+  }
+
   // ===== VALIDATIONS DG (Phase 2 / Bloc 2 — fn 2.1) =====
   const dgUser = createdUsers.find((u) => u.role === Role.DG)!;
   const dafUser = createdUsers.find((u) => u.role === Role.DAF)!;

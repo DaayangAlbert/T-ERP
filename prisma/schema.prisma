@@ -138,67 +138,71 @@ model User {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
-  payslips                     Payslip[]
-  applications                 Application[]
-  sentMessages                 Message[]                     @relation("SentMessages")
-  conversationParticipants     ConversationParticipant[]
-  notifications                Notification[]
-  auditLogs                    AuditLog[]
-  managedSites                 Site[]                        @relation("SiteManager")
-  dgSettings                   DgSettings?
-  objectives                   Objective[]
-  boardReports                 BoardReport[]
-  validationsInitiated         Validation[]                  @relation("ValidationInitiator")
-  validationsAssigned          Validation[]                  @relation("ValidationCurrentApprover")
-  validationsDecided           Validation[]                  @relation("ValidationDecidedBy")
-  delegationsGiven             Delegation[]                  @relation("DelegationFrom")
-  delegationsReceived          Delegation[]                  @relation("DelegationTo")
-  reports                      Report[]
-  sessions                     Session[]
-  trainings                    Training[]
-  successionsAsIncumbent       SuccessionPlan[]              @relation("SuccessionIncumbent")
-  successionsAsSuccessor       SuccessionPlan[]              @relation("SuccessionSuccessor")
-  preferences                  UserPreferences?
-  signature                    UserSignature?
-  agendaEvents                 AgendaEvent[]
-  interestDeclarations         InterestDeclaration[]
-  benefits                     BenefitInKind[]
-  performanceBonuses           PerformanceBonus[]
-  dafSettings                  DafSettings?
-  signaturePower               UserSignaturePower?
-  rhSettings                   RhSettings?
-  employeeProfile              EmployeeProfile?
-  employeeDocuments            EmployeeDocument[]
+  payslips                      Payslip[]
+  applications                  Application[]
+  sentMessages                  Message[]                     @relation("SentMessages")
+  conversationParticipants      ConversationParticipant[]
+  notifications                 Notification[]
+  auditLogs                     AuditLog[]
+  managedSites                  Site[]                        @relation("SiteManager")
+  dgSettings                    DgSettings?
+  objectives                    Objective[]
+  boardReports                  BoardReport[]
+  validationsInitiated          Validation[]                  @relation("ValidationInitiator")
+  validationsAssigned           Validation[]                  @relation("ValidationCurrentApprover")
+  validationsDecided            Validation[]                  @relation("ValidationDecidedBy")
+  delegationsGiven              Delegation[]                  @relation("DelegationFrom")
+  delegationsReceived           Delegation[]                  @relation("DelegationTo")
+  reports                       Report[]
+  sessions                      Session[]
+  trainings                     Training[]
+  successionsAsIncumbent        SuccessionPlan[]              @relation("SuccessionIncumbent")
+  successionsAsSuccessor        SuccessionPlan[]              @relation("SuccessionSuccessor")
+  preferences                   UserPreferences?
+  signature                     UserSignature?
+  agendaEvents                  AgendaEvent[]
+  interestDeclarations          InterestDeclaration[]
+  benefits                      BenefitInKind[]
+  performanceBonuses            PerformanceBonus[]
+  dafSettings                   DafSettings?
+  signaturePower                UserSignaturePower?
+  rhSettings                    RhSettings?
+  employeeProfile               EmployeeProfile?
+  employeeDocuments             EmployeeDocument[]
   // Bloc 0 Comptable — workflow promotion + écritures + factures
-  promotionRequestsAsTarget    RolePromotionRequest[]        @relation("PromotionTarget")
-  promotionRequestsAsRequester RolePromotionRequest[]        @relation("PromotionRequester")
-  cptEntriesCreated            Entry[]                       @relation("EntryCreator")
-  cptEntriesValidated          Entry[]                       @relation("EntryValidator")
-  cashboxMovements             CashboxMovement[]
+  promotionRequestsAsTarget     RolePromotionRequest[]        @relation("PromotionTarget")
+  promotionRequestsAsRequester  RolePromotionRequest[]        @relation("PromotionRequester")
+  cptEntriesCreated             Entry[]                       @relation("EntryCreator")
+  cptEntriesValidated           Entry[]                       @relation("EntryValidator")
+  cashboxMovements              CashboxMovement[]
   // DTrav — relations chantier
-  dailyReportsSubmitted        SiteDailyReport[]             @relation("DailyReportAuthor")
-  dailyReportsValidated        SiteDailyReport[]             @relation("DailyReportValidator")
-  workforceMemberships         SiteWorkforceMember[]
-  amendmentsInitiated          ContractAmendment[]           @relation("AmendmentInitiator")
-  documentsUploaded            SiteDocument[]                @relation("DocumentUploader")
-  moaReportsAuthored           MoaReport[]                   @relation("MoaReportAuthor")
+  dailyReportsSubmitted         SiteDailyReport[]             @relation("DailyReportAuthor")
+  dailyReportsValidated         SiteDailyReport[]             @relation("DailyReportValidator")
+  workforceMemberships          SiteWorkforceMember[]
+  amendmentsInitiated           ContractAmendment[]           @relation("AmendmentInitiator")
+  documentsUploaded             SiteDocument[]                @relation("DocumentUploader")
+  moaReportsAuthored            MoaReport[]                   @relation("MoaReportAuthor")
   // CC — relations
-  attendancesAsWorker          Attendance[]                  @relation("AttendanceWorker")
-  attendancesRecorded          Attendance[]                  @relation("AttendanceRecorder")
-  attendanceSessionsCompleted  AttendanceSessionCompletion[]
-  deliveryReceiptsRecorded     DeliveryReceipt[]
-  safetyTalksCompleted         HseSafetyTalk[]
+  attendancesAsWorker           Attendance[]                  @relation("AttendanceWorker")
+  attendancesRecorded           Attendance[]                  @relation("AttendanceRecorder")
+  attendanceSessionsCompleted   AttendanceSessionCompletion[]
+  deliveryReceiptsRecorded      DeliveryReceipt[]
+  safetyTalksCompleted          HseSafetyTalk[]
+  // MAG — relations magasin
+  warehousesKept                Warehouse[]                   @relation("WarehouseKeeper")
+  warehouseMovementsRecorded    WarehouseMovement[]           @relation("WarehouseMovementRecorder")
+  warehouseInventoriesCompleted WarehouseInventory[]
   // DT — Espace Direction Technique (Bloc 0+)
-  dtSettings                   DtSettings?
-  managedTenders               Tender[]                      @relation("TenderStudyOwner")
-  dtIncidentReports            HseIncident[]                 @relation("IncidentReporter")
-  dtAuditsLed                  SiteAudit[]                   @relation("AuditAuditor")
-  dtNcOwned                    NonConformity[]               @relation("NcOwner")
-  dtSubcontractorEvals         SubcontractorEvaluation[]     @relation("SubEvaluator")
-  dtCrewsLed                   Crew[]                        @relation("CrewLeader")
-  dtMethodsAuthored            OperatingMethod[]             @relation("MethodAuthor")
-  dtTemplatePlannings          TemplatePlanning[]            @relation("TemplatePlanningAuthor")
-  dtRexAuthored                SiteRex[]                     @relation("RexAuthor")
+  dtSettings                    DtSettings?
+  managedTenders                Tender[]                      @relation("TenderStudyOwner")
+  dtIncidentReports             HseIncident[]                 @relation("IncidentReporter")
+  dtAuditsLed                   SiteAudit[]                   @relation("AuditAuditor")
+  dtNcOwned                     NonConformity[]               @relation("NcOwner")
+  dtSubcontractorEvals          SubcontractorEvaluation[]     @relation("SubEvaluator")
+  dtCrewsLed                    Crew[]                        @relation("CrewLeader")
+  dtMethodsAuthored             OperatingMethod[]             @relation("MethodAuthor")
+  dtTemplatePlannings           TemplatePlanning[]            @relation("TemplatePlanningAuthor")
+  dtRexAuthored                 SiteRex[]                     @relation("RexAuthor")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -483,6 +487,8 @@ model Site {
   attendances              Attendance[]
   attendanceCompletions    AttendanceSessionCompletion[]
   hseSafetyTalks           HseSafetyTalk[]
+  // MAG — relation magasin (1:1)
+  warehouse                Warehouse?
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -1524,9 +1530,10 @@ model RhSettings {
   id           String   @id @default(cuid())
   userId       String   @unique
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  alertsConfig Json? // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  alertsConfig    Json? // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
+  signatureConfig Json? // { authorizedDocs[], delegates[] } — RH Bloc 2 / fn 2.3
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("rh_settings")
 }
@@ -1798,12 +1805,12 @@ enum ReportType {
   DAF_CAC_QUARTERLY // Reporting CAC trimestriel (commissaires aux comptes)
   DAF_DSF_PREP // Préparation DSF (états financiers OHADA annuels)
   // RH Bloc 2 / fn 2.2 — Reportings RH
-  RH_MONTHLY               // Rapport mensuel d'activité RH (pour le DG)
-  RH_SOCIAL_ANNUAL         // Bilan social annuel (obligation légale)
-  RH_GENDER_EQUALITY       // Rapport égalité H/F (obligation légale)
-  RH_WEEKLY_DASHBOARD      // Tableau de bord RH hebdomadaire (interne)
+  RH_MONTHLY // Rapport mensuel d'activité RH (pour le DG)
+  RH_SOCIAL_ANNUAL // Bilan social annuel (obligation légale)
+  RH_GENDER_EQUALITY // Rapport égalité H/F (obligation légale)
+  RH_WEEKLY_DASHBOARD // Tableau de bord RH hebdomadaire (interne)
   RH_RECRUITMENT_QUARTERLY // Statistiques recrutement trimestriel
-  RH_SOCIAL_INDICATORS     // Indicateurs sociaux (turnover, absentéisme, climat)
+  RH_SOCIAL_INDICATORS // Indicateurs sociaux (turnover, absentéisme, climat)
   // Comptable Bloc 2 / fn 2.2 — Rapports comptables (Direction + Chantier)
   CPT_GENERAL_LEDGER
   CPT_BALANCE_GENERAL
@@ -4131,7 +4138,7 @@ model HseSafetyTalk {
 // MAGASINIER — BLOC 0 + 1 : ARTICLES, MAGASIN, STOCKS, MOUVEMENTS, INVENTAIRES
 // ========================================
 model Article {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   tenantId          String
   code              String
   name              String
@@ -4139,14 +4146,14 @@ model Article {
   unit              String
   conversionUnit    String?
   defaultSupplierId String?
-  active            Boolean  @default(true)
+  active            Boolean         @default(true)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  warehouseStocks   WarehouseStock[]
+  warehouseStocks    WarehouseStock[]
   warehouseMovements WarehouseMovement[]
-  inventoryLines    WarehouseInventoryLine[]
+  inventoryLines     WarehouseInventoryLine[]
 
   @@unique([tenantId, code])
   @@index([tenantId, category])
@@ -4166,41 +4173,41 @@ enum ArticleCategory {
 }
 
 model Warehouse {
-  id          String   @id @default(cuid())
-  tenantId    String
-  siteId      String   @unique
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  code        String
-  name        String
-  keeperId    String?
-  keeper      User?    @relation("WarehouseKeeper", fields: [keeperId], references: [id])
+  id       String  @id @default(cuid())
+  tenantId String
+  siteId   String  @unique
+  site     Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  code     String
+  name     String
+  keeperId String?
+  keeper   User?   @relation("WarehouseKeeper", fields: [keeperId], references: [id])
 
   stocks      WarehouseStock[]
   movements   WarehouseMovement[]
   inventories WarehouseInventory[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@map("warehouses")
 }
 
 model WarehouseStock {
-  id            String   @id @default(cuid())
-  warehouseId   String
-  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
-  articleId     String
-  article       Article  @relation(fields: [articleId], references: [id])
-  quantity      Float    @default(0)
-  pmpUnitPrice  BigInt   @default(0)
-  totalValue    BigInt   @default(0)
-  minThreshold  Float?
-  lastInAt      DateTime?
-  lastOutAt     DateTime?
+  id           String    @id @default(cuid())
+  warehouseId  String
+  warehouse    Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  articleId    String
+  article      Article   @relation(fields: [articleId], references: [id])
+  quantity     Float     @default(0)
+  pmpUnitPrice BigInt    @default(0)
+  totalValue   BigInt    @default(0)
+  minThreshold Float?
+  lastInAt     DateTime?
+  lastOutAt    DateTime?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([warehouseId, articleId])
   @@index([warehouseId])
@@ -4208,11 +4215,11 @@ model WarehouseStock {
 }
 
 model WarehouseMovement {
-  id                String   @id @default(cuid())
+  id                String                     @id @default(cuid())
   warehouseId       String
-  warehouse         Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  warehouse         Warehouse                  @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
   articleId         String
-  article           Article  @relation(fields: [articleId], references: [id])
+  article           Article                    @relation(fields: [articleId], references: [id])
   direction         WarehouseMovementDirection
   quantity          Float
   unitPrice         BigInt
@@ -4227,12 +4234,12 @@ model WarehouseMovement {
   blPhoto           String?
   notes             String?
   recordedById      String
-  recordedBy        User     @relation("WarehouseMovementRecorder", fields: [recordedById], references: [id])
+  recordedBy        User                       @relation("WarehouseMovementRecorder", fields: [recordedById], references: [id])
   occurredAt        DateTime
-  syncedFromOffline Boolean  @default(false)
+  syncedFromOffline Boolean                    @default(false)
   clientUuid        String?
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([warehouseId, occurredAt])
   @@index([articleId])
@@ -4259,22 +4266,22 @@ enum WarehouseMovementReason {
 }
 
 model WarehouseInventory {
-  id            String   @id @default(cuid())
+  id            String                   @id @default(cuid())
   warehouseId   String
-  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  warehouse     Warehouse                @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
   type          WarehouseInventoryType
   scope         String
   plannedDate   DateTime
   startedAt     DateTime?
   completedAt   DateTime?
   completedById String?
-  completedBy   User?    @relation(fields: [completedById], references: [id])
-  totalGapValue BigInt   @default(0)
+  completedBy   User?                    @relation(fields: [completedById], references: [id])
+  totalGapValue BigInt                   @default(0)
   status        WarehouseInventoryStatus @default(PLANNED)
   lines         WarehouseInventoryLine[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([warehouseId, status])
   @@map("warehouse_inventories")
@@ -4298,23 +4305,22 @@ enum WarehouseInventoryStatus {
 }
 
 model WarehouseInventoryLine {
-  id             String   @id @default(cuid())
+  id             String             @id @default(cuid())
   inventoryId    String
   inventory      WarehouseInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   articleId      String
-  article        Article  @relation(fields: [articleId], references: [id])
+  article        Article            @relation(fields: [articleId], references: [id])
   theoreticalQty Float
-  countedQty     Float    @default(0)
-  gap            Float    @default(0)
-  gapValue       BigInt   @default(0)
+  countedQty     Float              @default(0)
+  gap            Float              @default(0)
+  gapValue       BigInt             @default(0)
   justification  String?
   countedAt      DateTime?
   countedById    String?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([inventoryId])
   @@map("warehouse_inventory_lines")
 }
-
