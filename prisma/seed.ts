@@ -3645,6 +3645,83 @@ async function main() {
       }
     }
     console.log(`✓ DT : ${sitesForCrews.length} équipes + 20 semaines d'affectations seedées`);
+
+    // ===== DT BLOC 1.7 — Sous-traitants techniques =====
+    const subNames = [
+      { name: "STI ÉTANCHÉITÉ SARL", spec: "ROOFING_WATERPROOFING", rating: 4.5 },
+      { name: "ELECTRO BAT SARL", spec: "ELECTRICAL", rating: 4.2 },
+      { name: "PLOMBERIE PRO SARL", spec: "PLUMBING", rating: 4.0 },
+      { name: "FROID & CLIM SARL", spec: "HVAC", rating: 3.8 },
+      { name: "PEINTURE MODERNE SARL", spec: "PAINTING", rating: 4.6 },
+      { name: "CARRELAGES KAMGA SARL", spec: "TILING", rating: 4.3 },
+      { name: "MENUISERIE BOIS SUD", spec: "JOINERY", rating: 4.1 },
+      { name: "METAL CAM SARL", spec: "METALWORK", rating: 4.4 },
+      { name: "MIROIR DOUALA SARL", spec: "GLAZING", rating: 3.9 },
+      { name: "TERRASSEMENT NDONGO", spec: "EARTHWORKS_HEAVY", rating: 4.7 },
+      { name: "DEMOLITION RAPIDE", spec: "DEMOLITION", rating: 3.6 },
+      { name: "GRUE & LEVAGE SARL", spec: "CRANE", rating: 4.8 },
+    ];
+    const additionalNames = Array.from({ length: 30 }, (_, i) => ({
+      name: `Sous-traitant ${String(i + 13).padStart(3, "0")} SARL`,
+      spec: ["EARTHWORKS_HEAVY", "ELECTRICAL", "PLUMBING", "PAINTING", "TILING", "JOINERY", "METALWORK", "OTHER"][i % 8],
+      rating: 3 + (i % 5) * 0.5,
+    }));
+    const subs = [...subNames, ...additionalNames];
+    for (const s of subs) {
+      const fiscalOk = Math.random() > 0.2;
+      await prisma.supplier.upsert({
+        where: { tenantId_name: { tenantId: tenant.id, name: s.name } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          name: s.name,
+          category: "Sous-traitance",
+          isSubcontractor: true,
+          specialties: [s.spec as any],
+          agreements: s.rating > 4 ? ["ISO 9001"] : [],
+          internalRating: s.rating,
+          ratingsCount: Math.floor(Math.random() * 12) + 1,
+          fiscalCompliance: {
+            cnps: fiscalOk ? "OK" : "PENDING",
+            dgi: fiscalOk ? "OK" : "PENDING",
+            lastChecked: new Date().toISOString(),
+          },
+          paymentTerms: 60,
+        },
+      });
+    }
+    // 6 évaluations historiques + 6 à faire (sites WON ou ACTIVE)
+    const subRegistry = await prisma.supplier.findMany({
+      where: { tenantId: tenant.id, isSubcontractor: true },
+      take: 10,
+    });
+    const evalSites = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 6,
+    });
+    for (let i = 0; i < 6; i++) {
+      const sup = subRegistry[i];
+      const site = evalSites[i];
+      if (!sup || !site) continue;
+      const q = 3 + Math.floor(Math.random() * 3);
+      const d = 3 + Math.floor(Math.random() * 3);
+      const sa = 3 + Math.floor(Math.random() * 3);
+      const b = 3 + Math.floor(Math.random() * 3);
+      await prisma.subcontractorEvaluation.create({
+        data: {
+          supplierId: sup.id,
+          siteId: site.id,
+          evaluatorId: dt!.id,
+          qualityScore: q,
+          delayScore: d,
+          safetyScore: sa,
+          behaviorScore: b,
+          overallScore: (q + d + sa + b) / 4,
+          comments: "Évaluation post-prestation standard.",
+        },
+      });
+    }
+    console.log(`✓ DT : ${subs.length} sous-traitants seedés + 6 évaluations`);
   }
 
   console.log("\n✅ Seed terminé.\n");
