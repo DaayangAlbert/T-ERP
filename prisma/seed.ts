@@ -102,6 +102,23 @@ async function main() {
   await prisma.notification.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.document.deleteMany();
+  // DT — purger les tables qui référencent users/sites avant deleteMany users
+  await prisma.tenderItem.deleteMany();
+  await prisma.tender.deleteMany();
+  await prisma.competitor.deleteMany();
+  await prisma.subcontractorEvaluation.deleteMany();
+  await prisma.crewAssignment.deleteMany();
+  await prisma.crew.deleteMany();
+  await prisma.hseIncident.deleteMany();
+  await prisma.siteAudit.deleteMany();
+  await prisma.nonConformity.deleteMany();
+  await prisma.certification.deleteMany();
+  await prisma.siteRex.deleteMany();
+  await prisma.referenceRatio.deleteMany();
+  await prisma.templatePlanning.deleteMany();
+  await prisma.operatingMethod.deleteMany();
+  await prisma.dtAlert.deleteMany();
+  await prisma.dtSettings.deleteMany();
   await prisma.site.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
@@ -3264,6 +3281,143 @@ async function main() {
     },
   });
   console.log(`✓ 2 rôles personnalisés créés`);
+
+  // ===== DT BLOC 1.3 — Études et offres (tenders) =====
+  const dt = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
+  if (dt) {
+    const tenders = [
+      {
+        reference: "AO-2026-018",
+        title: "Construction école 12 salles Maroua",
+        moaName: "MINEDUB",
+        moaType: "PUBLIC",
+        workType: "BUILDING",
+        estimatedBudget: 480_000_000n,
+        submissionDeadline: new Date("2026-05-22"),
+        stage: "PRICING",
+        probability: 65,
+        studyCost: 2_400_000n,
+      },
+      {
+        reference: "AO-2026-019",
+        title: "Réhabilitation route Bertoua–Yokadouma 35 km",
+        moaName: "MINTP",
+        moaType: "PUBLIC",
+        workType: "ROADWORK",
+        estimatedBudget: 1_950_000_000n,
+        submissionDeadline: new Date("2026-06-04"),
+        stage: "TECHNICAL_STUDY",
+        probability: 45,
+        studyCost: 8_500_000n,
+      },
+      {
+        reference: "AO-2026-020",
+        title: "Forage AEP rural 4 villages Sud",
+        moaName: "MINEE",
+        moaType: "PUBLIC",
+        workType: "HYDRAULIC",
+        estimatedBudget: 320_000_000n,
+        submissionDeadline: new Date("2026-05-15"),
+        stage: "INTERNAL_VALIDATION",
+        probability: 80,
+        studyCost: 1_800_000n,
+      },
+      {
+        reference: "AO-2026-021",
+        title: "Immeuble bureau R+12 Akwa",
+        moaName: "Groupe SODECOTON",
+        moaType: "PRIVATE",
+        workType: "BUILDING",
+        estimatedBudget: 1_350_000_000n,
+        submissionDeadline: new Date("2026-06-18"),
+        stage: "DCE_ANALYSIS",
+        probability: 30,
+        studyCost: 5_200_000n,
+      },
+      {
+        reference: "AO-2026-022",
+        title: "Aménagement zone d'activités Kribi",
+        moaName: "PAK",
+        moaType: "PARAPUBLIC",
+        workType: "LAYOUT",
+        estimatedBudget: 1_120_000_000n,
+        submissionDeadline: new Date("2026-05-30"),
+        stage: "SUBCONTRACTOR_QUOTES",
+        probability: 55,
+        studyCost: 4_100_000n,
+      },
+      {
+        reference: "AO-2026-014",
+        title: "Pont métallique Mbam",
+        moaName: "MINTP",
+        moaType: "PUBLIC",
+        workType: "CIVIL_ENGINEERING",
+        estimatedBudget: 780_000_000n,
+        submissionDeadline: new Date("2026-04-12"),
+        stage: "WON",
+        probability: 100,
+        studyCost: 6_800_000n,
+        ourBidAmount: 765_000_000n,
+        ourMargin: 18.5,
+        awarded: true,
+      },
+      {
+        reference: "AO-2026-011",
+        title: "Voirie urbaine Limbé",
+        moaName: "Commune de Limbé",
+        moaType: "PUBLIC",
+        workType: "ROADWORK",
+        estimatedBudget: 540_000_000n,
+        submissionDeadline: new Date("2026-03-28"),
+        stage: "LOST",
+        probability: 0,
+        studyCost: 3_400_000n,
+        ourBidAmount: 558_000_000n,
+        ourMargin: 19.2,
+        awarded: false,
+        awardedTo: "GENIE TP SARL",
+      },
+    ];
+
+    for (const t of tenders) {
+      await prisma.tender.create({
+        data: {
+          ...t,
+          moaType: t.moaType as any,
+          workType: t.workType as any,
+          stage: t.stage as any,
+          tenantId: tenant.id,
+          studyOwnerId: dt.id,
+        },
+      });
+    }
+    // Items BPU pour le 1er tender (école Maroua)
+    const aoMaroua = await prisma.tender.findUnique({ where: { reference: "AO-2026-018" } });
+    if (aoMaroua) {
+      const items = [
+        { code: "01.01", designation: "Installation chantier", unit: "ft", quantity: 1, unitPrice: 8_500_000n },
+        { code: "02.01", designation: "Terrassement général", unit: "m3", quantity: 1850, unitPrice: 12_500n },
+        { code: "03.01", designation: "Béton de propreté", unit: "m3", quantity: 42, unitPrice: 95_000n },
+        { code: "03.02", designation: "Béton armé semelles", unit: "m3", quantity: 96, unitPrice: 195_000n },
+        { code: "03.03", designation: "Béton armé poteaux", unit: "m3", quantity: 78, unitPrice: 215_000n },
+        { code: "04.01", designation: "Maçonnerie blocs creux 15", unit: "m2", quantity: 2840, unitPrice: 14_500n },
+        { code: "05.01", designation: "Charpente métallique", unit: "kg", quantity: 8500, unitPrice: 1_850n },
+        { code: "06.01", designation: "Couverture bac alu", unit: "m2", quantity: 1450, unitPrice: 8_900n },
+        { code: "07.01", designation: "Menuiserie bois extérieure", unit: "u", quantity: 48, unitPrice: 185_000n },
+        { code: "08.01", designation: "Carrelage gres-cérame 30x30", unit: "m2", quantity: 1200, unitPrice: 12_500n },
+      ];
+      for (const it of items) {
+        await prisma.tenderItem.create({
+          data: {
+            ...it,
+            tenderId: aoMaroua.id,
+            totalPrice: BigInt(it.quantity * Number(it.unitPrice)),
+          },
+        });
+      }
+    }
+    console.log(`✓ ${tenders.length} appels d'offres seedés (10 items BPU sur AO-2026-018)`);
+  }
 
   console.log("\n✅ Seed terminé.\n");
   console.log(`Login : albert@batimcam.cm / ${PWD}`);
