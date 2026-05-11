@@ -1221,22 +1221,61 @@ model DafSettings {
 // ========================================
 
 // ========================================
+// RH — Visites médicales (RH Bloc 1 / fn 1.7)
+// ========================================
+model MedicalVisit {
+  id             String           @id @default(cuid())
+  tenantId       String
+  employeeKey    String // userId réel ou syn_*
+  employeeName   String
+  type           MedicalVisitType
+  scheduledAt    DateTime
+  completedAt    DateTime?
+  fitnessVerdict FitnessVerdict?
+  restrictions   String?          @db.Text
+  nextVisitDue   DateTime?
+  doctor         String?
+  notes          String?          @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, scheduledAt])
+  @@index([employeeKey])
+  @@map("medical_visits")
+}
+
+enum MedicalVisitType {
+  HIRING
+  PERIODIC
+  RETURN_TO_WORK
+  SPONTANEOUS
+}
+
+enum FitnessVerdict {
+  FIT
+  FIT_WITH_RESTRICTIONS
+  UNFIT
+  TEMPORARILY_UNFIT
+}
+
+// ========================================
 // RH — Certifications employés (RH Bloc 1 / fn 1.6)
 // ========================================
 // Distinct du modèle Certification (ISO entreprise) — ici par salarié.
 model EmployeeCertification {
   id             String   @id @default(cuid())
   tenantId       String
-  employeeKey    String   // userId réel ou syn_*
+  employeeKey    String // userId réel ou syn_*
   employeeName   String
-  type           String   // "CACES R482 cat B1", "Travail en hauteur", "SST"
+  type           String // "CACES R482 cat B1", "Travail en hauteur", "SST"
   issuedAt       DateTime
   expiresAt      DateTime
   issuedBy       String
   certificateUrl String?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, expiresAt])
   @@index([employeeKey])
@@ -2418,25 +2457,31 @@ model PurchaseOrder {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   supplierId String
   supplier   Supplier @relation(fields: [supplierId], references: [id])
+  // DTrav fn 1.6 — rattachement chantier (null = siège)
+  siteId     String?
 
-  reference       String
-  label           String
-  amount          BigInt
-  category        String
-  initiatorId     String
-  status          PoStatus  @default(PENDING_DAF)
-  dafApprovedAt   DateTime?
-  dafApprovedBy   String?
-  dgDecisionAt    DateTime?
-  dgDecisionBy    String?
-  dgDecisionNote  String?
-  rejectionReason String?
+  reference        String
+  label            String
+  amount           BigInt
+  category         String
+  initiatorId      String
+  status           PoStatus  @default(PENDING_DAF)
+  // DTrav fn 1.6 — validation N1 par le DTrav
+  dtravValidatedAt DateTime?
+  dtravValidatedBy String?
+  dafApprovedAt    DateTime?
+  dafApprovedBy    String?
+  dgDecisionAt     DateTime?
+  dgDecisionBy     String?
+  dgDecisionNote   String?
+  rejectionReason  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, reference])
   @@index([tenantId, status])
+  @@index([siteId])
   @@map("purchase_orders")
 }
 
