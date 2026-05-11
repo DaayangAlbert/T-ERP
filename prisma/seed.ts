@@ -3722,6 +3722,93 @@ async function main() {
       });
     }
     console.log(`✓ DT : ${subs.length} sous-traitants seedés + 6 évaluations`);
+
+    // ===== DT BLOC 1.8 — QHSE (incidents, audits, NC, certifications) =====
+    const sitesForHse = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 12,
+    });
+    const incidentTypes = [
+      "NEAR_MISS", "NEAR_MISS", "NEAR_MISS",
+      "MINOR_INJURY", "MINOR_INJURY", "MINOR_INJURY",
+      "MINOR_INJURY", "MINOR_INJURY",
+      "MATERIAL_DAMAGE", "MATERIAL_DAMAGE",
+      "ENVIRONMENT_INCIDENT", "MAJOR_INJURY",
+    ];
+    const severities = ["LOW", "LOW", "MEDIUM", "MEDIUM", "HIGH", "LOW", "LOW", "MEDIUM", "LOW", "MEDIUM", "MEDIUM", "HIGH"];
+    for (let i = 0; i < 12; i++) {
+      const s = sitesForHse[i % sitesForHse.length];
+      await prisma.hseIncident.create({
+        data: {
+          siteId: s.id,
+          occurredAt: new Date(Date.now() - Math.floor(Math.random() * 120) * 86400_000),
+          type: incidentTypes[i] as any,
+          severity: severities[i] as any,
+          victimsCount: incidentTypes[i].includes("INJURY") ? 1 : 0,
+          workdaysLost: incidentTypes[i].includes("INJURY") ? Math.floor(Math.random() * 5) + 1 : 0,
+          description: `Incident ${incidentTypes[i].toLowerCase()} sur ${s.name}.`,
+          reportedById: dt!.id,
+          status: i < 8 ? "CLOSED" : ("ACTIONS_IN_PROGRESS" as any),
+          declaredCnps: incidentTypes[i].includes("INJURY"),
+        },
+      });
+    }
+    // 8 audits
+    for (let i = 0; i < 8; i++) {
+      const s = sitesForHse[i % sitesForHse.length];
+      await prisma.siteAudit.create({
+        data: {
+          siteId: s.id,
+          auditType: i < 5 ? "INTERNAL_QHSE" : i < 7 ? ("MOA_INSPECTION" as any) : ("EXTERNAL_ISO" as any),
+          scheduledAt: new Date(Date.now() - (10 - i) * 7 * 86400_000),
+          completedAt: i < 6 ? new Date(Date.now() - (10 - i - 1) * 7 * 86400_000) : null,
+          auditorId: dt!.id,
+          score: i < 6 ? 70 + Math.floor(Math.random() * 25) : null,
+          findings: i < 6 ? [
+            { severity: "MINOR", description: "Affichage EPI à compléter", recommendation: "Mettre à jour panneau d'affichage" },
+            { severity: "MAJOR", description: "Sécurisation balisage zone livraison", recommendation: "Ajouter chicane Heras" },
+          ] : [],
+        },
+      });
+    }
+    // 14 NC
+    const ncCategories = ["QUALITY", "SAFETY", "ENVIRONMENT", "REGULATORY", "DOCUMENTATION"];
+    for (let i = 0; i < 14; i++) {
+      await prisma.nonConformity.create({
+        data: {
+          siteId: sitesForHse[i % sitesForHse.length].id,
+          category: ncCategories[i % ncCategories.length] as any,
+          criticality: i < 3 ? "CRITICAL" : i < 7 ? ("MAJOR" as any) : ("MINOR" as any),
+          description: `NC #${i + 1} — détectée lors audit interne.`,
+          correctiveAction: i < 10 ? "Plan d'action en cours" : null,
+          ownerId: dt!.id,
+          dueDate: new Date(Date.now() + Math.floor(Math.random() * 60) * 86400_000),
+          status: i < 4 ? "CLOSED" : i < 10 ? ("IN_PROGRESS" as any) : ("OPEN" as any),
+          closedAt: i < 4 ? new Date(Date.now() - Math.floor(Math.random() * 30) * 86400_000) : null,
+        },
+      });
+    }
+    // 3 certifications ISO
+    const certs = [
+      { standard: "ISO 9001", scope: "Qualité — Travaux BTP", issuedBy: "AFNOR Certification", validMonths: 36, openNc: 2 },
+      { standard: "ISO 14001", scope: "Environnement", issuedBy: "Bureau Veritas", validMonths: 36, openNc: 1 },
+      { standard: "ISO 45001", scope: "Santé/Sécurité", issuedBy: "AFNOR Certification", validMonths: 36, openNc: 4 },
+    ];
+    for (const c of certs) {
+      await prisma.certification.create({
+        data: {
+          tenantId: tenant.id,
+          standard: c.standard,
+          scope: c.scope,
+          issuedBy: c.issuedBy,
+          issuedAt: new Date(Date.now() - 12 * 30 * 86400_000),
+          validUntil: new Date(Date.now() + (c.validMonths - 12) * 30 * 86400_000),
+          surveillanceAuditDate: new Date(Date.now() + 6 * 30 * 86400_000),
+          openNcCount: c.openNc,
+        },
+      });
+    }
+    console.log(`✓ DT QHSE : 12 incidents + 8 audits + 14 NC + 3 ISO`);
   }
 
   console.log("\n✅ Seed terminé.\n");
