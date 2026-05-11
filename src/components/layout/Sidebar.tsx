@@ -77,6 +77,8 @@ const DT_SECTION: NavSection = {
     { label: "Plan de charge équipes", href: "/dt/charge", icon: Network },
     { label: "Sous-traitance", href: "/dt/sous-traitance", icon: HardHat, badge: { value: "42" } },
     { label: "QHSE", href: "/dt/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
+    { label: "Rapports techniques", href: "/dt/rapports", icon: BarChart3 },
+    { label: "Mon espace DT", href: "/dt/profil", icon: User },
   ],
 };
 
@@ -124,6 +126,19 @@ const RH_SECTION: NavSection = {
     { label: "Disciplinaire", href: "/rh/disciplinaire", icon: Shield, badge: { value: "3" } },
     { label: "Validations N1 RH", href: "/rh/validations", icon: CheckCircle2 },
     { label: "Rapports RH", href: "/rh/rapports", icon: BarChart3 },
+  ],
+};
+
+// Section exclusive au Magasinier (Lucas TIENTCHEU). PWA mobile-first.
+const MAG_SECTION: NavSection = {
+  title: "Espace Magasinier",
+  items: [
+    { label: "Tableau de bord", href: "/mag", icon: LayoutDashboard },
+    { label: "Entrées stock", href: "/mag/entrees", icon: Package },
+    { label: "Sorties stock", href: "/mag/sorties", icon: ShoppingCart },
+    { label: "Catalogue", href: "/mag/catalogue", icon: ClipboardList },
+    { label: "Inventaires", href: "/mag/inventaires", icon: ClipboardCheck },
+    { label: "Mouvements", href: "/mag/mouvements", icon: ScrollText },
   ],
 };
 
@@ -231,16 +246,18 @@ export function Sidebar() {
       : user?.role === "DAF"
         ? [DAF_SECTION, CPT_SECTION, ...cleanedNav]
         : user?.role === "DG"
-          ? [DG_SECTION, DAF_SECTION, CPT_SECTION, DTRAV_SECTION, CC_SECTION, ...cleanedNav]
+          ? [DG_SECTION, DAF_SECTION, CPT_SECTION, DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
           : user?.role === "TECH_DIRECTOR"
-            ? [DT_SECTION, DTRAV_SECTION, CC_SECTION, ...cleanedNav]
+            ? [DT_SECTION, DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
             : user?.role === "ACCOUNTANT"
               ? [CPT_SECTION, ...cleanedNav]
               : user?.role === "WORKS_DIRECTOR"
-                ? [DTRAV_SECTION, CC_SECTION, ...cleanedNav]
+                ? [DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
                 : user?.role === "SITE_MANAGER"
-                  ? [CC_SECTION, ...cleanedNav]
-                  : NAV;
+                  ? [CC_SECTION, MAG_SECTION, ...cleanedNav]
+                  : user?.role === "WAREHOUSE"
+                    ? [MAG_SECTION, ...cleanedNav]
+                    : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
