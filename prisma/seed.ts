@@ -3417,6 +3417,71 @@ async function main() {
       }
     }
     console.log(`✓ ${tenders.length} appels d'offres seedés (10 items BPU sur AO-2026-018)`);
+
+    // ===== DT BLOC 1.4 — Validations N2 technique =====
+    const initiatorWd = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
+    const dg = createdUsers.find((u) => u.role === Role.DG);
+    if (initiatorWd && dg) {
+      const dtPending = [
+        { type: ValidationType.AMENDMENT, ref: "AVE-202605-002", title: "Avenant Pont Mfoundi — surcoût fondations", amount: 45_800_000n, prio: "URGENT", ageH: 24 },
+        { type: ValidationType.SUBCONTRACTING, ref: "STC-202605-014", title: "Sous-traitance étanchéité — Bastos R+8 (STI ÉTANCHÉITÉ)", amount: 38_500_000n, prio: "HIGH", ageH: 36 },
+        { type: ValidationType.EQUIPMENT, ref: "EQP-202605-007", title: "Acquisition centrale béton 30 m³/h Bonabéri", amount: 62_400_000n, prio: "HIGH", ageH: 12 },
+        { type: ValidationType.SPECIAL_METHOD, ref: "MTH-202605-003", title: "Méthode coffrage glissant — Pont Wouri annexe", amount: 28_700_000n, prio: "NORMAL", ageH: 8 },
+        { type: ValidationType.TECHNICAL_HANDOVER, ref: "MES-202605-001", title: "Mise en service AEP Mbalmayo — réception phase 2", amount: 18_500_000n, prio: "NORMAL", ageH: 4 },
+      ];
+      for (const v of dtPending) {
+        const wf = {
+          steps: [
+            { key: "init", label: "Initiateur", role: "WORKS_DIRECTOR", status: "approved", decidedBy: initiatorWd.id, decidedAt: new Date(Date.now() - v.ageH * 3600_000).toISOString() },
+            { key: "dt", label: "N2 technique (DT)", role: "TECH_DIRECTOR", status: "pending" },
+            { key: "dg", label: "N3 final (DG)", role: "DG", status: "waiting" },
+          ],
+        };
+        await prisma.validation.create({
+          data: {
+            tenantId: tenant.id,
+            type: v.type,
+            reference: v.ref,
+            title: v.title,
+            amount: v.amount,
+            priority: v.prio as any,
+            initiatorId: initiatorWd.id,
+            currentStep: "DT",
+            currentApproverId: dt!.id,
+            workflow: wf as any,
+            status: ValidationStatus.PENDING,
+            dtValidationRequired: true,
+            createdAt: new Date(Date.now() - v.ageH * 3600_000),
+          },
+        });
+      }
+      // 38 validations DT clôturées sur le mois (KPI "38 validés ce mois")
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      for (let i = 0; i < 38; i++) {
+        const d = new Date(monthStart.getTime() + i * 86400_000);
+        if (d > new Date()) break;
+        await prisma.validation.create({
+          data: {
+            tenantId: tenant.id,
+            type: ValidationType.AMENDMENT,
+            reference: `AVE-202605-H${100 + i}`,
+            title: `Validation historique #${i + 1}`,
+            amount: BigInt((5 + (i % 30)) * 1_000_000),
+            priority: "NORMAL" as any,
+            initiatorId: initiatorWd.id,
+            workflow: { steps: [] } as any,
+            status: ValidationStatus.APPROVED,
+            dtValidationRequired: true,
+            dtValidatedAt: d,
+            dtValidatedBy: dt!.id,
+            decidedById: dg.id,
+            decisionAt: new Date(d.getTime() + 3 * 3600_000),
+            createdAt: new Date(d.getTime() - 6 * 3600_000),
+          },
+        });
+      }
+      console.log(`✓ DT : 5 validations N2 en attente + 38 historiques approuvées`);
+    }
   }
 
   console.log("\n✅ Seed terminé.\n");
