@@ -12,6 +12,7 @@
  */
 import {
   PrismaClient,
+  Prisma,
   Role,
   UserStatus,
   AppStage,
@@ -110,22 +111,136 @@ async function main() {
       lastName: "NGONGO",
       phone: "+237 690 12 34 56",
       position: "Conducteur de Travaux",
+      dateOfBirth: new Date("1988-04-12"),
+      address: "Yaoundé · Mvog-Mbi",
       role: Role.CANDIDATE,
       status: UserStatus.ACTIVE,
       tenantId: null,
       emailVerified: true,
       preferredLanguage: "fr-CM",
       notificationChannel: "EMAIL",
+      // Recherche
+      desiredJob: "Conducteur de Travaux Senior",
+      desiredContractType: ContractType.CDI,
+      desiredLocation: "Yaoundé",
+      desiredSalaryMin: 850_000n,
+      desiredSalaryMax: 1_200_000n,
+      availability: "Immédiate",
+      mobilityDailyTravel: true,
+      mobilityMissions: true,
+      mobilityExpatriation: false,
+      candidateSkills: [
+        "Suivi de chantier",
+        "AutoCAD",
+        "MS Project",
+        "Gestion équipes",
+        "SYSCOHADA chantier",
+      ],
+      candidateLanguages: [
+        { name: "Français", level: "natif" },
+        { name: "Anglais", level: "intermediaire" },
+      ] as Prisma.InputJsonValue,
+      gdprConsent: true,
+      gdprConsentAt: new Date(),
     },
     update: {
       passwordHash,
       role: Role.CANDIDATE,
       status: UserStatus.ACTIVE,
       tenantId: null,
+      dateOfBirth: new Date("1988-04-12"),
+      address: "Yaoundé · Mvog-Mbi",
+      desiredJob: "Conducteur de Travaux Senior",
+      desiredContractType: ContractType.CDI,
+      desiredLocation: "Yaoundé",
+      desiredSalaryMin: 850_000n,
+      desiredSalaryMax: 1_200_000n,
+      availability: "Immédiate",
+      mobilityDailyTravel: true,
+      mobilityMissions: true,
+      mobilityExpatriation: false,
+      candidateSkills: [
+        "Suivi de chantier",
+        "AutoCAD",
+        "MS Project",
+        "Gestion équipes",
+        "SYSCOHADA chantier",
+      ],
+      candidateLanguages: [
+        { name: "Français", level: "natif" },
+        { name: "Anglais", level: "intermediaire" },
+      ] as Prisma.InputJsonValue,
+      gdprConsent: true,
+      gdprConsentAt: new Date(),
     },
     select: { id: true, email: true },
   });
   console.log(`✓ Candidat : ${jean.email} / ${PWD}`);
+
+  // Expériences + Formations Jean
+  await prisma.candidateExperience.deleteMany({ where: { userId: jean.id } });
+  await prisma.candidateFormation.deleteMany({ where: { userId: jean.id } });
+
+  await prisma.candidateExperience.createMany({
+    data: [
+      {
+        userId: jean.id,
+        position: "Conducteur de Travaux",
+        company: "SOGEA SATOM Cameroun",
+        location: "Douala",
+        startDate: new Date("2020-09-01"),
+        endDate: null,
+        isCurrent: true,
+        description:
+          "Pilotage chantier Pont sur le Wouri (250 MFCFA), équipe de 35 personnes, sous-traitants.",
+        order: 0,
+      },
+      {
+        userId: jean.id,
+        position: "Chef de Chantier",
+        company: "Razel-Bec Cameroun",
+        location: "Yaoundé",
+        startDate: new Date("2016-03-01"),
+        endDate: new Date("2020-08-31"),
+        isCurrent: false,
+        description:
+          "Encadrement quotidien chantier logements collectifs Bastos (180 logements).",
+        order: 1,
+      },
+      {
+        userId: jean.id,
+        position: "Ingénieur travaux junior",
+        company: "Arab Contractors",
+        location: "Douala",
+        startDate: new Date("2013-09-01"),
+        endDate: new Date("2016-02-28"),
+        isCurrent: false,
+        description: "Études techniques, métré, suivi avancement.",
+        order: 2,
+      },
+    ],
+  });
+  await prisma.candidateFormation.createMany({
+    data: [
+      {
+        userId: jean.id,
+        diploma: "Master 2 Génie Civil",
+        institution: "ENSP Yaoundé",
+        year: 2013,
+        description: "Spécialité Bâtiment et travaux publics.",
+        order: 0,
+      },
+      {
+        userId: jean.id,
+        diploma: "Licence Génie Civil",
+        institution: "Université de Yaoundé I",
+        year: 2010,
+        description: null,
+        order: 1,
+      },
+    ],
+  });
+  console.log("✓ Expériences (3) + Formations (2) de Jean");
 
   // ---- 3. Applications ----
   // Nettoyer applications précédentes de Jean pour idempotence

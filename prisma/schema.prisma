@@ -168,6 +168,22 @@ model User {
   // GED — accès transverse documentaire (ARCHIVIST uniquement)
   canReadAllDocuments Boolean @default(false)
 
+  // Candidat — Profil & recherche (CAND fn 1.2)
+  cvUrl               String?
+  desiredJob          String? // poste recherché (ex. "Conducteur de Travaux")
+  desiredContractType ContractType?
+  desiredLocation     String?
+  desiredSalaryMin    BigInt? // FCFA
+  desiredSalaryMax    BigInt? // FCFA
+  availability        String? // ex. "Immédiate", "Sous 1 mois"
+  mobilityDailyTravel Boolean       @default(false)
+  mobilityMissions    Boolean       @default(false)
+  mobilityExpatriation Boolean      @default(false)
+  candidateSkills     String[]      @default([]) // chips
+  candidateLanguages  Json? // [{ name: "Français", level: "natif" }, ...]
+  gdprConsent         Boolean       @default(false)
+  gdprConsentAt       DateTime?
+
   // Rôle principal (MVP — rôles avancés en phase 2)
   role Role @default(EMPLOYEE)
 
@@ -239,6 +255,8 @@ model User {
   technicalLogs                 TechnicalLog[]
   // Candidat — matching offres recommandées
   candidateMatches              JobMatch[]                    @relation("CandidateMatches")
+  candidateExperiences          CandidateExperience[]
+  candidateFormations           CandidateFormation[]
   // DT — Espace Direction Technique (Bloc 0+)
   dtSettings                    DtSettings?
   managedTenders                Tender[]                      @relation("TenderStudyOwner")
@@ -5322,4 +5340,44 @@ model JobMatch {
   @@unique([candidateId, jobOfferId])
   @@index([candidateId, score])
   @@map("job_matches")
+}
+
+// ========================================
+// PORTAIL CANDIDAT — Profil détaillé (CAND fn 1.2)
+// ========================================
+model CandidateExperience {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position    String
+  company     String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  isCurrent   Boolean   @default(false)
+  description String?   @db.Text
+  order       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, order])
+  @@map("candidate_experiences")
+}
+
+model CandidateFormation {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diploma     String
+  institution String
+  year        Int
+  description String? @db.Text
+  order       Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, order])
+  @@map("candidate_formations")
 }
