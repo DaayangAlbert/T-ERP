@@ -89,23 +89,16 @@ export async function GET() {
     }
   }
 
-  // 3. Offres recommandées — placeholder fn 1.5
-  // Pour l'instant : top 2 JobOffer PUBLISHED non encore postulées par le candidat,
-  // avec un score pseudo-aléatoire stable basé sur l'id (75-95).
-  const appliedOfferIds = new Set(activeApps.map((a) => a.jobOffer.id));
-  // tenant inféré depuis la première candidature ; sinon premier tenant disponible
-  const inferredTenantId =
-    activeApps[0]?.jobOffer.tenantId ??
-    (await prisma.tenant.findFirst({ select: { id: true } }))?.id ??
-    null;
-
-  const publishedOffers = inferredTenantId
-    ? await prisma.jobOffer.findMany({
-        where: {
-          tenantId: inferredTenantId,
-          status: "PUBLISHED",
-          id: { notIn: [...appliedOfferIds] },
-        },
+  // 3. Offres recommandées — JobMatch réels (fn 1.5)
+  const jobMatches = await prisma.jobMatch.findMany({
+    where: {
+      candidateId: session.sub,
+      score: { gte: 75 },
+      dismissedAt: null,
+      jobOffer: { status: "PUBLISHED" },
+    },
+    include: {
+      jobOffer: {
         select: {
           id: true,
           title: true,
@@ -113,18 +106,21 @@ export async function GET() {
           contractType: true,
           salaryMin: true,
           salaryMax: true,
-          publishedAt: true,
         },
-        orderBy: { publishedAt: "desc" },
-      })
-    : [];
-
-  const scoredOffers = publishedOffers.map((o) => ({
-    ...o,
-    score: pseudoScoreFromId(o.id),
+      },
+    },
+    orderBy: { score: "desc" },
+  });
+  const topMatches = jobMatches.slice(0, 2).map((m) => ({
+    id: m.jobOfferId,
+    title: m.jobOffer.title,
+    region: m.jobOffer.region,
+    contractType: m.jobOffer.contractType,
+    salaryMin: m.jobOffer.salaryMin,
+    salaryMax: m.jobOffer.salaryMax,
+    score: m.score,
   }));
-  scoredOffers.sort((a, b) => b.score - a.score);
-  const topMatches = scoredOffers.slice(0, 2);
+  const totalAboveThreshold = jobMatches.length;
 
   // ---- Sérialisation pour l'UI ----
   return NextResponse.json({
@@ -141,7 +137,7 @@ export async function GET() {
       nextInterviewLabel: nextInterviewRow
         ? labelForNextInterview(nextInterviewRow.scheduledAt)
         : null,
-      recommendations: topMatches.length,
+      recommendations: totalAboveThreshold,
       profileCompletion: completionPct,
       profileMissingHint: completionHint,
     },
@@ -178,7 +174,7 @@ export async function GET() {
       salaryMax: m.salaryMax ? Number(m.salaryMax) : null,
       score: m.score,
     })),
-    totalRecommendations: scoredOffers.length,
+    totalRecommendations: totalAboveThreshold,
   });
 }
 
@@ -214,12 +210,3 @@ function computeCompletionHint(user: {
   return `Manque : ${missing.slice(0, 2).join(", ")}${missing.length > 2 ? "…" : ""}`;
 }
 
-function pseudoScoreFromId(id: string): number {
-  // Pseudo-score déterministe 75..95 basé sur l'id (sera remplacé par vrai matching fn 1.5)
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  }
-  const v = Math.abs(hash) % 21;
-  return 75 + v;
-}

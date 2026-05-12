@@ -319,6 +319,81 @@ async function main() {
     `✓ Entretien programmé : ${interview.scheduledAt.toISOString()} (60 min · VIDEO)`,
   );
 
+  // ---- 5. JobMatches initiaux (fn 1.5) ----
+  const { computeMatch } = await import("../src/lib/cand-matching");
+  const fullJean = await prisma.user.findUnique({
+    where: { id: jean.id },
+    select: {
+      candidateSkills: true,
+      desiredLocation: true,
+      desiredContractType: true,
+      desiredSalaryMin: true,
+      desiredSalaryMax: true,
+    },
+  });
+  const jeanExperiences = await prisma.candidateExperience.findMany({
+    where: { userId: jean.id },
+    select: { startDate: true, endDate: true, isCurrent: true },
+  });
+  const experienceYears = Math.round(
+    jeanExperiences.reduce((acc, e) => {
+      const end = e.isCurrent ? new Date() : (e.endDate ?? e.startDate);
+      return acc + (end.getTime() - e.startDate.getTime()) / (365.25 * 24 * 3600 * 1000);
+    }, 0),
+  );
+  const allOffers = await prisma.jobOffer.findMany({
+    where: { status: JobStatus.PUBLISHED },
+    select: {
+      id: true,
+      title: true,
+      region: true,
+      contractType: true,
+      category: true,
+      description: true,
+      requirements: true,
+      salaryMin: true,
+      salaryMax: true,
+    },
+  });
+  await prisma.jobMatch.deleteMany({ where: { candidateId: jean.id } });
+  const appliedIds = new Set([appReceived.id, appShortlist.id, appInterview.id]);
+  const unappliedOffers = allOffers.filter((o) => {
+    // Exclure les offres déjà postulées via applications
+    return ![offers[0].id, offers[1].id, offers[2].id].includes(o.id);
+  });
+  // Inclure aussi les offres où Jean n'a pas postulé
+  for (const offer of allOffers) {
+    if ([offers[0].id, offers[1].id, offers[2].id].includes(offer.id)) continue;
+    const result = computeMatch(
+      {
+        skills: fullJean!.candidateSkills,
+        experienceYears,
+        desiredLocation: fullJean!.desiredLocation,
+        desiredContractType: fullJean!.desiredContractType,
+        desiredSalaryMin: fullJean!.desiredSalaryMin,
+        desiredSalaryMax: fullJean!.desiredSalaryMax,
+      },
+      offer,
+    );
+    await prisma.jobMatch.create({
+      data: {
+        candidateId: jean.id,
+        jobOfferId: offer.id,
+        score: result.score,
+        matchedSkills: result.matchedSkills,
+        missingRequirements: result.missingRequirements,
+      },
+    });
+  }
+  const matchesAbove75 = await prisma.jobMatch.count({
+    where: { candidateId: jean.id, score: { gte: 75 } },
+  });
+  console.log(
+    `✓ JobMatches calculés (${experienceYears} ans d'exp, ${matchesAbove75} match≥75 sur ${allOffers.length - 3} offres non postulées)`,
+  );
+  void appliedIds;
+  void unappliedOffers;
+
   console.log("\n=== Compte de démo ===");
   console.log(`  Email    : jean.ngongo@email.cm`);
   console.log(`  Password : ${PWD}`);
