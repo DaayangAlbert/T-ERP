@@ -2,16 +2,14 @@
 
 import { Clock, AlertCircle } from "lucide-react";
 import type { LeaveRequestItem } from "@/hooks/useEmpLeaves";
+import type { LeaveType } from "@prisma/client";
+import { LEAVE_TYPE_LABEL } from "@/lib/emp-labels";
+import { formatDateLong } from "@/lib/emp-format";
 
 interface Props {
   request: LeaveRequestItem;
   onCancel: (id: string) => void;
   isCancelling: boolean;
-}
-
-function formatDateLong(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long" });
 }
 
 function daysAgo(iso: string): string {
@@ -20,18 +18,6 @@ function daysAgo(iso: string): string {
   if (diff === 1) return "hier";
   return `il y a ${diff} jours`;
 }
-
-const TYPE_LABEL: Record<string, string> = {
-  PAID_LEAVE: "Congés payés",
-  RTT: "RTT",
-  COMPENSATORY: "Récupération",
-  UNPAID: "Sans solde",
-  SICK: "Maladie",
-  MATERNITY: "Maternité",
-  PATERNITY: "Paternité",
-  FAMILY: "Événement familial",
-  OTHER: "Autre",
-};
 
 /**
  * Card "Demande en cours" — border-left ambré, statut "En attente", dates,
@@ -47,7 +33,7 @@ export function PendingLeaveRequestCard({ request, onCancel, isCancelling }: Pro
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-amber-900">
-              {TYPE_LABEL[request.type] ?? request.type} · {request.daysCount} j
+              {LEAVE_TYPE_LABEL[request.type as LeaveType] ?? request.type} · {request.daysCount} j
             </p>
             <p className="mt-1 text-sm text-amber-900">
               du {formatDateLong(request.startDate)} au {formatDateLong(request.endDate)}

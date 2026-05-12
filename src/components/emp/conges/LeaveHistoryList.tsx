@@ -1,25 +1,11 @@
 import { CheckCircle2, XCircle, CalendarX2, HeartPulse, CalendarDays } from "lucide-react";
 import type { LeaveRequestItem } from "@/hooks/useEmpLeaves";
+import type { LeaveType } from "@prisma/client";
+import { LEAVE_TYPE_LABEL } from "@/lib/emp-labels";
+import { formatDateShort } from "@/lib/emp-format";
 
 interface Props {
   items: LeaveRequestItem[];
-}
-
-const TYPE_LABEL: Record<string, string> = {
-  PAID_LEAVE: "Congés payés",
-  RTT: "RTT",
-  COMPENSATORY: "Récupération",
-  UNPAID: "Sans solde",
-  SICK: "Maladie",
-  MATERNITY: "Maternité",
-  PATERNITY: "Paternité",
-  FAMILY: "Événement familial",
-  OTHER: "Autre",
-};
-
-function formatDateShort(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
 
 function statusChip(status: string) {
@@ -95,7 +81,7 @@ export function LeaveHistoryList({ items }: Props) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-ink">
-                    {TYPE_LABEL[r.type] ?? r.type} · {r.daysCount} j
+                    {LEAVE_TYPE_LABEL[r.type as LeaveType] ?? r.type} · {r.daysCount} j
                   </p>
                   <p className="text-[11px] text-ink-3">
                     {formatDateShort(r.startDate)} → {formatDateShort(r.endDate)}

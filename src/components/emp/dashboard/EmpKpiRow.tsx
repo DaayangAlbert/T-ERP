@@ -1,4 +1,5 @@
 import { Banknote, CalendarCheck, Clock, Award } from "lucide-react";
+import { formatKShort } from "@/lib/emp-format";
 
 interface Props {
   kpis: {
@@ -7,11 +8,6 @@ interface Props {
     overtimeHoursMonth: number;
     seniorityYears: number;
   };
-}
-
-function formatKShort(amount: number): string {
-  if (amount >= 1000) return `${(amount / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} K`;
-  return amount.toLocaleString("fr-FR");
 }
 
 /**

@@ -1,24 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { Role, LeaveType } from "@prisma/client";
+import { Role, type LeaveType } from "@prisma/client";
 import { getSyntheticPersonnel } from "@/lib/rh-personnel";
+import { LEAVE_TYPE_COLOR as TYPE_COLOR } from "@/lib/emp-labels";
 
 export const dynamic = "force-dynamic";
 
 const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
-
-const TYPE_COLOR: Record<LeaveType, string> = {
-  PAID_LEAVE: "#22C55E",
-  RTT: "#A855F7",
-  COMPENSATORY: "#8B5CF6",
-  UNPAID: "#94A3B8",
-  SICK: "#EF4444",
-  MATERNITY: "#EC4899",
-  PATERNITY: "#3B82F6",
-  FAMILY: "#F59E0B",
-  OTHER: "#64748B",
-};
 
 export async function GET(req: Request) {
   const session = getCurrentSession();

@@ -1,3 +1,5 @@
+import { formatFcfa } from "@/lib/emp-format";
+
 interface Props {
   detail: {
     workedDays: number;
@@ -12,10 +14,6 @@ interface Props {
     transportAllowance: number;
     grossAmount: number;
   };
-}
-
-function formatFcfa(n: number): string {
-  return `${n.toLocaleString("fr-FR")} FCFA`;
 }
 
 /**

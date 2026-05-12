@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { formatFcfa, decomposePeriod } from "@/lib/emp-format";
 
 interface Item {
   id: string;
@@ -13,40 +14,6 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
-const MONTH_LABEL_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-const MONTH_LABEL_FULL = [
-  "Janvier",
-  "Février",
-  "Mars",
-  "Avril",
-  "Mai",
-  "Juin",
-  "Juillet",
-  "Août",
-  "Septembre",
-  "Octobre",
-  "Novembre",
-  "Décembre",
-];
-
-function monthAndYear(label: string | null, period: string): { short: string; full: string; year: string } {
-  if (label) {
-    const [y, m] = label.split("-");
-    const idx = Number(m) - 1;
-    return { short: MONTH_LABEL_SHORT[idx] ?? m, full: MONTH_LABEL_FULL[idx] ?? m, year: y };
-  }
-  const d = new Date(period);
-  return {
-    short: MONTH_LABEL_SHORT[d.getMonth()],
-    full: MONTH_LABEL_FULL[d.getMonth()],
-    year: String(d.getFullYear()),
-  };
-}
-
-function formatFcfa(n: number): string {
-  return `${n.toLocaleString("fr-FR")} FCFA`;
-}
-
 /**
  * Liste des bulletins de l'année. Items 68 px de haut. Icône mois 44×44
  * en cercle violet. Le bulletin sélectionné est surligné en violet doux.
@@ -55,7 +22,7 @@ export function PayslipsHistoryList({ items, selectedId, onSelect }: Props) {
   if (items.length === 0) {
     return null;
   }
-  const year = monthAndYear(items[0].periodLabel, items[0].period).year;
+  const year = decomposePeriod(items[0].periodLabel, items[0].period).year;
   return (
     <section className="mt-6">
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-3">
@@ -64,7 +31,7 @@ export function PayslipsHistoryList({ items, selectedId, onSelect }: Props) {
       <div className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
         <ul className="divide-y divide-line">
           {items.map((p) => {
-            const { short, full, year: yr } = monthAndYear(p.periodLabel, p.period);
+            const { short, long: full, year: yr } = decomposePeriod(p.periodLabel, p.period);
             const selected = p.id === selectedId;
             return (
               <li key={p.id}>

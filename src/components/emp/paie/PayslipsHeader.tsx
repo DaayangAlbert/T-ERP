@@ -1,11 +1,9 @@
+import { formatFcfa } from "@/lib/emp-format";
+
 interface Props {
   year: number;
   total: number;
   cumulNet: number;
-}
-
-function formatFcfa(n: number): string {
-  return `${n.toLocaleString("fr-FR")} FCFA`;
 }
 
 export function PayslipsHeader({ year, total, cumulNet }: Props) {

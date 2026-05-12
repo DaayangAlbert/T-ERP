@@ -1,24 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { Role, LeaveStatus, LeaveType } from "@prisma/client";
+import { Role, LeaveStatus, type LeaveType } from "@prisma/client";
 import { getSyntheticPersonnel } from "@/lib/rh-personnel";
+import { LEAVE_TYPE_LABEL as TYPE_LABEL } from "@/lib/emp-labels";
 
 export const dynamic = "force-dynamic";
 
 const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
-
-const TYPE_LABEL: Record<LeaveType, string> = {
-  PAID_LEAVE: "Congé payé",
-  RTT: "RTT",
-  COMPENSATORY: "Récupération",
-  UNPAID: "Sans solde",
-  SICK: "Maladie",
-  MATERNITY: "Maternité",
-  PATERNITY: "Paternité",
-  FAMILY: "Familial",
-  OTHER: "Autre",
-};
 
 async function ensureSeedRequests(tenantId: string) {
   const existing = await prisma.leaveRequest.count({ where: { tenantId, status: "PENDING" } });

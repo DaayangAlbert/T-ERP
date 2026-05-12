@@ -1,4 +1,5 @@
 import { CheckCircle2, Star } from "lucide-react";
+import { formatFcfa, formatPeriodLabel, formatDateMedium } from "@/lib/emp-format";
 
 interface Props {
   payslip: {
@@ -15,39 +16,6 @@ interface Props {
   };
 }
 
-const MONTHS_FR = [
-  "janvier",
-  "février",
-  "mars",
-  "avril",
-  "mai",
-  "juin",
-  "juillet",
-  "août",
-  "septembre",
-  "octobre",
-  "novembre",
-  "décembre",
-];
-
-function formatFcfa(n: number): string {
-  return `${n.toLocaleString("fr-FR")} FCFA`;
-}
-
-function formatPeriod(label: string | null, period: string): string {
-  if (label) {
-    const [y, m] = label.split("-");
-    return `${MONTHS_FR[Number(m) - 1] ?? m} ${y}`;
-  }
-  const d = new Date(period);
-  return `${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function formatShortDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
-}
-
 /**
  * Card focus du dernier bulletin : border-left violet épais, gradient
  * subtil, statut "Payé" en chip vert. 3 chiffres clés en grid (brut /
@@ -62,16 +30,16 @@ export function LatestPayslipCard({ payslip }: Props) {
     <section className="mt-4">
       <h2 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
         <Star className="h-3.5 w-3.5 text-amber-500" /> Dernier bulletin ·{" "}
-        {formatPeriod(payslip.periodLabel, payslip.period)}
+        {formatPeriodLabel(payslip.periodLabel, payslip.period)}
       </h2>
       <article className="overflow-hidden rounded-2xl border-l-4 border-purple-600 bg-gradient-to-br from-purple-50 via-white to-white shadow-card">
         <div className="flex items-start justify-between p-4">
           <div>
             <p className="text-sm font-semibold text-ink">
-              {formatPeriod(payslip.periodLabel, payslip.period)}
+              {formatPeriodLabel(payslip.periodLabel, payslip.period)}
             </p>
             <p className="mt-0.5 text-[11px] text-ink-3">
-              Versé le {formatShortDate(payslip.paymentDate)}
+              Versé le {formatDateMedium(payslip.paymentDate)}
               {payslip.paymentReference ? ` · ${payslip.paymentReference}` : ""}
             </p>
             {payslip.paymentBankAccount && (

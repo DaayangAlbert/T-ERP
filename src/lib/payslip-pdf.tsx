@@ -9,6 +9,7 @@
  * mobile, envoi WhatsApp).
  */
 import { Document, Page, View, Text, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import { formatFcfa, formatPeriodLabel } from "@/lib/emp-format";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 9, fontFamily: "Helvetica" },
@@ -71,33 +72,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const MONTHS_FR = [
-  "Janvier",
-  "Février",
-  "Mars",
-  "Avril",
-  "Mai",
-  "Juin",
-  "Juillet",
-  "Août",
-  "Septembre",
-  "Octobre",
-  "Novembre",
-  "Décembre",
-];
-
-function formatFcfa(n: number): string {
-  return `${n.toLocaleString("fr-FR")} FCFA`;
-}
-
-function formatPeriod(label: string | null, period: Date): string {
-  if (label) {
-    const [y, m] = label.split("-");
-    return `${MONTHS_FR[Number(m) - 1]} ${y}`;
-  }
-  return `${MONTHS_FR[period.getMonth()]} ${period.getFullYear()}`;
-}
-
 function formatDate(d: Date | null): string {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("fr-FR", {
@@ -158,7 +132,7 @@ export function PayslipDocument({ data }: { data: PayslipPdfData }) {
           <Text style={styles.brandSubtitle}>
             BTP Cameroun · NIU M021800012345 · CNPS Employeur CNPS-EMP-218
           </Text>
-          <Text style={styles.title}>Bulletin de paie · {formatPeriod(data.periodLabel, data.period)}</Text>
+          <Text style={styles.title}>Bulletin de paie · {formatPeriodLabel(data.periodLabel, data.period)}</Text>
         </View>
 
         <View style={styles.block}>

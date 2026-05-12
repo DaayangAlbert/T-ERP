@@ -160,9 +160,9 @@ export default function EmpPointagePage() {
                     type="button"
                     onClick={() => setContestDay(d)}
                     disabled={d.contested}
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-line bg-white px-2 text-[11px] font-semibold text-ink-3 hover:bg-surface-alt disabled:opacity-40"
+                    className="inline-flex min-h-[48px] items-center gap-1 rounded-md border border-line bg-white px-3 text-[12px] font-semibold text-ink-3 hover:bg-surface-alt disabled:opacity-40"
                   >
-                    <AlertTriangle className="h-3 w-3" /> Signaler
+                    <AlertTriangle className="h-3.5 w-3.5" /> Signaler
                   </button>
                 </li>
               );
@@ -264,7 +264,7 @@ function ContestDialog({ day, onClose }: { day: MonthDay; onClose: () => void })
           </button>
           <p className="text-[11px] text-ink-3">
             <CheckCircle2 className="mr-1 inline h-3 w-3 text-emerald-600" />
-            Notification WhatsApp à votre chef de chantier. Délai max 48h pour signaler.
+            Notification envoyée à votre chef de chantier. Délai max 48 h pour signaler.
           </p>
         </div>
       </div>
