@@ -785,7 +785,13 @@ model Application {
   coverLetter String?  @db.Text
   score       Int? // 0-100, calculé par tri auto
   stage       AppStage @default(RECEIVED)
-  notes       String?  @db.Text
+  notes       String?  @db.Text // notes RH internes
+
+  // CAND fn 1.3
+  rhMessage         String?   @db.Text // dernier message RH visible candidat
+  lastStageChangeAt DateTime?
+  withdrawnAt       DateTime?
+  withdrawnReason   String?
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -802,6 +808,8 @@ enum AppStage {
   OFFER
   HIRED
   REJECTED
+  WITHDRAWN
+  EXPIRED
 }
 
 // ========================================
