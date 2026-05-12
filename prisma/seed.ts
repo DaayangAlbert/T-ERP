@@ -4070,11 +4070,11 @@ async function main() {
     // 2) SiteTeams sur Pont Mfoundi : créer si absentes (CDT a besoin de 5 équipes)
     let teams = await prisma.siteTeam.findMany({ where: { siteId: pontMfoundi.id }, take: 5 });
     if (teams.length === 0) {
-      const teamSpecs: Array<{ name: string; specialty: "MASONRY" | "REBAR" | "CONCRETE" | "EARTHWORKS" | "FINISHING"; headcount: number }> = [
-        { name: "Équipe Coffrage Nord", specialty: "MASONRY", headcount: 14 },
+      const teamSpecs: Array<{ name: string; specialty: "FORMWORK" | "REBAR" | "CONCRETE" | "ROADWORK" | "FINISHING"; headcount: number }> = [
+        { name: "Équipe Coffrage Nord", specialty: "FORMWORK", headcount: 14 },
         { name: "Équipe Ferraillage", specialty: "REBAR", headcount: 16 },
         { name: "Équipe Béton", specialty: "CONCRETE", headcount: 12 },
-        { name: "Équipe Terrassement", specialty: "EARTHWORKS", headcount: 6 },
+        { name: "Équipe Terrassement", specialty: "ROADWORK", headcount: 6 },
         { name: "Équipe Finitions VRD", specialty: "FINISHING", headcount: 10 },
       ];
       for (const t of teamSpecs) {
