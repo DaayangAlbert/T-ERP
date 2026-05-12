@@ -739,14 +739,24 @@ model JobOffer {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   reference    String // REC-2026-008
+  slug         String? // URL friendly (CAND Zone 2)
   title        String // Ingénieur travaux BTP
   department   String? // Direction Technique
   contractType ContractType
   category     String // Cadre, ETAM, OQ...
   positions    Int          @default(1)
 
-  description  String @db.Text
-  requirements String @db.Text
+  summary      String? @db.Text
+  description  String  @db.Text
+  requirements String  @db.Text
+
+  // CAND Zone 2 — sections riches détail offre
+  missions      Json? // string[] missions
+  profileItems  Json? // string[] profil recherché
+  benefits      Json? // string[] avantages
+  experienceMin Int? // années requises
+  siteId        String? // chantier de rattachement
+  hiringManagerId String?
 
   salaryMin BigInt?
   salaryMax BigInt?
@@ -755,6 +765,7 @@ model JobOffer {
   publishedAt DateTime?
   expiresAt   DateTime?
   status      JobStatus @default(DRAFT)
+  viewCount   Int       @default(0)
 
   applications Application[]
   matches      JobMatch[]
@@ -763,6 +774,7 @@ model JobOffer {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, reference])
+  @@unique([tenantId, slug])
   @@index([status, publishedAt])
   @@map("job_offers")
 }
