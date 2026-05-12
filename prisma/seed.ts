@@ -119,6 +119,12 @@ async function main() {
   await prisma.operatingMethod.deleteMany();
   await prisma.dtAlert.deleteMany();
   await prisma.dtSettings.deleteMany();
+  // LOG — purge avant users (FK)
+  await prisma.interSiteTransferItem.deleteMany();
+  await prisma.interSiteTransfer.deleteMany();
+  await prisma.maintenanceSchedule.deleteMany();
+  await prisma.equipmentAssignment.deleteMany();
+  await prisma.equipment.deleteMany();
   await prisma.site.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
@@ -299,6 +305,16 @@ async function main() {
       position: "Magasinier central",
       category: "OS 5",
       hireDate: new Date("2024-01-08"),
+    },
+    {
+      email: "robert@batimcam.cm",
+      firstName: "Robert",
+      lastName: "ETONDÉ",
+      role: Role.LOGISTICS,
+      employeeId: "EMP-2020-00031",
+      position: "Logisticien d'entreprise",
+      category: "Cadre 10",
+      hireDate: new Date("2020-06-15"),
     },
     {
       email: "olivier@batimcam.cm",
@@ -4051,12 +4067,29 @@ async function main() {
       },
     });
 
-    // 2) SiteTeams existant sur Pont Mfoundi (créées par DTrav seed). Récupérer pour
-    //    affecter chacune dans le plan.
-    const teams = await prisma.siteTeam.findMany({
-      where: { siteId: pontMfoundi.id },
-      take: 5,
-    });
+    // 2) SiteTeams sur Pont Mfoundi : créer si absentes (CDT a besoin de 5 équipes)
+    let teams = await prisma.siteTeam.findMany({ where: { siteId: pontMfoundi.id }, take: 5 });
+    if (teams.length === 0) {
+      const teamSpecs: Array<{ name: string; specialty: "MASONRY" | "REBAR" | "CONCRETE" | "EARTHWORKS" | "FINISHING"; headcount: number }> = [
+        { name: "Équipe Coffrage Nord", specialty: "MASONRY", headcount: 14 },
+        { name: "Équipe Ferraillage", specialty: "REBAR", headcount: 16 },
+        { name: "Équipe Béton", specialty: "CONCRETE", headcount: 12 },
+        { name: "Équipe Terrassement", specialty: "EARTHWORKS", headcount: 6 },
+        { name: "Équipe Finitions VRD", specialty: "FINISHING", headcount: 10 },
+      ];
+      for (const t of teamSpecs) {
+        await prisma.siteTeam.create({
+          data: {
+            siteId: pontMfoundi.id,
+            name: t.name,
+            specialty: t.specialty,
+            leaderUserId: samuelCdt.id,
+            headcountTarget: t.headcount,
+          },
+        });
+      }
+      teams = await prisma.siteTeam.findMany({ where: { siteId: pontMfoundi.id }, take: 5 });
+    }
     const teamTasks: Array<{ task: string; obj: string; status: "ASSIGNED" | "REINFORCEMENT_NEEDED" | "PENDING_RESOURCES" }> = [
       { task: "Coffrage culée Nord", obj: "14 m²", status: "ASSIGNED" },
       { task: "Ferraillage tablier zone Z3", obj: "900 kg", status: "ASSIGNED" },
@@ -4282,6 +4315,188 @@ async function main() {
     }
 
     console.log("✓ CDT Pont Mfoundi : plan du jour (5 équipes), 3 contrôles + 3 labs, 1 sous-traitant, 3 visites, 5 jalons");
+  }
+
+  // ===== LOG BLOC 0 — Logisticien (Robert ETONDÉ) =====
+  const robert = createdUsers.find((u) => u.role === Role.LOGISTICS);
+  if (robert) {
+    const allLogSites = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 23,
+    });
+
+    // 42 engins/véhicules
+    const equipmentTypes = [
+      // 18 engins TP
+      ...Array.from({ length: 18 }, (_, i) => ({ type: "TP_HEAVY", name: ["Pelle CAT 320", "Bulldozer Komatsu D65", "Chargeuse Volvo L120", "Niveleuse Caterpillar 140", "Compacteur HAMM 3520", "Pelle Hyundai R210", "Bulldozer Liebherr PR736", "Mini-pelle JCB 8030"][i % 8], reg: `EN-${2018 + (i % 6)}-${String(100 + i).padStart(3, "0")}` })),
+      // 12 camions
+      ...Array.from({ length: 12 }, (_, i) => ({ type: "TRUCK", name: ["Camion Mercedes Actros", "Camion Renault Trucks K", "Camion benne MAN TGS", "Camion plateau Iveco"][i % 4], reg: `CM-${2019 + (i % 5)}-${String(200 + i).padStart(3, "0")}` })),
+      // 6 bétonnières
+      ...Array.from({ length: 6 }, (_, i) => ({ type: "CONCRETE_MIXER", name: `Bétonnière mobile 6m³ #${i + 1}`, reg: `BT-2022-${String(300 + i).padStart(3, "0")}` })),
+      // 6 véhicules service
+      ...Array.from({ length: 6 }, (_, i) => ({ type: "SERVICE_VEHICLE", name: ["Pickup Toyota Hilux", "4x4 Toyota Land Cruiser", "Berline Toyota Corolla", "Pickup Ford Ranger"][i % 4], reg: `VS-${2020 + (i % 4)}-${String(400 + i).padStart(3, "0")}` })),
+    ];
+    const equipmentStatuses = [
+      ...Array.from({ length: 36 }, () => "IN_SERVICE"),
+      ...Array.from({ length: 4 }, () => "MAINTENANCE"),
+      ...Array.from({ length: 2 }, () => "BREAKDOWN"),
+    ];
+    for (let i = 0; i < equipmentTypes.length; i++) {
+      const e = equipmentTypes[i];
+      const value = e.type === "TP_HEAVY" ? 95_000_000n : e.type === "TRUCK" ? 42_000_000n : e.type === "CONCRETE_MIXER" ? 18_000_000n : 12_000_000n;
+      const eq = await prisma.equipment.create({
+        data: {
+          tenantId: tenant.id,
+          registration: e.reg,
+          designation: e.name,
+          type: e.type as any,
+          acquisitionDate: new Date(2018 + (i % 6), i % 12, 1),
+          acquisitionValue: value,
+          currentValue: BigInt(Math.round(Number(value) * (0.6 + Math.random() * 0.35))),
+          status: equipmentStatuses[i] as any,
+          counterUnit: e.type === "TP_HEAVY" || e.type === "CONCRETE_MIXER" ? "h" : "km",
+          counter: e.type === "TP_HEAVY" ? 1500 + i * 350 : 25000 + i * 4800,
+          insuranceUntil: new Date(2026, 11 - (i % 12), 1),
+          visiteUntil: new Date(2026, 8 + (i % 4), 15),
+        },
+      });
+      // Affecter à un chantier (random)
+      const targetSite = allLogSites[i % allLogSites.length];
+      await prisma.equipmentAssignment.create({
+        data: {
+          equipmentId: eq.id,
+          siteId: targetSite?.id ?? null,
+          startDate: new Date(2026, 0, 1 + (i % 30)),
+          active: equipmentStatuses[i] === "IN_SERVICE",
+        },
+      });
+      // Plan maintenance préventive (1-2 par engin)
+      if (i % 3 === 0) {
+        await prisma.maintenanceSchedule.create({
+          data: {
+            equipmentId: eq.id,
+            type: "PREVENTIVE_SMALL" as any,
+            description: "Petite révision (vidange, filtres)",
+            scheduledAt: new Date(Date.now() + (10 + i) * 86400_000),
+            status: "PLANNED" as any,
+          },
+        });
+      }
+    }
+    console.log(`✓ LOG : 42 engins/véhicules seedés (36 en service, 4 maintenance, 2 panne)`);
+
+    // 80 fournisseurs supplémentaires (pour atteindre ~86 total)
+    const supplierNames = [
+      { name: "BICAM SA", category: "Ciment", framework: 600_000_000n, rating: 4.5 },
+      { name: "ALUCAM", category: "Acier", framework: 320_000_000n, rating: 4.8 },
+      { name: "Total Cameroun", category: "Carburant", framework: 240_000_000n, rating: 5.0 },
+      { name: "STRABAG", category: "Coffrage", framework: 120_000_000n, rating: 4.2 },
+      { name: "Carrière Mfou", category: "Granulats", framework: 60_000_000n, rating: 4.3 },
+      { name: "CIMENCAM Douala", category: "Ciment", framework: null, rating: 4.0 },
+      { name: "Tractafric Equipment", category: "Pièces engins", framework: null, rating: 4.4 },
+      { name: "Bocom Petroleum", category: "Carburant", framework: null, rating: 3.9 },
+    ];
+    for (const s of supplierNames) {
+      await prisma.supplier.upsert({
+        where: { tenantId_name: { tenantId: tenant.id, name: s.name } },
+        update: {
+          ratingQuality: s.rating,
+          fiscalCompliance: { cnps: "OK", dgi: "OK", lastChecked: new Date().toISOString() },
+        },
+        create: {
+          tenantId: tenant.id,
+          name: s.name,
+          category: s.category,
+          taxId: `NIU-CM-${Math.floor(Math.random() * 9000000) + 1000000}`,
+          ratingQuality: s.rating,
+          ratingDelay: 4 + Math.random(),
+          ratingPrice: 4 + Math.random(),
+          strategic: !!s.framework,
+          volumeYTD: s.framework ?? BigInt(Math.floor(Math.random() * 60_000_000)),
+          paymentTerms: 60,
+          fiscalCompliance: { cnps: "OK", dgi: "OK", lastChecked: new Date().toISOString() },
+        },
+      });
+      if (s.framework) {
+        const sup = await prisma.supplier.findFirst({ where: { tenantId: tenant.id, name: s.name } });
+        if (sup) {
+          await prisma.frameworkContract.upsert({
+            where: { tenantId_reference: { tenantId: tenant.id, reference: `FC-2026-${s.name.slice(0, 4).toUpperCase()}` } },
+            update: {},
+            create: {
+              tenantId: tenant.id,
+              supplierId: sup.id,
+              reference: `FC-2026-${s.name.slice(0, 4).toUpperCase()}`,
+              subject: `Contrat-cadre ${s.category} 2026`,
+              maxAmount: s.framework,
+              usedAmount: BigInt(Math.round(Number(s.framework) * 0.35)),
+              startDate: new Date("2026-01-01"),
+              endDate: new Date("2026-12-31"),
+              status: "ACTIVE" as any,
+            },
+          });
+        }
+      }
+    }
+    console.log(`✓ LOG : 8 fournisseurs nommés (5 contrats-cadres) seedés`);
+
+    // 4 transferts inter-chantiers en attente
+    const transferData = [
+      { ref: "TR-2026-0042", fromIdx: 1, toIdx: 2, category: "Coffrage", priority: "NORMAL", savings: 1_800_000n, context: "Surplus coffrage Bastos suite décalage planning" },
+      { ref: "TR-2026-0043", fromIdx: 3, toIdx: 5, category: "Bétonnière", priority: "NORMAL", savings: 850_000n, context: "Bétonnière inutilisée Odza phase préparation" },
+      { ref: "TR-2026-0044", fromIdx: 3, toIdx: 2, category: "Ciment", priority: "URGENT", savings: 360_000n, context: "Rupture imminente Pont Mfoundi" },
+      { ref: "TR-2026-0045", fromIdx: 0, toIdx: 1, category: "Grue", priority: "HIGH", savings: 4_200_000n, context: "Grue Liebherr libre Yaoundé–Nsimalen" },
+    ];
+    for (const t of transferData) {
+      const trans = await prisma.interSiteTransfer.upsert({
+        where: { tenantId_reference: { tenantId: tenant.id, reference: t.ref } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          reference: t.ref,
+          fromSiteId: allLogSites[t.fromIdx]!.id,
+          toSiteId: allLogSites[t.toIdx]!.id,
+          category: t.category,
+          priority: t.priority as any,
+          status: "PENDING" as any,
+          estimatedSavings: t.savings,
+          context: t.context,
+        },
+      });
+      await prisma.interSiteTransferItem.create({
+        data: {
+          transferId: trans.id,
+          designation: t.category,
+          quantity: t.category === "Ciment" ? 200 : 1,
+          unit: t.category === "Ciment" ? "sacs 50 kg" : "u",
+        },
+      });
+    }
+    // 3 transferts validés récents (historique)
+    for (let i = 0; i < 3; i++) {
+      const trans = await prisma.interSiteTransfer.upsert({
+        where: { tenantId_reference: { tenantId: tenant.id, reference: `TR-2026-002${i}` } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          reference: `TR-2026-002${i}`,
+          fromSiteId: allLogSites[i]!.id,
+          toSiteId: allLogSites[i + 3]!.id,
+          category: ["Acier HA", "Carburant", "Coffrage"][i],
+          priority: "NORMAL" as any,
+          status: "COMPLETED" as any,
+          estimatedSavings: BigInt((2 + i) * 1_000_000),
+          context: "Transfert clos avec succès",
+          arbitratedById: robert.id,
+          arbitratedAt: new Date(Date.now() - (i + 5) * 86400_000),
+          completedAt: new Date(Date.now() - (i + 2) * 86400_000),
+        },
+      });
+      await prisma.interSiteTransferItem.create({
+        data: { transferId: trans.id, designation: trans.category, quantity: 100, unit: "u" },
+      });
+    }
+    console.log(`✓ LOG : 4 transferts en attente + 3 historiques seedés`);
   }
 
   console.log("\n✅ Seed terminé.\n");

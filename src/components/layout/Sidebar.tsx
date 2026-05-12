@@ -39,6 +39,10 @@ import {
   Network,
   ShieldAlert,
   ShieldCheck,
+  Truck,
+  ArrowLeftRight,
+  Store,
+  PieChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -172,6 +176,19 @@ const MAG_SECTION: NavSection = {
   ],
 };
 
+// Section exclusive au Logisticien (Robert ETONDÉ · siège, vue 23 chantiers).
+const LOG_SECTION: NavSection = {
+  title: "Espace Logisticien",
+  items: [
+    { label: "Tableau de bord", href: "/log", icon: LayoutDashboard },
+    { label: "Bons de commande", href: "/log/bc", icon: ClipboardList, badge: { value: "8", alert: true } },
+    { label: "Fournisseurs", href: "/log/fournisseurs", icon: Store, badge: { value: "86" } },
+    { label: "Flotte engins", href: "/log/flotte", icon: Truck, badge: { value: "42" } },
+    { label: "Transferts", href: "/log/transferts", icon: ArrowLeftRight, badge: { value: "4", alert: true } },
+    { label: "Statistiques achats", href: "/log/stats", icon: PieChart },
+  ],
+};
+
 // Section exclusive au Comptable (Direction OU Chantier — adapté côté UI via assignedSiteIds).
 const CPT_SECTION: NavSection = {
   title: "Espace Comptabilité",
@@ -269,7 +286,7 @@ export function Sidebar() {
   //   Le DG la conserve pour supervision.
   const ROLES_WITH_DEDICATED_DASHBOARD = new Set([
     "DG", "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS",
   ]);
   const ACTIVITY_HIDDEN_BY_ROLE: Record<string, Set<string>> = {
     DG:             new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
@@ -277,13 +294,14 @@ export function Sidebar() {
     HR:             new Set(["/rh", "/finances", "/comptabilite", "/achats", "/stocks"]),
     TECH_DIRECTOR:  new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     ACCOUNTANT:     new Set(["/comptabilite", "/rh", "/achats", "/stocks"]),
+    LOGISTICS:      new Set(["/finances", "/comptabilite", "/rh"]),
     WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     WAREHOUSE:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
   };
   const HIDES_ADMIN_SECTION = new Set([
     "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS",
   ]);
   const role = user?.role ?? "";
   const cleanedNav = NAV.map((section) => {
@@ -320,7 +338,9 @@ export function Sidebar() {
                     ? [CC_SECTION, MAG_SECTION, ...cleanedNav]
                     : user?.role === "WAREHOUSE"
                       ? [MAG_SECTION, ...cleanedNav]
-                      : NAV;
+                      : user?.role === "LOGISTICS"
+                        ? [LOG_SECTION, ...cleanedNav]
+                        : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
