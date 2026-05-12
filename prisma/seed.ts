@@ -4790,6 +4790,78 @@ async function main() {
     }
     console.log(`✓ GED archivage : ${active} actifs · ${semi} semi-actifs · ${fin} archives déf. · ${pend} en attente destruction`);
 
+    // Audit events + anomalies + access requests (fn 1.6)
+    const otherUsers = await prisma.user.findMany({
+      where: { tenantId: tenant.id, NOT: { id: christelle.id }, role: { in: ["DG", "DAF", "TECH_DIRECTOR", "WORKS_DIRECTOR", "HR"] as any } },
+      take: 8,
+      select: { id: true, role: true, firstName: true, lastName: true },
+    });
+    const docsForAudit = allDocs.slice(0, 10);
+
+    if (docsForAudit.length > 0 && otherUsers.length > 0) {
+      const auditActions = ["CONSULTATION", "DOWNLOAD", "IMPORT", "MODIFICATION", "WORKFLOW_DECISION", "DIFFUSION"] as const;
+      const ips = ["192.168.10.42", "192.168.10.78", "10.0.5.12", "192.168.10.103", "41.207.220.18"];
+      const now = Date.now();
+      // 30 événements normaux ces dernières 72h
+      for (let i = 0; i < 30; i++) {
+        const actor = otherUsers[i % otherUsers.length];
+        const doc = docsForAudit[i % docsForAudit.length];
+        await prisma.gedAuditEvent.create({
+          data: {
+            tenantId: tenant.id,
+            actorId: actor.id,
+            documentId: doc.id,
+            action: auditActions[i % auditActions.length] as any,
+            ipAddress: ips[i % ips.length],
+            userAgent: "Mozilla/5.0 (Windows NT 10.0) Chrome/132.0",
+            anomaly: false,
+            createdAt: new Date(now - i * 3 * 3600_000),
+          },
+        });
+      }
+      // 3 anomalies non résolues
+      const anomalyTitles = [
+        { title: "Modification document avec workflow actif COMPLETED", action: "MODIFICATION" },
+        { title: "Téléchargement massif > 50 docs/heure", action: "DOWNLOAD" },
+        { title: "Tentative consultation document confidentiel non autorisé", action: "CONSULTATION" },
+      ];
+      for (let i = 0; i < 3; i++) {
+        const a = anomalyTitles[i];
+        await prisma.gedAuditEvent.create({
+          data: {
+            tenantId: tenant.id,
+            actorId: otherUsers[i % otherUsers.length].id,
+            documentId: docsForAudit[i].id,
+            action: a.action as any,
+            ipAddress: ips[(i + 2) % ips.length],
+            userAgent: "Mozilla/5.0 (Windows NT 10.0) Chrome/132.0",
+            anomaly: true,
+            metadata: { title: a.title },
+            createdAt: new Date(now - (i + 1) * 7200_000),
+          },
+        });
+      }
+      // 5 demandes d'accès en attente
+      const reasons = [
+        "Préparation contentieux client Pont Mfoundi",
+        "Audit interne ISO 9001 mai 2026",
+        "Vérification dossier salarié pour évaluation",
+        "Préparation rapport DG mensuel",
+        "Contrôle fiscal DGI annuel",
+      ];
+      for (let i = 0; i < Math.min(5, otherUsers.length); i++) {
+        await prisma.documentAccessRequest.create({
+          data: {
+            requesterId: otherUsers[i].id,
+            documentId: docsForAudit[i].id,
+            reason: reasons[i],
+            status: "PENDING" as any,
+          },
+        });
+      }
+      console.log(`✓ GED audit : 30 événements + 3 anomalies + 5 demandes d'accès`);
+    }
+
     console.log(`✓ GED : Christelle + 5 espaces transverses + 23 espaces chantiers + 8 workflows + ${classifications.length} classifications + 12 instances en cours`);
   }
 
