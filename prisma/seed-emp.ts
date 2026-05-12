@@ -505,6 +505,130 @@ async function main() {
   });
   console.log("  ✓ Payslip avril 2026 François (net 142 480 FCFA · payé)");
 
+  // 8) Historique Q1 2026 : janvier, février, mars (cumul net = 528 480 FCFA
+  //    avec avril, exactement comme dans le prototype HTML).
+  const Q1: ReadonlyArray<{
+    label: string;
+    monthStart: string;
+    monthEnd: string;
+    paidAt: string;
+    base: number;
+    overtimeHours: number;
+    overtimeAmount: number;
+    seniority: number;
+    transport: number;
+    gross: number;
+    cnps: number;
+    irpp: number;
+    net: number;
+    workedDays: number;
+    reportedHours: number;
+    reference: string;
+  }> = [
+    {
+      label: "2026-01",
+      monthStart: "2026-01-01",
+      monthEnd: "2026-01-31",
+      paidAt: "2026-02-02",
+      base: 170_000,
+      overtimeHours: 12,
+      overtimeAmount: 16_038,
+      seniority: 12_000,
+      transport: 7_000,
+      gross: 205_038,
+      cnps: 8_612,
+      irpp: 41_226,
+      net: 127_400,
+      workedDays: 22,
+      reportedHours: 176,
+      reference: "BS-2026-01-NDF",
+    },
+    {
+      label: "2026-02",
+      monthStart: "2026-02-01",
+      monthEnd: "2026-02-28",
+      paidAt: "2026-03-02",
+      base: 170_000,
+      overtimeHours: 14,
+      overtimeAmount: 18_711,
+      seniority: 12_000,
+      transport: 7_000,
+      gross: 207_711,
+      cnps: 8_724,
+      irpp: 41_787,
+      net: 128_400,
+      workedDays: 20,
+      reportedHours: 160,
+      reference: "BS-2026-02-NDF",
+    },
+    {
+      label: "2026-03",
+      monthStart: "2026-03-01",
+      monthEnd: "2026-03-31",
+      paidAt: "2026-04-02",
+      base: 170_000,
+      overtimeHours: 18,
+      overtimeAmount: 24_057,
+      seniority: 12_000,
+      transport: 7_000,
+      gross: 213_057,
+      cnps: 8_948,
+      irpp: 43_109,
+      net: 130_200,
+      workedDays: 22,
+      reportedHours: 176,
+      reference: "BS-2026-03-NDF",
+    },
+  ];
+
+  for (const m of Q1) {
+    const period = new Date(m.monthStart);
+    const periodEnd = new Date(m.monthEnd);
+    await prisma.payslip.upsert({
+      where: { tenantId_userId_period: { tenantId, userId: francois.id, period } },
+      create: {
+        tenantId,
+        userId: francois.id,
+        period,
+        periodEnd,
+        periodLabel: m.label,
+        paymentDate: new Date(m.paidAt),
+        paymentMode: "VIREMENT",
+        paymentMethod: PayslipPaymentMethod.BANK_TRANSFER,
+        paymentBankAccount: "Afriland First Bank · ****1842",
+        paymentReference: m.reference,
+        baseSalary: BigInt(m.base),
+        overtimeAmount: BigInt(m.overtimeAmount),
+        overtimeHours: m.overtimeHours,
+        overtimeHours125: m.overtimeHours,
+        seniorityBonus: BigInt(m.seniority),
+        transportAllowance: BigInt(m.transport),
+        grossAmount: BigInt(m.gross),
+        taxableGross: BigInt(m.gross),
+        cnpsAmount: BigInt(m.cnps),
+        irppAmount: BigInt(m.irpp),
+        socialCharges: BigInt(m.cnps),
+        fiscalCharges: BigInt(m.irpp),
+        otherDeductions: BigInt(0),
+        employerCharges: BigInt(35_000),
+        netAmount: BigInt(m.net),
+        workedDays: m.workedDays,
+        reportedHours: m.reportedHours,
+        status: PayslipStatus.PAID,
+        validatedN1At: new Date(`${m.label}-26`),
+        validatedN2At: new Date(`${m.label}-28`),
+        paidAt: new Date(m.paidAt),
+      },
+      update: {
+        netAmount: BigInt(m.net),
+        grossAmount: BigInt(m.gross),
+        paymentReference: m.reference,
+        status: PayslipStatus.PAID,
+      },
+    });
+  }
+  console.log(`  ✓ Historique 2026 : ${Q1.length} bulletins (jan, fév, mars) — cumul net Q1 ${Q1.reduce((s, p) => s + p.net, 0).toLocaleString("fr-FR")} FCFA`);
+
   console.log("\n✅ Seed EMP terminé.");
   console.log("  → Connexion test : francois@batimcam.cm / Demo2026!  (chef d'équipe, mobile-first)");
   console.log("  → Connexion test : pauline@batimcam.cm / Demo2026!  (employée bureau)");
