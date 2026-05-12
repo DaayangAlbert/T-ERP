@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { signJwt, type TerpJwtPayload } from "@/lib/auth";
+import { signJwt, resolveSessionType, type TerpJwtPayload } from "@/lib/auth";
 
 export const ACCESS_COOKIE = "terp_access";
 export const REFRESH_COOKIE = "terp_refresh";
@@ -17,11 +17,20 @@ function parseTtlToSeconds(ttl: string): number {
   return n * mul;
 }
 
-export type AuthIdentity = Pick<TerpJwtPayload, "sub" | "tenantId" | "role" | "email">;
+export type AuthIdentity = Pick<TerpJwtPayload, "sub" | "tenantId" | "role" | "email"> & {
+  type?: TerpJwtPayload["type"];
+};
 
 export function setAuthCookies(identity: AuthIdentity) {
-  const access = signJwt(identity, ACCESS_TTL as `${number}${"s" | "m" | "h" | "d"}`);
-  const refresh = signJwt(identity, REFRESH_TTL as `${number}${"s" | "m" | "h" | "d"}`);
+  const payload: Omit<TerpJwtPayload, "iat" | "exp"> = {
+    sub: identity.sub,
+    tenantId: identity.tenantId,
+    role: identity.role,
+    email: identity.email,
+    type: identity.type ?? resolveSessionType(identity.role),
+  };
+  const access = signJwt(payload, ACCESS_TTL as `${number}${"s" | "m" | "h" | "d"}`);
+  const refresh = signJwt(payload, REFRESH_TTL as `${number}${"s" | "m" | "h" | "d"}`);
   const jar = cookies();
   const baseOpts = {
     httpOnly: true,
