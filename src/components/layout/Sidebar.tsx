@@ -38,6 +38,7 @@ import {
   ClipboardCheck,
   Network,
   ShieldAlert,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -65,6 +66,22 @@ const DG_SECTION: NavSection = {
   ],
 };
 
+// Liens drill-down compacts : un seul lien d'entrée par espace métier pour
+// le DG (au lieu de déplier 6 espaces complets soit 51 items dans la sidebar).
+// Cliquer ouvre le tableau de bord de l'espace, depuis lequel le DG peut
+// naviguer vers le détail s'il en a besoin.
+const DG_DRILLDOWN_SECTION: NavSection = {
+  title: "Drill-down métiers",
+  items: [
+    { label: "Vue Finance (DAF)", href: "/daf", icon: Briefcase },
+    { label: "Vue RH", href: "/rh", icon: Users },
+    { label: "Vue Technique (DT)", href: "/dt", icon: Wrench },
+    { label: "Vue Comptabilité", href: "/comptable", icon: FileText },
+    { label: "Vue Production terrain", href: "/dtrav", icon: HardHat },
+    { label: "Vue Stocks", href: "/mag", icon: Package },
+  ],
+};
+
 // Section exclusive à la Direction Technique (Daniel ESSOMBA).
 const DT_SECTION: NavSection = {
   title: "Espace Direction Technique",
@@ -79,6 +96,19 @@ const DT_SECTION: NavSection = {
     { label: "QHSE", href: "/dt/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
     { label: "Rapports techniques", href: "/dt/rapports", icon: BarChart3 },
     { label: "Mon espace DT", href: "/dt/profil", icon: User },
+  ],
+};
+
+// Section exclusive au Conducteur de Travaux (Samuel MBARGA · Pont Mfoundi · terrain).
+const CDT_SECTION: NavSection = {
+  title: "Espace Conducteur Travaux",
+  items: [
+    { label: "Tableau de bord", href: "/cdt", icon: LayoutDashboard },
+    { label: "Plan du jour", href: "/cdt/plan", icon: ListChecks, badge: { value: "5", alert: true } },
+    { label: "Contrôles qualité", href: "/cdt/qualite", icon: ShieldCheck, badge: { value: "3" } },
+    { label: "Sous-traitants", href: "/cdt/soustraitants", icon: HardHat },
+    { label: "Visites externes", href: "/cdt/visites", icon: Briefcase },
+    { label: "Réceptions techniques", href: "/cdt/receptions", icon: ClipboardCheck },
   ],
 };
 
@@ -227,37 +257,70 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCompact, toggleSidebarCompact, mobileSidebarOpen, closeMobileSidebar } = useUiStore();
   const { user } = useAuth();
-  // Pour le DG, on retire "Tableau de bord" (PILOTAGE) car il fait doublon avec "Tableau de bord DG" (ESPACE DG).
-  // Le DG voit aussi l'Espace DAF (lecture seule). Le DAF voit son espace en haut (action).
-  // La RH (Sandrine) a son propre espace "Espace RH" prepended.
-  // Le DT (Daniel ESSOMBA) a son propre espace "Espace Direction Technique" prepended.
-  const cleanedNav = NAV.map((section) =>
-    section.title === "Pilotage" &&
-    (user?.role === "DG" ||
-      user?.role === "DAF" ||
-      user?.role === "HR" ||
-      user?.role === "TECH_DIRECTOR")
-      ? { ...section, items: section.items.filter((i) => i.href !== "/dashboard") }
-      : section
-  );
+  // Chaque rôle dispose d'un espace dédié prepended (DG, DAF, RH, DT, CPT, DTRAV, CC, MAG).
+  // On élague la NAV générique pour éviter doublons et items hors-périmètre.
+  //
+  // Règles :
+  // - "Tableau de bord" (Pilotage) retiré pour tout rôle qui a son propre tableau de bord dédié.
+  // - "Activité" : chaque rôle masque les sphères qui ne sont pas dans son périmètre métier ou
+  //   qui sont déjà couvertes par son espace dédié.
+  //   • Tout le monde garde "Chantiers" et "Planning" (transverse).
+  // - "Administration" (Configuration + Sécurité & rôles) : réservé TENANT_ADMIN et SUPER_ADMIN.
+  //   Le DG la conserve pour supervision.
+  const ROLES_WITH_DEDICATED_DASHBOARD = new Set([
+    "DG", "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE",
+  ]);
+  const ACTIVITY_HIDDEN_BY_ROLE: Record<string, Set<string>> = {
+    DG:             new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    DAF:            new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    HR:             new Set(["/rh", "/finances", "/comptabilite", "/achats", "/stocks"]),
+    TECH_DIRECTOR:  new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    ACCOUNTANT:     new Set(["/comptabilite", "/rh", "/achats", "/stocks"]),
+    WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    WAREHOUSE:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+  };
+  const HIDES_ADMIN_SECTION = new Set([
+    "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE",
+  ]);
+  const role = user?.role ?? "";
+  const cleanedNav = NAV.map((section) => {
+    if (section.title === "Pilotage" && ROLES_WITH_DEDICATED_DASHBOARD.has(role)) {
+      return { ...section, items: section.items.filter((i) => i.href !== "/dashboard") };
+    }
+    if (section.title === "Activité") {
+      const hidden = ACTIVITY_HIDDEN_BY_ROLE[role];
+      if (hidden) {
+        return { ...section, items: section.items.filter((i) => !hidden.has(i.href)) };
+      }
+    }
+    if (section.title === "Administration" && HIDES_ADMIN_SECTION.has(role)) {
+      return { ...section, items: [] };
+    }
+    return section;
+  }).filter((s) => s.items.length > 0);
   const sections: NavSection[] =
     user?.role === "HR"
       ? [RH_SECTION, ...cleanedNav]
       : user?.role === "DAF"
         ? [DAF_SECTION, CPT_SECTION, ...cleanedNav]
         : user?.role === "DG"
-          ? [DG_SECTION, DAF_SECTION, CPT_SECTION, DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
+          ? [DG_SECTION, DG_DRILLDOWN_SECTION, ...cleanedNav]
           : user?.role === "TECH_DIRECTOR"
-            ? [DT_SECTION, DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
+            ? [DT_SECTION, DTRAV_SECTION, CDT_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
             : user?.role === "ACCOUNTANT"
               ? [CPT_SECTION, ...cleanedNav]
               : user?.role === "WORKS_DIRECTOR"
-                ? [DTRAV_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
-                : user?.role === "SITE_MANAGER"
-                  ? [CC_SECTION, MAG_SECTION, ...cleanedNav]
-                  : user?.role === "WAREHOUSE"
-                    ? [MAG_SECTION, ...cleanedNav]
-                    : NAV;
+                ? [DTRAV_SECTION, CDT_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
+                : user?.role === "WORKS_MANAGER"
+                  ? [CDT_SECTION, CC_SECTION, MAG_SECTION, ...cleanedNav]
+                  : user?.role === "SITE_MANAGER"
+                    ? [CC_SECTION, MAG_SECTION, ...cleanedNav]
+                    : user?.role === "WAREHOUSE"
+                      ? [MAG_SECTION, ...cleanedNav]
+                      : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);

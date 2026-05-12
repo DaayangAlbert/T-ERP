@@ -4027,6 +4027,263 @@ async function main() {
     console.log(`✓ DT QHSE : 12 incidents + 8 audits + 14 NC + 3 ISO`);
   }
 
+  // ===== CDT — Conducteur de Travaux (CDT Bloc 0 + 1) =====
+  // Pont Mfoundi est le chantier où Samuel MBARGA (CDT) opère 80% du temps.
+  const pontMfoundi = await prisma.site.findFirst({
+    where: { code: "CHT-2025-031" },
+  });
+  const samuelCdt = createdUsers.find((u) => u.role === Role.WORKS_MANAGER);
+  const jeanCc = createdUsers.find((u) => u.role === Role.SITE_MANAGER);
+
+  if (pontMfoundi && samuelCdt) {
+    // 1) Daily plan du jour (DRAFT, en attente validation Jean)
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const plan = await prisma.dailyPlan.upsert({
+      where: { siteId_planDate: { siteId: pontMfoundi.id, planDate: todayMidnight } },
+      update: {},
+      create: {
+        siteId: pontMfoundi.id,
+        planDate: todayMidnight,
+        status: "DRAFT",
+        createdBy: samuelCdt.id,
+        notes: "Revue 7h45 avec Jean (CC) prévue.",
+      },
+    });
+
+    // 2) SiteTeams existant sur Pont Mfoundi (créées par DTrav seed). Récupérer pour
+    //    affecter chacune dans le plan.
+    const teams = await prisma.siteTeam.findMany({
+      where: { siteId: pontMfoundi.id },
+      take: 5,
+    });
+    const teamTasks: Array<{ task: string; obj: string; status: "ASSIGNED" | "REINFORCEMENT_NEEDED" | "PENDING_RESOURCES" }> = [
+      { task: "Coffrage culée Nord", obj: "14 m²", status: "ASSIGNED" },
+      { task: "Ferraillage tablier zone Z3", obj: "900 kg", status: "ASSIGNED" },
+      { task: "Bétonnage culée Nord", obj: "9 m³", status: "PENDING_RESOURCES" },
+      { task: "Terrassement zone 4", obj: "120 m³", status: "REINFORCEMENT_NEEDED" },
+      { task: "Finitions VRD zone parking", obj: "85 m²", status: "ASSIGNED" },
+    ];
+    for (const [i, t] of teams.entries()) {
+      const ta = teamTasks[i] ?? teamTasks[0];
+      await prisma.dailyPlanTeam.upsert({
+        where: { planId_teamId: { planId: plan.id, teamId: t.id } },
+        update: {},
+        create: {
+          planId: plan.id,
+          teamId: t.id,
+          mainTask: ta.task,
+          objective: ta.obj,
+          status: ta.status,
+          materialsNeeded: i === 0 ? [
+            { article: "Ciment", quantity: 42, unit: "sacs" },
+            { article: "Sable", quantity: 6, unit: "m³" },
+          ] : [],
+        },
+      });
+    }
+
+    // 3) 3 contrôles qualité dont 1 NC ouverte
+    const qcExisting = await prisma.qualityControl.count({ where: { siteId: pontMfoundi.id } });
+    if (qcExisting === 0) {
+      await prisma.qualityControl.createMany({
+        data: [
+          {
+            siteId: pontMfoundi.id,
+            type: "SELF_CONTROL",
+            category: "REBAR",
+            reference: "QC-2026-0040",
+            checkpoints: [
+              { label: "Diamètre HA conforme plans", expected: "20 mm", measured: "20 mm", conform: true },
+              { label: "Espacement aciers", expected: "20 cm", measured: "20 cm", conform: true },
+              { label: "Recouvrement", expected: "≥ 40 cm", measured: "38 cm", conform: false },
+            ] as object,
+            overallConform: false,
+            photos: [],
+            performedBy: samuelCdt.id,
+            performedAt: new Date(Date.now() - 2 * 86_400_000),
+            phase: "Gros œuvre",
+            location: "Tablier zone Z3",
+            notes: "NC-2026-005 ouverte : recouvrement insuffisant",
+          },
+          {
+            siteId: pontMfoundi.id,
+            type: "SELF_CONTROL",
+            category: "CONCRETE",
+            reference: "QC-2026-0041",
+            checkpoints: [
+              { label: "Slump test", expected: "10 ± 2 cm", measured: "11 cm", conform: true },
+              { label: "Température béton", expected: "< 30°C", measured: "28°C", conform: true },
+            ] as object,
+            overallConform: true,
+            photos: [],
+            performedBy: samuelCdt.id,
+            performedAt: new Date(Date.now() - 86_400_000),
+            phase: "Gros œuvre",
+            location: "Culée Sud",
+          },
+          {
+            siteId: pontMfoundi.id,
+            type: "EXTERNAL_INSPECTION",
+            category: "GEOMETRY",
+            reference: "QC-2026-0042",
+            checkpoints: [
+              { label: "Alignement axe pont", expected: "± 5 mm", measured: "3 mm", conform: true },
+              { label: "Cote arase pile 3", expected: "+8,250 m", measured: "+8,248 m", conform: true },
+            ] as object,
+            overallConform: true,
+            photos: [],
+            performedBy: samuelCdt.id,
+            performedAt: new Date(Date.now() - 3 * 86_400_000),
+            phase: "Gros œuvre",
+            location: "Pile 3",
+            notes: "Inspection topographe TopoCAM",
+          },
+        ],
+      });
+    }
+
+    // 4) Tests labo
+    const labExisting = await prisma.labTest.count({ where: { siteId: pontMfoundi.id } });
+    if (labExisting === 0) {
+      await prisma.labTest.createMany({
+        data: [
+          {
+            siteId: pontMfoundi.id,
+            labName: "LABOGENIE",
+            testType: "CONCRETE_J7",
+            sampleRef: "EPV-2026-128",
+            samplingDate: new Date(Date.now() - 7 * 86_400_000),
+            expectedDate: new Date(),
+            receivedDate: new Date(),
+            result: { compressionMPa: 24.5, expectedMPa: 22 } as object,
+            conform: true,
+          },
+          {
+            siteId: pontMfoundi.id,
+            labName: "LABOGENIE",
+            testType: "CONCRETE_J28",
+            sampleRef: "EPV-2026-129",
+            samplingDate: new Date(Date.now() - 21 * 86_400_000),
+            expectedDate: new Date(Date.now() + 7 * 86_400_000),
+            conform: null,
+          },
+          {
+            siteId: pontMfoundi.id,
+            labName: "LABOGENIE",
+            testType: "STEEL_TENSILE",
+            sampleRef: "ACS-2026-018",
+            samplingDate: new Date(Date.now() - 14 * 86_400_000),
+            expectedDate: new Date(Date.now() - 2 * 86_400_000),
+            receivedDate: new Date(Date.now() - 86_400_000),
+            result: { yieldMpa: 520, expectedMin: 500 } as object,
+            conform: true,
+          },
+        ],
+      });
+    }
+
+    // 5) Sous-traitant STI Étanchéité (Supplier déjà existant via seed achats)
+    const stiSub = await prisma.supplier.findFirst({
+      where: { tenantId: tenant.id, name: { contains: "Sous-traitant Coffrage 1" } },
+    });
+    if (stiSub) {
+      await prisma.subcontractorPresence.upsert({
+        where: { siteId_subcontractorId_date: { siteId: pontMfoundi.id, subcontractorId: stiSub.id, date: todayMidnight } },
+        update: {},
+        create: {
+          siteId: pontMfoundi.id,
+          subcontractorId: stiSub.id,
+          date: todayMidnight,
+          supervisorOnSite: "E. NDOUNA",
+          workerCount: 6,
+          activityNotes: "Pose étanchéité tablier zone Z2 — 28% avancement",
+          recordedBy: samuelCdt.id,
+        },
+      });
+    }
+
+    // 6) 2 visites externes prévues
+    const visitExisting = await prisma.externalVisit.count({ where: { siteId: pontMfoundi.id } });
+    if (visitExisting === 0) {
+      await prisma.externalVisit.createMany({
+        data: [
+          {
+            siteId: pontMfoundi.id,
+            visitorType: "GEOMETER",
+            visitorName: "B. NJONGA",
+            organization: "TopoCAM",
+            scheduledAt: new Date(Date.now() + 26 * 3_600_000),
+            purpose: "Implantation pile 4",
+            status: "SCHEDULED",
+          },
+          {
+            siteId: pontMfoundi.id,
+            visitorType: "MOA",
+            visitorName: "Mme TCHAMBA",
+            organization: "Commune Yaoundé I",
+            scheduledAt: new Date(Date.now() + 3 * 86_400_000),
+            purpose: "Réunion MOA mensuelle (avenant + planning)",
+            status: "SCHEDULED",
+          },
+          {
+            siteId: pontMfoundi.id,
+            visitorType: "BCT",
+            visitorName: "M. KENGNE",
+            organization: "BCT Cameroun",
+            scheduledAt: new Date(Date.now() - 5 * 3_600_000),
+            completedAt: new Date(Date.now() - 5 * 3_600_000),
+            purpose: "Visite BCT mensuelle",
+            reportContent: "Réserve sur recouvrement aciers Z3. À lever sous 7 jours.",
+            reservations: 1,
+            status: "REPORTED",
+          },
+        ],
+      });
+    }
+
+    // 7) 5 jalons J1-J5 (DOE checklist)
+    const msExisting = await prisma.cdtMilestone.count({ where: { siteId: pontMfoundi.id } });
+    if (msExisting === 0) {
+      const baseDoeChecklist = [
+        { key: "plans_conformes", label: "Plans conformes à l'exécution", done: false },
+        { key: "pv_controles", label: "PV des contrôles qualité", done: false },
+        { key: "photos_avancement", label: "Photos d'avancement", done: false },
+        { key: "tests_labo", label: "Résultats tests labo (béton J+28)", done: false },
+        { key: "notes_calcul", label: "Notes de calcul (si modifs)", done: false },
+        { key: "pv_ferraillage", label: "PV ferraillage", done: false },
+        { key: "doe_assemblé", label: "DOE assemblé et relu", done: false },
+        { key: "convocation_moa", label: "Convocation MOA + BCT envoyée", done: false },
+      ];
+      const milestones = [
+        { code: "J1", designation: "Études préliminaires + DCE", offset: -180, status: "REACHED" as const, prep: 100, donePct: 8 },
+        { code: "J2", designation: "Terrassements généraux", offset: -90, status: "REACHED" as const, prep: 100, donePct: 8 },
+        { code: "J3", designation: "Levée réserves piles centrales", offset: 12, status: "IN_PREPARATION" as const, prep: 75, donePct: 6 },
+        { code: "J4", designation: "Pose tablier", offset: 75, status: "UPCOMING" as const, prep: 10, donePct: 0 },
+        { code: "J5", designation: "Réception ouvrage", offset: 160, status: "UPCOMING" as const, prep: 0, donePct: 0 },
+      ];
+      for (const m of milestones) {
+        const checklist = baseDoeChecklist.map((c, idx) => ({ ...c, done: idx < m.donePct }));
+        await prisma.cdtMilestone.create({
+          data: {
+            siteId: pontMfoundi.id,
+            code: m.code,
+            designation: m.designation,
+            contractDate: new Date(Date.now() + m.offset * 86_400_000),
+            forecastDate: new Date(Date.now() + m.offset * 86_400_000),
+            actualDate: m.status === "REACHED" ? new Date(Date.now() + (m.offset + 3) * 86_400_000) : null,
+            status: m.status,
+            deliverables: checklist as object,
+            preparation: m.prep,
+            reservations: m.code === "J3" ? 1 : 0,
+          },
+        });
+      }
+    }
+
+    console.log("✓ CDT Pont Mfoundi : plan du jour (5 équipes), 3 contrôles + 3 labs, 1 sous-traitant, 3 visites, 5 jalons");
+  }
+
   console.log("\n✅ Seed terminé.\n");
   console.log(`Login : albert@batimcam.cm / ${PWD}`);
   console.log(`URL   : http://batimcam.terp.local:5000\n`);

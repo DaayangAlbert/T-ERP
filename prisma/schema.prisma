@@ -78,6 +78,9 @@ model Tenant {
   referenceRatios      ReferenceRatio[]
   crews                Crew[]
   certifications       Certification[]
+  // LOG — Logisticien siège
+  equipment            Equipment[]
+  interSiteTransfers   InterSiteTransfer[]
 
   @@index([parentId])
   @@map("tenants")
@@ -203,6 +206,9 @@ model User {
   dtMethodsAuthored             OperatingMethod[]             @relation("MethodAuthor")
   dtTemplatePlannings           TemplatePlanning[]            @relation("TemplatePlanningAuthor")
   dtRexAuthored                 SiteRex[]                     @relation("RexAuthor")
+  // LOG — Logisticien siège
+  logTransfersArbitrated        InterSiteTransfer[]           @relation("TransferArbitrator")
+  logEquipmentAssignments       EquipmentAssignment[]         @relation("EquipmentDriver")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -472,6 +478,10 @@ model Site {
   ncs                      NonConformity[]
   subcontractorEvaluations SubcontractorEvaluation[]
   crewAssignments          CrewAssignment[]
+  // LOG — relations
+  equipmentAssignments     EquipmentAssignment[]
+  transfersFrom            InterSiteTransfer[]           @relation("TransferFromSite")
+  transfersTo              InterSiteTransfer[]           @relation("TransferToSite")
   // DTrav — relations chantier (Bloc 0 + Bloc 1)
   dailyReports             SiteDailyReport[]
   workforceMembers         SiteWorkforceMember[]
@@ -489,6 +499,11 @@ model Site {
   hseSafetyTalks           HseSafetyTalk[]
   // MAG — relation magasin (1:1)
   warehouse                Warehouse?
+  // CDT — relations conducteur de travaux
+  dailyPlans               DailyPlan[]
+  qualityControls          QualityControl[]
+  externalVisits           ExternalVisit[]
+  cdtMilestones            CdtMilestone[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -1527,9 +1542,9 @@ enum RhAlertType {
 }
 
 model RhSettings {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   alertsConfig    Json? // { medicalVisitDaysBefore, trainingRecycleDaysBefore, cddEndingDaysBefore, channels[] }
   signatureConfig Json? // { authorizedDocs[], delegates[] } — RH Bloc 2 / fn 2.3
   createdAt       DateTime @default(now())
@@ -2448,6 +2463,8 @@ model Supplier {
   invoices       SupplierInvoice[]
   // DT — relations sous-traitance
   subEvaluations SubcontractorEvaluation[]
+  // CDT — présences sous-traitants journalières
+  presences      SubcontractorPresence[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3689,9 +3706,230 @@ model SiteTeam {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   SiteTaskRealization SiteTaskRealization[]
+  // CDT — affectations plan du jour
+  dailyPlanTeams      DailyPlanTeam[]
 
   @@index([siteId])
   @@map("site_teams")
+}
+
+// ========================================
+// CDT — Conducteur de Travaux (CDT Bloc 0 + 1)
+// ========================================
+model DailyPlan {
+  id          String          @id @default(cuid())
+  siteId      String
+  site        Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  planDate    DateTime        @db.Date
+  status      DailyPlanStatus @default(DRAFT)
+  createdBy   String // userId conducteur de travaux
+  validatedAt DateTime?
+  validatedBy String? // userId chef de chantier
+  notes       String?         @db.Text
+  teams       DailyPlanTeam[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, planDate])
+  @@index([siteId, status])
+  @@map("daily_plans")
+}
+
+enum DailyPlanStatus {
+  DRAFT
+  VALIDATED
+  EXECUTED
+  REVISED
+}
+
+model DailyPlanTeam {
+  id              String     @id @default(cuid())
+  planId          String
+  plan            DailyPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  teamId          String
+  team            SiteTeam   @relation(fields: [teamId], references: [id])
+  mainTask        String
+  objective       String? // "14 m²", "900 kg"
+  materialsNeeded Json? // [{ articleId, quantity, unit }]
+  status          TeamStatus @default(ASSIGNED)
+  extraNotes      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, teamId])
+  @@map("daily_plan_teams")
+}
+
+enum TeamStatus {
+  ASSIGNED
+  PENDING_RESOURCES
+  REINFORCEMENT_NEEDED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model QualityControl {
+  id             String     @id @default(cuid())
+  siteId         String
+  site           Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  type           QcType
+  category       QcCategory
+  reference      String // QC-2026-0042
+  checkpoints    Json // [{ label, expected, measured, conform }]
+  overallConform Boolean    @default(true)
+  photos         String[]
+  notes          String?
+  performedBy    String // userId
+  performedAt    DateTime
+  phase          String?
+  location       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId, performedAt])
+  @@map("quality_controls")
+}
+
+enum QcType {
+  SELF_CONTROL
+  LAB_TEST
+  EXTERNAL_INSPECTION
+}
+
+enum QcCategory {
+  CONCRETE
+  REBAR
+  FORMWORK
+  GEOMETRY
+  EARTHWORKS
+  WATERPROOFING
+  ELECTRICAL
+  OTHER
+}
+
+model LabTest {
+  id           String      @id @default(cuid())
+  qcId         String?
+  siteId       String
+  labName      String
+  testType     LabTestType
+  sampleRef    String
+  samplingDate DateTime
+  expectedDate DateTime
+  receivedDate DateTime?
+  result       Json?
+  conform      Boolean?
+  reportUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId, expectedDate])
+  @@map("lab_tests")
+}
+
+enum LabTestType {
+  CONCRETE_J7
+  CONCRETE_J28
+  STEEL_TENSILE
+  SOIL_BEARING
+  SOIL_DENSITY
+  ASPHALT
+  OTHER
+}
+
+model SubcontractorPresence {
+  id               String   @id @default(cuid())
+  siteId           String
+  subcontractorId  String
+  subcontractor    Supplier @relation(fields: [subcontractorId], references: [id], onDelete: Cascade)
+  date             DateTime @db.Date
+  supervisorOnSite String
+  workerCount      Int
+  activityNotes    String?
+  dailyPresenceBL  String?
+  recordedBy       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, subcontractorId, date])
+  @@index([siteId, date])
+  @@map("subcontractor_presences")
+}
+
+model ExternalVisit {
+  id            String      @id @default(cuid())
+  siteId        String
+  site          Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  visitorType   VisitorType
+  visitorName   String
+  organization  String
+  scheduledAt   DateTime
+  completedAt   DateTime?
+  purpose       String
+  reportContent String?     @db.Text
+  reportPhotos  String[]
+  reservations  Int         @default(0)
+  status        VisitStatus @default(SCHEDULED)
+  reportUrl     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId, scheduledAt])
+  @@map("external_visits")
+}
+
+enum VisitorType {
+  BCT
+  GEOMETER
+  MOA
+  INSURANCE
+  BANK
+  CONSULTANT
+  OTHER
+}
+
+enum VisitStatus {
+  SCHEDULED
+  COMPLETED
+  REPORTED
+  VALIDATED
+}
+
+model CdtMilestone {
+  id           String             @id @default(cuid())
+  siteId       String
+  site         Site               @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  code         String // "J1", "J2", "J3"
+  designation  String
+  contractDate DateTime
+  forecastDate DateTime
+  actualDate   DateTime?
+  status       CdtMilestoneStatus @default(UPCOMING)
+  deliverables Json // checklist DOE
+  preparation  Int                @default(0)
+  reservations Int                @default(0)
+  pvUrl        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, code])
+  @@index([siteId, status])
+  @@map("cdt_milestones")
+}
+
+enum CdtMilestoneStatus {
+  UPCOMING
+  IN_PREPARATION
+  READY_FOR_RECEPTION
+  REACHED
+  MISSED
 }
 
 // ========================================
@@ -4323,4 +4561,181 @@ model WarehouseInventoryLine {
 
   @@index([inventoryId])
   @@map("warehouse_inventory_lines")
+}
+
+// ============================================================
+// LOG — LOGISTICIEN SIÈGE (Bloc 0 + 1)
+// ============================================================
+// Robert ETONDÉ — vue consolidée 23 chantiers, achats, flotte 42 engins,
+// transferts inter-chantiers, contrats-cadres fournisseurs.
+// ============================================================
+
+// Bloc 1 / fn 1.4 — Flotte d'engins et véhicules
+model Equipment {
+  id               String          @id @default(cuid())
+  tenantId         String
+  tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  registration     String // immatriculation (ex: EN-2019-008)
+  designation      String // "Pelle CAT 320"
+  type             EquipmentType
+  acquisitionDate  DateTime?
+  acquisitionValue BigInt
+  currentValue     BigInt
+  status           EquipmentStatus @default(IN_SERVICE)
+  counterUnit      String          @default("h") // "h" engins TP, "km" véhicules
+  counter          Float           @default(0)
+  insuranceUntil   DateTime?
+  visiteUntil      DateTime?
+
+  assignments  EquipmentAssignment[]
+  maintenances MaintenanceSchedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, registration])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@map("equipment")
+}
+
+enum EquipmentType {
+  TP_HEAVY // Engins TP (pelles, bulldozers, chargeuses, niveleuses)
+  TRUCK // Camions
+  CONCRETE_MIXER // Bétonnières / centrales mobiles
+  SERVICE_VEHICLE // Véhicules de service
+  OTHER
+}
+
+enum EquipmentStatus {
+  IN_SERVICE
+  MAINTENANCE
+  BREAKDOWN
+  RETIRED
+  TRANSFER // en cours de transfert inter-chantiers
+}
+
+// Bloc 1 / fn 1.4 — Affectation engin × chantier × conducteur
+model EquipmentAssignment {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  siteId      String?
+  site        Site?     @relation(fields: [siteId], references: [id])
+  driverId    String?
+  driver      User?     @relation("EquipmentDriver", fields: [driverId], references: [id])
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean   @default(true)
+  notes       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([equipmentId, active])
+  @@index([siteId])
+  @@map("equipment_assignments")
+}
+
+// Bloc 1 / fn 1.4 — Plan de maintenance préventive et curative
+model MaintenanceSchedule {
+  id          String            @id @default(cuid())
+  equipmentId String
+  equipment   Equipment         @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  type        MaintenanceType
+  description String
+  // Critères de déclenchement
+  scheduledAt DateTime?
+  triggerAt   Float? // valeur compteur déclencheur (ex: 5000 h)
+  // Réalisation
+  completedAt DateTime?
+  cost        BigInt? // coût réel
+  vendorName  String? // garage externe ou interne
+  status      MaintenanceStatus @default(PLANNED)
+  notes       String?           @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([equipmentId, scheduledAt])
+  @@index([status])
+  @@map("maintenance_schedules")
+}
+
+enum MaintenanceType {
+  PREVENTIVE_SMALL // Petite révision (250h, 5000 km)
+  PREVENTIVE_BIG // Grande révision (1000h, 20000 km)
+  ANNUAL_INSPECTION // Visite technique annuelle
+  CURATIVE // Panne / réparation
+  INSURANCE_RENEWAL // Renouvellement assurance
+  REGULATORY // Contrôle réglementaire BTP
+}
+
+enum MaintenanceStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+  OVERDUE
+  CANCELLED
+}
+
+// Bloc 1 / fn 1.5 — Transferts inter-chantiers
+model InterSiteTransfer {
+  id               String           @id @default(cuid())
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reference        String // TR-2026-0042
+  fromSiteId       String
+  fromSite         Site             @relation("TransferFromSite", fields: [fromSiteId], references: [id])
+  toSiteId         String
+  toSite           Site             @relation("TransferToSite", fields: [toSiteId], references: [id])
+  category         String // "Coffrage", "Engin TP", "Ciment"...
+  priority         TransferPriority @default(NORMAL)
+  status           TransferStatus   @default(PENDING)
+  estimatedSavings BigInt           @default(0) // FCFA économisés vs achat neuf
+  context          String?          @db.Text
+  arbitratedById   String?
+  arbitratedBy     User?            @relation("TransferArbitrator", fields: [arbitratedById], references: [id])
+  arbitratedAt     DateTime?
+  arbitrationNote  String?          @db.Text
+  scheduledAt      DateTime?
+  completedAt      DateTime?
+
+  items InterSiteTransferItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, reference])
+  @@index([tenantId, status])
+  @@map("inter_site_transfers")
+}
+
+enum TransferPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SCHEDULED
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+// Bloc 1 / fn 1.5 — Articles d'un transfert (matières) ou engin
+model InterSiteTransferItem {
+  id          String            @id @default(cuid())
+  transferId  String
+  transfer    InterSiteTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  designation String
+  quantity    Float
+  unit        String
+
+  @@index([transferId])
+  @@map("inter_site_transfer_items")
 }
