@@ -133,6 +133,14 @@ async function main() {
   await prisma.documentWorkflowTemplate.deleteMany();
   await prisma.documentClassification.deleteMany();
   await prisma.documentSpace.deleteMany();
+  // CDT — purge avant sites (FK daily_plan_teams → site_teams)
+  await prisma.dailyPlanTeam.deleteMany();
+  await prisma.dailyPlan.deleteMany();
+  await prisma.qualityControl.deleteMany();
+  await prisma.labTest.deleteMany();
+  await prisma.subcontractorPresence.deleteMany();
+  await prisma.externalVisit.deleteMany();
+  await prisma.cdtMilestone.deleteMany();
   await prisma.site.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
