@@ -1,0 +1,28 @@
+{
+  "name": "T-ERP Employé",
+  "short_name": "T-ERP EMP",
+  "description": "Espace personnel ouvriers et employés BatimCAM — bulletins, congés, pointage, profil",
+  "start_url": "/emp",
+  "scope": "/emp",
+  "display": "standalone",
+  "background_color": "#2A1B3D",
+  "theme_color": "#A855F7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "fr-CM",
+  "dir": "ltr"
+}

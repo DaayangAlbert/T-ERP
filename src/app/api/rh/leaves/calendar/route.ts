@@ -11,6 +11,7 @@ const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
 const TYPE_COLOR: Record<LeaveType, string> = {
   PAID_LEAVE: "#22C55E",
   RTT: "#A855F7",
+  COMPENSATORY: "#8B5CF6",
   UNPAID: "#94A3B8",
   SICK: "#EF4444",
   MATERNITY: "#EC4899",

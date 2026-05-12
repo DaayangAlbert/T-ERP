@@ -81,6 +81,11 @@ model Tenant {
   // LOG — Logisticien siège
   equipment            Equipment[]
   interSiteTransfers   InterSiteTransfer[]
+  // GED — Référent documentaire (Bloc 0)
+  documentSpaces            DocumentSpace[]
+  documentClassifications   DocumentClassification[]
+  documentWorkflowTemplates DocumentWorkflowTemplate[]
+  gedAuditEvents            GedAuditEvent[]
 
   @@index([parentId])
   @@map("tenants")
@@ -118,17 +123,50 @@ model User {
 
   // Si employé du tenant
   employeeId   String?       @unique // ex: EMP-2018-00001
+  matricule    String?       @unique // matricule employeur BatimCAM (ex: BTC-2018-0142)
   hireDate     DateTime?
   position     String? // intitulé du poste
   category     String? // catégorie pro (Cadre HC, ETAM, OQ, OS...)
+  professionalCategory String? // grille BTP (ex: "Catégorie 8 · échelon 3")
   cnpsNumber   String?
   contractType ContractType?
+
+  // EMP — identité personnelle (Bloc 0 Employé / fn 1.5)
+  dateOfBirth           DateTime?
+  cniNumber             String?
+  phoneMobile           String?
+  personalEmail         String?
+  address               String?
+  familyStatus          String? // "Marié · 3 enfants"
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  // EMP — informations professionnelles complémentaires
+  niu        String? // NIU DGI (F218014203187)
+  bankName   String? // ex: "Afriland First Bank"
+  bankAgency String?
+  rib        String?
+  teamLeader Boolean @default(false) // chef d'équipe → consulte son équipe
+
+  // EMP — préférences notification & langue
+  preferredLanguage   String @default("fr-CM") // "fr-CM" ou "en-CM"
+  notificationChannel String @default("WHATSAPP") // "WHATSAPP" | "EMAIL" | "PUSH"
 
   // Sécurité
   twoFactorEnabled Boolean   @default(false)
   twoFactorSecret  String?
   emailVerified    Boolean   @default(false)
   lastLoginAt      DateTime?
+
+  // IT — pouvoirs spéciaux (octroyés par DG uniquement, jamais par IT_ADMIN lui-même)
+  canManageUsers          Boolean @default(false)
+  canManageRoles          Boolean @default(false)
+  canManageTenantSettings Boolean @default(false)
+  canManageIntegrations   Boolean @default(false)
+  canViewTechnicalLogs    Boolean @default(false)
+
+  // GED — accès transverse documentaire (ARCHIVIST uniquement)
+  canReadAllDocuments Boolean @default(false)
 
   // Rôle principal (MVP — rôles avancés en phase 2)
   role Role @default(EMPLOYEE)
@@ -195,6 +233,10 @@ model User {
   warehousesKept                Warehouse[]                   @relation("WarehouseKeeper")
   warehouseMovementsRecorded    WarehouseMovement[]           @relation("WarehouseMovementRecorder")
   warehouseInventoriesCompleted WarehouseInventory[]
+  // IT — relations administration tenant
+  apiKeysCreated                ApiKey[]                      @relation("ApiKeyCreator")
+  apiKeysRevoked                ApiKey[]                      @relation("ApiKeyRevoker")
+  technicalLogs                 TechnicalLog[]
   // DT — Espace Direction Technique (Bloc 0+)
   dtSettings                    DtSettings?
   managedTenders                Tender[]                      @relation("TenderStudyOwner")
@@ -209,6 +251,20 @@ model User {
   // LOG — Logisticien siège
   logTransfersArbitrated        InterSiteTransfer[]           @relation("TransferArbitrator")
   logEquipmentAssignments       EquipmentAssignment[]         @relation("EquipmentDriver")
+  // EMP — relations employé/ouvrier (Bloc 0 EMP)
+  timeReportsOwned              TimeReport[]                  @relation("TimeReportOwner")
+  timeReportsPointed            TimeReport[]                  @relation("TimeReportPointer")
+  timeReportsResolved           TimeReport[]                  @relation("TimeReportResolver")
+  leaveRequestsOwned            LeaveRequest[]                @relation("LeaveRequestOwner")
+  leaveRequestsValidated        LeaveRequest[]                @relation("LeaveRequestValidator")
+  leaveBalanceOwned             LeaveBalance?                 @relation("LeaveBalanceOwner")
+  // GED — Référent documentaire (Bloc 0)
+  gedSpacesResponsible          DocumentSpace[]               @relation("SpaceResponsible")
+  gedWorkflowsInitiated         DocumentWorkflowInstance[]    @relation("WorkflowInitiator")
+  gedWorkflowsAssigned          DocumentWorkflowStep[]        @relation("WorkflowStepAssignee")
+  gedAccessRequestsMade         DocumentAccessRequest[]       @relation("AccessRequester")
+  gedAccessRequestsDecided      DocumentAccessRequest[]       @relation("AccessDecider")
+  gedAuditEvents                GedAuditEvent[]               @relation("GedAuditActor")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -392,6 +448,7 @@ enum Role {
   LOGISTICS
   WAREHOUSE // Magasinier
   GED // Gestionnaire documentaire
+  ARCHIVIST // Documentaliste-Archiviste (Référent documentaire transverse, canReadAllDocuments)
   EMPLOYEE // Employé bureau
 
   // Externe
@@ -504,6 +561,8 @@ model Site {
   qualityControls          QualityControl[]
   externalVisits           ExternalVisit[]
   cdtMilestones            CdtMilestone[]
+  // GED — espace documentaire chantier (Bloc 0)
+  documentSpaces           DocumentSpace[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -555,6 +614,8 @@ model Payslip {
   user     User   @relation(fields: [userId], references: [id])
 
   period      DateTime // 1er du mois (ex: 2025-09-01)
+  periodLabel String? // "2026-04" — pratique pour affichage et tri lexico
+  periodEnd   DateTime? // dernier jour de la période
   paymentDate DateTime
   paymentMode String   @default("VIREMENT") // VIREMENT, ESPECES, CHEQUE, MOMO
 
@@ -565,6 +626,31 @@ model Payslip {
   socialCharges   BigInt @default(0)
   fiscalCharges   BigInt @default(0)
   employerCharges BigInt @default(0)
+
+  // EMP Bloc 0 — composantes détaillées du brut
+  baseSalary         BigInt? // salaire de base (ex: 170 000 FCFA)
+  overtimeAmount     BigInt  @default(0)
+  overtimeHours      Float   @default(0)
+  overtimeHours125   Float   @default(0) // heures sup soir 18h-22h
+  overtimeHours150   Float   @default(0) // heures sup nuit 22h-6h
+  overtimeHours200   Float   @default(0) // heures sup dimanche/férié
+  seniorityBonus     BigInt  @default(0) // prime d'ancienneté
+  transportAllowance BigInt  @default(0) // indemnité transport
+  otherBonuses       Json? // autres primes [{ label, amount }]
+
+  // EMP Bloc 0 — cotisations détaillées
+  cnpsAmount      BigInt @default(0) // CNPS salarié
+  irppAmount      BigInt @default(0) // Impôt sur le revenu
+  otherDeductions BigInt @default(0)
+
+  // EMP Bloc 0 — paiement effectif
+  paymentMethod      PayslipPaymentMethod @default(BANK_TRANSFER)
+  paymentBankAccount String? // ex: "Afriland First Bank · ****1842"
+  paymentReference   String? // ex: "BS-2026-04-NDF"
+
+  // EMP Bloc 0 — temps de travail synthèse
+  workedDays     Int   @default(0)
+  reportedHours  Float @default(0)
 
   status PayslipStatus @default(DRAFT)
 
@@ -582,7 +668,15 @@ model Payslip {
 
   @@unique([tenantId, userId, period])
   @@index([tenantId, period])
+  @@index([userId, period])
   @@map("payslips")
+}
+
+enum PayslipPaymentMethod {
+  BANK_TRANSFER // virement
+  MOBILE_MONEY // MOMO / Orange Money
+  CASH // espèces
+  CHECK // chèque
 }
 
 enum PayslipStatus {
@@ -1370,11 +1464,17 @@ model LeaveRequest {
   tenantId        String
   employeeKey     String // userId réel ou syn_*
   employeeName    String
+  // EMP Bloc 0 — relation optionnelle vers User pour les ouvriers/employés réels
+  userId          String?
+  user            User?       @relation("LeaveRequestOwner", fields: [userId], references: [id])
+  validatorUserId String?
+  validator       User?       @relation("LeaveRequestValidator", fields: [validatorUserId], references: [id])
   type            LeaveType
   startDate       DateTime
   endDate         DateTime
   daysCount       Float
   reason          String?
+  justificationDoc String? // URL document (certificat médical, etc.)
   status          LeaveStatus @default(PENDING)
   n1ValidatedBy   String?
   n1ValidatedAt   DateTime?
@@ -1386,12 +1486,14 @@ model LeaveRequest {
 
   @@index([tenantId, status])
   @@index([tenantId, startDate])
+  @@index([userId, startDate])
   @@map("leave_requests")
 }
 
 enum LeaveType {
   PAID_LEAVE
   RTT
+  COMPENSATORY // récupération heures sup (EMP Bloc 0)
   UNPAID
   SICK
   MATERNITY
@@ -1413,8 +1515,16 @@ model LeaveBalance {
   tenantId          String
   employeeKey       String    @unique
   employeeName      String
-  paidLeaveAcquired Float     @default(0)
+  // EMP Bloc 0 — relation vers User si interne
+  userId            String?   @unique
+  user              User?     @relation("LeaveBalanceOwner", fields: [userId], references: [id])
+  year              Int       @default(2026)
+  paidLeaveAcquired Float     @default(30) // congés payés acquis (30 j réglementaire CM)
   paidLeaveTaken    Float     @default(0)
+  paidLeaveRemaining Float    @default(30)
+  compensatoryDays  Float     @default(0) // récupération heures sup
+  sickDaysUsed      Float     @default(0)
+  unpaidLeaveUsed   Float     @default(0)
   rttBalance        Float     @default(0)
   lastTakenAt       DateTime?
   updatedAt         DateTime  @updatedAt
@@ -1447,6 +1557,58 @@ enum AbsenceReason {
   LATE
   STRIKE
   OTHER
+}
+
+// ========================================
+// EMP — Vue détaillée du pointage employé (Bloc 0 / fn 1.4)
+// ========================================
+// Pour chaque journée travaillée d'un employé, conserve l'heure d'arrivée, de
+// départ, la pause, le total d'heures (normales + sup) ainsi que la traçabilité
+// du pointeur (CC pour les ouvriers, badge automatique pour les bureaux).
+//
+// Une contestation peut être ouverte par l'employé via `contestedAt` /
+// `contestReason` et résolue par le CC ou le DTrav (`resolvedAt`, `resolvedBy`).
+model TimeReport {
+  id            String     @id @default(cuid())
+  tenantId      String
+  userId        String
+  user          User       @relation("TimeReportOwner", fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime   @db.Date
+  siteId        String? // chantier d'affectation pour les ouvriers
+  arrivalTime   DateTime?
+  departureTime DateTime?
+  breakMinutes  Int        @default(60)
+  totalHours    Float      @default(0)
+  standardHours Float      @default(0)
+  overtimeHours Float      @default(0)
+  overtimeType  String? // "evening_125" | "night_150" | "sunday_200"
+  status        TimeStatus @default(PRESENT)
+  // Pointeur (Chef Chantier pour ouvriers, "AUTO_BADGE" pour bureaux)
+  pointedBy     String
+  pointer       User?      @relation("TimeReportPointer", fields: [pointedBy], references: [id])
+  // Contestation
+  contestedAt   DateTime?
+  contestReason String?
+  resolvedAt    DateTime?
+  resolvedBy    String?
+  resolver      User?      @relation("TimeReportResolver", fields: [resolvedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([tenantId, date])
+  @@index([siteId, date])
+  @@map("time_reports")
+}
+
+enum TimeStatus {
+  PRESENT
+  ABSENT_JUSTIFIED
+  ABSENT_UNJUSTIFIED
+  HOLIDAY // jour férié
+  LEAVE // congé approuvé
+  SICK // arrêt maladie
 }
 
 // ========================================
@@ -1595,11 +1757,24 @@ model Document {
 
   status DocStatus @default(DRAFT)
 
+  // GED — Référent documentaire (Bloc 0)
+  spaceId           String?
+  space             DocumentSpace?           @relation(fields: [spaceId], references: [id])
+  classificationId  String?
+  classification    DocumentClassification?  @relation(fields: [classificationId], references: [id])
+  internalReference String?                  @unique // ex: "PEX-2026-0142"
+  confidentiality   Confidentiality          @default(INTERNAL)
+  workflowInstances DocumentWorkflowInstance[]
+  retentionRecord   DocumentRetentionRecord?
+  accessRequests    DocumentAccessRequest[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([tenantId, folder])
   @@index([tenantId, siteId])
+  @@index([tenantId, spaceId])
+  @@index([tenantId, classificationId])
   @@map("documents")
 }
 
@@ -4738,4 +4913,382 @@ model InterSiteTransferItem {
 
   @@index([transferId])
   @@map("inter_site_transfer_items")
+}
+
+// ========================================
+// INFORMATICIEN — BLOC 0 + 1 : INTEGRATIONS, API KEYS, WEBHOOKS, LOGS
+// ========================================
+model Integration {
+  id              String              @id @default(cuid())
+  tenantId        String
+  code            String // "CNPS_DIPE", "DGI_ETAX", "AFRILAND", "SGBC", ...
+  name            String
+  category        IntegrationCategory
+  endpoint        String?
+  credentials     Json? // chiffrés
+  status          IntegrationStatus   @default(ACTIVE)
+  lastSyncAt      DateTime?
+  lastSyncSuccess Boolean?
+  lastError       String?             @db.Text
+  retryCount      Int                 @default(0)
+  maxRetries      Int                 @default(5)
+  frequency       String? // "hourly", "daily_6am", "monthly_day5"
+  webhookSecret   String?
+  active          Boolean             @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@map("it_integrations")
+}
+
+enum IntegrationCategory {
+  SOCIAL_SECURITY
+  TAX_AUTHORITY
+  BANK
+  EMAIL
+  SMS_MESSAGING
+  STORAGE
+  MONITORING
+  OTHER
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  ERROR
+  PAUSED
+  DEACTIVATED
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  keyPrefix   String // tEr_live_xxx... (visible)
+  keyHash     String // bcrypt(secret)
+  scopes      String[] @default([])
+  ipWhitelist String[] @default([])
+
+  createdById String
+  createdBy   User      @relation("ApiKeyCreator", fields: [createdById], references: [id])
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  revokedById String?
+  revokedBy   User?     @relation("ApiKeyRevoker", fields: [revokedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, keyPrefix])
+  @@index([tenantId])
+  @@map("it_api_keys")
+}
+
+model WebhookEndpoint {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  name                String
+  url                 String
+  secret              String // HMAC
+  events              String[]  @default([]) // ["site.created", "timesheet.validated"]
+  active              Boolean   @default(true)
+  lastDeliveryAt      DateTime?
+  lastDeliverySuccess Boolean?
+  deliveryCount       Int       @default(0)
+  failureCount        Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("it_webhooks")
+}
+
+model TechnicalLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  timestamp DateTime @default(now())
+  level     LogLevel
+  service   String
+  message   String   @db.Text
+  details   Json?
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  ipAddress String?
+
+  @@index([tenantId, timestamp])
+  @@index([tenantId, level])
+  @@index([tenantId, service])
+  @@map("it_technical_logs")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+// ========================================
+// GED — RÉFÉRENT DOCUMENTAIRE (Bloc 0)
+// ========================================
+// Profil ARCHIVIST (Christelle EYENGA, BatimCAM) : transverse, structure
+// la documentation de toute l'entreprise. Architecture 3 niveaux :
+// Espace → Catégorie/Classification → Document. Workflows configurables,
+// rétention SYSCOHADA + droit camerounais (DUA), traçabilité ISO 9001.
+
+model DocumentSpace {
+  id              String          @id @default(cuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code            String // "MARCHES", "RH", "SITE_PONT_MFOUNDI"
+  name            String
+  description     String?
+  icon            String? // emoji
+  responsibleId   String?
+  responsible     User?           @relation("SpaceResponsible", fields: [responsibleId], references: [id])
+  siteId          String? // si espace = espace chantier
+  site            Site?           @relation(fields: [siteId], references: [id])
+  spaceType       SpaceType
+  confidentiality Confidentiality
+  active          Boolean         @default(true)
+
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, spaceType])
+  @@map("ged_document_spaces")
+}
+
+enum SpaceType {
+  CONSTRUCTION_SITE
+  MARKETS_CONTRACTS
+  HR
+  ACCOUNTING
+  LEGAL
+  QSE
+  OTHER
+}
+
+enum Confidentiality {
+  PUBLIC
+  INTERNAL
+  RESTRICTED
+  CONFIDENTIAL
+}
+
+model DocumentClassification {
+  id                 String                    @id @default(cuid())
+  tenantId           String
+  tenant             Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prefix             String // "CTR", "PEX", "BS_", "AVE"
+  code               String // "CONTRAT_MARCHE", "PLAN_EXECUTION"
+  name               String // "Contrat marché travaux"
+  category           ClassificationCategory
+  dua                String // "10 ans", "5 ans", "+5 ans après départ", "Permanente"
+  duaYears           Int? // valeur numérique pour calculs
+  duaTrigger         DuaTrigger
+  confidentiality    Confidentiality
+  workflowId         String?
+  workflow           DocumentWorkflowTemplate? @relation(fields: [workflowId], references: [id])
+  requiredValidators String[] // rôles requis (ex: ["DAF","DG"])
+  active             Boolean                   @default(true)
+
+  documents Document[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, prefix])
+  @@index([tenantId, category])
+  @@map("ged_document_classifications")
+}
+
+enum ClassificationCategory {
+  MARKETS
+  TECHNICAL
+  HR
+  ACCOUNTING
+  LEGAL
+  QSE
+  OTHER
+}
+
+enum DuaTrigger {
+  CREATION_DATE
+  END_OF_FISCAL_YEAR
+  EMPLOYEE_DEPARTURE
+  PROJECT_CLOSURE
+  OTHER
+}
+
+model DocumentWorkflowTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code        String // "WF-PLAN-V3", "WF-AVENANT"
+  name        String
+  description String?
+  steps       Json // [{ stepIndex, name, role, mandatory, slaHours }]
+  active      Boolean  @default(true)
+
+  classifications DocumentClassification[]
+  instances       DocumentWorkflowInstance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@map("ged_workflow_templates")
+}
+
+model DocumentWorkflowInstance {
+  id          String                   @id @default(cuid())
+  reference   String                   @unique // "WF-2026-0142"
+  templateId  String
+  template    DocumentWorkflowTemplate @relation(fields: [templateId], references: [id])
+  documentId  String
+  document    Document                 @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status      WorkflowStatus
+  currentStep Int                      @default(0)
+  initiatorId String
+  initiator   User                     @relation("WorkflowInitiator", fields: [initiatorId], references: [id])
+  startedAt   DateTime                 @default(now())
+  dueAt       DateTime?
+  completedAt DateTime?
+
+  steps DocumentWorkflowStep[]
+
+  @@index([documentId])
+  @@index([status, dueAt])
+  @@map("ged_workflow_instances")
+}
+
+enum WorkflowStatus {
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  CANCELLED
+  OVERDUE
+}
+
+model DocumentWorkflowStep {
+  id           String                   @id @default(cuid())
+  instanceId   String
+  instance     DocumentWorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  stepIndex    Int
+  stepName     String
+  assignedToId String
+  assignedTo   User                     @relation("WorkflowStepAssignee", fields: [assignedToId], references: [id])
+  status       StepStatus               @default(PENDING)
+  decidedAt    DateTime?
+  comment      String?                  @db.Text
+
+  @@unique([instanceId, stepIndex])
+  @@index([assignedToId, status])
+  @@map("ged_workflow_steps")
+}
+
+enum StepStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+model DocumentRetentionRecord {
+  id             String         @id @default(cuid())
+  documentId     String         @unique
+  document       Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  duaEndDate     DateTime // date calculée fin de DUA
+  archivalStatus ArchivalStatus @default(ACTIVE)
+  archivedAt     DateTime?
+  destroyedAt    DateTime?
+  destructionPv  String? // référence PV destruction
+  legalHold      Boolean        @default(false) // bloqué (contentieux, audit)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([archivalStatus, duaEndDate])
+  @@map("ged_retention_records")
+}
+
+enum ArchivalStatus {
+  ACTIVE
+  SEMI_ACTIVE
+  FINAL_ARCHIVE
+  PENDING_DESTRUCTION
+  DESTROYED
+}
+
+model DocumentAccessRequest {
+  id            String        @id @default(cuid())
+  requesterId   String
+  requester     User          @relation("AccessRequester", fields: [requesterId], references: [id])
+  documentId    String
+  document      Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  reason        String        @db.Text
+  status        AccessStatus  @default(PENDING)
+  decidedById   String?
+  decidedBy     User?         @relation("AccessDecider", fields: [decidedById], references: [id])
+  decidedAt     DateTime?
+  decisionNotes String?
+  expiresAt     DateTime?
+  requestedAt   DateTime      @default(now())
+
+  @@index([documentId])
+  @@index([status, requestedAt])
+  @@map("ged_access_requests")
+}
+
+enum AccessStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+}
+
+// Journal d'audit dédié GED (consultations, downloads, anomalies).
+// Distinct de AuditLog global pour permettre l'export ISO 9001 ciblé.
+model GedAuditEvent {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorId    String?
+  actor      User?         @relation("GedAuditActor", fields: [actorId], references: [id])
+  action     GedAuditAction
+  documentId String?
+  spaceId    String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  anomaly    Boolean       @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  resolutionNotes String?
+  createdAt  DateTime      @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action, createdAt])
+  @@index([tenantId, anomaly])
+  @@map("ged_audit_events")
+}
+
+enum GedAuditAction {
+  CONSULTATION
+  DOWNLOAD
+  IMPORT
+  MODIFICATION
+  DELETION
+  WORKFLOW_DECISION
+  DIFFUSION
+  ACCESS_REQUEST
+  ANOMALY
 }

@@ -11,6 +11,7 @@ const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
 const TYPE_LABEL: Record<LeaveType, string> = {
   PAID_LEAVE: "Congé payé",
   RTT: "RTT",
+  COMPENSATORY: "Récupération",
   UNPAID: "Sans solde",
   SICK: "Maladie",
   MATERNITY: "Maternité",
