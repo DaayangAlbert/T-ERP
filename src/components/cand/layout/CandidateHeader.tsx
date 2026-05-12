@@ -17,7 +17,10 @@ export function CandidateHeader({ fullName, email, initials, onMenuClick }: Prop
 
   async function handleLogout() {
     await fetch("/api/cand/auth/logout", { method: "POST" });
-    router.push("/cand/login");
+    // Après déconnexion, on ramène le candidat sur la landing publique
+    // plutôt que sur l'écran de login : il peut continuer à naviguer
+    // (offres, démo, FAQ) ou se reconnecter via la modale du header.
+    router.push("/");
     router.refresh();
   }
 

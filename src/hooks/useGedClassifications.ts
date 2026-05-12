@@ -79,3 +79,106 @@ export function useCreateClassification() {
     },
   });
 }
+
+export interface ClassificationDetail {
+  classification: {
+    id: string;
+    prefix: string;
+    code: string;
+    name: string;
+    category: ClassificationCategoryCode;
+    dua: string;
+    duaYears: number | null;
+    duaTrigger: string;
+    confidentiality: ClassificationConfidentiality;
+    requiredValidators: string[];
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+    workflow: { id: string; code: string; name: string; description: string | null } | null;
+  };
+  stats: {
+    documentsTotal: number;
+    documentsActive: number;
+    volumeBytes: number;
+    monthlySeries: Array<{ month: string; count: number }>;
+  };
+  recentDocuments: Array<{
+    id: string;
+    name: string;
+    reference: string | null;
+    sizeBytes: number;
+    createdAt: string;
+    spaceName: string | null;
+    spaceIcon: string | null;
+  }>;
+}
+
+export function useClassificationDetail(id: string | null) {
+  return useQuery<ClassificationDetail>({
+    queryKey: ["ged", "classification-detail", id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const r = await fetch(`/api/ged/classifications/${id}`, { credentials: "include" });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error ?? "Erreur chargement");
+      }
+      return r.json();
+    },
+  });
+}
+
+export function usePatchClassification(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      name?: string;
+      dua?: string;
+      duaYears?: number | null;
+      duaTrigger?: string;
+      confidentiality?: ClassificationConfidentiality;
+      requiredValidators?: string[];
+      workflowCode?: string | null;
+    }) => {
+      const r = await fetch(`/api/ged/classifications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(input),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error ?? "Erreur mise à jour");
+      }
+      return r.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ged", "classifications"] });
+      qc.invalidateQueries({ queryKey: ["ged", "classification-detail", id] });
+    },
+  });
+}
+
+export function useDeprecateClassification(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { reason: string }) => {
+      const r = await fetch(`/api/ged/classifications/${id}/deprecate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(input),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error ?? "Erreur");
+      }
+      return r.json() as Promise<{ ok: true; documentsKept: number }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ged", "classifications"] });
+      qc.invalidateQueries({ queryKey: ["ged", "classification-detail", id] });
+    },
+  });
+}

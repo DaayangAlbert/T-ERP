@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { AlertOctagon, Check, X, Download, FileText, Shield } from "lucide-react";
+import { AlertOctagon, Check, X, Download, FileText, Shield, Award, FileBarChart, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { useGedAudit, useDecideAccessRequest } from "@/hooks/useGedAudit";
+import { useAuth } from "@/hooks/useAuth";
+import { AnomalyDetailDrawer } from "@/components/ged/audit/AnomalyDetailDrawer";
+import { ComplianceReportDialog } from "@/components/ged/audit/ComplianceReportDialog";
+import { Iso9001ReadinessChecklist } from "@/components/ged/audit/Iso9001ReadinessChecklist";
 
 const ACTION_LABEL: Record<string, string> = {
   CONSULTATION: "Consultation",
@@ -36,6 +40,8 @@ function fmt(n: number): string {
 }
 
 export default function GedAuditPage() {
+  const { user } = useAuth();
+  const canResolve = user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN";
   const [action, setAction] = useState("");
   const [anomalyOnly, setAnomalyOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -43,6 +49,9 @@ export default function GedAuditPage() {
   const decide = useDecideAccessRequest();
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
+  const [openAnomalyId, setOpenAnomalyId] = useState<string | null>(null);
+  const [showComplianceReport, setShowComplianceReport] = useState(false);
+  const [showIso9001, setShowIso9001] = useState(false);
 
   if (isLoading || !data) {
     return <div className="h-64 animate-pulse rounded-xl bg-surface-alt" />;
@@ -59,21 +68,27 @@ export default function GedAuditPage() {
             Traçabilité tous accès · politique SYSCOHADA · droit camerounais · audit ISO 9001.
           </p>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           <a
             href="/api/ged/audit/export"
             className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12.5px] font-medium text-ink hover:bg-surface-alt"
           >
             <Download className="h-3.5 w-3.5" /> Export journal
           </a>
-          <a
-            href="/api/ged/audit/iso9001-readiness"
-            target="_blank"
-            rel="noopener"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-semibold text-white hover:bg-primary-700"
+          <button
+            type="button"
+            onClick={() => setShowIso9001(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12.5px] font-medium text-ink hover:bg-surface-alt"
           >
-            <FileText className="h-3.5 w-3.5" /> Rapport conformité
-          </a>
+            <Award className="h-3.5 w-3.5" /> ISO 9001
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowComplianceReport(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+          >
+            <FileBarChart className="h-3.5 w-3.5" /> Rapport conformité
+          </button>
         </div>
       </header>
 
@@ -130,9 +145,11 @@ export default function GedAuditPage() {
           </h2>
           <div className="flex flex-col gap-1.5">
             {data.alerts.map((a) => (
-              <div
+              <button
                 key={a.id}
-                className="flex flex-col gap-2 rounded-lg border border-rose-200 border-l-[4px] border-l-rose-500 bg-rose-50/60 px-3 py-2.5 sm:flex-row sm:items-center sm:gap-3"
+                type="button"
+                onClick={() => setOpenAnomalyId(a.id)}
+                className="flex w-full items-center gap-2 rounded-lg border border-rose-200 border-l-[4px] border-l-rose-500 bg-rose-50/60 px-3 py-2.5 text-left transition hover:bg-rose-50 sm:gap-3"
               >
                 <AlertOctagon className="h-4 w-4 flex-shrink-0 text-rose-700" />
                 <div className="min-w-0 flex-1">
@@ -142,7 +159,8 @@ export default function GedAuditPage() {
                     {format(new Date(a.createdAt), "dd MMM HH:mm", { locale: fr })}
                   </div>
                 </div>
-              </div>
+                <ChevronRight className="h-4 w-4 flex-shrink-0 text-rose-700" />
+              </button>
             ))}
           </div>
         </section>
@@ -244,7 +262,11 @@ export default function GedAuditPage() {
                   {data.journal.map((e) => (
                     <tr
                       key={e.id}
-                      className={clsx("border-t border-line", e.anomaly && "bg-rose-50/30")}
+                      onClick={() => e.anomaly && setOpenAnomalyId(e.id)}
+                      className={clsx(
+                        "border-t border-line",
+                        e.anomaly && "cursor-pointer bg-rose-50/30 hover:bg-rose-100/40",
+                      )}
                     >
                       <td className="px-3 py-2 font-mono text-[11px] text-ink-2">
                         {format(new Date(e.createdAt), "dd/MM HH:mm:ss", { locale: fr })}
@@ -323,6 +345,17 @@ export default function GedAuditPage() {
           </>
         )}
       </section>
+
+      {/* Drawer anomalie */}
+      <AnomalyDetailDrawer
+        anomalyId={openAnomalyId}
+        readOnly={!canResolve}
+        onClose={() => setOpenAnomalyId(null)}
+      />
+
+      {/* Dialogs */}
+      {showComplianceReport && <ComplianceReportDialog onClose={() => setShowComplianceReport(false)} />}
+      {showIso9001 && <Iso9001ReadinessChecklist onClose={() => setShowIso9001(false)} />}
 
       {/* Modale refus */}
       {denyingId && (

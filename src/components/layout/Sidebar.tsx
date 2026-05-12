@@ -43,6 +43,11 @@ import {
   ArrowLeftRight,
   Store,
   PieChart,
+  FolderOpen,
+  Search,
+  GitBranch,
+  Tags,
+  Archive,
   type LucideIcon,
 } from "lucide-react";
 
@@ -163,6 +168,30 @@ const RH_SECTION: NavSection = {
   ],
 };
 
+// Section exclusive au Candidat externe (compte CANDIDATE).
+const CAND_SECTION: NavSection = {
+  title: "Espace Candidat",
+  items: [
+    { label: "Tableau de bord", href: "/cand", icon: LayoutDashboard },
+    { label: "Mon profil", href: "/cand/profil", icon: User },
+    { label: "Mes candidatures", href: "/cand/candidatures", icon: ClipboardList },
+    { label: "Mes entretiens", href: "/cand/entretiens", icon: Calendar },
+    { label: "Offres recommandées", href: "/cand/offres", icon: Briefcase },
+  ],
+};
+
+// Section exclusive à l'Informaticien d'entreprise (Étienne ONANA).
+const IT_SECTION: NavSection = {
+  title: "Espace Informaticien",
+  items: [
+    { label: "Tableau de bord IT", href: "/it", icon: LayoutDashboard },
+    { label: "Utilisateurs", href: "/it/users", icon: Users },
+    { label: "Paramètres tenant", href: "/it/settings", icon: Settings },
+    { label: "Chantiers (admin)", href: "/it/sites", icon: Building2 },
+    { label: "Intégrations", href: "/it/integrations", icon: Network },
+  ],
+};
+
 // Section exclusive au Magasinier (Lucas TIENTCHEU). PWA mobile-first.
 const MAG_SECTION: NavSection = {
   title: "Espace Magasinier",
@@ -186,6 +215,20 @@ const LOG_SECTION: NavSection = {
     { label: "Flotte engins", href: "/log/flotte", icon: Truck, badge: { value: "42" } },
     { label: "Transferts", href: "/log/transferts", icon: ArrowLeftRight, badge: { value: "4", alert: true } },
     { label: "Statistiques achats", href: "/log/stats", icon: PieChart },
+  ],
+};
+
+// Section exclusive au Référent documentaire / GED (Christelle EYENGA · ARCHIVIST).
+// Profil transverse au siège : structure les 28 espaces documentaires de l'entreprise.
+const GED_SECTION: NavSection = {
+  title: "Espace GED",
+  items: [
+    { label: "Tableau de bord", href: "/ged", icon: LayoutDashboard },
+    { label: "Espaces documentaires", href: "/ged/espaces", icon: FolderOpen, badge: { value: "28" } },
+    { label: "Workflows", href: "/ged/workflows", icon: GitBranch, badge: { value: "12", alert: true } },
+    { label: "Nomenclature", href: "/ged/nomenclature", icon: Tags, badge: { value: "72" } },
+    { label: "Recherche & archivage", href: "/ged/recherche", icon: Search },
+    { label: "Audit & conformité", href: "/ged/audit", icon: Archive, badge: { value: "5", alert: true } },
   ],
 };
 
@@ -286,7 +329,7 @@ export function Sidebar() {
   //   Le DG la conserve pour supervision.
   const ROLES_WITH_DEDICATED_DASHBOARD = new Set([
     "DG", "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST",
   ]);
   const ACTIVITY_HIDDEN_BY_ROLE: Record<string, Set<string>> = {
     DG:             new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
@@ -295,13 +338,14 @@ export function Sidebar() {
     TECH_DIRECTOR:  new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     ACCOUNTANT:     new Set(["/comptabilite", "/rh", "/achats", "/stocks"]),
     LOGISTICS:      new Set(["/finances", "/comptabilite", "/rh"]),
+    ARCHIVIST:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     WAREHOUSE:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
   };
   const HIDES_ADMIN_SECTION = new Set([
     "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST",
   ]);
   const role = user?.role ?? "";
   const cleanedNav = NAV.map((section) => {
@@ -340,7 +384,13 @@ export function Sidebar() {
                       ? [MAG_SECTION, ...cleanedNav]
                       : user?.role === "LOGISTICS"
                         ? [LOG_SECTION, ...cleanedNav]
-                        : NAV;
+                        : user?.role === "TENANT_ADMIN"
+                          ? [IT_SECTION, ...cleanedNav]
+                          : user?.role === "ARCHIVIST"
+                            ? [GED_SECTION, ...cleanedNav]
+                            : user?.role === "CANDIDATE"
+                              ? [CAND_SECTION]
+                              : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);

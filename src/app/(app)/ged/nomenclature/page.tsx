@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tags, Download, Plus, X, Save, Shield } from "lucide-react";
+import { Tags, Download, Plus, X, Save, Shield, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -11,6 +11,7 @@ import {
   type ClassificationRow,
   type ClassificationConfidentiality,
 } from "@/hooks/useGedClassifications";
+import { ClassificationDetailDrawer } from "@/components/ged/nomenclature/ClassificationDetailDrawer";
 
 type Tab = "ALL" | ClassificationCategoryCode;
 
@@ -44,6 +45,7 @@ export default function GedNomenclaturePage() {
 
   const [tab, setTab] = useState<Tab>("ALL");
   const [showNew, setShowNew] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const { data, isLoading } = useGedClassifications(tab);
 
   if (isLoading || !data) {
@@ -130,11 +132,16 @@ export default function GedNomenclaturePage() {
                   <th className="px-3 py-2 text-left">Confidentialité</th>
                   <th className="px-3 py-2 text-left">Workflow</th>
                   <th className="px-3 py-2 text-right">Docs liés</th>
+                  <th className="px-3 py-2 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((r) => (
-                  <tr key={r.id} className="hover:bg-surface-alt/40">
+                  <tr
+                    key={r.id}
+                    className="cursor-pointer hover:bg-surface-alt/40"
+                    onClick={() => setOpenId(r.id)}
+                  >
                     <td className="px-3 py-2 font-mono text-[12px] font-bold text-primary-700">{r.prefix}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium text-ink">{r.name}</div>
@@ -148,6 +155,9 @@ export default function GedNomenclaturePage() {
                     </td>
                     <td className="px-3 py-2 text-[11.5px] font-mono text-ink-3">{r.workflowCode ?? "—"}</td>
                     <td className="px-3 py-2 text-right font-mono text-[12px] text-ink">{r.documentsCount}</td>
+                    <td className="px-3 py-2 text-right">
+                      <ChevronRight className="ml-auto h-4 w-4 text-ink-3" />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -157,7 +167,12 @@ export default function GedNomenclaturePage() {
           {/* Cards mobile */}
           <ul className="space-y-2 md:hidden">
             {rows.map((r) => (
-              <li key={r.id} className="rounded-xl border border-line bg-white p-3">
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => setOpenId(r.id)}
+                  className="w-full rounded-xl border border-line bg-white p-3 text-left hover:bg-surface-alt/40"
+                >
                 <header className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="font-mono text-[11px] font-bold text-primary-700">{r.prefix}</div>
@@ -181,6 +196,7 @@ export default function GedNomenclaturePage() {
                 <div className="mt-2 flex items-center gap-1 text-[11px] text-ink-3">
                   <Tags className="h-3 w-3" /> {r.documentsCount} documents liés
                 </div>
+                </button>
               </li>
             ))}
           </ul>
@@ -198,6 +214,12 @@ export default function GedNomenclaturePage() {
       </section>
 
       {showNew && <NewClassificationDialog onClose={() => setShowNew(false)} />}
+
+      <ClassificationDetailDrawer
+        classificationId={openId}
+        readOnly={!canEdit}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, FileText, Archive, AlertTriangle, Calendar, Filter, Shield } from "lucide-react";
+import { Search, FileText, Archive, AlertTriangle, Calendar, Filter, Shield, Cog } from "lucide-react";
 import { clsx } from "clsx";
 import { useArchivalStats, useGedSearch, type SearchFilters, type SearchResultItem } from "@/hooks/useGedSearch";
 import { useGedClassifications, type ClassificationRow } from "@/hooks/useGedClassifications";
+import { useAuth } from "@/hooks/useAuth";
+import { RecentSearchesList } from "@/components/ged/recherche/RecentSearchesList";
+import { ArchivalPolicyDialog } from "@/components/ged/recherche/ArchivalPolicyDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 function fmt(n: number): string {
   return new Intl.NumberFormat("fr-FR").format(n);
@@ -31,14 +35,22 @@ const ARCH_STATUS_LABEL: Record<string, string> = {
 };
 
 export default function GedRecherchePage() {
+  const { user } = useAuth();
+  const canEditPolicy = user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN";
+  const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({});
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
   const search = useGedSearch();
   const { data: stats } = useArchivalStats();
   const { data: classifs } = useGedClassifications("ALL");
 
-  const runSearch = () => search.mutate({ query, filters, page: 1 });
+  const runSearch = () => {
+    search.mutate({ query, filters, page: 1 }, {
+      onSuccess: () => qc.invalidateQueries({ queryKey: ["ged", "search", "recent"] }),
+    });
+  };
 
   useEffect(() => {
     search.mutate({ query: "", filters: {}, page: 1 });
@@ -49,11 +61,32 @@ export default function GedRecherchePage() {
 
   return (
     <div className="space-y-3 pb-20">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Recherche & archivage</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Moteur full-text · {fmt(stats?.totals.active ?? 0)} actifs · {fmt(stats?.totals.semiActive ?? 0)} semi-actifs · {fmt(stats?.totals.finalArchive ?? 0)} archives définitives
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Recherche & archivage</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Moteur full-text · {fmt(stats?.totals.active ?? 0)} actifs · {fmt(stats?.totals.semiActive ?? 0)} semi-actifs ·{" "}
+            {fmt(stats?.totals.finalArchive ?? 0)} archives définitives
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12.5px] font-semibold text-ink hover:bg-surface-alt"
+          >
+            <Filter className="h-3.5 w-3.5" /> Recherche avancée
+          </button>
+          {canEditPolicy && (
+            <button
+              type="button"
+              onClick={() => setShowPolicy(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+            >
+              <Cog className="h-3.5 w-3.5" /> Politique archivage
+            </button>
+          )}
+        </div>
       </header>
 
       {/* KPIs */}
@@ -179,6 +212,18 @@ export default function GedRecherchePage() {
           )}
         </section>
       )}
+
+      {/* Recherches récentes */}
+      <RecentSearchesList
+        onRelaunch={(q) => {
+          setQuery(q);
+          search.mutate({ query: q, filters, page: 1 }, {
+            onSuccess: () => qc.invalidateQueries({ queryKey: ["ged", "search", "recent"] }),
+          });
+        }}
+      />
+
+      {showPolicy && <ArchivalPolicyDialog onClose={() => setShowPolicy(false)} />}
     </div>
   );
 }

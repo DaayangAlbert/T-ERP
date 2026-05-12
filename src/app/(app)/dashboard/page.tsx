@@ -17,6 +17,7 @@ const ROLE_TO_PATH: Record<Role, string> = {
   LOGISTICS: "/dashboard/logistics",
   WAREHOUSE: "/dashboard/warehouse",
   GED: "/dashboard/ged",
+  ARCHIVIST: "/ged",
   EMPLOYEE: "/dashboard/employee",
   CANDIDATE: "/dashboard/candidate",
   TENANT_ADMIN: "/dashboard/tenant-admin",

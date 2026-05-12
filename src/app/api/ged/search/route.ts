@@ -108,6 +108,23 @@ export async function POST(req: Request) {
     prisma.document.count({ where }),
   ]);
 
+  // Historise la recherche (uniquement si query non vide ou filtres actifs, et page=1)
+  const hasFilter = Object.keys(filters).length > 0;
+  if ((q || hasFilter) && page === 1) {
+    prisma.gedAuditEvent
+      .create({
+        data: {
+          tenantId: session.tenantId,
+          actorId: session.sub,
+          action: "MODIFICATION",
+          metadata: { kind: "SEARCH", query: q || null, filters, total },
+        },
+      })
+      .catch(() => {
+        /* non bloquant */
+      });
+  }
+
   const authorIds = Array.from(new Set(items.map((d) => d.authorId)));
   const authors = await prisma.user.findMany({
     where: { id: { in: authorIds } },
