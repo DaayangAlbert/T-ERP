@@ -125,6 +125,14 @@ async function main() {
   await prisma.maintenanceSchedule.deleteMany();
   await prisma.equipmentAssignment.deleteMany();
   await prisma.equipment.deleteMany();
+  // GED — purge avant users + documents (FK)
+  await prisma.documentAccessRequest.deleteMany();
+  await prisma.documentRetentionRecord.deleteMany();
+  await prisma.documentWorkflowStep.deleteMany();
+  await prisma.documentWorkflowInstance.deleteMany();
+  await prisma.documentWorkflowTemplate.deleteMany();
+  await prisma.documentClassification.deleteMany();
+  await prisma.documentSpace.deleteMany();
   await prisma.site.deleteMany();
   await prisma.user.deleteMany();
   await prisma.tenant.deleteMany();
@@ -315,6 +323,16 @@ async function main() {
       position: "Logisticien d'entreprise",
       category: "Cadre 10",
       hireDate: new Date("2020-06-15"),
+    },
+    {
+      email: "christelle@batimcam.cm",
+      firstName: "Christelle",
+      lastName: "EYENGA",
+      role: Role.ARCHIVIST,
+      employeeId: "EMP-2019-00018",
+      position: "Documentaliste-Archiviste (Référent documentaire)",
+      category: "Cadre 9",
+      hireDate: new Date("2019-09-02"),
     },
     {
       email: "olivier@batimcam.cm",
@@ -4497,6 +4515,165 @@ async function main() {
       });
     }
     console.log(`✓ LOG : 4 transferts en attente + 3 historiques seedés`);
+  }
+
+  // ===== GED BLOC 0 — Référent documentaire (Christelle EYENGA) =====
+  const christelle = createdUsers.find((u) => u.role === Role.ARCHIVIST);
+  if (christelle) {
+    // Flag canReadAllDocuments + assignedSiteIds=[]
+    await prisma.user.update({
+      where: { id: christelle.id },
+      data: { canReadAllDocuments: true, assignedSiteIds: [] },
+    });
+
+    const allGedSites = await prisma.site.findMany({
+      where: { tenantId: { in: [tenant.id, yaounde.id, douala.id, logistique.id] } },
+      take: 23,
+    });
+
+    // 5 espaces transverses
+    const transverseSpaces = [
+      { code: "MARCHES", name: "Marchés & contrats", icon: "📜", spaceType: "MARKETS_CONTRACTS", confidentiality: "RESTRICTED" },
+      { code: "RH", name: "Ressources humaines", icon: "👥", spaceType: "HR", confidentiality: "CONFIDENTIAL" },
+      { code: "COMPTA", name: "Comptable & fiscal", icon: "💰", spaceType: "ACCOUNTING", confidentiality: "RESTRICTED" },
+      { code: "LEGAL", name: "Juridique", icon: "⚖", spaceType: "LEGAL", confidentiality: "CONFIDENTIAL" },
+      { code: "QSE", name: "Qualité Sécurité Environnement", icon: "🛡", spaceType: "QSE", confidentiality: "INTERNAL" },
+    ];
+    for (const s of transverseSpaces) {
+      await prisma.documentSpace.upsert({
+        where: { tenantId_code: { tenantId: tenant.id, code: s.code } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          code: s.code,
+          name: s.name,
+          icon: s.icon,
+          spaceType: s.spaceType as any,
+          confidentiality: s.confidentiality as any,
+          responsibleId: christelle.id,
+          active: true,
+        },
+      });
+    }
+    // 1 espace par chantier (23)
+    for (const s of allGedSites) {
+      await prisma.documentSpace.upsert({
+        where: { tenantId_code: { tenantId: tenant.id, code: `SITE_${s.code}` } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          code: `SITE_${s.code}`,
+          name: `Chantier ${s.name}`,
+          icon: "🏗",
+          spaceType: "CONSTRUCTION_SITE" as any,
+          confidentiality: "INTERNAL" as any,
+          siteId: s.id,
+          active: true,
+        },
+      });
+    }
+
+    // 8 workflows templates
+    const workflowTemplates = [
+      { code: "WF-MARCHE-V2", name: "Validation contrat marché (V2)", steps: [{ stepIndex: 0, name: "Étude juridique", role: "DAF", mandatory: true, slaHours: 48 }, { stepIndex: 1, name: "Validation DG", role: "DG", mandatory: true, slaHours: 24 }] },
+      { code: "WF-PLAN-V3", name: "Validation plan exécution (V3)", steps: [{ stepIndex: 0, name: "Revue technique DT", role: "TECH_DIRECTOR", mandatory: true, slaHours: 24 }, { stepIndex: 1, name: "Approbation MOA", role: "EXTERNAL", mandatory: false, slaHours: 72 }] },
+      { code: "WF-PVR", name: "PV de réception", steps: [{ stepIndex: 0, name: "Constatation chantier", role: "WORKS_DIRECTOR", mandatory: true, slaHours: 24 }, { stepIndex: 1, name: "Validation MOA", role: "EXTERNAL", mandatory: true, slaHours: 168 }] },
+      { code: "WF-AVENANT", name: "Avenant marché", steps: [{ stepIndex: 0, name: "Étude DT", role: "TECH_DIRECTOR", mandatory: true, slaHours: 24 }, { stepIndex: 1, name: "Validation DAF", role: "DAF", mandatory: true, slaHours: 24 }, { stepIndex: 2, name: "Signature DG", role: "DG", mandatory: true, slaHours: 12 }] },
+      { code: "WF-BC", name: "Bon de commande > 5M", steps: [{ stepIndex: 0, name: "Validation DAF", role: "DAF", mandatory: true, slaHours: 48 }] },
+      { code: "WF-NC", name: "Non-conformité qualité", steps: [{ stepIndex: 0, name: "Analyse QSE", role: "QSE", mandatory: true, slaHours: 24 }] },
+      { code: "WF-DOE", name: "DOE (Dossier ouvrages exécutés)", steps: [{ stepIndex: 0, name: "Compilation DT", role: "TECH_DIRECTOR", mandatory: true, slaHours: 240 }] },
+      { code: "WF-FAC", name: "Facture fournisseur > 1M", steps: [{ stepIndex: 0, name: "Validation compta", role: "ACCOUNTANT", mandatory: true, slaHours: 24 }, { stepIndex: 1, name: "Validation DAF", role: "DAF", mandatory: true, slaHours: 24 }] },
+    ];
+    const createdTemplates: Record<string, string> = {};
+    for (const w of workflowTemplates) {
+      const tpl = await prisma.documentWorkflowTemplate.upsert({
+        where: { tenantId_code: { tenantId: tenant.id, code: w.code } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          code: w.code,
+          name: w.name,
+          steps: w.steps as any,
+          active: true,
+        },
+      });
+      createdTemplates[w.code] = tpl.id;
+    }
+
+    // Classifications minimales (6 prefixes pour démo)
+    const classifications = [
+      { prefix: "CTR", code: "CONTRAT_MARCHE", name: "Contrat marché travaux", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-MARCHE-V2" },
+      { prefix: "AVE", code: "AVENANT", name: "Avenant marché", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-AVENANT" },
+      { prefix: "PEX", code: "PLAN_EXECUTION", name: "Plan d'exécution", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL", workflow: "WF-PLAN-V3" },
+      { prefix: "PVR", code: "PV_RECEPTION", name: "PV de réception", category: "TECHNICAL", dua: "30 ans", duaYears: 30, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-PVR" },
+      { prefix: "BS_", code: "BULLETIN_SALAIRE", name: "Bulletin de salaire", category: "HR", dua: "5 ans + 5 après départ", duaYears: 10, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "FAC", code: "FACTURE_FOURNISSEUR", name: "Facture fournisseur", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED", workflow: "WF-FAC" },
+    ];
+    for (const c of classifications) {
+      await prisma.documentClassification.upsert({
+        where: { tenantId_prefix: { tenantId: tenant.id, prefix: c.prefix } },
+        update: {},
+        create: {
+          tenantId: tenant.id,
+          prefix: c.prefix,
+          code: c.code,
+          name: c.name,
+          category: c.category as any,
+          dua: c.dua,
+          duaYears: c.duaYears,
+          duaTrigger: c.duaTrigger as any,
+          confidentiality: c.confidentiality as any,
+          workflowId: c.workflow ? createdTemplates[c.workflow] : null,
+          requiredValidators: [],
+          active: true,
+        },
+      });
+    }
+
+    // 12 workflow instances en cours
+    const allSpaces = await prisma.documentSpace.findMany({ where: { tenantId: tenant.id }, take: 5 });
+    const wfTpl = await prisma.documentWorkflowTemplate.findFirst({ where: { tenantId: tenant.id, code: "WF-PLAN-V3" } });
+    if (wfTpl && allSpaces.length > 0) {
+      for (let i = 0; i < 12; i++) {
+        const space = allSpaces[i % allSpaces.length];
+        // Crée d'abord un Document minimal
+        const doc = await prisma.document.create({
+          data: {
+            tenantId: tenant.id,
+            name: `PEX-2026-${String(140 + i).padStart(4, "0")} — Plan exécution`,
+            mimeType: "application/pdf",
+            sizeBytes: BigInt(1024 * (200 + i * 50)),
+            url: `https://example.com/docs/pex-${i}.pdf`,
+            authorId: christelle.id,
+            spaceId: space.id,
+            internalReference: `PEX-2026-${String(140 + i).padStart(4, "0")}`,
+            confidentiality: "INTERNAL" as any,
+          },
+        });
+        const inst = await prisma.documentWorkflowInstance.create({
+          data: {
+            reference: `WF-2026-${String(140 + i).padStart(4, "0")}`,
+            templateId: wfTpl.id,
+            documentId: doc.id,
+            status: "IN_PROGRESS" as any,
+            currentStep: 0,
+            initiatorId: christelle.id,
+            dueAt: new Date(Date.now() + (3 + (i % 5)) * 86400_000),
+          },
+        });
+        await prisma.documentWorkflowStep.create({
+          data: {
+            instanceId: inst.id,
+            stepIndex: 0,
+            stepName: "Revue technique DT",
+            assignedToId: christelle.id,
+            status: "PENDING" as any,
+          },
+        });
+      }
+    }
+
+    console.log(`✓ GED : Christelle + 5 espaces transverses + 23 espaces chantiers + 8 workflows + 6 classifications + 12 instances en cours`);
   }
 
   console.log("\n✅ Seed terminé.\n");
