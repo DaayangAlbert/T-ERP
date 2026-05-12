@@ -4608,14 +4608,92 @@ async function main() {
       createdTemplates[w.code] = tpl.id;
     }
 
-    // Classifications minimales (6 prefixes pour démo)
+    // Nomenclature documentaire complète — 72 types · 6 catégories
+    // Conforme SYSCOHADA + Code du travail Cameroun + CNPS + DGI + BTP
     const classifications = [
+      // MARCHÉS (14)
       { prefix: "CTR", code: "CONTRAT_MARCHE", name: "Contrat marché travaux", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-MARCHE-V2" },
-      { prefix: "AVE", code: "AVENANT", name: "Avenant marché", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-AVENANT" },
+      { prefix: "AVE", code: "AVENANT", name: "Avenant contrat marché", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-AVENANT" },
+      { prefix: "CON", code: "CONVENTION_PARTENARIAT", name: "Convention de partenariat", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "BCC", code: "BON_COMMANDE_CADRE", name: "Bon de commande cadre", category: "MARKETS", dua: "5 ans", duaYears: 5, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "INTERNAL" },
+      { prefix: "BCM", code: "BON_COMMANDE_MARCHE", name: "Bon de commande marché", category: "MARKETS", dua: "5 ans", duaYears: 5, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "INTERNAL", workflow: "WF-BC" },
+      { prefix: "MAP", code: "MARCHE_PRESTATION", name: "Marché de prestation", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "AON", code: "APPEL_OFFRES", name: "Dossier appel d'offres", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "PVO", code: "PV_OUVERTURE_OFFRES", name: "PV ouverture des offres", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "PVA", code: "PV_ATTRIBUTION", name: "PV attribution marché", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "SST", code: "CONTRAT_SOUS_TRAITANCE", name: "Contrat de sous-traitance", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "GAR", code: "GARANTIE_BANCAIRE", name: "Garantie bancaire / caution", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "OS_", code: "ORDRE_SERVICE", name: "Ordre de service", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "DDC", code: "DECOMPTE_DEFINITIF", name: "Décompte définitif", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+      { prefix: "RES", code: "RESILIATION_MARCHE", name: "Acte de résiliation", category: "MARKETS", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+
+      // TECHNIQUES (18)
       { prefix: "PEX", code: "PLAN_EXECUTION", name: "Plan d'exécution", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL", workflow: "WF-PLAN-V3" },
+      { prefix: "DOE", code: "DOSSIER_OUVRAGE_EXECUTE", name: "Dossier ouvrage exécuté", category: "TECHNICAL", dua: "30 ans", duaYears: 30, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL", workflow: "WF-DOE" },
+      { prefix: "CSC", code: "CAHIER_SPECIFICATIONS", name: "Cahier des spécifications techniques", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "CCT", code: "CCTP", name: "CCTP — Clauses techniques", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
       { prefix: "PVR", code: "PV_RECEPTION", name: "PV de réception", category: "TECHNICAL", dua: "30 ans", duaYears: 30, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED", workflow: "WF-PVR" },
+      { prefix: "PVB", code: "PV_VISITE_BCT", name: "PV de visite BCT", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "LAB", code: "RAPPORT_ESSAI_LAB", name: "Rapport essai laboratoire", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "RTE", code: "RAPPORT_TECHNIQUE", name: "Rapport technique d'expertise", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "ETU", code: "ETUDE_SOL", name: "Étude de sol géotechnique", category: "TECHNICAL", dua: "30 ans", duaYears: 30, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "MET", code: "METRES_QUANTITES", name: "Métrés et quantités", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "CR_", code: "COMPTE_RENDU_REUNION", name: "Compte-rendu de réunion", category: "TECHNICAL", dua: "5 ans", duaYears: 5, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "FCH", code: "FICHE_TECHNIQUE", name: "Fiche technique produit", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "PHO", code: "PHOTO_CHANTIER", name: "Photo de chantier datée", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "JCH", code: "JOURNAL_CHANTIER", name: "Journal de chantier", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "MOL", code: "METHODE_OPERATOIRE", name: "Méthode opératoire", category: "TECHNICAL", dua: "5 ans", duaYears: 5, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "PLG", code: "PLANNING_PROJET", name: "Planning projet Gantt", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "REC", code: "RAPPORT_AVANCEMENT", name: "Rapport d'avancement mensuel", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL" },
+      { prefix: "BPU", code: "BORDEREAU_PRIX_UNITAIRES", name: "Bordereau prix unitaires", category: "TECHNICAL", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "RESTRICTED" },
+
+      // RH (12)
+      { prefix: "CDT", code: "CONTRAT_TRAVAIL", name: "Contrat de travail", category: "HR", dua: "+5 ans après départ", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
       { prefix: "BS_", code: "BULLETIN_SALAIRE", name: "Bulletin de salaire", category: "HR", dua: "5 ans + 5 après départ", duaYears: 10, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "EVA", code: "ENTRETIEN_EVALUATION", name: "Entretien d'évaluation", category: "HR", dua: "5 ans", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "POL", code: "POLITIQUE_RH", name: "Politique RH / procédure", category: "HR", dua: "Permanente", duaYears: null, duaTrigger: "OTHER", confidentiality: "INTERNAL" },
+      { prefix: "AVT", code: "AVENANT_CONTRAT", name: "Avenant contrat travail", category: "HR", dua: "+5 ans après départ", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "CNG", code: "DEMANDE_CONGE", name: "Demande / décompte congés", category: "HR", dua: "5 ans", duaYears: 5, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "CONFIDENTIAL" },
+      { prefix: "FOR", code: "ATTESTATION_FORMATION", name: "Attestation formation", category: "HR", dua: "+5 ans après départ", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "INTERNAL" },
+      { prefix: "DSR", code: "DOSSIER_RECRUTEMENT", name: "Dossier de recrutement", category: "HR", dua: "5 ans", duaYears: 5, duaTrigger: "CREATION_DATE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "SAN", code: "SANCTION_DISCIPLINAIRE", name: "Sanction disciplinaire", category: "HR", dua: "5 ans", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "MED", code: "VISITE_MEDICALE", name: "Visite médicale travail", category: "HR", dua: "+5 ans après départ", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "STC", code: "SOLDE_TOUT_COMPTE", name: "Solde de tout compte", category: "HR", dua: "+5 ans après départ", duaYears: 5, duaTrigger: "EMPLOYEE_DEPARTURE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "CNS", code: "COTISATION_CNPS", name: "Cotisations CNPS / déclarations", category: "HR", dua: "30 ans", duaYears: 30, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+
+      // COMPTABLES (16)
       { prefix: "FAC", code: "FACTURE_FOURNISSEUR", name: "Facture fournisseur", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED", workflow: "WF-FAC" },
+      { prefix: "FCL", code: "FACTURE_CLIENT", name: "Facture client", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "BIL", code: "BILAN_ANNUEL", name: "Bilan annuel", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "CDR", code: "COMPTE_RESULTAT", name: "Compte de résultat", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "LIV", code: "LIVRE_JOURNAL", name: "Livre journal SYSCOHADA", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "GLE", code: "GRAND_LIVRE", name: "Grand livre comptable", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "BLN", code: "BALANCE_GENERALE", name: "Balance générale", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "DEC", code: "DECLARATION_FISCALE", name: "Déclaration fiscale DGI", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "CONFIDENTIAL" },
+      { prefix: "TVA", code: "DECLARATION_TVA", name: "Déclaration TVA mensuelle", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "CONFIDENTIAL" },
+      { prefix: "IRP", code: "IMPOT_REVENUS", name: "Impôts revenus / IRPP", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "CONFIDENTIAL" },
+      { prefix: "RAP", code: "RAPPROCHEMENT_BANCAIRE", name: "Rapprochement bancaire", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "RIB", code: "RELEVE_BANCAIRE", name: "Relevé bancaire mensuel", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "CONFIDENTIAL" },
+      { prefix: "PRO", code: "PROVISIONS_COMPTABLES", name: "Provisions comptables", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "IMO", code: "REGISTRE_IMMOBILISATIONS", name: "Registre immobilisations", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "CLO", code: "DOSSIER_CLOTURE", name: "Dossier de clôture annuelle", category: "ACCOUNTING", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "BUD", code: "BUDGET_PREVISIONNEL", name: "Budget prévisionnel", category: "ACCOUNTING", dua: "5 ans", duaYears: 5, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+
+      // JURIDIQUES (8)
+      { prefix: "STA", code: "STATUTS_SOCIETE", name: "Statuts de société", category: "LEGAL", dua: "Permanente", duaYears: null, duaTrigger: "OTHER", confidentiality: "CONFIDENTIAL" },
+      { prefix: "PVG", code: "PV_AG", name: "PV assemblée générale", category: "LEGAL", dua: "30 ans", duaYears: 30, duaTrigger: "CREATION_DATE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "PVC", code: "PV_CA", name: "PV conseil administration", category: "LEGAL", dua: "30 ans", duaYears: 30, duaTrigger: "CREATION_DATE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "RCC", code: "REGISTRE_COMMERCE", name: "Registre commerce RCCM", category: "LEGAL", dua: "Permanente", duaYears: null, duaTrigger: "OTHER", confidentiality: "RESTRICTED" },
+      { prefix: "AGR", code: "AGREMENT_ADMINISTRATIF", name: "Agrément administratif", category: "LEGAL", dua: "Permanente", duaYears: null, duaTrigger: "OTHER", confidentiality: "INTERNAL" },
+      { prefix: "ASS", code: "POLICE_ASSURANCE", name: "Police d'assurance", category: "LEGAL", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+      { prefix: "CON_J", code: "CONTENTIEUX", name: "Dossier contentieux", category: "LEGAL", dua: "30 ans", duaYears: 30, duaTrigger: "CREATION_DATE", confidentiality: "CONFIDENTIAL" },
+      { prefix: "DEP", code: "DEPOT_LEGAL", name: "Dépôt légal annuel", category: "LEGAL", dua: "10 ans", duaYears: 10, duaTrigger: "END_OF_FISCAL_YEAR", confidentiality: "RESTRICTED" },
+
+      // QSE (4)
+      { prefix: "NCO", code: "NON_CONFORMITE", name: "Fiche non-conformité", category: "QSE", dua: "10 ans", duaYears: 10, duaTrigger: "PROJECT_CLOSURE", confidentiality: "INTERNAL", workflow: "WF-NC" },
+      { prefix: "INC", code: "DECLARATION_INCIDENT", name: "Déclaration d'incident", category: "QSE", dua: "10 ans", duaYears: 10, duaTrigger: "CREATION_DATE", confidentiality: "RESTRICTED" },
+      { prefix: "ISO", code: "AUDIT_ISO", name: "Rapport audit ISO 9001", category: "QSE", dua: "10 ans", duaYears: 10, duaTrigger: "CREATION_DATE", confidentiality: "INTERNAL" },
+      { prefix: "FDS", code: "FICHE_DONNEES_SECURITE", name: "Fiche données sécurité", category: "QSE", dua: "10 ans", duaYears: 10, duaTrigger: "CREATION_DATE", confidentiality: "INTERNAL" },
     ];
     for (const c of classifications) {
       await prisma.documentClassification.upsert({
@@ -4631,7 +4709,7 @@ async function main() {
           duaYears: c.duaYears,
           duaTrigger: c.duaTrigger as any,
           confidentiality: c.confidentiality as any,
-          workflowId: c.workflow ? createdTemplates[c.workflow] : null,
+          workflowId: (c as { workflow?: string }).workflow ? createdTemplates[(c as { workflow: string }).workflow] : null,
           requiredValidators: [],
           active: true,
         },
@@ -4681,7 +4759,7 @@ async function main() {
       }
     }
 
-    console.log(`✓ GED : Christelle + 5 espaces transverses + 23 espaces chantiers + 8 workflows + 6 classifications + 12 instances en cours`);
+    console.log(`✓ GED : Christelle + 5 espaces transverses + 23 espaces chantiers + 8 workflows + ${classifications.length} classifications + 12 instances en cours`);
   }
 
   console.log("\n✅ Seed terminé.\n");
