@@ -4759,6 +4759,37 @@ async function main() {
       }
     }
 
+    // Retention records pour démo archivage (fn 1.5)
+    const allDocs = await prisma.document.findMany({
+      where: { tenantId: tenant.id },
+      select: { id: true, createdAt: true },
+      take: 200,
+    });
+    const today = new Date();
+    let active = 0, semi = 0, fin = 0, pend = 0;
+    for (const [i, d] of allDocs.entries()) {
+      const bucket = i % 10;
+      let archivalStatus: "ACTIVE" | "SEMI_ACTIVE" | "FINAL_ARCHIVE" | "PENDING_DESTRUCTION" = "ACTIVE";
+      let yearsAhead = 8;
+      if (bucket === 0) { archivalStatus = "PENDING_DESTRUCTION"; yearsAhead = -1; pend++; }
+      else if (bucket < 3) { archivalStatus = "SEMI_ACTIVE"; yearsAhead = 3; semi++; }
+      else if (bucket < 5) { archivalStatus = "FINAL_ARCHIVE"; yearsAhead = 15; fin++; }
+      else { active++; }
+      const duaEnd = new Date(today);
+      duaEnd.setFullYear(duaEnd.getFullYear() + yearsAhead);
+      await prisma.documentRetentionRecord.upsert({
+        where: { documentId: d.id },
+        update: {},
+        create: {
+          documentId: d.id,
+          duaEndDate: duaEnd,
+          archivalStatus,
+          legalHold: i === 0, // 1 document avec gel légal
+        },
+      });
+    }
+    console.log(`✓ GED archivage : ${active} actifs · ${semi} semi-actifs · ${fin} archives déf. · ${pend} en attente destruction`);
+
     console.log(`✓ GED : Christelle + 5 espaces transverses + 23 espaces chantiers + 8 workflows + ${classifications.length} classifications + 12 instances en cours`);
   }
 
