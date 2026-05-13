@@ -67,9 +67,18 @@ export function LandingFooter() {
             </div>
           ))}
         </div>
-        <div className="mt-10 border-t border-white/10 pt-6 text-center text-[11px] text-white/50">
-          © {new Date().getFullYear()} T-ERP — Tous droits réservés. Conforme loi
-          2010/012 (Cameroun).
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-[11px] text-white/50">
+          <span>
+            © {new Date().getFullYear()} T-ERP — Tous droits réservés. Conforme loi
+            2010/012 (Cameroun).
+          </span>
+          <Link
+            href="/admin/login"
+            className="rounded-md border border-cyan-400/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-300/80 hover:border-cyan-400/60 hover:text-cyan-200"
+            title="Réservé aux super-admins Anthropic"
+          >
+            Console plateforme →
+          </Link>
         </div>
       </div>
     </footer>

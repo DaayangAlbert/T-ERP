@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/session";
 import { isCandidateSession } from "@/lib/auth";
+import { getAdminSession } from "@/lib/admin-session";
 import { LandingHeader } from "@/components/public/landing/LandingHeader";
 import { LandingHero } from "@/components/public/landing/LandingHero";
 import { ClientLogos } from "@/components/public/landing/ClientLogos";
@@ -39,6 +40,9 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
+  // Une session super-admin a priorité — l'utilisateur Anthropic doit
+  // toujours être ramené vers la console plateforme, pas la landing.
+  if (getAdminSession()) redirect("/admin");
   const session = getCurrentSession();
   if (session) {
     if (isCandidateSession(session)) redirect("/cand/dashboard");
