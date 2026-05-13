@@ -20,7 +20,7 @@ export function setAdminCookie(
   cookies().set(ADMIN_COOKIE, access, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite: "lax",
     path: "/",
     maxAge: parseTtlToSeconds(ACCESS_TTL),
   });
