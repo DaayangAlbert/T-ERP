@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { Role, ValidationStatus } from "@prisma/client";
+import { Role, ValidationStatus, ValidationType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.TENANT_ADMIN];
 
-const TECH_TYPES = ["AMENDMENT", "SUBCONTRACTING", "EQUIPMENT", "SPECIAL_METHOD", "TECHNICAL_HANDOVER"] as const;
+const TECH_TYPES: ValidationType[] = [
+  ValidationType.AMENDMENT,
+  ValidationType.SUBCONTRACTING,
+  ValidationType.EQUIPMENT,
+  ValidationType.SPECIAL_METHOD,
+  ValidationType.TECHNICAL_HANDOVER,
+];
 
 export async function GET() {
   const session = getCurrentSession();
@@ -20,7 +26,7 @@ export async function GET() {
     where: {
       tenantId: session.tenantId,
       status: ValidationStatus.PENDING,
-      type: { in: TECH_TYPES as unknown as string[] },
+      type: { in: TECH_TYPES },
     },
     include: {
       initiator: { select: { firstName: true, lastName: true } },

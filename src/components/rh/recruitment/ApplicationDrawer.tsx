@@ -18,6 +18,8 @@ const STAGE_LABEL: Record<AppStage, string> = {
   OFFER: "Décision",
   HIRED: "Embauchée",
   REJECTED: "Rejetée",
+  WITHDRAWN: "Retirée",
+  EXPIRED: "Expirée",
 };
 
 const NEXT_STAGES: Record<AppStage, AppStage[]> = {
@@ -28,6 +30,8 @@ const NEXT_STAGES: Record<AppStage, AppStage[]> = {
   OFFER: ["HIRED", "REJECTED"],
   HIRED: [],
   REJECTED: [],
+  WITHDRAWN: [],
+  EXPIRED: [],
 };
 
 function fmtDate(s: string): string {

@@ -15,6 +15,8 @@ const STAGE_LABEL: Record<AppStage, string> = {
   OFFER: "Décision",
   HIRED: "Embauchés",
   REJECTED: "Rejetés",
+  WITHDRAWN: "Retirées",
+  EXPIRED: "Expirées",
 };
 
 const COLUMNS_ORDER: AppStage[] = [

@@ -148,12 +148,12 @@ export function SiteDetailDrawer({ siteId, onClose }: Props) {
               <div>
                 <div className="flex justify-between text-[11px] text-ink-3">
                   <span>Avancement physique</span>
-                  <span className="font-mono">{Math.round(data.physicalProgress)} %</span>
+                  <span className="font-mono">{Math.round(data.progress)} %</span>
                 </div>
                 <div className="mt-1 h-2 rounded-full bg-line">
                   <div
                     className="h-2 rounded-full bg-violet-500"
-                    style={{ width: `${data.physicalProgress}%` }}
+                    style={{ width: `${data.progress}%` }}
                   />
                 </div>
               </div>

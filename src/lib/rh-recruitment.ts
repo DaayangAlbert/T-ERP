@@ -43,6 +43,8 @@ const STAGE_DISTRIBUTION: Record<AppStage, number> = {
   OFFER: 0,
   HIRED: 3,
   REJECTED: 0,
+  WITHDRAWN: 0,
+  EXPIRED: 0,
 };
 
 function pseudoRandom(seed: number): () => number {

@@ -24,6 +24,8 @@ export async function GET() {
     OFFER: 0,
     HIRED: 0,
     REJECTED: 0,
+    WITHDRAWN: 0,
+    EXPIRED: 0,
   };
   for (const a of apps) counts[getEffectiveStage(a)]++;
   return NextResponse.json({
