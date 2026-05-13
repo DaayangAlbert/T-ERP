@@ -17,22 +17,46 @@ datasource db {
 model Tenant {
   id           String       @id @default(cuid())
   slug         String       @unique // batimcam, njoya, socabtp...
+  subdomain    String? // batimcam.terp.cm
   name         String
-  taxId        String? // N° contribuable
+  taxId        String? // N° contribuable / NIU
   cnpsId       String? // N° employeur CNPS
+  country      String       @default("CM")
+  legalForm    LegalForm? // forme juridique
   plan         Plan         @default(STARTER)
+  subscriptionPlanId String? // SubscriptionPlan T-ERP (Super-Admin Bloc 0)
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
   status       TenantStatus @default(ACTIVE)
   logoUrl      String?
   primaryColor String?      @default("#A855F7")
+  secondaryColor String?
+
+  // Limites plan (override Enterprise)
+  maxUsers       Int? @default(50)
+  maxSites       Int? @default(10)
+  maxStorageGb   Int? @default(20)
+
+  // Cycle de vie SaaS (Super-Admin Bloc 0)
+  provisionedAt       DateTime?
+  suspendedAt         DateTime?
+  suspensionReason    String?
+  terminatedAt        DateTime?
+  dataRetentionEndAt  DateTime?
+  isDemoTenant        Boolean   @default(false)
+  demoExpiresAt       DateTime?
+
+  // Contact facturation
+  billingContactEmail String?
+  billingContactName  String?
+  billingAddress      String?
+  paymentMethod       PaymentMethod?
 
   // Hiérarchie de groupe (Phase 2 / fn 1.2)
-  // parentId pointe vers le tenant mère ; children est le côté inverse.
-  // isGroup = true sur la société mère pour permettre l'agrégation consolidée.
   isGroup  Boolean  @default(false)
   parentId String?
   parent   Tenant?  @relation("TenantGroup", fields: [parentId], references: [id])
   children Tenant[] @relation("TenantGroup")
-  sector   String? // étiquette libre : "Bâtiment", "Routier", "Logistique"…
+  sector   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,6 +110,12 @@ model Tenant {
   documentClassifications   DocumentClassification[]
   documentWorkflowTemplates DocumentWorkflowTemplate[]
   gedAuditEvents            GedAuditEvent[]
+  // Super-Admin Bloc 0 — plateforme SaaS
+  subscriptions             Subscription[]
+  saasInvoices              SaasInvoice[]
+  platformIncidents         PlatformIncident[]
+  globalAuditLogs           GlobalAuditLog[]
+  tenantFeatureFlags        TenantFeatureFlag[]
   // SG — Secrétaire Général (Bloc 0)
   clientContracts           ClientContract[]
   governanceMeetings        GovernanceMeeting[]
@@ -109,10 +139,30 @@ enum Plan {
 }
 
 enum TenantStatus {
+  PROVISIONING
   ACTIVE
   TRIAL
+  DEMO
   SUSPENDED
   ARCHIVED
+  TERMINATED
+  PURGED
+}
+
+enum LegalForm {
+  SA
+  SARL
+  SAS
+  GIE
+  INDIVIDUAL
+  OTHER
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  MOBILE_MONEY
+  CARD
+  INVOICE_30D
 }
 
 // ========================================
@@ -6045,4 +6095,311 @@ enum ApprovalStatus {
   EXPIRING_SOON
   EXPIRED
   RENEWED
+}
+
+// ========================================
+// SUPER-ADMIN PLATEFORME T-ERP (Bloc 0)
+// Profil trans-tenant Anthropic
+// ========================================
+
+model PlatformAdmin {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  role            PlatformAdminRole
+  // Sécurité (MFA hardware en V2 — pour MVP : OTP TOTP)
+  mfaSecret       String?
+  mfaEnabled      Boolean           @default(false)
+  yubikeyId       String?
+  whitelistedIps  String[]          @default([])
+  // Permissions granulaires
+  canCreateTenants            Boolean @default(false)
+  canSuspendTenants           Boolean @default(false)
+  canDeleteTenants            Boolean @default(false)
+  canManageBilling            Boolean @default(false)
+  canManagePlatformConfig     Boolean @default(false)
+  canViewAllTenantsData       Boolean @default(false)
+  canManageGlobalIntegrations Boolean @default(false)
+  canViewGlobalAudit          Boolean @default(false)
+  // Statut
+  status      PlatformAdminStatus @default(ACTIVE)
+  lastLoginAt DateTime?
+  lastLoginIp String?
+  createdAt   DateTime            @default(now())
+  createdBy   String?
+
+  globalAuditLogs GlobalAuditLog[]
+
+  @@map("platform_admins")
+}
+
+enum PlatformAdminRole {
+  CTO
+  SUPPORT_L3
+  BILLING_ADMIN
+  COMPLIANCE_OFFICER
+}
+
+enum PlatformAdminStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+model SubscriptionPlan {
+  id                  String  @id @default(cuid())
+  code                String  @unique // ESSENTIEL, PRO, ENTERPRISE
+  name                String
+  description         String?
+  monthlyPriceXAF     BigInt
+  annualPriceXAF      BigInt?
+  maxUsers            Int
+  maxSites            Int
+  maxStorageGb        Int
+  enabledModules      String[]
+  hasWhatsAppBusiness Boolean @default(false)
+  hasJobPortal        Boolean @default(false)
+  hasSgModule         Boolean @default(false)
+  supportSlaHours     Int     @default(24)
+  isRecommended       Boolean @default(false)
+  isPublic            Boolean @default(true)
+  orderIndex          Int     @default(0)
+  active              Boolean @default(true)
+
+  tenants       Tenant[]
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  tenantId           String
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId             String
+  plan               SubscriptionPlan   @relation(fields: [planId], references: [id])
+  startDate          DateTime
+  endDate            DateTime?
+  billingCycle       BillingCycle       @default(MONTHLY)
+  status             SubscriptionStatus @default(ACTIVE)
+  autoRenew          Boolean            @default(true)
+  mrrXAF             BigInt             @default(0)
+  cancelledAt        DateTime?
+  cancellationReason String?
+
+  invoices SaasInvoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("subscriptions")
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
+}
+
+model SaasInvoice {
+  id               String         @id @default(cuid())
+  reference        String         @unique // F-2026-0142
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptionId   String
+  subscription     Subscription   @relation(fields: [subscriptionId], references: [id])
+  periodStart      DateTime
+  periodEnd        DateTime
+  amountHT         BigInt
+  vatRate          Float          @default(19.25)
+  vatAmount        BigInt
+  amountTTC        BigInt
+  currency         String              @default("XAF")
+  status           SaasInvoiceStatus   @default(DRAFT)
+  issuedAt         DateTime            @default(now())
+  dueAt            DateTime
+  paidAt           DateTime?
+  paidAmount       BigInt?
+  paymentMethod    PaymentMethod?
+  paymentReference String?
+  pdfUrl           String?
+  reminderCount    Int            @default(0)
+  lastReminderAt   DateTime?
+
+  @@index([tenantId, status])
+  @@index([status, dueAt])
+  @@map("saas_invoices")
+}
+
+enum SaasInvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+model SaasMetric {
+  id             String   @id @default(cuid())
+  date           DateTime @db.Date
+  mrrXAF         BigInt
+  arrXAF         BigInt
+  activeTenants  Int
+  newTenants     Int
+  churnedTenants Int
+  activeUsers    Int
+  dau            Int
+  mau            Int
+  arpuXAF        BigInt
+  conversionRate Float?
+
+  @@unique([date])
+  @@map("saas_metrics")
+}
+
+model PlatformIncident {
+  id              String                  @id @default(cuid())
+  reference       String                  @unique // INC-2026-0142
+  title           String
+  description     String                  @db.Text
+  severity        PlatformIncidentSeverity
+  status          PlatformIncidentStatus  @default(OPEN)
+  affectedTenants String[]
+  tenantId        String?
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  module          String?
+  usersImpacted   Int?
+  detectedAt      DateTime         @default(now())
+  acknowledgedAt  DateTime?
+  resolvedAt      DateTime?
+  postmortemUrl   String?
+  assignedTo      String?
+  hypothesis      String?          @db.Text
+  resolution      String?          @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, severity])
+  @@map("platform_incidents")
+}
+
+enum PlatformIncidentSeverity {
+  P1_CRITICAL
+  P2_MAJOR
+  P3_MINOR
+  P4_INFO
+}
+
+enum PlatformIncidentStatus {
+  OPEN
+  INVESTIGATING
+  IDENTIFIED
+  MONITORING
+  RESOLVED
+  CLOSED
+}
+
+model GlobalAuditLog {
+  id                String              @id @default(cuid())
+  timestamp         DateTime            @default(now())
+  platformAdminId   String?
+  platformAdmin     PlatformAdmin?      @relation(fields: [platformAdminId], references: [id])
+  actorEmail        String
+  actorRole         PlatformAdminRole?
+  action            GlobalAuditAction
+  targetType        String
+  targetId          String?
+  targetDescription String?
+  tenantId          String?
+  tenant            Tenant?             @relation(fields: [tenantId], references: [id])
+  ipAddress         String
+  userAgent         String?
+  justification     String?
+  ticketReference   String?
+  beforeState       Json?
+  afterState        Json?
+
+  @@index([timestamp])
+  @@index([platformAdminId, timestamp])
+  @@index([tenantId, timestamp])
+  @@index([action, timestamp])
+  @@map("global_audit_logs")
+}
+
+enum GlobalAuditAction {
+  TENANT_PROVISIONED
+  TENANT_SUSPENDED
+  TENANT_REACTIVATED
+  TENANT_DELETED
+  PLAN_UPGRADED
+  PLAN_DOWNGRADED
+  INVOICE_ISSUED
+  INVOICE_CANCELLED
+  PAYMENT_RECORDED
+  CONFIG_MODIFIED
+  FEATURE_FLAG_TOGGLED
+  CROSS_TENANT_ACCESS
+  DATA_EXPORTED
+  GDPR_EXPORT
+  DB_MIGRATION
+  DEPLOYMENT
+  INTEGRATION_CONFIGURED
+  AUTH_MFA_SUCCESS
+  AUTH_MFA_FAILURE
+  ADMIN_CREATED
+  ADMIN_REVOKED
+  PERMISSIONS_CHANGED
+}
+
+model TenantFeatureFlag {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  flagKey   String
+  enabled   Boolean   @default(true)
+  enabledBy String
+  enabledAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@unique([tenantId, flagKey])
+  @@map("tenant_feature_flags")
+}
+
+model GlobalIntegration {
+  id                String                  @id @default(cuid())
+  code              String                  @unique // CNPS, DGI, WHATSAPP, R2…
+  name              String
+  provider          String
+  status            GlobalIntegrationStatus @default(ACTIVE)
+  apiVersion        String?
+  credentialsRef    String?
+  lastHealthCheckAt DateTime?
+  metricsLast24h    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_integrations")
+}
+
+enum GlobalIntegrationStatus {
+  ACTIVE
+  DEGRADED
+  DOWN
+  MAINTENANCE
+  DEPRECATED
 }
