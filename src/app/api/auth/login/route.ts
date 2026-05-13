@@ -10,7 +10,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { email, password } = loginSchema.parse(body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { tenant: { select: { slug: true } } },
+    });
     if (!user || user.status !== "ACTIVE") {
       return NextResponse.json({ error: "Identifiants invalides" }, { status: 401 });
     }
@@ -23,6 +26,7 @@ export async function POST(req: Request) {
     setAuthCookies({
       sub: user.id,
       tenantId: user.tenantId,
+      tenantSlug: user.tenant?.slug ?? null,
       role: user.role,
       email: user.email,
     });
@@ -40,6 +44,7 @@ export async function POST(req: Request) {
         lastName: user.lastName,
         role: user.role,
         tenantId: user.tenantId,
+        tenantSlug: user.tenant?.slug ?? null,
         avatarUrl: user.avatarUrl,
       },
     });

@@ -18,6 +18,7 @@ function parseTtlToSeconds(ttl: string): number {
 }
 
 export type AuthIdentity = Pick<TerpJwtPayload, "sub" | "tenantId" | "role" | "email"> & {
+  tenantSlug?: string | null;
   type?: TerpJwtPayload["type"];
 };
 
@@ -25,6 +26,7 @@ export function setAuthCookies(identity: AuthIdentity) {
   const payload: Omit<TerpJwtPayload, "iat" | "exp"> = {
     sub: identity.sub,
     tenantId: identity.tenantId,
+    tenantSlug: identity.tenantSlug ?? null,
     role: identity.role,
     email: identity.email,
     type: identity.type ?? resolveSessionType(identity.role),

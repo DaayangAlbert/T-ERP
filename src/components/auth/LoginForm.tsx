@@ -40,15 +40,19 @@ export function LoginForm({ onSuccess }: Props) {
       return;
     }
     setUser(json.user, "");
+    let slug: string | null = json.user.tenantSlug ?? null;
     if (json.user.tenantId) {
       const meRes = await fetch("/api/auth/me");
       if (meRes.ok) {
         const me = await meRes.json();
-        if (me.user?.tenant) setTenant(me.user.tenant);
+        if (me.user?.tenant) {
+          setTenant(me.user.tenant);
+          slug = me.user.tenant.slug ?? slug;
+        }
       }
     }
     onSuccess?.();
-    router.push("/dashboard");
+    router.push(slug ? `/${slug}/dashboard` : "/");
     router.refresh();
   };
 

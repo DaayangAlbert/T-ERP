@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
+import { useTenantStore } from "@/stores/tenant-store";
 
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Pilotage",
@@ -58,12 +59,28 @@ function labelFor(segment: string) {
 
 export function Breadcrumbs() {
   const pathname = usePathname();
-  const parts = pathname.split("/").filter(Boolean);
+  const tenant = useTenantStore((s) => s.tenant);
+  const allParts = pathname.split("/").filter(Boolean);
 
-  if (parts.length === 0) return null;
+  if (allParts.length === 0) return null;
 
-  const items = parts.map((seg, i) => {
-    const href = "/" + parts.slice(0, i + 1).join("/");
+  // Le 1ʳᵉ segment est le slug du tenant (ex: "batimcam-sa") — on l'affiche
+  // sous forme du nom complet de l'entreprise et on construit les href
+  // suivants relatifs en l'incluant.
+  const isTenantPath = tenant && allParts[0] === tenant.slug;
+  const tenantSegments = isTenantPath ? 1 : 0;
+  const parts = allParts.slice(tenantSegments);
+
+  const items: { href: string; isLast: boolean; label: string }[] = [];
+  if (isTenantPath) {
+    items.push({
+      href: `/${tenant.slug}/dashboard`,
+      isLast: parts.length === 0,
+      label: tenant.name,
+    });
+  }
+  parts.forEach((seg, i) => {
+    const href = "/" + allParts.slice(0, tenantSegments + i + 1).join("/");
     const isLast = i === parts.length - 1;
     // Le segment 'dg' a deux significations selon le contexte :
     //   - /dashboard/dg → "Direction générale" (le tableau de bord du DG)
@@ -74,13 +91,13 @@ export function Breadcrumbs() {
         : seg === "daf" && i === 0
           ? "Espace DAF"
           : labelFor(seg);
-    return { seg, href, isLast, label };
+    items.push({ href, isLast, label });
   });
 
   return (
     <nav aria-label="Fil d'Ariane" className="flex items-center gap-1 text-[12.5px] text-ink-3">
       {items.map(({ href, isLast, label }, i) => (
-        <span key={href} className="flex items-center gap-1">
+        <span key={`${href}-${i}`} className="flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3 w-3 text-ink-4" />}
           {isLast ? (
             <span className="font-medium text-ink-2">{label}</span>

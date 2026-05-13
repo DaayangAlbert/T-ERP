@@ -10,6 +10,7 @@ export type SessionType = "candidate" | "employee";
 export interface TerpJwtPayload extends JwtPayload {
   sub: string;
   tenantId: string | null;
+  tenantSlug?: string | null;
   role: string;
   email: string;
   type: SessionType;

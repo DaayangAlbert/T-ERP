@@ -23,7 +23,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Validation" }, { status: 400 });
   }
 
-  const target = await prisma.user.findUnique({ where: { id: body.userId } });
+  const target = await prisma.user.findUnique({
+    where: { id: body.userId },
+    include: { tenant: { select: { slug: true } } },
+  });
   if (!target || target.status !== "ACTIVE") {
     return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   }
@@ -39,6 +42,7 @@ export async function POST(req: Request) {
   setAuthCookies({
     sub: target.id,
     tenantId: target.tenantId,
+    tenantSlug: target.tenant?.slug ?? null,
     role: target.role,
     email: target.email,
   });
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
       lastName: target.lastName,
       role: target.role,
       tenantId: target.tenantId,
+      tenantSlug: target.tenant?.slug ?? null,
       avatarUrl: target.avatarUrl,
     },
   });

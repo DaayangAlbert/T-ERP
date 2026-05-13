@@ -106,8 +106,10 @@ export function ProfileSwitcher({ open, onClose }: Props) {
       setSwitchingId(null);
       return;
     }
+    const json = await res.json().catch(() => ({}));
+    const slug: string | null = json.user?.tenantSlug ?? null;
     onClose();
-    router.push("/dashboard");
+    router.push(slug ? `/${slug}/dashboard` : "/");
     router.refresh();
   };
 

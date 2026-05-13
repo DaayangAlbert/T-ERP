@@ -1,116 +1,135 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Middleware T-ERP — Multi-tenant par sous-domaine
+ * Middleware T-ERP — Multi-tenant par slug dans l'URL
  *
- * Résolution :
- *   - app.terp.cm           → portail public (pas de tenant)
- *   - admin.terp.cm         → super-admin SaaS
- *   - <slug>.terp.cm        → tenant identifié par slug
- *   - localhost / *.terp.local → développement
+ * Architecture path-based : tous les écrans applicatifs sont sous
+ *   /{tenantSlug}/{role}/{page}   (ex: /batimcam-sa/direction-generale/objectifs)
  *
- * En dev sur localhost, deux raccourcis pour simuler les sous-domaines
- * sans toucher /etc/hosts :
- *   - ?tenant=batimcam dans l'URL → set le cookie terp_dev_tenant=batimcam
- *   - ?tenant=admin → cookie terp_dev_tenant=admin (super-admin)
- *   - ?tenant=  (vide) → clear cookie
+ * Pour faciliter la migration depuis l'ancien schéma non-préfixé, ce middleware
+ * rétrocompatibilise les liens existants qui pointent encore sans slug :
+ *   /dashboard      → /{slug}/dashboard
+ *   /direction-...  → /{slug}/direction-...
+ *   etc.
+ * Le slug est lu depuis le cookie terp_access (JWT non-vérifié — la validation
+ * réelle reste faite par (app)/[tenantSlug]/layout.tsx qui re-lookup le tenant).
  *
- * Le slug résolu est injecté en header x-tenant-slug pour les API routes.
+ * Routes non-tenant (jamais préfixées) :
+ *   /                 portail public landing
+ *   /api/*            API (résolution tenant via cookie auth)
+ *   /admin/*          super-admin SaaS
+ *   /cand/*           espace candidat externe
+ *   /recrutement/*    portail recrutement public d'un tenant
+ *   /_next/*, assets statiques
  */
 
-const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || "terp.cm";
-const PUBLIC_SUBDOMAINS = ["app", "www", ""];
-const ADMIN_SUBDOMAINS = ["admin"];
-const DEV_TENANT_COOKIE = "terp_dev_tenant";
+// Sous-routes connues de (app) — utilisées pour redirect les anciens liens
+// non-préfixés vers leur version /{slug}/... pendant la migration.
+const APP_ROUTES = new Set([
+  "achats",
+  "chantiers",
+  "chef-chantier",
+  "comptabilite",
+  "comptable",
+  "conducteur-travaux",
+  "configuration",
+  "dashboard",
+  "directeur-travaux",
+  "direction-financiere",
+  "direction-generale",
+  "direction-technique",
+  "employe",
+  "finances",
+  "gestion-documentaire",
+  "informatique",
+  "logistique",
+  "magasin",
+  "messagerie",
+  "paie",
+  "planning",
+  "profil",
+  "rapports",
+  "ressources-humaines",
+  "secretaire-general",
+  "securite",
+  "stocks",
+  "validations",
+]);
+
+// Chemins qui ne sont jamais sous /{slug}/ — passent direct.
+const NON_TENANT_PREFIXES = ["/api", "/cand", "/recrutement", "/login", "/_next"];
+
+// /admin/* est super-admin SaaS — distinct des routes /{slug}/admin (IT du tenant).
+function isSuperAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+// Décodage base64url → JSON, sans vérification de signature.
+// La vraie validation est faite côté server component (DB lookup).
+function decodeJwtPayload(token: string): { tenantSlug?: string | null; sub?: string } | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
+function readTenantSlugFromCookie(req: NextRequest): string | null {
+  const token = req.cookies.get("terp_access")?.value;
+  if (!token) return null;
+  const payload = decodeJwtPayload(token);
+  return payload?.tenantSlug ?? null;
+}
 
 export function middleware(request: NextRequest) {
-  const hostname = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
-  const isLocalhost =
-    hostname.startsWith("localhost") || hostname.includes(".localhost");
 
-  // Extraire le sous-domaine depuis l'URL
-  let subdomain = "";
-
-  if (hostname.includes(APP_DOMAIN)) {
-    subdomain = hostname.replace(`.${APP_DOMAIN}`, "").split(":")[0];
-  } else if (hostname.includes("terp.local")) {
-    subdomain = hostname.replace(".terp.local", "").split(":")[0];
-  } else if (isLocalhost) {
-    subdomain = "";
+  // Bypass assets statiques + API + sous-systèmes hors-tenant.
+  if (
+    NON_TENANT_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    isSuperAdminPath(pathname) ||
+    pathname === "/" ||
+    pathname.includes(".") // .ico, .png, .js, .map, etc.
+  ) {
+    return NextResponse.next();
   }
 
-  // Normaliser : si l'extraction a renvoyé le hostname brut, c'est qu'il n'y avait pas de sous-domaine
-  if (subdomain === hostname.split(":")[0]) subdomain = "";
+  const segments = pathname.split("/").filter(Boolean);
+  const first = segments[0];
 
-  // === Dev shortcut : ?tenant=... + cookie ===
-  // Permet de tester batimcam.terp.local sans toucher /etc/hosts.
-  let devTenantOverride: string | null = null;
-  let setCookieValue: string | null = null;
-  let clearCookie = false;
-
-  if (isLocalhost) {
-    const tenantQuery = request.nextUrl.searchParams.get("tenant");
-    if (tenantQuery !== null) {
-      // Explicit override via query string — also persist in a cookie.
-      if (tenantQuery === "") {
-        clearCookie = true;
-      } else {
-        setCookieValue = tenantQuery;
-        devTenantOverride = tenantQuery;
-      }
-    } else {
-      // Fall back to cookie
-      const cookie = request.cookies.get(DEV_TENANT_COOKIE)?.value;
-      if (cookie) devTenantOverride = cookie;
+  // Cas A : ancien lien non-préfixé (/dashboard, /direction-generale/...).
+  // → On redirect vers /{slug}/{path} en récupérant le slug du cookie auth.
+  if (first && APP_ROUTES.has(first)) {
+    const slug = readTenantSlugFromCookie(request);
+    if (!slug) {
+      // Pas de session : on laisse Next.js servir un 404 ; le layout (app)
+      // renverra l'utilisateur vers "/" si besoin.
+      return NextResponse.next();
     }
-    if (devTenantOverride) subdomain = devTenantOverride;
+    const url = request.nextUrl.clone();
+    url.pathname = `/${slug}${pathname}`;
+    return NextResponse.redirect(url);
   }
 
-  const response = NextResponse.next();
-
-  if (setCookieValue) {
-    response.cookies.set(DEV_TENANT_COOKIE, setCookieValue, {
-      path: "/",
-      httpOnly: false,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24, // 24h
-    });
-  }
-  if (clearCookie) {
-    response.cookies.delete(DEV_TENANT_COOKIE);
-  }
-
-  // === Cas 1 : portail public ===
-  if (PUBLIC_SUBDOMAINS.includes(subdomain)) {
-    response.headers.set("x-tenant-slug", "");
-    response.headers.set("x-route-type", "public");
-
-    // Sur le portail prod (app.terp.cm), /dashboard n'a pas de sens — rediriger vers /.
-    // Sur localhost en dev, laisser le layout (app) gérer l'auth pour permettre le flow de test.
-    if (!isLocalhost && (pathname.startsWith("/dashboard") || pathname.startsWith("/admin"))) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  // Cas B : pathname commence par un slug (forme canonique).
+  // On injecte le slug en header pour les API routes / Server Components.
+  if (first) {
+    const response = NextResponse.next();
+    response.headers.set("x-tenant-slug", first);
+    response.headers.set("x-route-type", "tenant");
     return response;
   }
 
-  // === Cas 2 : super-admin SaaS ===
-  if (ADMIN_SUBDOMAINS.includes(subdomain)) {
-    response.headers.set("x-tenant-slug", "");
-    response.headers.set("x-route-type", "admin");
-    return response;
-  }
-
-  // === Cas 3 : tenant identifié ===
-  response.headers.set("x-tenant-slug", subdomain);
-  response.headers.set("x-route-type", "tenant");
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Exclure assets statiques et API publique
+    // Exclure assets statiques et API publique du matcher
     "/((?!_next/static|_next/image|favicon.ico|images|api/public).*)",
   ],
 };

@@ -66,6 +66,7 @@ export async function POST(req: Request) {
     setAuthCookies({
       sub: result.user.id,
       tenantId: result.tenant.id,
+      tenantSlug: result.tenant.slug,
       role: result.user.role,
       email: result.user.email,
     });

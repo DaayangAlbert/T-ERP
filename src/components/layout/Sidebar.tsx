@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUiStore } from "@/stores/ui-store";
 import { useAuth } from "@/hooks/useAuth";
+import { useTenantHref } from "@/hooks/useTenantHref";
 import { clsx } from "clsx";
 import {
   LayoutDashboard,
@@ -335,6 +336,7 @@ const NAV: NavSection[] = [
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const tenantHref = useTenantHref();
   const { sidebarCompact, toggleSidebarCompact, mobileSidebarOpen, closeMobileSidebar } = useUiStore();
   const { user } = useAuth();
   // Chaque rôle dispose d'un espace dédié prepended (DG, DAF, RH, DT, CPT, DTRAV, CC, MAG).
@@ -496,12 +498,13 @@ export function Sidebar() {
               </div>
             )}
             {section.items.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const href = tenantHref(item.href);
+              const active = pathname === href || pathname.startsWith(`${href}/`);
               const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={href}
                   title={visualCompact ? item.label : undefined}
                   aria-current={active ? "page" : undefined}
                   className={clsx(

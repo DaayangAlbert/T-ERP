@@ -16,7 +16,10 @@ export async function POST() {
     return NextResponse.json({ error: "Refresh token invalide" }, { status: 401 });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    include: { tenant: { select: { slug: true } } },
+  });
   if (!user || user.status !== "ACTIVE") {
     return NextResponse.json({ error: "Compte inactif" }, { status: 401 });
   }
@@ -24,6 +27,7 @@ export async function POST() {
   setAuthCookies({
     sub: user.id,
     tenantId: user.tenantId,
+    tenantSlug: user.tenant?.slug ?? null,
     role: user.role,
     email: user.email,
   });
