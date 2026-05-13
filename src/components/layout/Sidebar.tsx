@@ -48,6 +48,10 @@ import {
   GitBranch,
   Tags,
   Archive,
+  Scale,
+  Mail,
+  Landmark,
+  Gavel,
   type LucideIcon,
 } from "lucide-react";
 
@@ -232,6 +236,22 @@ const GED_SECTION: NavSection = {
   ],
 };
 
+// Section exclusive au Secrétaire Général (Élisabeth NDONGMO · SECRETARY_GENERAL).
+// Profil cadre dirigeant au siège : gouvernance corporate + marchés clients +
+// contentieux + conformité OHADA + courriers officiels.
+const SG_SECTION: NavSection = {
+  title: "Espace SG",
+  items: [
+    { label: "Tableau de bord", href: "/sg", icon: LayoutDashboard },
+    { label: "Marchés & contrats", href: "/sg/marches", icon: ScrollText, badge: { value: "6" } },
+    { label: "CA & Gouvernance", href: "/sg/gouvernance", icon: Landmark, badge: { value: "23j", alert: true } },
+    { label: "Contentieux", href: "/sg/contentieux", icon: Gavel, badge: { value: "4", alert: true } },
+    { label: "Conformité", href: "/sg/conformite", icon: Scale },
+    { label: "Institutionnel", href: "/sg/institutionnel", icon: Briefcase },
+    { label: "Courriers officiels", href: "/sg/courriers", icon: Mail, badge: { value: "12" } },
+  ],
+};
+
 // Section exclusive au Comptable (Direction OU Chantier — adapté côté UI via assignedSiteIds).
 const CPT_SECTION: NavSection = {
   title: "Espace Comptabilité",
@@ -329,7 +349,7 @@ export function Sidebar() {
   //   Le DG la conserve pour supervision.
   const ROLES_WITH_DEDICATED_DASHBOARD = new Set([
     "DG", "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST", "SECRETARY_GENERAL",
   ]);
   const ACTIVITY_HIDDEN_BY_ROLE: Record<string, Set<string>> = {
     DG:             new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
@@ -339,13 +359,14 @@ export function Sidebar() {
     ACCOUNTANT:     new Set(["/comptabilite", "/rh", "/achats", "/stocks"]),
     LOGISTICS:      new Set(["/finances", "/comptabilite", "/rh"]),
     ARCHIVIST:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    SECRETARY_GENERAL: new Set(["/finances", "/comptabilite", "/achats", "/stocks"]),
     WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
     WAREHOUSE:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
   };
   const HIDES_ADMIN_SECTION = new Set([
     "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",
-    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST",
+    "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST", "SECRETARY_GENERAL",
   ]);
   const role = user?.role ?? "";
   const cleanedNav = NAV.map((section) => {
@@ -388,9 +409,11 @@ export function Sidebar() {
                           ? [IT_SECTION, ...cleanedNav]
                           : user?.role === "ARCHIVIST"
                             ? [GED_SECTION, ...cleanedNav]
-                            : user?.role === "CANDIDATE"
-                              ? [CAND_SECTION]
-                              : NAV;
+                            : user?.role === "SECRETARY_GENERAL"
+                              ? [SG_SECTION, ...cleanedNav]
+                              : user?.role === "CANDIDATE"
+                                ? [CAND_SECTION]
+                                : NAV;
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);

@@ -86,6 +86,16 @@ model Tenant {
   documentClassifications   DocumentClassification[]
   documentWorkflowTemplates DocumentWorkflowTemplate[]
   gedAuditEvents            GedAuditEvent[]
+  // SG — Secrétaire Général (Bloc 0)
+  clientContracts           ClientContract[]
+  governanceMeetings        GovernanceMeeting[]
+  boardMembers              BoardMember[]
+  shareholders              Shareholder[]
+  legalCases                LegalCase[]
+  regulatoryRegisters       RegulatoryRegister[]
+  officialCorrespondences   OfficialCorrespondence[]
+  institutions              Institution[]
+  professionalApprovals     ProfessionalApproval[]
 
   @@index([parentId])
   @@map("tenants")
@@ -168,21 +178,28 @@ model User {
   // GED — accès transverse documentaire (ARCHIVIST uniquement)
   canReadAllDocuments Boolean @default(false)
 
+  // SG — pouvoirs spéciaux Secrétaire Général (octroyés par DG)
+  canManageCorporateGovernance    Boolean @default(false) // CA, AG, registres
+  canManageMarketContracts        Boolean @default(false) // marchés clients, avenants, garanties
+  canManageLegalCases             Boolean @default(false) // contentieux, dossiers avocats
+  canManageOfficialCorrespondence Boolean @default(false) // courriers signés DG
+  canReadAllDashboards            Boolean @default(false) // lecture seule autres directions
+
   // Candidat — Profil & recherche (CAND fn 1.2)
-  cvUrl               String?
-  desiredJob          String? // poste recherché (ex. "Conducteur de Travaux")
-  desiredContractType ContractType?
-  desiredLocation     String?
-  desiredSalaryMin    BigInt? // FCFA
-  desiredSalaryMax    BigInt? // FCFA
-  availability        String? // ex. "Immédiate", "Sous 1 mois"
-  mobilityDailyTravel Boolean       @default(false)
-  mobilityMissions    Boolean       @default(false)
-  mobilityExpatriation Boolean      @default(false)
-  candidateSkills     String[]      @default([]) // chips
-  candidateLanguages  Json? // [{ name: "Français", level: "natif" }, ...]
-  gdprConsent         Boolean       @default(false)
-  gdprConsentAt       DateTime?
+  cvUrl                String?
+  desiredJob           String? // poste recherché (ex. "Conducteur de Travaux")
+  desiredContractType  ContractType?
+  desiredLocation      String?
+  desiredSalaryMin     BigInt? // FCFA
+  desiredSalaryMax     BigInt? // FCFA
+  availability         String? // ex. "Immédiate", "Sous 1 mois"
+  mobilityDailyTravel  Boolean       @default(false)
+  mobilityMissions     Boolean       @default(false)
+  mobilityExpatriation Boolean       @default(false)
+  candidateSkills      String[]      @default([]) // chips
+  candidateLanguages   Json? // [{ name: "Français", level: "natif" }, ...]
+  gdprConsent          Boolean       @default(false)
+  gdprConsentAt        DateTime?
 
   // Rôle principal (MVP — rôles avancés en phase 2)
   role Role @default(EMPLOYEE)
@@ -196,6 +213,7 @@ model User {
   updatedAt DateTime   @updatedAt
 
   payslips                      Payslip[]
+  payrollEmployeeSnapshots      PayrollEmployeeSnapshot[]
   applications                  Application[]
   sentMessages                  Message[]                     @relation("SentMessages")
   conversationParticipants      ConversationParticipant[]
@@ -285,6 +303,10 @@ model User {
   gedAccessRequestsMade         DocumentAccessRequest[]       @relation("AccessRequester")
   gedAccessRequestsDecided      DocumentAccessRequest[]       @relation("AccessDecider")
   gedAuditEvents                GedAuditEvent[]               @relation("GedAuditActor")
+  // SG — Secrétaire Général (Bloc 0)
+  sgBoardMemberships            BoardMember[]
+  sgRegulatoryRegisters         RegulatoryRegister[]          @relation("RegisterResponsible")
+  sgCorrespondencesAssigned     OfficialCorrespondence[]      @relation("CorrespondenceAssignee")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -469,6 +491,7 @@ enum Role {
   WAREHOUSE // Magasinier
   GED // Gestionnaire documentaire
   ARCHIVIST // Documentaliste-Archiviste (Référent documentaire transverse, canReadAllDocuments)
+  SECRETARY_GENERAL // Secrétaire Général (Élisabeth NDONGMO · juriste · gouvernance/corporate/juridique)
   EMPLOYEE // Employé bureau
 
   // Externe
@@ -583,6 +606,8 @@ model Site {
   cdtMilestones            CdtMilestone[]
   // GED — espace documentaire chantier (Bloc 0)
   documentSpaces           DocumentSpace[]
+  // SG — marché client lié au chantier (Bloc 0)
+  clientContracts          ClientContract[]
 
   @@unique([tenantId, code])
   @@index([tenantId, status])
@@ -627,11 +652,15 @@ enum SiteStatus {
 // ========================================
 
 model Payslip {
-  id       String @id @default(cuid())
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
+  id             String                   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                     @relation(fields: [userId], references: [id])
+  payrollCycleId String?
+  payrollCycle   PayrollCycle?            @relation(fields: [payrollCycleId], references: [id])
+  snapshotId     String?
+  snapshot       PayrollEmployeeSnapshot? @relation(fields: [snapshotId], references: [id])
 
   period      DateTime // 1er du mois (ex: 2025-09-01)
   periodLabel String? // "2026-04" — pratique pour affichage et tri lexico
@@ -682,6 +711,14 @@ model Payslip {
 
   pdfUrl String?
 
+  verificationUuid  String?   @unique
+  verificationCode  String?
+  verificationHash  String?
+  verifiedPublicUrl String?
+  issuedAt          DateTime?
+  cancelledAt       DateTime?
+  replacedById      String?
+
   lines     PayslipLine[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
@@ -689,6 +726,8 @@ model Payslip {
   @@unique([tenantId, userId, period])
   @@index([tenantId, period])
   @@index([userId, period])
+  @@index([payrollCycleId])
+  @@index([verificationUuid])
   @@map("payslips")
 }
 
@@ -751,11 +790,11 @@ model JobOffer {
   requirements String  @db.Text
 
   // CAND Zone 2 — sections riches détail offre
-  missions      Json? // string[] missions
-  profileItems  Json? // string[] profil recherché
-  benefits      Json? // string[] avantages
-  experienceMin Int? // années requises
-  siteId        String? // chantier de rattachement
+  missions        Json? // string[] missions
+  profileItems    Json? // string[] profil recherché
+  benefits        Json? // string[] avantages
+  experienceMin   Int? // années requises
+  siteId          String? // chantier de rattachement
   hiringManagerId String?
 
   salaryMin BigInt?
@@ -1104,7 +1143,9 @@ model PayrollCycle {
 
   warnings Json @default("[]") // [{ severity, type, message, count? }]
 
-  inputs PayrollInput[]
+  inputs            PayrollInput[]
+  payslips          Payslip[]
+  employeeSnapshots PayrollEmployeeSnapshot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1677,6 +1718,41 @@ model PayrollInput {
   @@unique([payrollCycleId, employeeKey])
   @@index([payrollCycleId, category])
   @@map("payroll_inputs")
+}
+
+model PayrollEmployeeSnapshot {
+  id              String    @id @default(cuid())
+  tenantId        String
+  payrollCycleId  String
+  employeeKey     String
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  matricule       String
+  firstName       String
+  lastName        String
+  fullName        String
+  position        String?
+  category        String?
+  echelon         String?
+  department      String?
+  site            String?
+  contractType    String?
+  hireDate        DateTime?
+  cnpsNumber      String?
+  taxNumber       String?
+  bankName        String?
+  bankAccount     String?
+  profilePhotoUrl String?
+  baseSalary      Decimal   @default(0)
+  createdAt       DateTime  @default(now())
+
+  payrollCycle PayrollCycle @relation(fields: [payrollCycleId], references: [id])
+  payslips     Payslip[]
+
+  @@unique([payrollCycleId, employeeKey])
+  @@index([tenantId, payrollCycleId])
+  @@index([userId])
+  @@map("payroll_employee_snapshots")
 }
 
 // ========================================
@@ -5406,20 +5482,562 @@ model CandidateFormation {
 // LANDING — Demandes de démo (CAND ZONE 1)
 // ========================================
 model DemoRequest {
-  id          String   @id @default(cuid())
-  fullName    String
-  position    String?
-  companyName String
+  id             String   @id @default(cuid())
+  fullName       String
+  position       String?
+  companyName    String
   employeesRange String? // "1-10", "11-50", "51-200", "201+"
-  email       String
-  phone       String?
-  message     String?  @db.Text
-  source      String?  // utm_source ou referrer
-  status      String   @default("NEW") // NEW, CONTACTED, QUALIFIED, CONVERTED, LOST
-  notes       String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  email          String
+  phone          String?
+  message        String?  @db.Text
+  source         String? // utm_source ou referrer
+  status         String   @default("NEW") // NEW, CONTACTED, QUALIFIED, CONVERTED, LOST
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([status, createdAt])
   @@map("demo_requests")
+}
+
+// ========================================
+// SG — SECRÉTAIRE GÉNÉRAL (Bloc 0)
+// ========================================
+// Profil SECRETARY_GENERAL (Élisabeth NDONGMO, BatimCAM SA OHADA) :
+// gouvernance corporate (CA/AG/registres), marchés clients (MOA), garanties
+// bancaires, contentieux juridiques, conformité réglementaire, courriers
+// officiels, relations institutionnelles.
+
+model ClientContract {
+  id                         String                   @id @default(cuid())
+  tenantId                   String
+  tenant                     Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reference                  String                   @unique // "M-2026-001"
+  title                      String
+  contractingAuthority       String // ex: "Commune Yaoundé I"
+  authorityType              ContractingAuthorityType
+  amountHT                   BigInt
+  currency                   String                   @default("XAF")
+  vatRate                    Float                    @default(19.25)
+  phase                      ContractPhase
+  callForTendersOpenDate     DateTime?
+  callForTendersCloseDate    DateTime?
+  submissionDate             DateTime?
+  notificationDate           DateTime?
+  signatureDate              DateTime?
+  orderServiceDate           DateTime?
+  executionStartDate         DateTime?
+  receptionPV                DateTime?
+  gpaEndDate                 DateTime? // garantie de parfait achèvement
+  siteId                     String?
+  site                       Site?                    @relation(fields: [siteId], references: [id])
+  callForTendersDocUrl       String?
+  submissionDocUrl           String?
+  signedContractDocUrl       String?
+  receptionPvDocUrl          String?
+  submissionGuaranteeAmount  BigInt?
+  performanceGuaranteeAmount BigInt?
+  retentionGuaranteeAmount   BigInt?
+  legalStatus                LegalContractStatus      @default(OK)
+  status                     MarketContractStatus     @default(DRAFT)
+  createdBy                  String
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+
+  amendments     MarketContractAmendment[]
+  bankGuarantees BankGuarantee[]
+  legalCases     LegalCase[]
+
+  @@index([tenantId, phase])
+  @@index([tenantId, status])
+  @@map("sg_client_contracts")
+}
+
+enum ContractingAuthorityType {
+  PUBLIC_MINISTRY
+  PUBLIC_MUNICIPALITY
+  PUBLIC_INSTITUTION
+  PRIVATE_COMPANY
+  PRIVATE_INDIVIDUAL
+}
+
+enum ContractPhase {
+  CALL_FOR_TENDERS_WATCH
+  STUDY_AND_SUBMISSION
+  AWAITING_ATTRIBUTION
+  CONTRACT_SIGNATURE
+  ORDER_SERVICE
+  EXECUTION
+  RECEPTION
+  GUARANTEE_PERIOD
+  CLOSED
+}
+
+enum LegalContractStatus {
+  OK
+  LITIGATION
+  AMENDMENT_PENDING
+  EXPIRED_GUARANTEE
+}
+
+enum MarketContractStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  PAUSED
+  CLOSED
+  CANCELLED
+}
+
+// Avenant marché client (distinct du ContractAmendment DTrav qui porte sur Site)
+model MarketContractAmendment {
+  id                  String                @id @default(cuid())
+  contractId          String
+  contract            ClientContract        @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  amendmentNumber     Int
+  reason              String                @db.Text
+  additionalAmount    BigInt
+  additionalDelayDays Int?
+  submittedAt         DateTime?
+  approvedAt          DateTime?
+  signedAt            DateTime?
+  status              MarketAmendmentStatus @default(DRAFT)
+  documentUrl         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@unique([contractId, amendmentNumber])
+  @@index([contractId, status])
+  @@map("sg_market_contract_amendments")
+}
+
+enum MarketAmendmentStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  SIGNED
+  REJECTED
+}
+
+model BankGuarantee {
+  id          String          @id @default(cuid())
+  contractId  String
+  contract    ClientContract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  type        GuaranteeType
+  amount      BigInt
+  issuingBank String
+  issuedAt    DateTime
+  expiryDate  DateTime
+  releaseDate DateTime?
+  status      GuaranteeStatus @default(ACTIVE)
+  documentUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contractId, status])
+  @@index([status, expiryDate])
+  @@map("sg_bank_guarantees")
+}
+
+enum GuaranteeType {
+  SUBMISSION
+  PERFORMANCE
+  RETENTION
+  ADVANCE_PAYMENT
+}
+
+enum GuaranteeStatus {
+  ACTIVE
+  EXPIRED
+  RELEASED
+  REVOKED
+}
+
+model GovernanceMeeting {
+  id                     String        @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type                   MeetingType
+  scheduledAt            DateTime
+  location               String
+  convocationsSentAt     DateTime?
+  convocationsRecipients Json
+  agenda                 Json
+  agendaApprovedBy       String?
+  agendaApprovedAt       DateTime?
+  status                 MeetingStatus @default(SCHEDULED)
+  attendees              Json?
+  quorum                 Float?
+  pvDocumentUrl          String?
+  pvSignedAt             DateTime?
+  pvSignedBy             String?
+
+  decisions MeetingDecision[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, type, scheduledAt])
+  @@index([tenantId, status])
+  @@map("sg_governance_meetings")
+}
+
+enum MeetingType {
+  BOARD_MEETING
+  ORDINARY_AG
+  EXTRAORDINARY_AG
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+model MeetingDecision {
+  id             String            @id @default(cuid())
+  meetingId      String
+  meeting        GovernanceMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  decisionNumber Int
+  title          String
+  description    String            @db.Text
+  decisionType   DecisionType
+  votingResult   Json?
+  followUpUserId String?
+  followUpStatus String?
+  decidedAt      DateTime
+
+  @@unique([meetingId, decisionNumber])
+  @@map("sg_meeting_decisions")
+}
+
+enum DecisionType {
+  APPROVAL
+  RATIFICATION
+  AUTHORIZATION
+  NOMINATION
+  REVOCATION
+  OTHER
+}
+
+model BoardMember {
+  id                 String              @id @default(cuid())
+  tenantId           String
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?               @relation(fields: [userId], references: [id])
+  fullName           String
+  function           BoardMemberFunction
+  representingEntity String?
+  isIndependent      Boolean             @default(false)
+  mandateStartDate   DateTime
+  mandateEndDate     DateTime
+  mandateRenewable   Boolean             @default(true)
+  biography          String?             @db.Text
+  status             BoardMemberStatus   @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("sg_board_members")
+}
+
+enum BoardMemberFunction {
+  PRESIDENT_CEO
+  PRESIDENT_BOARD
+  DIRECTOR_GENERAL
+  ADMINISTRATOR
+  INDEPENDENT_DIRECTOR
+  BOARD_SECRETARY
+}
+
+enum BoardMemberStatus {
+  ACTIVE
+  EXPIRED
+  RESIGNED
+  REVOKED
+  DECEASED
+}
+
+model Shareholder {
+  id               String                @id @default(cuid())
+  tenantId         String
+  tenant           Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fullName         String
+  entityType       ShareholderEntityType
+  numberOfShares   Int
+  totalShares      Int
+  percentage       Float
+  nationality      String?
+  idNumber         String?
+  address          String?
+  phoneEmail       String?
+  acquisitionDate  DateTime
+  acquisitionPrice BigInt?
+  status           ShareholderStatus     @default(ACTIVE)
+  isVoting         Boolean               @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("sg_shareholders")
+}
+
+enum ShareholderEntityType {
+  INDIVIDUAL
+  CORPORATION
+  INVESTMENT_FUND
+  EMPLOYEE_PLAN
+}
+
+enum ShareholderStatus {
+  ACTIVE
+  TRANSFERRED
+  INHERITED
+  DECEASED
+}
+
+model LegalCase {
+  id                String                    @id @default(cuid())
+  tenantId          String
+  tenant            Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reference         String                    @unique
+  title             String
+  description       String                    @db.Text
+  ourPosition       LegalPosition
+  jurisdiction      String
+  caseNumber        String?
+  opposingParty     String
+  opposingPartyType ContractingAuthorityType?
+  amountAtStake     BigInt
+  provisionAmount   BigInt
+  lawyerName        String
+  lawFirm           String
+  lawyerContactInfo Json?
+  status            LegalCaseStatus           @default(OPEN)
+  nextHearingDate   DateTime?
+  strategy          String?                   @db.Text
+  relatedContractId String?
+  relatedContract   ClientContract?           @relation(fields: [relatedContractId], references: [id])
+  openedAt          DateTime                  @default(now())
+  closedAt          DateTime?
+  resolution        String?                   @db.Text
+
+  events LegalCaseEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("sg_legal_cases")
+}
+
+enum LegalPosition {
+  DEMANDEUR
+  DEFENDEUR
+  MEDIATION
+  ARBITRATION
+}
+
+enum LegalCaseStatus {
+  OPEN
+  MEDIATION
+  COURT_PENDING
+  APPEAL
+  SUPREME_COURT
+  SETTLED
+  WON
+  LOST
+  ABANDONED
+}
+
+model LegalCaseEvent {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        LegalCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  eventType   String
+  eventDate   DateTime
+  description String    @db.Text
+  documentUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([caseId, eventDate])
+  @@map("sg_legal_case_events")
+}
+
+model RegulatoryRegister {
+  id                String         @id @default(cuid())
+  tenantId          String
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  registerType      RegisterType
+  name              String
+  description       String?
+  legalBasis        String
+  responsibleUserId String
+  responsibleUser   User           @relation("RegisterResponsible", fields: [responsibleUserId], references: [id])
+  entriesCount      Int            @default(0)
+  lastEntryDate     DateTime?
+  status            RegisterStatus @default(UP_TO_DATE)
+  nextReviewDate    DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@map("sg_regulatory_registers")
+}
+
+enum RegisterType {
+  AG_DECISIONS
+  SHAREHOLDERS
+  BOARD_DECISIONS
+  PERSONNEL
+  HSE_SITES
+  REGULATED_AGREEMENTS
+  BANK_GUARANTEES
+  PUBLIC_MARKETS
+}
+
+enum RegisterStatus {
+  UP_TO_DATE
+  TO_UPDATE
+  OVERDUE
+}
+
+model OfficialCorrespondence {
+  id                  String                        @id @default(cuid())
+  tenantId            String
+  tenant              Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reference           String                        @unique
+  direction           CorrespondenceDirection
+  date                DateTime
+  correspondentName   String
+  correspondentEntity String?
+  subject             String
+  summary             String?                       @db.Text
+  confidentiality     CorrespondenceConfidentiality @default(STANDARD)
+  assignedToUserId    String?
+  assignedTo          User?                         @relation("CorrespondenceAssignee", fields: [assignedToUserId], references: [id])
+  status              CorrespondenceStatus          @default(RECEIVED)
+  dueDate             DateTime?
+  handledAt           DateTime?
+  requiresDgSignature Boolean                       @default(false)
+  submittedToDgAt     DateTime?
+  signedByDgAt        DateTime?
+  dgSignatureRef      String?
+  documentUrl         String?
+  archivedInGedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, direction, date])
+  @@index([tenantId, status])
+  @@map("sg_official_correspondences")
+}
+
+enum CorrespondenceDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum CorrespondenceConfidentiality {
+  PUBLIC
+  STANDARD
+  SENSITIVE
+  CONFIDENTIAL
+}
+
+enum CorrespondenceStatus {
+  RECEIVED
+  IN_PROGRESS
+  AWAITING_DG_SIGNATURE
+  SIGNED
+  SENT
+  ARCHIVED
+}
+
+model Institution {
+  id                  String              @id @default(cuid())
+  tenantId            String
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                String
+  type                InstitutionType
+  category            InstitutionCategory
+  primaryContactName  String?
+  primaryContactRole  String?
+  primaryContactPhone String?
+  primaryContactEmail String?
+  address             String?
+  website             String?
+  relationshipStatus  RelationshipStatus  @default(ACTIVE)
+  relationshipNotes   String?             @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, type])
+  @@index([tenantId, category])
+  @@map("sg_institutions")
+}
+
+enum InstitutionType {
+  MINISTRY
+  MUNICIPALITY
+  PUBLIC_INSTITUTION
+  PROFESSIONAL_ASSOCIATION
+  LAW_FIRM
+  AUDIT_FIRM
+  BANK
+  OTHER
+}
+
+enum InstitutionCategory {
+  CLIENT
+  REGULATORY
+  ASSOCIATION
+  SUPPLIER
+  PARTNER
+}
+
+enum RelationshipStatus {
+  ACTIVE
+  WATCH
+  SENSITIVE
+  INACTIVE
+}
+
+model ProfessionalApproval {
+  id                  String         @id @default(cuid())
+  tenantId            String
+  tenant              Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  approvalName        String
+  deliveringAuthority String
+  approvalNumber      String
+  issuedAt            DateTime
+  expiresAt           DateTime
+  renewable           Boolean        @default(true)
+  status              ApprovalStatus @default(VALID)
+  documentUrl         String?
+  renewalReminderSent Boolean        @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([status, expiresAt])
+  @@map("sg_professional_approvals")
+}
+
+enum ApprovalStatus {
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+  RENEWED
 }
