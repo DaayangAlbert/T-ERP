@@ -3,6 +3,7 @@
 import { Download, FileText } from "lucide-react";
 import { clsx } from "clsx";
 import { useLogStats } from "@/hooks/useLogStats";
+import { useTenant } from "@/hooks/useTenant";
 
 function fmt(n: number): string {
   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
@@ -12,6 +13,7 @@ function fmt(n: number): string {
 
 export default function LogStatsPage() {
   const { data, isLoading } = useLogStats();
+  const { tenant } = useTenant();
 
   if (isLoading || !data) {
     return <div className="h-64 animate-pulse rounded-xl bg-surface-alt" />;
@@ -30,7 +32,7 @@ export default function LogStatsPage() {
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-            Statistiques achats BatimCAM
+            Statistiques achats{tenant?.name ? ` ${tenant.name}` : ""}
           </h1>
           <p className="mt-1 text-[12.5px] text-ink-3">
             Analyses YTD consolidées + rapport DG mensuel.

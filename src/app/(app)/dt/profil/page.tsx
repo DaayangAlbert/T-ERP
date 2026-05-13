@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Bell, Pen, Calendar, MessageSquare, Save } from "lucide-react";
 import { clsx } from "clsx";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DtProfileResponse {
   alertsConfig: {
@@ -51,6 +52,7 @@ const TECH_CONTACTS = [
 
 export default function DtProfilePage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const profile = useQuery({
     queryKey: ["dt", "profile"],
@@ -100,7 +102,7 @@ export default function DtProfilePage() {
           Mon espace Direction Technique
         </h1>
         <p className="mt-1 text-[12.5px] text-ink-3">
-          Daniel ESSOMBA · préférences alertes, habilitations, agenda, messagerie technique.
+          {user ? `${user.firstName} ${user.lastName} · ` : ""}Préférences alertes, habilitations, agenda, messagerie technique.
         </p>
       </header>
 

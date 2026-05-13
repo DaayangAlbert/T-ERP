@@ -106,7 +106,7 @@ export default function GedWorkflowsPage() {
                       étape {wf.currentStepIndex + 1}/{wf.totalSteps}
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-[11.5px] text-ink-3">Christelle</td>
+                  <td className="px-3 py-2 text-[11.5px] text-ink-3">{wf.initiatorName}</td>
                   <td className="px-3 py-2 text-[11.5px] text-ink-3">{fmtDate(wf.dueAt)}</td>
                   <td className="px-3 py-2">
                     <span

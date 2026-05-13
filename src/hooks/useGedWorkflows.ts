@@ -14,6 +14,7 @@ export interface WorkflowInstanceRow {
   currentStepName: string;
   currentStepRole: string;
   totalSteps: number;
+  initiatorName: string;
   dueAt: string | null;
   daysToDue: number | null;
   startedAt: string;

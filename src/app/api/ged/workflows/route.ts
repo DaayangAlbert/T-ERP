@@ -35,6 +35,7 @@ export async function GET() {
       include: {
         template: { select: { code: true, name: true, steps: true } },
         document: { select: { name: true, internalReference: true } },
+        initiator: { select: { firstName: true, lastName: true } },
         steps: { orderBy: { stepIndex: "asc" }, take: 5 },
       },
       orderBy: { startedAt: "desc" },
@@ -67,6 +68,7 @@ export async function GET() {
       currentStepName: stepDef?.name ?? `Étape ${i.currentStep + 1}`,
       currentStepRole: stepDef?.role ?? "—",
       totalSteps: tplSteps.length,
+      initiatorName: i.initiator ? `${i.initiator.firstName} ${i.initiator.lastName}` : "—",
       dueAt: i.dueAt?.toISOString() ?? null,
       daysToDue,
       startedAt: i.startedAt.toISOString(),

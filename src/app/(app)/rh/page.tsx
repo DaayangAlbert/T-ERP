@@ -29,6 +29,7 @@ const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
 
 function RhDashboardScreen() {
   const { data, isLoading } = useRhDashboard();
+  const { user } = useAuth();
 
   return (
     <div className="space-y-3">
@@ -36,7 +37,7 @@ function RhDashboardScreen() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Tableau de bord RH</h1>
           <p className="mt-1 text-[12.5px] text-ink-3">
-            Vue d&apos;ensemble pour Sandrine ONANA, Responsable RH.
+            Vue d&apos;ensemble {user ? `pour ${user.firstName} ${user.lastName}, Responsable RH` : "RH"}.
           </p>
         </div>
       </header>

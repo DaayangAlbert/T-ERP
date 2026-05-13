@@ -12,6 +12,7 @@ import {
   type RhCircuitItem,
   type RhPendingValidation,
 } from "@/hooks/useRhValidations";
+import { useAuth } from "@/hooks/useAuth";
 
 type Tab = "n1" | "circuit" | "delegations";
 
@@ -94,6 +95,7 @@ function N1View() {
   const { data, isLoading } = useRhPendingValidations();
   const approve = useApproveRhValidation();
   const reject = useRejectRhValidation();
+  const { user } = useAuth();
   const [rejectTarget, setRejectTarget] = useState<RhPendingValidation | null>(null);
 
   if (isLoading || !data) {
@@ -102,7 +104,7 @@ function N1View() {
   if (data.items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-line bg-white p-6 text-center text-[12.5px] text-ink-3">
-        Aucune validation N1 RH en attente. Bravo Sandrine 👏
+        Aucune validation N1 RH en attente.{user ? ` Bravo ${user.firstName} 👏` : ""}
       </div>
     );
   }

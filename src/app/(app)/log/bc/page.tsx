@@ -334,7 +334,7 @@ function NewBcModal({
               />
               {form.amount > 5_000_000 && (
                 <p className="mt-1 text-[10.5px] text-amber-700">
-                  ⚠ Montant &gt; 5 M FCFA → workflow N2 DAF (Marie NGONO).
+                  ⚠ Montant &gt; 5 M FCFA → workflow N2 DAF.
                 </p>
               )}
             </div>

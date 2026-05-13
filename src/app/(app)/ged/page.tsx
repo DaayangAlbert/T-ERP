@@ -48,7 +48,7 @@ export default function GedDashboardPage() {
           <p className="mt-1 text-[12.5px] text-ink-3">
             {isReadOnly
               ? "Vue lecture seule (DG / admin) — actions documentaires désactivées."
-              : "Référent documentaire — Christelle EYENGA · structure 28 espaces transverses."}
+              : `Référent documentaire — ${user?.firstName ?? ""} ${user?.lastName ?? ""}. Structure les espaces documentaires transverses.`}
           </p>
         </div>
       </header>

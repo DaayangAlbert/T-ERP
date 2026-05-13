@@ -178,7 +178,7 @@ function DoctorPanel() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-bold text-ink">Dr. NGOUFO Pierre</div>
-          <div className="text-[12.5px] text-ink-3">Médecin du travail référent BatimCAM</div>
+          <div className="text-[12.5px] text-ink-3">Médecin du travail référent</div>
           <div className="mt-1 text-[11.5px] text-ink-3">Cabinet : Avenue Kennedy, Yaoundé · +237 6 77 12 88 90 · ngoufo.medtravail@batimcam.cm</div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { ReportWizardStepper } from "@/components/reports/ReportWizardStepper";
 import { BlockLibrary } from "@/components/reports/BlockLibrary";
 import { useCreateReport } from "@/hooks/useReports";
 import { REPORT_TYPE_LABEL, TEMPLATE_BLOCKS, REPORT_BLOCKS } from "@/lib/report-blocks";
+import { useAuth } from "@/hooks/useAuth";
 
 const STEPS = [
   { key: "type", label: "Type" },
@@ -44,7 +45,11 @@ function defaultPeriod(type: ReportType): string {
 export default function NouveauRapportPage() {
   const router = useRouter();
   const sp = useSearchParams();
+  const { user } = useAuth();
   const initialType = (sp.get("type") as ReportType | null) ?? ReportType.EXECUTIVE_SUMMARY;
+  const defaultSignature = user
+    ? `${user.firstName} ${user.lastName}${user.role === "DG" ? ", Directeur Général" : ""}`
+    : "";
 
   const [step, setStep] = useState(0);
   const [type, setType] = useState<ReportType>(initialType);
@@ -52,8 +57,14 @@ export default function NouveauRapportPage() {
   const [period, setPeriod] = useState<string>(defaultPeriod(initialType));
   const [scope, setScope] = useState<string>("GROUP");
   const [blocks, setBlocks] = useState<string[]>(TEMPLATE_BLOCKS[initialType] ?? []);
-  const [signature, setSignature] = useState<string>("Albert DAAYANG, Directeur Général");
+  const [signature, setSignature] = useState<string>(defaultSignature);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Si l'utilisateur arrive avant l'hydratation puis user devient disponible, met la signature.
+  useEffect(() => {
+    if (defaultSignature && !signature) setSignature(defaultSignature);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultSignature]);
 
   const create = useCreateReport();
 

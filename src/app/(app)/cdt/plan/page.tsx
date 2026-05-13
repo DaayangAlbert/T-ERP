@@ -99,7 +99,7 @@ export default function CdtPlanPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold text-ink">Valider le plan du jour</h3>
             <p className="mt-2 text-[12.5px] text-ink-3">
-              Notification équipes ({data.teams.length} chefs d'équipe) + DTrav (Paul ETOUNDI) + Magasinier (Lucas) pour préparation matières.
+              Notification équipes ({data.teams.length} chefs d'équipe) + DTrav + Magasinier pour préparation matières.
             </p>
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => setConfirmValidate(false)} className="h-9 rounded-md border border-line bg-white px-3 text-[12.5px] font-medium text-ink-3 hover:bg-surface-alt">

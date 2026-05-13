@@ -45,7 +45,7 @@ export default function DtDashboardPage() {
           <p className="mt-1 text-[12.5px] text-ink-3">
             {isReadOnly
               ? "Vue lecture seule (DG / admin) — actions DT désactivées."
-              : "Cockpit production — Daniel ESSOMBA · supervise 23 chantiers et 4 directeurs travaux."}
+              : `Cockpit production — ${user?.firstName ?? ""} ${user?.lastName ?? ""}. Supervision portefeuille chantiers et équipes travaux.`}
           </p>
         </div>
       </header>

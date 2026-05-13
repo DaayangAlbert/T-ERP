@@ -13,6 +13,13 @@ export default async function SgDashboardPage() {
   if (!session?.tenantId) redirect("/");
   const tenantId = session.tenantId;
 
+  const [me, tenant] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.sub }, select: { firstName: true, lastName: true } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true } }),
+  ]);
+  const tenantName = tenant?.name ?? "Société";
+  const meName = me ? `${me.firstName} ${me.lastName}` : "";
+
   const [contracts, activeCases, nextMeeting, expiringApprovals, pendingCorrespondences, registers, boardCount] = await Promise.all([
     prisma.clientContract.count({ where: { tenantId, status: "ACTIVE" } }),
     prisma.legalCase.count({
@@ -107,7 +114,7 @@ export default async function SgDashboardPage() {
           </p>
         </div>
         <span className="rounded-full bg-violet-100 px-3 py-1 text-[11.5px] font-semibold text-violet-700">
-          BatimCAM SA · OHADA · {boardCount} administrateurs
+          {tenantName} · OHADA · {boardCount} administrateurs
         </span>
       </header>
 
@@ -116,7 +123,7 @@ export default async function SgDashboardPage() {
           Secrétaire Général
         </div>
         <div className="mt-1.5 font-mono text-[18px] font-bold leading-tight tracking-tight sm:text-[22px]">
-          Bonjour Élisabeth · {contracts} marchés · {activeCases} contentieux · {pendingCorrespondences} courriers en attente
+          {meName ? `Bonjour ${meName.split(" ")[0]} · ` : ""}{contracts} marchés · {activeCases} contentieux · {pendingCorrespondences} courriers en attente
         </div>
       </div>
 
@@ -171,8 +178,8 @@ export default async function SgDashboardPage() {
       <section className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-[12px] text-blue-900">
         <strong>Bloc 0 SG livré :</strong> 11 modèles Prisma corporate (ClientContract, MarketContractAmendment, BankGuarantee,
         GovernanceMeeting, MeetingDecision, BoardMember, Shareholder, LegalCase, LegalCaseEvent, RegulatoryRegister,
-        OfficialCorrespondence, Institution, ProfessionalApproval) · RBAC SECRETARY_GENERAL + 5 flags · seed BatimCAM SA OHADA
-        (6 marchés · 9 administrateurs · 8 actionnaires · 4 contentieux · 12 courriers · 8 registres · 3 agréments).
+        OfficialCorrespondence, Institution, ProfessionalApproval) · RBAC SECRETARY_GENERAL + 5 flags · seed initial OHADA
+        ({contracts} marchés · {boardCount} administrateurs · {activeCases} contentieux · {pendingCorrespondences} courriers en attente · {registers.length} registres).
         Note : MFA spec'd dans le prompt — non implémenté (phase 2).
       </section>
     </div>

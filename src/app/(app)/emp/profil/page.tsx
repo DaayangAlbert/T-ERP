@@ -4,6 +4,7 @@ import { useState } from "react";
 import { User, Edit3, Download, FileText, Shield, Phone, MapPin, Cake, Heart, Building2, CreditCard, X, Save, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useEmpProfile, useEmpDocuments, useEmpPolicies, useRequestProfileModification, type EmpDocument } from "@/hooks/useEmpProfile";
+import { useTenant } from "@/hooks/useTenant";
 
 const MODIFIABLE_FIELDS: { code: string; label: string; type: string }[] = [
   { code: "phoneMobile", label: "Téléphone mobile", type: "tel" },
@@ -32,6 +33,7 @@ export default function EmpProfilPage() {
   const profile = useEmpProfile();
   const docs = useEmpDocuments();
   const policies = useEmpPolicies();
+  const { tenant } = useTenant();
   const [showModify, setShowModify] = useState(false);
 
   if (profile.isLoading || !profile.data) {
@@ -134,7 +136,7 @@ export default function EmpProfilPage() {
 
       {/* Politiques RH */}
       <section className="rounded-xl border border-line bg-white p-3">
-        <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">Politiques RH BatimCAM</h2>
+        <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">Politiques RH{tenant?.name ? ` ${tenant.name}` : ""}</h2>
         {policies.isLoading || !policies.data ? (
           <div className="h-20 animate-pulse rounded-md bg-surface-alt" />
         ) : (
@@ -228,7 +230,7 @@ function ModifyDialog({ onClose }: { onClose: () => void }) {
         </header>
         <div className="space-y-2.5">
           <div className="rounded-md border border-blue-200 bg-blue-50 p-2 text-[11.5px] text-blue-900">
-            <AlertTriangle className="mr-1 inline h-3 w-3" /> Modifications validées par la RH (Sandrine ONANA). Délai estimé : 2 jours ouvrés.
+            <AlertTriangle className="mr-1 inline h-3 w-3" /> Modifications validées par la RH. Délai estimé : 2 jours ouvrés.
           </div>
           <label className="block">
             <div className="text-[10.5px] font-semibold uppercase tracking-wide text-ink-3">Champ à modifier</div>

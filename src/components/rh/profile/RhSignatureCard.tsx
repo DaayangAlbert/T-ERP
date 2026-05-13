@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { PenLine, Save } from "lucide-react";
 import { clsx } from "clsx";
 import { useRhSignature, useUpdateRhSignature } from "@/hooks/useRhProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 export function RhSignatureCard() {
   const { data, isLoading } = useRhSignature();
   const update = useUpdateRhSignature();
+  const { user } = useAuth();
   const [authorized, setAuthorized] = useState<string[]>([]);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function RhSignatureCard() {
         <h3 className="text-sm font-semibold text-ink">Documents que je peux signer</h3>
       </header>
       <p className="text-[11.5px] text-ink-3">
-        Liste des documents RH pour lesquels Sandrine ONANA est autorisée à signer seule.
+        Liste des documents RH pour lesquels {user ? `${user.firstName} ${user.lastName} est` : "le RH est"} autorisé{user ? "(e)" : ""} à signer seul{user ? "(e)" : ""}.
         Les documents non cochés nécessitent une cosignature DG / Direction.
       </p>
       <div className="flex flex-wrap gap-1.5">
