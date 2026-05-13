@@ -4,14 +4,20 @@ import { ArrowRight, Building2, Users, FileCheck, Wallet } from "lucide-react";
 export function LandingHero() {
   return (
     <section className="relative overflow-hidden bg-brand-gradient-dark text-white">
-      <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_20%_50%,rgba(192,132,252,.25),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(168,85,247,.25),transparent_40%)]" />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-30"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 50%, rgba(192,132,252,.25), transparent 40%), radial-gradient(circle at 80% 30%, rgba(168,85,247,.25), transparent 40%)",
+        }}
+      />
       <div className="relative mx-auto max-w-6xl px-4 py-20 md:py-28">
         <div className="grid items-center gap-10 md:grid-cols-2">
-          <div>
+          <div className="min-w-0">
             <span className="inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
               ERP BTP · Cameroun · CEMAC
             </span>
-            <h1 className="mt-4 text-3xl font-bold leading-tight md:text-5xl">
+            <h1 className="mt-4 text-3xl font-bold leading-tight md:text-4xl lg:text-5xl">
               L&apos;ERP qui parle <span className="text-primary-300">SYSCOHADA</span>,
               CNPS et chantier
             </h1>
@@ -71,8 +77,8 @@ function Stat({
 
 function MockupCard() {
   return (
-    <div className="relative">
-      <div className="absolute -inset-4 rounded-2xl bg-primary-300/20 blur-2xl" />
+    <div className="relative min-w-0">
+      <div className="pointer-events-none absolute inset-0 -m-4 rounded-2xl bg-primary-300/20 blur-2xl" />
       <div className="relative rounded-xl bg-white p-4 text-ink shadow-2xl">
         <div className="flex items-center gap-2 border-b border-line pb-3">
           <div className="flex gap-1.5">
