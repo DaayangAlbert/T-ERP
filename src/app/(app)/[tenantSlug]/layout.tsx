@@ -1,10 +1,21 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { isCandidateSession } from "@/lib/auth";
 import { getCurrentSession } from "@/lib/session";
 import { AuthenticatedShell } from "@/components/layout/AuthenticatedShell";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+// Le layout lit cookies + Prisma — doit être dynamique. Sinon Next.js peut
+// rendre statiquement et appeler getCurrentSession() sans contexte requête,
+// ce qui renvoie null et redirige vers "/" (faux négatif d'auth).
+export const dynamic = "force-dynamic";
+
+export default async function AppLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { tenantSlug: string };
+}) {
   const session = getCurrentSession();
   if (!session) redirect("/");
   if (isCandidateSession(session)) redirect("/cand/dashboard");
@@ -25,6 +36,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   });
 
   if (!user) redirect("/");
+
+  // Le slug dans l'URL doit correspondre au tenant de l'utilisateur connecté.
+  // Si mismatch : SUPER_ADMIN n'a pas de tenant → 404, autres → redirect vers leur slug.
+  if (!user.tenant) {
+    if (user.role === "SUPER_ADMIN") redirect("/admin");
+    notFound();
+  }
+  if (user.tenant.slug !== params.tenantSlug) {
+    redirect(`/${user.tenant.slug}/dashboard`);
+  }
 
   return (
     <AuthenticatedShell
