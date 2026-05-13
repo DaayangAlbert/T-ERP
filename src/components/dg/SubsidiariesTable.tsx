@@ -42,7 +42,7 @@ export function SubsidiariesTable({ rows }: Props) {
               >
                 <td className="py-3 pl-4">
                   <Link
-                    href={`/dg/consolidation/${r.id}`}
+                    href={`/direction-generale/consolidation/${r.id}`}
                     className="flex items-center gap-2.5 hover:text-primary-700"
                   >
                     <span
@@ -88,7 +88,7 @@ export function SubsidiariesTable({ rows }: Props) {
                 </td>
                 <td className="py-3 pr-4 text-right">
                   <Link
-                    href={`/dg/consolidation/${r.id}`}
+                    href={`/direction-generale/consolidation/${r.id}`}
                     aria-label={`Détail ${r.name}`}
                     className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt hover:text-primary-700"
                   >
@@ -105,7 +105,7 @@ export function SubsidiariesTable({ rows }: Props) {
       <ul className="divide-y divide-line md:hidden">
         {rows.map((r) => (
           <li key={r.id}>
-            <Link href={`/dg/consolidation/${r.id}`} className="flex items-center gap-3 p-3 hover:bg-surface-alt">
+            <Link href={`/direction-generale/consolidation/${r.id}`} className="flex items-center gap-3 p-3 hover:bg-surface-alt">
               <span
                 className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-md text-sm font-bold text-white"
                 style={{ background: r.color }}

@@ -1,501 +1,384 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { PayslipDetail, PayslipLine } from "@/hooks/usePayslips";
-
-const PAYMENT_MODE_LABEL: Record<string, string> = {
-  VIREMENT: "VIREMENT",
-  ESPECES: "EN ESPECES",
-  CHEQUE: "PAR CHEQUE",
-  MOMO: "MOBILE MONEY",
-};
-
-function fmt(amount: string | null | undefined): string {
-  if (!amount) return "";
-  const n = Number(amount);
-  if (!Number.isFinite(n) || n === 0) return "";
-  return new Intl.NumberFormat("fr-FR").format(Math.round(n));
-}
-function fmtRate(rate: number | null | undefined): string {
-  if (!rate) return "";
-  return rate.toFixed(2).replace(".", ",");
-}
-function fmtQty(q: number | null | undefined): string {
-  if (!q) return "";
-  return q.toString();
-}
-function fmtDate(date: string | Date | null | undefined): string {
-  if (!date) return "";
-  const d = typeof date === "string" ? new Date(date) : date;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yy = d.getFullYear();
-  return `${dd}/${mm}/${yy}`;
-}
-
-const BORDER = "1pt solid #999";
-
-const styles = StyleSheet.create({
-  page: {
-    padding: 28,
-    fontFamily: "Helvetica",
-    fontSize: 9,
-    color: "#000",
-  },
-  // Header band
-  topRow: {
-    flexDirection: "row",
-    borderTop: BORDER,
-    borderLeft: BORDER,
-    borderRight: BORDER,
-  },
-  topCellLeftEmpty: { width: "30%", borderRight: BORDER, padding: 4, minHeight: 18 },
-  topCellPeriod: { width: "30%", borderRight: BORDER, padding: 4, fontStyle: "italic" },
-  topCellLabel: { width: "15%", borderRight: BORDER, padding: 4, textAlign: "center" },
-  topCellDate: { width: "15%", borderRight: BORDER, padding: 4, textAlign: "center", fontWeight: 700 },
-  topCellMode: { width: "10%", padding: 4, textAlign: "center", fontWeight: 700 },
-
-  // Title row
-  titleRow: { flexDirection: "row", borderTop: BORDER, borderLeft: BORDER, borderRight: BORDER },
-  titleBand: {
-    width: "30%",
-    borderRight: BORDER,
-    padding: 5,
-    backgroundColor: "#FEF3C7",
-    textAlign: "center",
-    fontWeight: 700,
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  titleHeadCell: {
-    backgroundColor: "#D1F2EB",
-    padding: 4,
-    textAlign: "center",
-    fontWeight: 600,
-    borderRight: BORDER,
-  },
-
-  // Employer row
-  blockRow: { flexDirection: "row", borderTop: BORDER, borderLeft: BORDER, borderRight: BORDER },
-  employerCell: {
-    width: "30%",
-    backgroundColor: "#D6E4F5",
-    padding: 6,
-    borderRight: BORDER,
-  },
-  employerName: { fontWeight: 700, fontSize: 10, textAlign: "center", marginBottom: 3 },
-  employerMeta: { fontSize: 8.5, lineHeight: 1.4 },
-  cellCenter: { padding: 4, textAlign: "center", borderRight: BORDER },
-  cellLeft: { padding: 4, borderRight: BORDER },
-  cellEmpty: { padding: 4, borderRight: BORDER, minHeight: 18 },
-
-  // Mid headers and values
-  miniHead: {
-    backgroundColor: "#D1F2EB",
-    padding: 4,
-    textAlign: "center",
-    fontWeight: 600,
-    borderRight: BORDER,
-  },
-  yellowCell: {
-    backgroundColor: "#FFF8C5",
-    padding: 4,
-    textAlign: "center",
-    fontWeight: 600,
-    borderRight: BORDER,
-  },
-  greenCell: { backgroundColor: "#E8F5E9", padding: 4, textAlign: "center", borderRight: BORDER },
-
-  // Identity full-width
-  identityName: {
-    width: "100%",
-    padding: 5,
-    textAlign: "center",
-    fontWeight: 700,
-    fontSize: 11,
-  },
-
-  // Codes header
-  codesHeaderRow: {
-    flexDirection: "row",
-    borderTop: BORDER,
-    borderLeft: BORDER,
-    borderRight: BORDER,
-    backgroundColor: "#5DA9D8",
-  },
-  codeHead: {
-    color: "#fff",
-    padding: 5,
-    textAlign: "center",
-    fontWeight: 700,
-    borderRight: BORDER,
-  },
-  // Code line columns
-  codeLine: {
-    flexDirection: "row",
-    borderTop: BORDER,
-    borderLeft: BORDER,
-    borderRight: BORDER,
-  },
-  cCode: { width: "10%", padding: 4, textAlign: "center", borderRight: BORDER },
-  cLabel: { width: "30%", padding: 4, borderRight: BORDER },
-  cQty: { width: "8%", padding: 4, textAlign: "right", borderRight: BORDER },
-  cBase: { width: "12%", padding: 4, textAlign: "right", borderRight: BORDER },
-  cRate: { width: "8%", padding: 4, textAlign: "right", borderRight: BORDER },
-  cPlus: { width: "12%", padding: 4, textAlign: "right", borderRight: BORDER },
-  cMinus: { width: "10%", padding: 4, textAlign: "right", borderRight: BORDER },
-  cPatron: { width: "10%", padding: 4, textAlign: "right" },
-
-  // Totals row
-  totalsRow: {
-    flexDirection: "row",
-    borderTop: "2pt solid #555",
-    borderLeft: BORDER,
-    borderRight: BORDER,
-    backgroundColor: "#F7F7F7",
-  },
-  totalsLabel: {
-    width: "60%",
-    padding: 5,
-    textAlign: "right",
-    fontWeight: 700,
-    borderRight: BORDER,
-  },
-  totalsPlus: { width: "12%", padding: 5, textAlign: "right", fontWeight: 700, borderRight: BORDER },
-  totalsMinus: { width: "10%", padding: 5, textAlign: "right", fontWeight: 700, borderRight: BORDER },
-  totalsPatron: { width: "10%", padding: 5, textAlign: "right", fontWeight: 700 },
-
-  // Net row
-  netRow: {
-    flexDirection: "row",
-    borderTop: "2pt solid #555",
-    borderLeft: BORDER,
-    borderRight: BORDER,
-    borderBottom: BORDER,
-  },
-  netLabel: {
-    width: "60%",
-    padding: 6,
-    textAlign: "right",
-    fontWeight: 700,
-    fontSize: 11,
-    borderRight: BORDER,
-  },
-  netValue: {
-    width: "30%",
-    padding: 6,
-    textAlign: "center",
-    backgroundColor: "#FEF3C7",
-    fontWeight: 700,
-    fontSize: 12,
-    borderRight: BORDER,
-  },
-  netMode: {
-    width: "10%",
-    padding: 6,
-    textAlign: "center",
-    fontWeight: 700,
-  },
-
-  // Cumul band
-  cumul: {
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: "#F7F7F7",
-    border: BORDER,
-    fontSize: 8.5,
-    color: "#333",
-  },
-  cumulMeta: { color: "#666", fontStyle: "italic", marginTop: 4 },
-});
 
 interface Props {
   payslip: PayslipDetail;
+  qrDataUrl?: string;
+  publicUrl?: string;
 }
 
-export function PayslipPDF({ payslip }: Props) {
-  const periodFrom = new Date(payslip.period);
-  const periodTo = new Date(periodFrom.getFullYear(), periodFrom.getMonth() + 1, 0);
-  const tenantName = (payslip.tenant?.name ?? "").toUpperCase();
-  const fullName = `${payslip.user.lastName.toUpperCase()} ${payslip.user.firstName}`;
-  const seniority = payslip.user.hireDate
-    ? `${Math.max(
-        0,
-        Math.floor((Date.now() - new Date(payslip.user.hireDate).getTime()) / (1000 * 60 * 60 * 24 * 30))
-      )} mois`
-    : "";
+const GOLD = "#D6A84F";
+const PURPLE = "#2A1B3D";
+const PRIMARY = "#A855F7";
+const BORDER = "1pt solid #E5E7EB";
 
-  const cotisations =
-    Number(payslip.socialCharges) + Number(payslip.fiscalCharges);
+function fmt(amount: string | number | null | undefined): string {
+  if (amount === null || amount === undefined || amount === "") return "0";
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return "0";
+  return new Intl.NumberFormat("fr-FR").format(Math.round(n));
+}
+
+function fmtDate(date: string | Date | null | undefined): string {
+  if (!date) return "-";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("fr-FR").format(d);
+}
+
+function fmtPeriod(date: string): string {
+  return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date(date));
+}
+
+function initials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+function lineAmount(lines: PayslipLine[], code: string, field: "amountPlus" | "amountMinus" | "employerAmount") {
+  return lines
+    .filter((line) => line.code === code)
+    .reduce((sum, line) => sum + Number(line[field] ?? 0), 0);
+}
+
+function byPrefix(lines: PayslipLine[], prefix: string): PayslipLine[] {
+  return lines.filter((line) => line.code.startsWith(prefix));
+}
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 18,
+    fontFamily: "Helvetica",
+    fontSize: 8,
+    color: "#1F2937",
+    backgroundColor: "#FFFFFF",
+  },
+  securityBand: {
+    height: 6,
+    backgroundColor: PURPLE,
+    borderBottom: `2pt solid ${GOLD}`,
+    marginBottom: 10,
+  },
+  header: { flexDirection: "row", gap: 10, marginBottom: 10 },
+  company: {
+    flex: 1.2,
+    border: BORDER,
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  logo: { width: 42, height: 42, objectFit: "contain" },
+  logoFallback: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: PRIMARY,
+    color: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  titlePanel: {
+    flex: 1,
+    border: `1.5pt solid ${PURPLE}`,
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { fontSize: 18, fontWeight: 700, color: PURPLE, textTransform: "uppercase" },
+  titleMeta: { marginTop: 4, color: "#6B7280", textTransform: "uppercase" },
+  qrPanel: {
+    width: 100,
+    border: BORDER,
+    borderRadius: 8,
+    padding: 7,
+    alignItems: "center",
+  },
+  qr: { width: 70, height: 70 },
+  qrFallback: {
+    width: 70,
+    height: 70,
+    border: `1pt solid ${PURPLE}`,
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: 4,
+    fontSize: 6,
+  },
+  qrCode: { marginTop: 4, fontSize: 6, color: "#6B7280", textAlign: "center" },
+  companyName: { fontSize: 12, fontWeight: 700, color: PURPLE, textTransform: "uppercase" },
+  muted: { color: "#6B7280" },
+  layout: { flexDirection: "row", gap: 10 },
+  left: { width: "28%", gap: 8 },
+  right: { flex: 1, gap: 8 },
+  employeeCard: { border: BORDER, borderRadius: 8, padding: 9 },
+  employeeTop: { flexDirection: "row", gap: 8, alignItems: "center", marginBottom: 8 },
+  photo: { width: 48, height: 58, objectFit: "cover", borderRadius: 6 },
+  photoFallback: {
+    width: 48,
+    height: 58,
+    borderRadius: 6,
+    backgroundColor: "#F3E8FF",
+    color: "#7E22CE",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 13,
+    fontWeight: 700,
+  },
+  employeeName: { fontSize: 11, fontWeight: 700, color: "#111827", textTransform: "uppercase" },
+  section: { border: BORDER, borderRadius: 8, padding: 9 },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  sectionTitle: { color: PURPLE, fontSize: 9, fontWeight: 700, textTransform: "uppercase" },
+  metricRow: { flexDirection: "row", justifyContent: "space-between", borderBottom: "1pt solid #F3F4F6", paddingVertical: 2 },
+  metricLabel: { color: "#6B7280" },
+  metricValue: { fontWeight: 700, textAlign: "right" },
+  summaryNet: {
+    marginTop: 7,
+    borderRadius: 8,
+    padding: 9,
+    backgroundColor: PURPLE,
+    color: "#FFFFFF",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  summaryNetLabel: { textTransform: "uppercase", color: "#E9D5FF", fontSize: 9 },
+  summaryNetValue: { fontSize: 15, fontWeight: 700 },
+  columns: { flexDirection: "row", gap: 8 },
+  column: { flex: 1, border: BORDER, borderRadius: 8, padding: 8 },
+  tableHead: { flexDirection: "row", backgroundColor: PURPLE, color: "#FFFFFF", borderRadius: 4 },
+  lineRow: { flexDirection: "row", borderBottom: "1pt solid #F3F4F6" },
+  cell: { padding: 4 },
+  cellCode: { width: "14%" },
+  cellLabel: { width: "42%" },
+  cellNumber: { width: "22%", textAlign: "right" },
+  cellHeader: { fontSize: 6.5, fontWeight: 700 },
+  auth: {
+    marginTop: 8,
+    border: `1pt solid ${GOLD}`,
+    borderRadius: 8,
+    padding: 8,
+    backgroundColor: "#FFFBEB",
+  },
+  footer: {
+    marginTop: 8,
+    borderTop: BORDER,
+    paddingTop: 6,
+    fontSize: 7,
+    color: "#6B7280",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+});
+
+export function PayslipPDF({ payslip, qrDataUrl, publicUrl }: Props) {
+  const tenantName = payslip.tenant?.name ?? "Entreprise";
+  const snapshot = payslip.snapshot;
+  const firstName = snapshot?.firstName ?? payslip.user.firstName;
+  const lastName = snapshot?.lastName ?? payslip.user.lastName;
+  const fullName = snapshot?.fullName ?? `${firstName} ${lastName}`;
+  const matricule = snapshot?.matricule ?? payslip.user.matricule ?? payslip.user.employeeId ?? "-";
+  const category = snapshot?.category ?? payslip.user.category ?? "-";
+  const position = snapshot?.position ?? payslip.user.position ?? "-";
+  const photoUrl = snapshot?.profilePhotoUrl ?? payslip.user.avatarUrl ?? null;
+  const bankName = snapshot?.bankName ?? payslip.user.bankName ?? "-";
+  const bankAccount = snapshot?.bankAccount ?? payslip.user.rib ?? payslip.paymentBankAccount ?? "-";
+  const periodStart = new Date(payslip.period);
+  const periodEnd = payslip.periodEnd ? new Date(payslip.periodEnd) : new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
+  const gains = byPrefix(payslip.lines, "A");
+  const deductions = byPrefix(payslip.lines, "B");
+  const employerCharges = byPrefix(payslip.lines, "C");
+  const gross = Number(payslip.grossAmount);
+  const totalDeductions = Number(payslip.socialCharges) + Number(payslip.fiscalCharges) + Number(payslip.otherDeductions ?? 0);
 
   return (
-    <Document
-      title={`Bulletin ${tenantName} ${fullName} ${fmtDate(periodFrom)}`}
-      author={tenantName}
-    >
-      <Page size="A4" style={styles.page}>
-        {/* === Top : period + payment === */}
-        <View style={styles.topRow}>
-          <View style={styles.topCellLeftEmpty}>
-            <Text> </Text>
+    <Document title={`Bulletin ${tenantName} ${fullName} ${fmtPeriod(payslip.period)}`} author={tenantName}>
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <View style={styles.securityBand} />
+        <View style={styles.header}>
+          <View style={styles.company}>
+            {payslip.tenant?.logoUrl ? (
+              <Image src={payslip.tenant.logoUrl} style={styles.logo} />
+            ) : (
+              <View style={styles.logoFallback}>
+                <Text>{tenantName.slice(0, 2).toUpperCase()}</Text>
+              </View>
+            )}
+            <View>
+              <Text style={styles.companyName}>{tenantName}</Text>
+              <Text style={styles.muted}>NIU : {payslip.tenant?.taxId ?? "-"}</Text>
+              <Text style={styles.muted}>CNPS employeur : {payslip.tenant?.cnpsId ?? "-"}</Text>
+              <Text style={styles.muted}>Document securise T-ERP</Text>
+            </View>
           </View>
-          <View style={styles.topCellPeriod}>
-            <Text>
-              Paie du {fmtDate(periodFrom)} au {fmtDate(periodTo)}
+          <View style={styles.titlePanel}>
+            <Text style={styles.title}>Bulletin de paie</Text>
+            <Text style={styles.titleMeta}>{fmtPeriod(payslip.period)}</Text>
+            <Text style={styles.titleMeta}>
+              Du {fmtDate(periodStart)} au {fmtDate(periodEnd)}
             </Text>
           </View>
-          <View style={styles.topCellLabel}>
-            <Text>Paiement le</Text>
-          </View>
-          <View style={styles.topCellDate}>
-            <Text>{fmtDate(payslip.paymentDate)}</Text>
-          </View>
-          <View style={styles.topCellMode}>
-            <Text>{PAYMENT_MODE_LABEL[payslip.paymentMode] ?? payslip.paymentMode}</Text>
-          </View>
-        </View>
-
-        {/* === BULLETIN DE PAIE banner + headers === */}
-        <View style={styles.titleRow}>
-          <View style={styles.titleBand}>
-            <Text>BULLETIN DE PAIE</Text>
-          </View>
-          <View style={[styles.titleHeadCell, { width: "12%" }]}>
-            <Text>Matricule</Text>
-          </View>
-          <View style={[styles.titleHeadCell, { width: "13%" }]}>
-            <Text>Catégorie</Text>
-          </View>
-          <View style={[styles.titleHeadCell, { width: "10%" }]}>
-            <Text>Échelon</Text>
-          </View>
-          <View style={[styles.titleHeadCell, { width: "10%" }]}>
-            <Text>Ancienneté</Text>
-          </View>
-          <View style={[styles.titleHeadCell, { width: "25%", borderRight: undefined }]}>
-            <Text>N° CNPS</Text>
+          <View style={styles.qrPanel}>
+            {qrDataUrl ? (
+              <Image src={qrDataUrl} style={styles.qr} />
+            ) : (
+              <View style={styles.qrFallback}>
+                <Text>QR verification</Text>
+              </View>
+            )}
+            <Text style={styles.qrCode}>{payslip.verificationCode ?? "CODE A GENERER"}</Text>
           </View>
         </View>
 
-        {/* === Employer + matricule values === */}
-        <View style={styles.blockRow}>
-          <View style={styles.employerCell}>
-            <Text style={styles.employerName}>{tenantName}</Text>
-            <Text style={styles.employerMeta}>
-              {payslip.tenant?.taxId ? `N° Contribuable : ${payslip.tenant.taxId}\n` : ""}
-              {payslip.tenant?.cnpsId ? `N° CNPS employeur : ${payslip.tenant.cnpsId}\n` : ""}
-              Cameroun
-            </Text>
+        <View style={styles.layout}>
+          <View style={styles.left}>
+            <View style={styles.employeeCard}>
+              <View style={styles.employeeTop}>
+                {photoUrl ? (
+                  <Image src={photoUrl} style={styles.photo} />
+                ) : (
+                  <View style={styles.photoFallback}>
+                    <Text>{initials(firstName, lastName)}</Text>
+                  </View>
+                )}
+                <View>
+                  <Text style={styles.employeeName}>{fullName}</Text>
+                  <Text style={styles.muted}>{position}</Text>
+                  <Text style={styles.muted}>Matricule {matricule}</Text>
+                </View>
+              </View>
+              <Metric label="Categorie" value={category} />
+              <Metric label="Contrat" value={snapshot?.contractType ?? payslip.user.contractType ?? "-"} />
+              <Metric label="Date embauche" value={fmtDate(snapshot?.hireDate ?? payslip.user.hireDate)} />
+              <Metric label="N CNPS" value={snapshot?.cnpsNumber ?? payslip.user.cnpsNumber ?? "-"} />
+              <Metric label="Mode paiement" value={payslip.paymentMode} />
+              <Metric label="Banque" value={bankName} />
+              <Metric label="Compte bancaire" value={bankAccount} />
+            </View>
+
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recapitulatif</Text>
+              </View>
+              <Metric label="Salaire brut" value={`${fmt(payslip.grossAmount)} FCFA`} />
+              <Metric label="Brut imposable" value={`${fmt(payslip.taxableGross)} FCFA`} />
+              <Metric label="Retenues" value={`${fmt(totalDeductions)} FCFA`} />
+              <Metric label="Charges patronales" value={`${fmt(payslip.employerCharges)} FCFA`} />
+              <View style={styles.summaryNet}>
+                <Text style={styles.summaryNetLabel}>Net a payer</Text>
+                <Text style={styles.summaryNetValue}>{fmt(payslip.netAmount)} FCFA</Text>
+              </View>
+            </View>
+
+            <View style={styles.auth}>
+              <Text style={styles.sectionTitle}>Authentification</Text>
+              <Text>Code : {payslip.verificationCode ?? "-"}</Text>
+              <Text>URL : {publicUrl ?? payslip.verifiedPublicUrl ?? "-"}</Text>
+              <Text>Statut : {payslip.status}</Text>
+            </View>
           </View>
-          <View style={[styles.cellCenter, { width: "12%", fontWeight: 700 }]}>
-            <Text>{payslip.user.employeeId ?? "—"}</Text>
-          </View>
-          <View style={[styles.cellCenter, { width: "13%" }]}>
-            <Text>{payslip.user.category ?? ""}</Text>
-          </View>
-          <View style={[styles.cellEmpty, { width: "10%" }]}>
-            <Text> </Text>
-          </View>
-          <View style={[styles.greenCell, { width: "10%" }]}>
-            <Text>{seniority}</Text>
-          </View>
-          <View style={[styles.cellCenter, { width: "25%", borderRight: undefined }]}>
-            <Text>{payslip.user.cnpsNumber ?? ""}</Text>
+
+          <View style={styles.right}>
+            <View style={styles.columns}>
+              <LineSection title="1. Gains" lines={gains} field="amountPlus" total={gross} />
+              <LineSection title="2. Retenues salariales" lines={deductions} field="amountMinus" total={totalDeductions} />
+            </View>
+            <View style={styles.columns}>
+              <LineSection
+                title="3. Charges patronales"
+                lines={employerCharges}
+                field="employerAmount"
+                total={Number(payslip.employerCharges)}
+              />
+              <View style={styles.column}>
+                <Text style={styles.sectionTitle}>4. Synthese</Text>
+                <Metric label="Base CNPS" value={`${fmt(lineAmount(payslip.lines, "B001", "amountMinus") ? payslip.taxableGross : "0")} FCFA`} />
+                <Metric label="CNPS salarie" value={`${fmt(payslip.cnpsAmount)} FCFA`} />
+                <Metric label="IRPP" value={`${fmt(payslip.irppAmount)} FCFA`} />
+                <Metric label="Autres retenues" value={`${fmt(payslip.otherDeductions ?? "0")} FCFA`} />
+                <Metric label="Cumul brut annuel" value={`${fmt(payslip.grossAmount)} FCFA`} />
+                <Metric label="Conges payes" value="A renseigner" />
+                <Metric label="Absences" value="A renseigner" />
+                <Metric label="Edition" value={fmtDate(payslip.issuedAt ?? new Date().toISOString())} />
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* === Conv. coll. / Emploi / Département === */}
-        <View style={styles.blockRow}>
-          <View style={[styles.miniHead, { width: "30%" }]}>
-            <Text>Conv. coll.</Text>
-          </View>
-          <View style={[styles.miniHead, { width: "45%" }]}>
-            <Text>Emploi occupé</Text>
-          </View>
-          <View style={[styles.miniHead, { width: "25%", borderRight: undefined }]}>
-            <Text>Département</Text>
-          </View>
-        </View>
-        <View style={styles.blockRow}>
-          <View style={[styles.cellCenter, { width: "30%" }]}>
-            <Text>CCT BTP Cameroun</Text>
-          </View>
-          <View style={[styles.cellCenter, { width: "45%" }]}>
-            <Text>{payslip.user.position ?? ""}</Text>
-          </View>
-          <View style={[styles.cellEmpty, { width: "25%", borderRight: undefined }]}>
-            <Text> </Text>
-          </View>
-        </View>
-
-        {/* === Hire date + Family situation === */}
-        <View style={styles.blockRow}>
-          <View style={[styles.cellEmpty, { width: "30%" }]}>
-            <Text> </Text>
-          </View>
-          <View style={[styles.miniHead, { width: "25%" }]}>
-            <Text>Date d'embauche</Text>
-          </View>
-          <View style={[styles.miniHead, { width: "10%" }]}>
-            <Text>Horaire</Text>
-          </View>
-          <View style={[styles.miniHead, { width: "35%", borderRight: undefined }]}>
-            <Text>SITUATION DE FAMILLE</Text>
-          </View>
-        </View>
-        <View style={styles.blockRow}>
-          <View style={[styles.cellEmpty, { width: "30%" }]}>
-            <Text> </Text>
-          </View>
-          <View style={[styles.yellowCell, { width: "25%" }]}>
-            <Text>{fmtDate(payslip.user.hireDate)}</Text>
-          </View>
-          <View style={[styles.cellCenter, { width: "10%" }]}>
-            <Text>169h33</Text>
-          </View>
-          <View style={[styles.cellEmpty, { width: "35%", borderRight: undefined }]}>
-            <Text> </Text>
-          </View>
-        </View>
-
-        {/* === Employee identity === */}
-        <View style={styles.blockRow}>
-          <View style={[styles.cellEmpty, { width: "30%" }]}>
-            <Text> </Text>
-          </View>
-          <View
-            style={{
-              width: "70%",
-              padding: 5,
-              textAlign: "center",
-              fontWeight: 700,
-              fontSize: 11,
-            }}
-          >
-            <Text>{fullName}</Text>
-          </View>
-        </View>
-        <View style={styles.blockRow}>
-          <View style={[styles.cellEmpty, { width: "30%" }]}>
-            <Text> </Text>
-          </View>
-          <View style={[styles.cellLeft, { width: "70%", borderRight: undefined }]}>
-            <Text>N° de Compte :</Text>
-          </View>
-        </View>
-        <View style={styles.blockRow}>
-          <View style={[styles.cellEmpty, { width: "30%" }]}>
-            <Text> </Text>
-          </View>
-          <View style={[styles.cellLeft, { width: "70%", borderRight: undefined }]}>
-            <Text>Domiciliation :</Text>
-          </View>
-        </View>
-
-        {/* === Codes header === */}
-        <View style={styles.codesHeaderRow}>
-          <View style={[styles.codeHead, { width: "10%" }]}>
-            <Text>Code</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "30%" }]}>
-            <Text>LIBELLES</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "8%" }]}>
-            <Text>NOMBRE</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "12%" }]}>
-            <Text>BASE</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "8%" }]}>
-            <Text>TAUX</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "12%" }]}>
-            <Text>MONTANT+</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "10%" }]}>
-            <Text>MONTANT-</Text>
-          </View>
-          <View style={[styles.codeHead, { width: "10%", borderRight: undefined }]}>
-            <Text>RET PATRON</Text>
-          </View>
-        </View>
-
-        {/* === Lines === */}
-        {payslip.lines.map((l) => (
-          <BulletinLineRow key={l.id} line={l} />
-        ))}
-
-        {/* === Totals === */}
-        <View style={styles.totalsRow}>
-          <View style={styles.totalsLabel}>
-            <Text>TOTAUX</Text>
-          </View>
-          <View style={styles.totalsPlus}>
-            <Text>{fmt(payslip.grossAmount)}</Text>
-          </View>
-          <View style={styles.totalsMinus}>
-            <Text>{fmt(cotisations.toString())}</Text>
-          </View>
-          <View style={styles.totalsPatron}>
-            <Text>{fmt(payslip.employerCharges)}</Text>
-          </View>
-        </View>
-
-        {/* === Net to pay === */}
-        <View style={styles.netRow}>
-          <View style={styles.netLabel}>
-            <Text>NET A PAYER</Text>
-          </View>
-          <View style={styles.netValue}>
-            <Text>{fmt(payslip.netAmount)} FCFA</Text>
-          </View>
-          <View style={styles.netMode}>
-            <Text>{PAYMENT_MODE_LABEL[payslip.paymentMode] ?? payslip.paymentMode}</Text>
-          </View>
-        </View>
-
-        {/* === Cumul === */}
-        <View style={styles.cumul}>
+        <View style={styles.footer}>
           <Text>
-            Cumuls de l'année : Brut {fmt(payslip.grossAmount)} FCFA · Imposable{" "}
-            {fmt(payslip.taxableGross)} FCFA · Charges salariales {fmt(cotisations.toString())} FCFA
+            Bulletin securise. Le QR code et le bouton employe ouvrent le meme lien public de verification.
           </Text>
-          <Text style={styles.cumulMeta}>
-            Bulletin généré le {fmtDate(new Date())} · à conserver sans limite — code du travail
-            Cameroun
-          </Text>
+          <Text>Cachet / signature entreprise</Text>
         </View>
       </Page>
     </Document>
   );
 }
 
-function BulletinLineRow({ line }: { line: PayslipLine }) {
-  const italic = line.code === "A001";
-  const cellStyle = italic ? { fontStyle: "italic" as const } : {};
+function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.codeLine}>
-      <View style={[styles.cCode, cellStyle]}>
-        <Text>{line.code}</Text>
+    <View style={styles.metricRow}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={styles.metricValue}>{value}</Text>
+    </View>
+  );
+}
+
+function LineSection({
+  title,
+  lines,
+  field,
+  total,
+}: {
+  title: string;
+  lines: PayslipLine[];
+  field: "amountPlus" | "amountMinus" | "employerAmount";
+  total: number;
+}) {
+  return (
+    <View style={styles.column}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.tableHead}>
+        <View style={[styles.cell, styles.cellCode]}>
+          <Text style={styles.cellHeader}>Code</Text>
+        </View>
+        <View style={[styles.cell, styles.cellLabel]}>
+          <Text style={styles.cellHeader}>Libelle</Text>
+        </View>
+        <View style={[styles.cell, styles.cellNumber]}>
+          <Text style={styles.cellHeader}>Base</Text>
+        </View>
+        <View style={[styles.cell, styles.cellNumber]}>
+          <Text style={styles.cellHeader}>Montant</Text>
+        </View>
       </View>
-      <View style={[styles.cLabel, cellStyle]}>
-        <Text>{line.label}</Text>
-      </View>
-      <View style={[styles.cQty, cellStyle]}>
-        <Text>{fmtQty(line.quantity)}</Text>
-      </View>
-      <View style={[styles.cBase, cellStyle]}>
-        <Text>{fmt(line.base)}</Text>
-      </View>
-      <View style={[styles.cRate, cellStyle]}>
-        <Text>{fmtRate(line.rate)}</Text>
-      </View>
-      <View style={[styles.cPlus, cellStyle]}>
-        <Text>{fmt(line.amountPlus)}</Text>
-      </View>
-      <View style={[styles.cMinus, cellStyle]}>
-        <Text>{fmt(line.amountMinus)}</Text>
-      </View>
-      <View style={[styles.cPatron, cellStyle]}>
-        <Text>{fmt(line.employerAmount)}</Text>
+      {lines.map((line) => (
+        <View key={line.id} style={styles.lineRow}>
+          <View style={[styles.cell, styles.cellCode]}>
+            <Text>{line.code}</Text>
+          </View>
+          <View style={[styles.cell, styles.cellLabel]}>
+            <Text>{line.label}</Text>
+          </View>
+          <View style={[styles.cell, styles.cellNumber]}>
+            <Text>{fmt(line.base)}</Text>
+          </View>
+          <View style={[styles.cell, styles.cellNumber]}>
+            <Text>{fmt(line[field])}</Text>
+          </View>
+        </View>
+      ))}
+      <View style={styles.metricRow}>
+        <Text style={styles.metricLabel}>Total</Text>
+        <Text style={styles.metricValue}>{fmt(total)} FCFA</Text>
       </View>
     </View>
   );

@@ -116,7 +116,7 @@ export default function DgDashboard() {
           label="Effectif total"
           value={formatNumber(kpis.headcount.value)}
           kpi={kpis.headcount}
-          href="/rh"
+          href="/ressources-humaines"
           sparkColor="#6B7280"
         />
       </div>

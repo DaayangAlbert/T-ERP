@@ -99,7 +99,7 @@ export function TendersTable({ tenders }: { tenders: TenderItem[] }) {
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Link
-                    href={`/dt/etudes/${t.id}`}
+                    href={`/direction-technique/etudes/${t.id}`}
                     className="inline-block rounded-md border border-line-2 bg-white px-2 py-1 text-[11px] font-semibold text-ink-2 hover:border-primary-300"
                   >
                     Voir
@@ -116,7 +116,7 @@ export function TendersTable({ tenders }: { tenders: TenderItem[] }) {
         {tenders.map((t) => (
           <Link
             key={t.id}
-            href={`/dt/etudes/${t.id}`}
+            href={`/direction-technique/etudes/${t.id}`}
             className="rounded-lg border border-line bg-white p-3 active:bg-surface-alt"
           >
             <div className="flex items-start justify-between gap-2">

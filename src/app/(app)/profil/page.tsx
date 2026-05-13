@@ -7,12 +7,14 @@ import { clsx } from "clsx";
 import {
   Award,
   CalendarDays,
+  Camera,
   CheckCircle2,
   FileText,
   KeyRound,
   Mail,
   Phone,
   Shield,
+  Trash2,
   User as UserIcon,
 } from "lucide-react";
 import { useProfile, useUpdateProfile, useChangePassword } from "@/hooks/useProfile";
@@ -150,9 +152,17 @@ function ProfileHero({ profile }: { profile: ReturnType<typeof useProfile>["data
       style={{ background: "linear-gradient(135deg,#2A1B3D 0%,#7E22CE 100%)" }}
     >
       <div className="flex flex-wrap items-center gap-5 p-6">
-        <div className="grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold ring-2 ring-white/30">
-          {initials}
-        </div>
+        {profile.avatarUrl ? (
+          <img
+            src={profile.avatarUrl}
+            alt=""
+            className="h-20 w-20 rounded-full object-cover ring-2 ring-white/30"
+          />
+        ) : (
+          <div className="grid h-20 w-20 place-items-center rounded-full bg-white/10 text-2xl font-bold ring-2 ring-white/30">
+            {initials}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="text-[11px] uppercase tracking-wider text-primary-200">
             {profile.role}
@@ -244,6 +254,8 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
@@ -252,6 +264,7 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
       avatarUrl: profile.avatarUrl ?? "",
     },
   });
+  const avatarValue = watch("avatarUrl") ?? "";
 
   useEffect(() => {
     reset({ phone: profile.phone ?? "", avatarUrl: profile.avatarUrl ?? "" });
@@ -273,6 +286,25 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
     }
   };
 
+  const handlePhotoChange = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setServerMsg({ tone: "error", text: "Le fichier doit etre une image." });
+      return;
+    }
+    if (file.size > 1_500_000) {
+      setServerMsg({ tone: "error", text: "Image trop volumineuse (1,5 Mo max)." });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setValue("avatarUrl", reader.result, { shouldDirty: true, shouldValidate: true });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-line bg-white p-5 shadow-card">
       <header className="mb-4 flex items-center justify-between">
@@ -285,6 +317,40 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
       </header>
 
       <div className="grid gap-3.5 sm:grid-cols-2">
+        <div className="rounded-lg border border-line bg-surface-alt/40 p-3 sm:col-span-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {avatarValue ? (
+              <img src={avatarValue} alt="" className="h-16 w-16 rounded-full object-cover ring-1 ring-line" />
+            ) : (
+              <div className="grid h-16 w-16 place-items-center rounded-full bg-primary-100 text-lg font-bold text-primary-700">
+                {profile.firstName.charAt(0)}
+                {profile.lastName.charAt(0)}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600">
+                <Camera className="h-3.5 w-3.5" />
+                Ajouter une photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
+                />
+              </label>
+              {avatarValue && (
+                <button
+                  type="button"
+                  onClick={() => setValue("avatarUrl", "", { shouldDirty: true, shouldValidate: true })}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Supprimer
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         <Field label="Prénom">
           <input
             value={profile.firstName}
@@ -313,10 +379,10 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
             className={inputClass(Boolean(errors.phone))}
           />
         </Field>
-        <Field label="Avatar (URL)" error={errors.avatarUrl?.message}>
+        <Field label="Photo de profil (URL ou image chargee)" error={errors.avatarUrl?.message}>
           <input
             {...register("avatarUrl")}
-            placeholder="https://…"
+            placeholder="https://..."
             className={inputClass(Boolean(errors.avatarUrl))}
           />
         </Field>

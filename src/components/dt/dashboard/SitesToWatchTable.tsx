@@ -40,7 +40,7 @@ export function SitesToWatchTable({ sites }: Props) {
       <header className="flex items-center justify-between border-b border-line px-4 py-2.5">
         <h2 className="text-[13px] font-semibold text-ink">Chantiers à surveiller</h2>
         <Link
-          href="/dt/portefeuille"
+          href="/direction-technique/portefeuille"
           className="text-[11.5px] font-semibold text-primary-700 hover:text-primary-800"
         >
           Tout le portefeuille →
@@ -89,7 +89,7 @@ export function SitesToWatchTable({ sites }: Props) {
                 </td>
                 <td className="px-3 py-2 text-right">
                   <Link
-                    href={`/dt/portefeuille?focus=${s.id}`}
+                    href={`/direction-technique/portefeuille?focus=${s.id}`}
                     className="inline-block rounded-md border border-line-2 bg-white px-2 py-1 text-[11px] font-semibold text-ink-2 hover:border-primary-300"
                   >
                     Voir
@@ -151,7 +151,7 @@ export function SitesToWatchTable({ sites }: Props) {
               </div>
             </dl>
             <Link
-              href={`/dt/portefeuille?focus=${s.id}`}
+              href={`/direction-technique/portefeuille?focus=${s.id}`}
               className="mt-3 block w-full rounded-md border border-line-2 bg-white px-3 py-2 text-center text-[12px] font-semibold text-ink-2 hover:border-primary-300"
             >
               Voir le chantier

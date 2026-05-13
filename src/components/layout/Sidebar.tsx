@@ -72,10 +72,10 @@ const DG_SECTION: NavSection = {
   title: "Espace DG",
   items: [
     { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
-    { label: "Consolidation groupe", href: "/dg/consolidation", icon: Building2 },
-    { label: "Mes objectifs", href: "/dg/objectifs", icon: Target },
-    { label: "Trésorerie prévisionnelle", href: "/dg/tresorerie-previsionnelle", icon: TrendingUp },
-    { label: "Reporting CA", href: "/dg/reporting-ca", icon: ClipboardList },
+    { label: "Consolidation groupe", href: "/direction-generale/consolidation", icon: Building2 },
+    { label: "Mes objectifs", href: "/direction-generale/objectifs", icon: Target },
+    { label: "Trésorerie prévisionnelle", href: "/direction-generale/tresorerie-previsionnelle", icon: TrendingUp },
+    { label: "Reporting CA", href: "/direction-generale/reporting-ca", icon: ClipboardList },
   ],
 };
 
@@ -86,12 +86,12 @@ const DG_SECTION: NavSection = {
 const DG_DRILLDOWN_SECTION: NavSection = {
   title: "Drill-down métiers",
   items: [
-    { label: "Vue Finance (DAF)", href: "/daf", icon: Briefcase },
-    { label: "Vue RH", href: "/rh", icon: Users },
-    { label: "Vue Technique (DT)", href: "/dt", icon: Wrench },
+    { label: "Vue Finance (DAF)", href: "/direction-financiere", icon: Briefcase },
+    { label: "Vue RH", href: "/ressources-humaines", icon: Users },
+    { label: "Vue Technique (DT)", href: "/direction-technique", icon: Wrench },
     { label: "Vue Comptabilité", href: "/comptable", icon: FileText },
-    { label: "Vue Production terrain", href: "/dtrav", icon: HardHat },
-    { label: "Vue Stocks", href: "/mag", icon: Package },
+    { label: "Vue Production terrain", href: "/directeur-travaux", icon: HardHat },
+    { label: "Vue Stocks", href: "/magasin", icon: Package },
   ],
 };
 
@@ -99,16 +99,16 @@ const DG_DRILLDOWN_SECTION: NavSection = {
 const DT_SECTION: NavSection = {
   title: "Espace Direction Technique",
   items: [
-    { label: "Tableau de bord", href: "/dt", icon: LayoutDashboard },
-    { label: "Portefeuille chantiers", href: "/dt/portefeuille", icon: Building2, badge: { value: "23" } },
-    { label: "Études et offres", href: "/dt/etudes", icon: ClipboardList, badge: { value: "8" } },
-    { label: "Méthodes et planification", href: "/dt/methodes", icon: Wrench },
-    { label: "Validation marchés", href: "/dt/validations", icon: ClipboardCheck, badge: { value: "5", alert: true } },
-    { label: "Plan de charge équipes", href: "/dt/charge", icon: Network },
-    { label: "Sous-traitance", href: "/dt/sous-traitance", icon: HardHat, badge: { value: "42" } },
-    { label: "QHSE", href: "/dt/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
-    { label: "Rapports techniques", href: "/dt/rapports", icon: BarChart3 },
-    { label: "Mon espace DT", href: "/dt/profil", icon: User },
+    { label: "Tableau de bord", href: "/direction-technique", icon: LayoutDashboard },
+    { label: "Portefeuille chantiers", href: "/direction-technique/portefeuille", icon: Building2, badge: { value: "23" } },
+    { label: "Études et offres", href: "/direction-technique/etudes", icon: ClipboardList, badge: { value: "8" } },
+    { label: "Méthodes et planification", href: "/direction-technique/methodes", icon: Wrench },
+    { label: "Validation marchés", href: "/direction-technique/validations", icon: ClipboardCheck, badge: { value: "5", alert: true } },
+    { label: "Plan de charge équipes", href: "/direction-technique/charge", icon: Network },
+    { label: "Sous-traitance", href: "/direction-technique/sous-traitance", icon: HardHat, badge: { value: "42" } },
+    { label: "QHSE", href: "/direction-technique/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
+    { label: "Rapports techniques", href: "/direction-technique/rapports", icon: BarChart3 },
+    { label: "Mon espace DT", href: "/direction-technique/profil", icon: User },
   ],
 };
 
@@ -116,12 +116,12 @@ const DT_SECTION: NavSection = {
 const CDT_SECTION: NavSection = {
   title: "Espace Conducteur Travaux",
   items: [
-    { label: "Tableau de bord", href: "/cdt", icon: LayoutDashboard },
-    { label: "Plan du jour", href: "/cdt/plan", icon: ListChecks, badge: { value: "5", alert: true } },
-    { label: "Contrôles qualité", href: "/cdt/qualite", icon: ShieldCheck, badge: { value: "3" } },
-    { label: "Sous-traitants", href: "/cdt/soustraitants", icon: HardHat },
-    { label: "Visites externes", href: "/cdt/visites", icon: Briefcase },
-    { label: "Réceptions techniques", href: "/cdt/receptions", icon: ClipboardCheck },
+    { label: "Tableau de bord", href: "/conducteur-travaux", icon: LayoutDashboard },
+    { label: "Plan du jour", href: "/conducteur-travaux/plan", icon: ListChecks, badge: { value: "5", alert: true } },
+    { label: "Contrôles qualité", href: "/conducteur-travaux/qualite", icon: ShieldCheck, badge: { value: "3" } },
+    { label: "Sous-traitants", href: "/conducteur-travaux/soustraitants", icon: HardHat },
+    { label: "Visites externes", href: "/conducteur-travaux/visites", icon: Briefcase },
+    { label: "Réceptions techniques", href: "/conducteur-travaux/receptions", icon: ClipboardCheck },
   ],
 };
 
@@ -129,12 +129,12 @@ const CDT_SECTION: NavSection = {
 const CC_SECTION: NavSection = {
   title: "Espace Chef Chantier",
   items: [
-    { label: "Tableau de bord", href: "/cc", icon: LayoutDashboard },
-    { label: "Pointage équipes", href: "/cc/pointage", icon: ClipboardCheck },
-    { label: "Production", href: "/cc/production", icon: ClipboardList },
-    { label: "Réceptions", href: "/cc/livraisons", icon: Package },
-    { label: "HSE & incidents", href: "/cc/hse", icon: ShieldAlert },
-    { label: "Mes équipes", href: "/cc/equipes", icon: Users },
+    { label: "Tableau de bord", href: "/chef-chantier", icon: LayoutDashboard },
+    { label: "Pointage équipes", href: "/chef-chantier/pointage", icon: ClipboardCheck },
+    { label: "Production", href: "/chef-chantier/production", icon: ClipboardList },
+    { label: "Réceptions", href: "/chef-chantier/livraisons", icon: Package },
+    { label: "HSE & incidents", href: "/chef-chantier/hse", icon: ShieldAlert },
+    { label: "Mes équipes", href: "/chef-chantier/equipes", icon: Users },
   ],
 };
 
@@ -142,16 +142,16 @@ const CC_SECTION: NavSection = {
 const DTRAV_SECTION: NavSection = {
   title: "Espace Directeur Travaux",
   items: [
-    { label: "Tableau de bord chantier", href: "/dtrav", icon: LayoutDashboard },
-    { label: "Production journalière", href: "/dtrav/production", icon: ClipboardList },
-    { label: "Équipe chantier", href: "/dtrav/equipe", icon: Users },
-    { label: "Planning", href: "/dtrav/planning", icon: Calendar },
-    { label: "Marché et avenants", href: "/dtrav/marche", icon: FileText },
-    { label: "Approvisionnements", href: "/dtrav/appros", icon: Package },
-    { label: "Documents chantier", href: "/dtrav/documents", icon: FileText },
-    { label: "Validations N1", href: "/dtrav/validations", icon: CheckCircle2 },
-    { label: "Reporting MOA", href: "/dtrav/reporting", icon: BarChart3 },
-    { label: "Mon espace", href: "/dtrav/profil", icon: User },
+    { label: "Tableau de bord chantier", href: "/directeur-travaux", icon: LayoutDashboard },
+    { label: "Production journalière", href: "/directeur-travaux/production", icon: ClipboardList },
+    { label: "Équipe chantier", href: "/directeur-travaux/equipe", icon: Users },
+    { label: "Planning", href: "/directeur-travaux/planning", icon: Calendar },
+    { label: "Marché et avenants", href: "/directeur-travaux/marche", icon: FileText },
+    { label: "Approvisionnements", href: "/directeur-travaux/appros", icon: Package },
+    { label: "Documents chantier", href: "/directeur-travaux/documents", icon: FileText },
+    { label: "Validations N1", href: "/directeur-travaux/validations", icon: CheckCircle2 },
+    { label: "Reporting MOA", href: "/directeur-travaux/reporting", icon: BarChart3 },
+    { label: "Mon espace", href: "/directeur-travaux/profil", icon: User },
   ],
 };
 
@@ -159,16 +159,16 @@ const DTRAV_SECTION: NavSection = {
 const RH_SECTION: NavSection = {
   title: "Espace RH",
   items: [
-    { label: "Tableau de bord RH", href: "/rh", icon: LayoutDashboard },
-    { label: "Personnel", href: "/rh/personnel", icon: Users, badge: { value: "487" } },
-    { label: "Saisie de paie", href: "/rh/paie", icon: CreditCard, badge: { value: "Avr", alert: true } },
-    { label: "Recrutement", href: "/rh/recrutement", icon: Briefcase, badge: { value: "12" } },
-    { label: "Congés & absences", href: "/rh/conges", icon: Calendar, badge: { value: "7", alert: true } },
-    { label: "Formations", href: "/rh/formations", icon: GraduationCap },
-    { label: "Visites médicales", href: "/rh/medical", icon: ScrollText, badge: { value: "5", alert: true } },
-    { label: "Disciplinaire", href: "/rh/disciplinaire", icon: Shield, badge: { value: "3" } },
-    { label: "Validations N1 RH", href: "/rh/validations", icon: CheckCircle2 },
-    { label: "Rapports RH", href: "/rh/rapports", icon: BarChart3 },
+    { label: "Tableau de bord RH", href: "/ressources-humaines", icon: LayoutDashboard },
+    { label: "Personnel", href: "/ressources-humaines/personnel", icon: Users, badge: { value: "487" } },
+    { label: "Saisie de paie", href: "/ressources-humaines/paie", icon: CreditCard, badge: { value: "Avr", alert: true } },
+    { label: "Recrutement", href: "/ressources-humaines/recrutement", icon: Briefcase, badge: { value: "12" } },
+    { label: "Congés & absences", href: "/ressources-humaines/conges", icon: Calendar, badge: { value: "7", alert: true } },
+    { label: "Formations", href: "/ressources-humaines/formations", icon: GraduationCap },
+    { label: "Visites médicales", href: "/ressources-humaines/medical", icon: ScrollText, badge: { value: "5", alert: true } },
+    { label: "Disciplinaire", href: "/ressources-humaines/disciplinaire", icon: Shield, badge: { value: "3" } },
+    { label: "Validations N1 RH", href: "/ressources-humaines/validations", icon: CheckCircle2 },
+    { label: "Rapports RH", href: "/ressources-humaines/rapports", icon: BarChart3 },
   ],
 };
 
@@ -188,11 +188,11 @@ const CAND_SECTION: NavSection = {
 const IT_SECTION: NavSection = {
   title: "Espace Informaticien",
   items: [
-    { label: "Tableau de bord IT", href: "/it", icon: LayoutDashboard },
-    { label: "Utilisateurs", href: "/it/users", icon: Users },
-    { label: "Paramètres tenant", href: "/it/settings", icon: Settings },
-    { label: "Chantiers (admin)", href: "/it/sites", icon: Building2 },
-    { label: "Intégrations", href: "/it/integrations", icon: Network },
+    { label: "Tableau de bord IT", href: "/informatique", icon: LayoutDashboard },
+    { label: "Utilisateurs", href: "/informatique/users", icon: Users },
+    { label: "Paramètres tenant", href: "/informatique/settings", icon: Settings },
+    { label: "Chantiers (admin)", href: "/informatique/sites", icon: Building2 },
+    { label: "Intégrations", href: "/informatique/integrations", icon: Network },
   ],
 };
 
@@ -200,12 +200,12 @@ const IT_SECTION: NavSection = {
 const MAG_SECTION: NavSection = {
   title: "Espace Magasinier",
   items: [
-    { label: "Tableau de bord", href: "/mag", icon: LayoutDashboard },
-    { label: "Entrées stock", href: "/mag/entrees", icon: Package },
-    { label: "Sorties stock", href: "/mag/sorties", icon: ShoppingCart },
-    { label: "Catalogue", href: "/mag/catalogue", icon: ClipboardList },
-    { label: "Inventaires", href: "/mag/inventaires", icon: ClipboardCheck },
-    { label: "Mouvements", href: "/mag/mouvements", icon: ScrollText },
+    { label: "Tableau de bord", href: "/magasin", icon: LayoutDashboard },
+    { label: "Entrées stock", href: "/magasin/entrees", icon: Package },
+    { label: "Sorties stock", href: "/magasin/sorties", icon: ShoppingCart },
+    { label: "Catalogue", href: "/magasin/catalogue", icon: ClipboardList },
+    { label: "Inventaires", href: "/magasin/inventaires", icon: ClipboardCheck },
+    { label: "Mouvements", href: "/magasin/mouvements", icon: ScrollText },
   ],
 };
 
@@ -213,12 +213,12 @@ const MAG_SECTION: NavSection = {
 const LOG_SECTION: NavSection = {
   title: "Espace Logisticien",
   items: [
-    { label: "Tableau de bord", href: "/log", icon: LayoutDashboard },
-    { label: "Bons de commande", href: "/log/bc", icon: ClipboardList, badge: { value: "8", alert: true } },
-    { label: "Fournisseurs", href: "/log/fournisseurs", icon: Store, badge: { value: "86" } },
-    { label: "Flotte engins", href: "/log/flotte", icon: Truck, badge: { value: "42" } },
-    { label: "Transferts", href: "/log/transferts", icon: ArrowLeftRight, badge: { value: "4", alert: true } },
-    { label: "Statistiques achats", href: "/log/stats", icon: PieChart },
+    { label: "Tableau de bord", href: "/logistique", icon: LayoutDashboard },
+    { label: "Bons de commande", href: "/logistique/bc", icon: ClipboardList, badge: { value: "8", alert: true } },
+    { label: "Fournisseurs", href: "/logistique/fournisseurs", icon: Store, badge: { value: "86" } },
+    { label: "Flotte engins", href: "/logistique/flotte", icon: Truck, badge: { value: "42" } },
+    { label: "Transferts", href: "/logistique/transferts", icon: ArrowLeftRight, badge: { value: "4", alert: true } },
+    { label: "Statistiques achats", href: "/logistique/stats", icon: PieChart },
   ],
 };
 
@@ -227,12 +227,12 @@ const LOG_SECTION: NavSection = {
 const GED_SECTION: NavSection = {
   title: "Espace GED",
   items: [
-    { label: "Tableau de bord", href: "/ged", icon: LayoutDashboard },
-    { label: "Espaces documentaires", href: "/ged/espaces", icon: FolderOpen, badge: { value: "28" } },
-    { label: "Workflows", href: "/ged/workflows", icon: GitBranch, badge: { value: "12", alert: true } },
-    { label: "Nomenclature", href: "/ged/nomenclature", icon: Tags, badge: { value: "72" } },
-    { label: "Recherche & archivage", href: "/ged/recherche", icon: Search },
-    { label: "Audit & conformité", href: "/ged/audit", icon: Archive, badge: { value: "5", alert: true } },
+    { label: "Tableau de bord", href: "/gestion-documentaire", icon: LayoutDashboard },
+    { label: "Espaces documentaires", href: "/gestion-documentaire/espaces", icon: FolderOpen, badge: { value: "28" } },
+    { label: "Workflows", href: "/gestion-documentaire/workflows", icon: GitBranch, badge: { value: "12", alert: true } },
+    { label: "Nomenclature", href: "/gestion-documentaire/nomenclature", icon: Tags, badge: { value: "72" } },
+    { label: "Recherche & archivage", href: "/gestion-documentaire/recherche", icon: Search },
+    { label: "Audit & conformité", href: "/gestion-documentaire/audit", icon: Archive, badge: { value: "5", alert: true } },
   ],
 };
 
@@ -242,13 +242,13 @@ const GED_SECTION: NavSection = {
 const SG_SECTION: NavSection = {
   title: "Espace SG",
   items: [
-    { label: "Tableau de bord", href: "/sg", icon: LayoutDashboard },
-    { label: "Marchés & contrats", href: "/sg/marches", icon: ScrollText, badge: { value: "6" } },
-    { label: "CA & Gouvernance", href: "/sg/gouvernance", icon: Landmark, badge: { value: "23j", alert: true } },
-    { label: "Contentieux", href: "/sg/contentieux", icon: Gavel, badge: { value: "4", alert: true } },
-    { label: "Conformité", href: "/sg/conformite", icon: Scale },
-    { label: "Institutionnel", href: "/sg/institutionnel", icon: Briefcase },
-    { label: "Courriers officiels", href: "/sg/courriers", icon: Mail, badge: { value: "12" } },
+    { label: "Tableau de bord", href: "/secretaire-general", icon: LayoutDashboard },
+    { label: "Marchés & contrats", href: "/secretaire-general/marches", icon: ScrollText, badge: { value: "6" } },
+    { label: "CA & Gouvernance", href: "/secretaire-general/gouvernance", icon: Landmark, badge: { value: "23j", alert: true } },
+    { label: "Contentieux", href: "/secretaire-general/contentieux", icon: Gavel, badge: { value: "4", alert: true } },
+    { label: "Conformité", href: "/secretaire-general/conformite", icon: Scale },
+    { label: "Institutionnel", href: "/secretaire-general/institutionnel", icon: Briefcase },
+    { label: "Courriers officiels", href: "/secretaire-general/courriers", icon: Mail, badge: { value: "12" } },
   ],
 };
 
@@ -274,18 +274,18 @@ const CPT_SECTION: NavSection = {
 const DAF_SECTION: NavSection = {
   title: "Espace DAF",
   items: [
-    { label: "Tableau de bord DAF", href: "/daf", icon: Briefcase },
-    { label: "Trésorerie temps réel", href: "/daf/tresorerie", icon: Coins },
-    { label: "Validations N2", href: "/daf/validations", icon: CheckCircle2, badge: { value: "5", alert: true } },
-    { label: "Cycle de paie", href: "/daf/paie", icon: CreditCard },
-    { label: "Recouvrement", href: "/daf/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
-    { label: "Fiscalité", href: "/daf/fiscal", icon: ScrollText },
-    { label: "Comptabilité (DAF)", href: "/daf/comptabilite", icon: FileText },
-    { label: "Finances (DAF)", href: "/daf/finances", icon: Wallet },
-    { label: "Achats (DAF)", href: "/daf/achats", icon: ShoppingCart },
-    { label: "Rapports financiers", href: "/daf/rapports", icon: BarChart3 },
-    { label: "RH financier", href: "/daf/rh", icon: Users },
-    { label: "Ma rémunération DAF", href: "/daf/paie-perso", icon: CreditCard },
+    { label: "Tableau de bord DAF", href: "/direction-financiere", icon: Briefcase },
+    { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
+    { label: "Validations N2", href: "/direction-financiere/validations", icon: CheckCircle2, badge: { value: "5", alert: true } },
+    { label: "Cycle de paie", href: "/direction-financiere/paie", icon: CreditCard },
+    { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
+    { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
+    { label: "Comptabilité (DAF)", href: "/direction-financiere/comptabilite", icon: FileText },
+    { label: "Finances (DAF)", href: "/direction-financiere/finances", icon: Wallet },
+    { label: "Achats (DAF)", href: "/direction-financiere/achats", icon: ShoppingCart },
+    { label: "Rapports financiers", href: "/direction-financiere/rapports", icon: BarChart3 },
+    { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
+    { label: "Ma rémunération DAF", href: "/direction-financiere/paie-perso", icon: CreditCard },
   ],
 };
 
@@ -305,7 +305,7 @@ const NAV: NavSection[] = [
       { label: "Planning", href: "/planning", icon: Calendar },
       { label: "Finances", href: "/finances", icon: Wallet },
       { label: "Comptabilité", href: "/comptabilite", icon: FileText },
-      { label: "Ressources humaines", href: "/rh", icon: Users },
+      { label: "Ressources humaines", href: "/ressources-humaines", icon: Users },
       { label: "Achats", href: "/achats", icon: ShoppingCart },
       { label: "Stocks & matériel", href: "/stocks", icon: Package },
     ],
@@ -352,17 +352,17 @@ export function Sidebar() {
     "WORKS_DIRECTOR", "SITE_MANAGER", "WAREHOUSE", "LOGISTICS", "ARCHIVIST", "SECRETARY_GENERAL",
   ]);
   const ACTIVITY_HIDDEN_BY_ROLE: Record<string, Set<string>> = {
-    DG:             new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
-    DAF:            new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
-    HR:             new Set(["/rh", "/finances", "/comptabilite", "/achats", "/stocks"]),
-    TECH_DIRECTOR:  new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
-    ACCOUNTANT:     new Set(["/comptabilite", "/rh", "/achats", "/stocks"]),
-    LOGISTICS:      new Set(["/finances", "/comptabilite", "/rh"]),
-    ARCHIVIST:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    DG:             new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    DAF:            new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    HR:             new Set(["/ressources-humaines", "/finances", "/comptabilite", "/achats", "/stocks"]),
+    TECH_DIRECTOR:  new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    ACCOUNTANT:     new Set(["/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    LOGISTICS:      new Set(["/finances", "/comptabilite", "/ressources-humaines"]),
+    ARCHIVIST:      new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
     SECRETARY_GENERAL: new Set(["/finances", "/comptabilite", "/achats", "/stocks"]),
-    WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
-    SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
-    WAREHOUSE:      new Set(["/finances", "/comptabilite", "/rh", "/achats", "/stocks"]),
+    WORKS_DIRECTOR: new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    SITE_MANAGER:   new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
+    WAREHOUSE:      new Set(["/finances", "/comptabilite", "/ressources-humaines", "/achats", "/stocks"]),
   };
   const HIDES_ADMIN_SECTION = new Set([
     "DAF", "HR", "TECH_DIRECTOR", "ACCOUNTANT",

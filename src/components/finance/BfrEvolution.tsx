@@ -41,7 +41,7 @@ export function BfrEvolution() {
       </div>
 
       <div className="rounded-lg border border-primary-200 bg-primary-50/40 p-3">
-        <Link href="/dg/tresorerie-previsionnelle" className="inline-flex items-center gap-1 text-[12.5px] font-medium text-primary-700 hover:underline">
+        <Link href="/direction-generale/tresorerie-previsionnelle" className="inline-flex items-center gap-1 text-[12.5px] font-medium text-primary-700 hover:underline">
           Trésorerie prévisionnelle 12 semaines <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>

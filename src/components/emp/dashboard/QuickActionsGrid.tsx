@@ -21,25 +21,25 @@ export function QuickActionsGrid({ latestPayslipId }: Props) {
       label: "Télécharger bulletin",
       href: latestPayslipId
         ? `/api/emp/payslips/${latestPayslipId}/pdf`
-        : "/emp/paie",
+        : "/employe/paie",
       icon: Download,
       accent: "bg-purple-50 text-purple-700",
     },
     {
       label: "Demander un congé",
-      href: "/emp/conges?action=new",
+      href: "/employe/conges?action=new",
       icon: CalendarPlus,
       accent: "bg-green-50 text-green-700",
     },
     {
       label: "Mes heures du mois",
-      href: "/emp/pointage",
+      href: "/employe/pointage",
       icon: Clock,
       accent: "bg-blue-50 text-blue-700",
     },
     {
       label: "Mes documents",
-      href: "/emp/profil#documents",
+      href: "/employe/profil#documents",
       icon: FolderOpen,
       accent: "bg-amber-50 text-amber-700",
     },

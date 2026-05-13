@@ -23,7 +23,7 @@ export function LatestPayslipCallToAction({ payslip }: Props) {
 
   return (
     <Link
-      href={`/emp/paie?bulletin=${payslip.id}`}
+      href={`/employe/paie?bulletin=${payslip.id}`}
       className="mt-4 flex items-center gap-3 rounded-2xl bg-gradient-to-br from-purple-700 via-purple-600 to-fuchsia-500 px-4 py-4 text-white shadow-lg transition active:scale-[0.99]"
       data-testid="emp-cta-payslip"
     >

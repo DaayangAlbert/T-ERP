@@ -92,10 +92,12 @@ export default function PaiePage() {
                 {STATUS_LABEL[latest.status]}
               </span>
               <Link
-                href={`/paie/bulletin/${latest.id}`}
+                href={latest.verifiedPublicUrl ?? "#"}
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
               >
-                <FileText className="h-3.5 w-3.5" /> Bulletin officiel
+                <FileText className="h-3.5 w-3.5" /> Ouvrir le bulletin
               </Link>
             </div>
           </div>
@@ -204,10 +206,12 @@ export default function PaiePage() {
                   </td>
                   <td className="py-2.5 pr-4 text-right">
                     <Link
-                      href={`/paie/bulletin/${p.id}`}
+                      href={p.verifiedPublicUrl ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
                       className="inline-flex items-center gap-1 text-[11.5px] font-medium text-primary-700 hover:underline"
                     >
-                      Voir bulletin
+                      Ouvrir bulletin
                     </Link>
                   </td>
                 </tr>

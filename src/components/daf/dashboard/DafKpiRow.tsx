@@ -50,7 +50,7 @@ export function DafKpiRow({ primary, secondary }: { primary: PrimaryKpis; second
           value={`${primary.pendingValidations.count}`}
           subtitle={formatFCFA(BigInt(primary.pendingValidations.amount))}
           tone={primary.pendingValidations.count > 5 ? "warning" : "primary"}
-          href="/daf/validations"
+          href="/direction-financiere/validations"
           icon={<CheckCircle2 className="h-3.5 w-3.5" />}
         />
         <KpiCard
@@ -67,13 +67,13 @@ export function DafKpiRow({ primary, secondary }: { primary: PrimaryKpis; second
           value={`${secondary.taxDeadlines.count}`}
           subtitle={formatFCFA(BigInt(secondary.taxDeadlines.amount))}
           tone={secondary.taxDeadlines.urgent > 0 ? "danger" : "ok"}
-          href="/daf/fiscal"
+          href="/direction-financiere/fiscal"
         />
         <KpiCard
           label="Créances échues"
           value={formatFCFA(BigInt(secondary.overdueReceivables.amount))}
           tone="danger"
-          href="/daf/recouvrement"
+          href="/direction-financiere/recouvrement"
         />
         <KpiCard
           label="Marge YTD"

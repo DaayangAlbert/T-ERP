@@ -29,7 +29,7 @@ export function HiringPipelineTable({ items }: { items: Item[] }) {
       <header className="flex items-center justify-between border-b border-line px-3 py-2">
         <h3 className="text-[13px] font-semibold text-ink">Embauches en cours</h3>
         <Link
-          href="/rh/recrutement"
+          href="/ressources-humaines/recrutement"
           className="inline-flex items-center gap-1 text-[11.5px] font-medium text-primary-700 hover:underline"
         >
           Pipeline <ArrowRight className="h-3 w-3" />
@@ -81,7 +81,7 @@ export function HiringPipelineTable({ items }: { items: Item[] }) {
             </div>
             <div className="mt-2">
               <Link
-                href="/rh/recrutement"
+                href="/ressources-humaines/recrutement"
                 className="inline-flex h-9 w-full items-center justify-center rounded-md border border-line bg-white text-[12.5px] font-semibold text-primary-700 hover:bg-surface-alt"
               >
                 Suivi

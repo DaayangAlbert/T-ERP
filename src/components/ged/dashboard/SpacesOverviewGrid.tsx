@@ -19,7 +19,7 @@ export function SpacesOverviewGrid({ spaces }: Props) {
       <header className="flex items-center justify-between border-b border-line px-4 py-2.5">
         <h2 className="text-[13.5px] font-semibold text-ink">Répartition par espace documentaire</h2>
         <Link
-          href="/ged/espaces"
+          href="/gestion-documentaire/espaces"
           className="text-[11.5px] font-semibold text-violet-700 hover:underline"
         >
           Voir tous les espaces →
@@ -32,7 +32,7 @@ export function SpacesOverviewGrid({ spaces }: Props) {
           return (
             <Link
               key={s.id}
-              href={s.id === "AGGREGATED_SITES" ? "/ged/espaces?tab=sites" : `/ged/espaces/${s.id}`}
+              href={s.id === "AGGREGATED_SITES" ? "/gestion-documentaire/espaces?tab=sites" : `/gestion-documentaire/espaces/${s.id}`}
               className="rounded-lg border border-line bg-surface-alt/40 p-3 transition hover:border-violet-300 hover:bg-violet-50"
             >
               <div className="flex items-center gap-2">

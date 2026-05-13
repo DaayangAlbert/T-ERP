@@ -95,7 +95,7 @@ export interface SendWhatsappArgs {
   toUserId: string;
   toPhone: string;
   variables: Record<string, string>;
-  /** Lien profond ouvrant la PWA (`/emp/...`) — utile pour l'item interactif */
+  /** Lien profond ouvrant la PWA (`/employe/...`) — utile pour l'item interactif */
   deepLink?: string;
 }
 

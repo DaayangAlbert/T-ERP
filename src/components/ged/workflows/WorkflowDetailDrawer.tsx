@@ -350,7 +350,7 @@ export function WorkflowDetailDrawer({ workflowId, userRole, onClose }: Props) {
                   type="button"
                   onClick={() => {
                     if (data.document.space) {
-                      window.location.href = `/ged/espaces`;
+                      window.location.href = `/gestion-documentaire/espaces`;
                     }
                   }}
                   className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12.5px] font-semibold text-ink hover:bg-surface-alt"
