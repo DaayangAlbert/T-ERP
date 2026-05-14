@@ -33,6 +33,9 @@ import {
   HseIncidentStatus,
   EpiType,
   EpiStatus,
+  PayslipStatus,
+  PayslipPaymentMethod,
+  SalaryAdvanceStatus,
   SiteType,
   SiteStatus,
   Plan,
@@ -510,6 +513,179 @@ async function main() {
     }
   }
   console.log("  ✓ 5 EpiAssignment Étienne");
+
+  // ---------------------------------------------------------------
+  // 6bis) Payslips Q1 + avril 2026 pour Étienne (fn 1.3)
+  //       Cible avril = net 142 480 FCFA (identique au prototype).
+  // ---------------------------------------------------------------
+  const payslipsData: Array<{
+    period: string;
+    end: string;
+    paymentDate: string;
+    base: number;
+    overtimeHours: number;
+    overtimeAmount: number;
+    seniorityBonus: number;
+    transportAllowance: number;
+    gross: number;
+    cnps: number;
+    irpp: number;
+    net: number;
+    workedDays: number;
+    reportedHours: number;
+    reference: string;
+  }> = [
+    {
+      period: "2026-04-01",
+      end: "2026-04-30",
+      paymentDate: "2026-05-02",
+      base: 142_142,
+      overtimeHours: 22,
+      overtimeAmount: 21_530,
+      seniorityBonus: 0,
+      transportAllowance: 28_000,
+      gross: 191_672,
+      cnps: 8_005,
+      irpp: 12_187,
+      net: 142_480,
+      workedDays: 22,
+      reportedHours: 182,
+      reference: "BS-2026-04-MBA",
+    },
+    {
+      period: "2026-03-01",
+      end: "2026-03-31",
+      paymentDate: "2026-04-03",
+      base: 142_142,
+      overtimeHours: 18,
+      overtimeAmount: 17_620,
+      seniorityBonus: 0,
+      transportAllowance: 25_000,
+      gross: 184_762,
+      cnps: 7_760,
+      irpp: 11_770,
+      net: 130_250,
+      workedDays: 21,
+      reportedHours: 174,
+      reference: "BS-2026-03-MBA",
+    },
+    {
+      period: "2026-02-01",
+      end: "2026-02-28",
+      paymentDate: "2026-03-02",
+      base: 142_142,
+      overtimeHours: 16,
+      overtimeAmount: 15_660,
+      seniorityBonus: 0,
+      transportAllowance: 25_000,
+      gross: 182_802,
+      cnps: 7_678,
+      irpp: 11_524,
+      net: 128_420,
+      workedDays: 20,
+      reportedHours: 166,
+      reference: "BS-2026-02-MBA",
+    },
+    {
+      period: "2026-01-01",
+      end: "2026-01-31",
+      paymentDate: "2026-02-02",
+      base: 142_142,
+      overtimeHours: 19,
+      overtimeAmount: 18_595,
+      seniorityBonus: 0,
+      transportAllowance: 25_000,
+      gross: 185_737,
+      cnps: 7_801,
+      irpp: 11_836,
+      net: 132_100,
+      workedDays: 22,
+      reportedHours: 176,
+      reference: "BS-2026-01-MBA",
+    },
+  ];
+  for (const p of payslipsData) {
+    const periodDate = new Date(p.period);
+    await prisma.payslip.upsert({
+      where: {
+        tenantId_userId_period: { tenantId, userId: etienne.id, period: periodDate },
+      },
+      create: {
+        tenantId,
+        userId: etienne.id,
+        period: periodDate,
+        periodEnd: new Date(p.end),
+        periodLabel: p.period.slice(0, 7),
+        paymentDate: new Date(p.paymentDate),
+        paymentMode: "VIREMENT",
+        paymentMethod: PayslipPaymentMethod.BANK_TRANSFER,
+        paymentBankAccount: "Afriland First Bank · ****1842",
+        paymentReference: p.reference,
+        baseSalary: BigInt(p.base),
+        overtimeAmount: BigInt(p.overtimeAmount),
+        overtimeHours: p.overtimeHours,
+        overtimeHours125: p.overtimeHours,
+        seniorityBonus: BigInt(p.seniorityBonus),
+        transportAllowance: BigInt(p.transportAllowance),
+        otherBonuses: [{ code: "PANIER_REPAS", label: "Prime chantier · panier repas", amount: p.transportAllowance }],
+        grossAmount: BigInt(p.gross),
+        taxableGross: BigInt(p.gross),
+        cnpsAmount: BigInt(p.cnps),
+        irppAmount: BigInt(p.irpp),
+        socialCharges: BigInt(p.cnps),
+        fiscalCharges: BigInt(p.irpp),
+        otherDeductions: BigInt(0),
+        employerCharges: BigInt(Math.round(p.gross * 0.16)),
+        netAmount: BigInt(p.net),
+        workedDays: p.workedDays,
+        reportedHours: p.reportedHours,
+        status: PayslipStatus.PAID,
+        paidAt: new Date(p.paymentDate),
+      },
+      update: {
+        paymentBankAccount: "Afriland First Bank · ****1842",
+        paymentReference: p.reference,
+        baseSalary: BigInt(p.base),
+        overtimeAmount: BigInt(p.overtimeAmount),
+        overtimeHours: p.overtimeHours,
+        seniorityBonus: BigInt(p.seniorityBonus),
+        transportAllowance: BigInt(p.transportAllowance),
+        grossAmount: BigInt(p.gross),
+        cnpsAmount: BigInt(p.cnps),
+        irppAmount: BigInt(p.irpp),
+        netAmount: BigInt(p.net),
+        status: PayslipStatus.PAID,
+      },
+    });
+  }
+  console.log(`  ✓ ${payslipsData.length} Payslips Étienne (avril 2026 net 142 480 + Q1)`);
+
+  // ---------------------------------------------------------------
+  // 6ter) 1 avance sur salaire déjà payée (mars) + 1 demande en attente
+  // ---------------------------------------------------------------
+  const advanceMarch = await prisma.salaryAdvanceRequest.findFirst({
+    where: { userId: etienne.id, reason: "Scolarité enfants — rentrée Pâques" },
+    select: { id: true },
+  });
+  if (!advanceMarch) {
+    await prisma.salaryAdvanceRequest.create({
+      data: {
+        tenantId,
+        userId: etienne.id,
+        amountXAF: BigInt(30_000),
+        maxAllowedXAF: BigInt(42_600), // 30% × 142 000
+        reason: "Scolarité enfants — rentrée Pâques",
+        status: SalaryAdvanceStatus.PAID,
+        validatedAt: new Date("2026-03-04T09:30:00Z"),
+        payoutAt: new Date("2026-03-05T14:00:00Z"),
+        payoutMethod: "BANK_TRANSFER",
+        recoveryMonth: "2026-04",
+        recoveredAt: new Date("2026-05-02"),
+        createdAt: new Date("2026-03-03T11:20:00Z"),
+      },
+    });
+  }
+  console.log("  ✓ 1 avance Étienne (30 000 FCFA · récupérée sur paie avril)");
 
   // ---------------------------------------------------------------
   // 7) Joseph ESSAMA — gardien (isGuard=true)
