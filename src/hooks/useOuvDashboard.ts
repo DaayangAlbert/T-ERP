@@ -23,6 +23,8 @@ export interface OuvDashboard {
     siteId: string;
     siteCode: string;
     siteName: string;
+    siteLat: number | null;
+    siteLng: number | null;
     teamLabel: string;
     payrollDayLabel: string;
     chief: {

@@ -6,6 +6,9 @@ node_modules/
 # Next.js
 .next/
 out/
+# Exception : la route API ouvrier de pointage de sortie (Bloc 1 Ouvrier)
+# vit dans src/app/api/ouv/clock/out — ne PAS la confondre avec un build out/.
+!src/app/api/ouv/clock/out/
 build/
 dist/
 

@@ -51,6 +51,8 @@ export async function GET() {
     siteId: string;
     siteCode: string;
     siteName: string;
+    siteLat: number | null;
+    siteLng: number | null;
     teamLabel: string;
     payrollDayLabel: string;
     chief: {
@@ -65,7 +67,7 @@ export async function GET() {
   if (primarySiteId) {
     const site = await prisma.site.findUnique({
       where: { id: primarySiteId },
-      select: { id: true, code: true, name: true },
+      select: { id: true, code: true, name: true, lat: true, lng: true },
     });
     if (site) {
       const chief = await prisma.user.findFirst({
@@ -77,6 +79,8 @@ export async function GET() {
         siteId: site.id,
         siteCode: site.code,
         siteName: site.name,
+        siteLat: site.lat,
+        siteLng: site.lng,
         teamLabel: me.teamLeader ? "équipe (chef d'équipe)" : "équipe coffrage",
         // Jour X/30 du cycle de paie courant (approximé sur le mois calendaire)
         payrollDayLabel: `jour ${new Date().getDate()}/30 paie`,
