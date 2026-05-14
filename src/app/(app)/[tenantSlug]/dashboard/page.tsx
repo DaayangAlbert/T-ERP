@@ -12,7 +12,7 @@ const ROLE_TO_PATH: Record<Role, string> = {
   WORKS_DIRECTOR: "/dashboard/works-director",
   WORKS_MANAGER: "/dashboard/works-manager",
   SITE_MANAGER: "/dashboard/site-manager",
-  WORKER: "/dashboard/worker",
+  WORKER: "/ouv/dashboard",
   ACCOUNTANT: "/dashboard/accountant",
   LOGISTICS: "/dashboard/logistics",
   WAREHOUSE: "/dashboard/warehouse",
@@ -25,7 +25,11 @@ const ROLE_TO_PATH: Record<Role, string> = {
   SUPER_ADMIN: "/tenants",
 };
 
-export default async function DashboardIndex() {
+export default async function DashboardIndex({
+  params,
+}: {
+  params: { tenantSlug: string };
+}) {
   const session = getCurrentSession();
   if (!session) redirect("/");
 
@@ -35,5 +39,5 @@ export default async function DashboardIndex() {
   });
   if (!user) redirect("/");
 
-  redirect(ROLE_TO_PATH[user.role]);
+  redirect(`/${params.tenantSlug}${ROLE_TO_PATH[user.role]}`);
 }

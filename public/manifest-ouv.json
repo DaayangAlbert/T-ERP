@@ -1,0 +1,29 @@
+{
+  "name": "T-ERP Ouvrier",
+  "short_name": "T-ERP",
+  "description": "Espace ouvrier BTP — pointage GPS, bulletin, congés, missions, HSE, EPI",
+  "start_url": "/ouv-login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#2A1B3D",
+  "theme_color": "#A855F7",
+  "orientation": "portrait",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "fr-CM",
+  "dir": "ltr"
+}

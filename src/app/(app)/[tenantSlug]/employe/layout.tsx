@@ -6,10 +6,12 @@ import Head from "next/head";
 import { useAuth } from "@/hooks/useAuth";
 import { EmployeeProvider } from "@/contexts/EmployeeContext";
 
-// Espace EMP : exclusivement EMPLOYEE et WORKER.
-// Les autres profils (DG, DAF, RH, etc.) ne consultent PAS l'espace personnel
-// d'un autre utilisateur, ce serait une fuite RGPD/sociale.
-const ALLOWED_ROLES = ["EMPLOYEE", "WORKER"];
+// Espace EMP : exclusivement EMPLOYEE (employé bureau).
+// Les ouvriers (WORKER) ont leur propre espace mobile-first /ouv depuis le
+// Bloc 0 Ouvrier (mai 2026). Les autres profils (DG, DAF, RH, etc.) ne
+// consultent PAS l'espace personnel d'un autre utilisateur — ce serait
+// une fuite RGPD/sociale stricte.
+const ALLOWED_ROLES = ["EMPLOYEE"];
 
 export default function EmpLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

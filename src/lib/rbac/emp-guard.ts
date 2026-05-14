@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { getCurrentSession } from "@/lib/session";
 
-// EMP : seul l'employé/ouvrier connecté peut consulter SON espace personnel.
+// EMP : EMPLOYEE (bureau) + WORKER (ouvriers) connectés peuvent consulter
+// LEUR espace personnel. Cette garde reste sur les deux rôles tant que
+// /api/ouv/* n'a pas dupliqué les endpoints équivalents (Bloc 1 Ouvrier).
+// L'UI /employe est en revanche restreinte aux EMPLOYEE uniquement.
 // Les autres rôles (DG, DAF, RH, etc.) n'ont aucune raison de naviguer dans
 // l'espace EMP d'un autre utilisateur — c'est une donnée RGPD/sociale stricte.
 const EMP_ROLES: Role[] = [Role.EMPLOYEE, Role.WORKER];

@@ -12,6 +12,7 @@
     "test:ui": "vitest --ui",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-emp": "tsx prisma/seed-emp.ts",
+    "db:seed-ouv": "tsx prisma/seed-ouv.ts",
     "db:seed-cand": "tsx prisma/seed-cand.ts",
     "db:seed-admin": "tsx prisma/seed-admin.ts",
     "db:reset": "prisma migrate reset --force && pnpm db:seed",

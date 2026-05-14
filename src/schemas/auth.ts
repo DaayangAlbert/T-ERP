@@ -6,6 +6,15 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+// OUV — auth téléphone + PIN 6 chiffres (Bloc 0 Ouvrier)
+// Téléphone normalisé en E.164 ou format CM local "+237 6 78 24 18 92" /
+// "237678241892" / "6 78 24 18 92" — on normalise dans l'API avant lookup.
+export const ouvLoginSchema = z.object({
+  phone: z.string().min(8, "Téléphone requis").max(20),
+  pin: z.string().regex(/^\d{6}$/, "PIN à 6 chiffres requis"),
+});
+export type OuvLoginInput = z.infer<typeof ouvLoginSchema>;
+
 export const registerCandidateSchema = z.object({
   fullName: z.string().min(2, "Nom complet requis").max(120),
   email: z.string().email("Email invalide"),

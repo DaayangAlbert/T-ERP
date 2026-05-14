@@ -126,6 +126,11 @@ model Tenant {
   officialCorrespondences   OfficialCorrespondence[]
   institutions              Institution[]
   professionalApprovals     ProfessionalApproval[]
+  // OUV — Espace Ouvrier (Bloc 0)
+  salaryAdvanceRequests     SalaryAdvanceRequest[]
+  missionAssignments        MissionAssignment[]
+  hseIncidentReports        HseIncidentReport[]
+  epiAssignments            EpiAssignment[]
 
   @@index([parentId])
   @@map("tenants")
@@ -216,6 +221,17 @@ model User {
   // EMP — préférences notification & langue
   preferredLanguage   String @default("fr-CM") // "fr-CM" ou "en-CM"
   notificationChannel String @default("WHATSAPP") // "WHATSAPP" | "EMAIL" | "PUSH"
+
+  // OUV — auth téléphone + PIN 6 chiffres (Bloc 0 Ouvrier)
+  // Les ouvriers n'ont pas d'email pro : login via phone + PIN. L'email reste
+  // requis (unique) mais peut être synthétique : worker-{matricule}@<slug>.local.
+  pinHash               String? // bcrypt du PIN 6 chiffres
+  phoneVerified         Boolean @default(false)
+  pinFailedAttempts     Int     @default(0) // compteur brute-force
+  pinLockedUntil        DateTime? // blocage 1h si > 5 essais
+  isGuard               Boolean @default(false) // gardien (widget tour de garde)
+  workerQualification   String? // libellé court qualif (ex: "Maçon-coffreur niveau B")
+  deviceFingerprints    String[] @default([]) // IDs appareils enrôlés (max 3)
 
   // Sécurité
   twoFactorEnabled Boolean   @default(false)
@@ -362,9 +378,18 @@ model User {
   sgBoardMemberships            BoardMember[]
   sgRegulatoryRegisters         RegulatoryRegister[]          @relation("RegisterResponsible")
   sgCorrespondencesAssigned     OfficialCorrespondence[]      @relation("CorrespondenceAssignee")
+  // OUV — Espace Ouvrier (Bloc 0 Ouvrier)
+  salaryAdvancesRequested       SalaryAdvanceRequest[]        @relation("SalaryAdvanceRequester")
+  salaryAdvancesValidated       SalaryAdvanceRequest[]        @relation("SalaryAdvanceValidator")
+  missionsAssigned              MissionAssignment[]           @relation("MissionWorker")
+  missionsCreated               MissionAssignment[]           @relation("MissionAssigner")
+  hseReportsCreated             HseIncidentReport[]           @relation("HseReporter")
+  hseReportsAssigned            HseIncidentReport[]           @relation("HseAssignee")
+  epiAssignments                EpiAssignment[]               @relation("EpiOwner")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
+  @@index([tenantId, phone])
   @@map("users")
 }
 
@@ -652,6 +677,9 @@ model Site {
   attendances              Attendance[]
   attendanceCompletions    AttendanceSessionCompletion[]
   hseSafetyTalks           HseSafetyTalk[]
+  // OUV — relations chantier (Bloc 0 Ouvrier)
+  ouvMissionAssignments    MissionAssignment[]
+  ouvHseReports            HseIncidentReport[]
   // MAG — relation magasin (1:1)
   warehouse                Warehouse?
   // CDT — relations conducteur de travaux
@@ -1724,9 +1752,21 @@ model TimeReport {
   overtimeHours Float      @default(0)
   overtimeType  String? // "evening_125" | "night_150" | "sunday_200"
   status        TimeStatus @default(PRESENT)
-  // Pointeur (Chef Chantier pour ouvriers, "AUTO_BADGE" pour bureaux)
+  // Pointeur (Chef Chantier pour ouvriers, "AUTO_BADGE" pour bureaux,
+  // "SELF_OUV" pour pointage autonome ouvrier via PWA)
   pointedBy     String
   pointer       User?      @relation("TimeReportPointer", fields: [pointedBy], references: [id])
+  // OUV — pointage autonome avec GPS + selfie (Bloc 0 Ouvrier fn 1.2)
+  entryGeoLat        Float?
+  entryGeoLng        Float?
+  entryGeoAccuracyM  Int?
+  entrySelfieUrl     String? // R2 URL /tenants/{slug}/clocks/{userId}/{date}-in.webp
+  exitGeoLat         Float?
+  exitGeoLng         Float?
+  exitGeoAccuracyM   Int?
+  exitSelfieUrl      String?
+  deviceFingerprint  String? // identifiant appareil pour anti-fraude
+  outOfGeofence      Boolean @default(false) // distance > 100m flag
   // Contestation
   contestedAt   DateTime?
   contestReason String?
@@ -6402,4 +6442,211 @@ enum GlobalIntegrationStatus {
   DOWN
   MAINTENANCE
   DEPRECATED
+}
+
+// ========================================
+// OUV — Espace Ouvrier (Bloc 0 Ouvrier)
+// ========================================
+// Quatre modèles dédiés à l'ouvrier de base (Étienne MBALLA) :
+//   - SalaryAdvanceRequest : avance sur salaire (max 30% salaire base)
+//   - MissionAssignment    : ordres de mission affectés par CC/DTrav
+//   - HseIncidentReport    : signalement HSE par l'ouvrier (anti-représailles)
+//   - EpiAssignment        : suivi équipements de protection individuels
+// Les modèles TimeReport et LeaveRequest existants sont réutilisés tels quels.
+
+model SalaryAdvanceRequest {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation("SalaryAdvanceRequester", fields: [userId], references: [id], onDelete: Cascade)
+  amountXAF      BigInt
+  reason         String?
+  maxAllowedXAF  BigInt // 30% × salaire base (calculé au moment de la demande)
+  status         SalaryAdvanceStatus @default(PENDING)
+  // Validation : auto (< 50K), RH (50-100K), DAF (100-200K), DG (> 200K)
+  validatedById  String?
+  validator      User?    @relation("SalaryAdvanceValidator", fields: [validatedById], references: [id])
+  validatedAt    DateTime?
+  rejectionReason String?
+  // Paiement
+  payoutAt       DateTime?
+  payoutMethod   String? // BANK_TRANSFER | MOBILE_MONEY | CASH
+  // Récupération sur paie
+  recoveryMonth  String? // "2026-05"
+  recoveredAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([userId, createdAt])
+  @@map("salary_advance_requests")
+}
+
+enum SalaryAdvanceStatus {
+  PENDING
+  APPROVED
+  PAID
+  RECOVERED
+  REJECTED
+  CANCELLED
+}
+
+model MissionAssignment {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId         String // ouvrier affecté
+  user           User     @relation("MissionWorker", fields: [userId], references: [id], onDelete: Cascade)
+  siteId         String
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  assignedById   String // CC ou DTrav
+  assignedBy     User     @relation("MissionAssigner", fields: [assignedById], references: [id])
+  title          String
+  description    String   @db.Text
+  instructions   String?  @db.Text // consigne chef
+  startDate      DateTime
+  endDate        DateTime?
+  estimatedDays  Int?
+  progressPercent Int     @default(0)
+  priority       MissionPriority @default(NORMAL)
+  status         MissionStatus   @default(PENDING_ACCEPTANCE)
+  // Acceptation par ouvrier
+  workerAcceptedAt      DateTime?
+  workerQuestionsRaised String?  @db.Text
+  // Clôture
+  completedAt    DateTime?
+  completionNotes String?
+  progressPhotoUrls String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([userId, status])
+  @@index([siteId, status])
+  @@map("mission_assignments")
+}
+
+enum MissionPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MissionStatus {
+  PENDING_ACCEPTANCE
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model HseIncidentReport {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reportedById   String
+  reportedBy     User     @relation("HseReporter", fields: [reportedById], references: [id])
+  siteId         String
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  type           HseIncidentType
+  severity       HseIncidentSeverity
+  title          String
+  description    String   @db.Text
+  // Localisation
+  incidentGeoLat Float?
+  incidentGeoLng Float?
+  locationDetail String?
+  // Personnes impliquées
+  injuredPersonIds String[] @default([]) // userIds des blessés si accident corporel
+  witnessIds       String[] @default([]) // userIds des témoins
+  // Photos (R2 URLs · max 5)
+  photosUrls     String[] @default([])
+  // Anonymat (anti-représailles, art. L132 Code du travail CM)
+  isAnonymous    Boolean @default(false)
+  // Suivi
+  status         HseIncidentStatus @default(OPEN)
+  assignedToId   String? // typiquement DTrav
+  assignedTo     User?   @relation("HseAssignee", fields: [assignedToId], references: [id])
+  resolution     String? @db.Text
+  resolvedAt     DateTime?
+  // CNPS si accident travail (déclaration < 48h obligatoire)
+  reportedToCnps    Boolean @default(false)
+  reportedToCnpsAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([reportedById, createdAt])
+  @@index([siteId, severity])
+  @@map("hse_incident_reports")
+}
+
+enum HseIncidentType {
+  CORPORAL_ACCIDENT
+  NEAR_MISS
+  EQUIPMENT_DEFECT
+  SITE_DANGER
+  THEFT_INTRUSION
+}
+
+enum HseIncidentSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum HseIncidentStatus {
+  OPEN
+  INVESTIGATING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model EpiAssignment {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation("EpiOwner", fields: [userId], references: [id], onDelete: Cascade)
+  epiType      EpiType
+  name         String // ex: "Casque chantier"
+  serialNumber String?
+  assignedAt   DateTime @default(now())
+  expectedReplacementAt DateTime?
+  status       EpiStatus @default(OK)
+  replacedAt   DateTime?
+  replacementReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([userId, epiType])
+  @@map("epi_assignments")
+}
+
+enum EpiType {
+  HELMET
+  HIGH_VIS_VEST
+  SAFETY_GLASSES
+  GLOVES
+  SAFETY_SHOES
+  HARNESS
+  DUST_MASK
+  EAR_PROTECTION
+}
+
+enum EpiStatus {
+  OK
+  WORN_OUT
+  DEFECTIVE
+  REPLACED
+  LOST
 }
