@@ -1,81 +1,140 @@
 "use client";
 
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Construction, Clock, Wallet, ClipboardList, Shield, Users, UserCircle } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useOuvDashboard } from "@/hooks/useOuvDashboard";
+import { OuvHeader } from "@/components/ouv/dashboard/OuvHeader";
+import { OuvIdentityBanner } from "@/components/ouv/dashboard/OuvIdentityBanner";
+import { OuvPointageCard } from "@/components/ouv/dashboard/OuvPointageCard";
+import { OuvKpiMini } from "@/components/ouv/dashboard/OuvKpiMini";
+import { OuvBulletinCard } from "@/components/ouv/dashboard/OuvBulletinCard";
+import { OuvQuickActions } from "@/components/ouv/dashboard/OuvQuickActions";
+import { OuvWhatsAppButton } from "@/components/ouv/dashboard/OuvWhatsAppButton";
 
-// Page placeholder : la version complète (mirror `screen-ouv-dashboard` du
-// prototype avec bouton héros de pointage, mini-KPIs, bandeau d'affectation,
-// liste actions rapides, etc.) sera livrée dans le prompt 1.1.
+// Reproduction pixel-perfect du prototype screen-ouv-dashboard (fn 1.1).
+// Mobile-first 414px. Empilage vertical :
+//   1. Header sombre (logo + avatar 36px)
+//   2. Bandeau identité gradient violet (avatar 54px + chip affectation)
+//   3. .page background #FAFAF7 :
+//      - Card pointage avec bouton HÉROS vert (68px)
+//      - 2 mini-KPIs (salaire + congés)
+//      - Card "Nouveau bulletin disponible" (si récent)
+//      - 5 cards actions rapides (Paie · Congés · Missions · HSE · Équipe)
+//      - Bouton WhatsApp vert (contact chef chantier)
 
-export default function OuvDashboardPlaceholder() {
-  const { user } = useAuth();
-  const params = useParams<{ tenantSlug: string }>();
-  const tenantSlug = params?.tenantSlug ?? "";
+export default function OuvDashboardPage() {
+  const { data, isLoading, error } = useOuvDashboard();
 
-  const initials = user ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}` : "??";
+  if (isLoading) return <DashboardSkeleton />;
+  if (error || !data) return <DashboardError />;
+
+  const { user, assignment, todayClock, latestPayslip, kpis } = data;
+  const chiefFullName = assignment?.chief
+    ? `${assignment.chief.firstName} ${assignment.chief.lastName}`
+    : null;
 
   return (
-    <main className="page mx-auto w-full max-w-screen-sm px-3 pt-3">
-      {/* Bandeau identité (placeholder) */}
-      <header className="rounded-xl bg-gradient-to-br from-purple-700 via-purple-600 to-fuchsia-500 px-4 py-4 text-white shadow">
-        <div className="flex items-center gap-3">
-          <div className="grid h-[54px] w-[54px] place-items-center rounded-full bg-white/15 text-base font-semibold">
-            {initials.toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] opacity-80">Bonjour</p>
-            <p className="truncate text-lg font-semibold">
-              {user ? `${user.firstName} ${user.lastName}` : "Ouvrier"}
-            </p>
-            <p className="text-[12px] opacity-90">
-              {user?.position ?? "Ouvrier BTP"}
-            </p>
-          </div>
-        </div>
-      </header>
+    <>
+      <OuvHeader initials={user.initials} avatarUrl={user.avatarUrl} />
 
-      {/* Notice bootstrap Bloc 0 */}
-      <section className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <div className="flex items-start gap-2">
-          <Construction className="mt-0.5 h-5 w-5 shrink-0" />
-          <div>
-            <p className="font-semibold">Bootstrap Bloc 0 Ouvrier activé.</p>
-            <p className="mt-1 text-[12.5px]">
-              Les 8 fonctions (Dashboard, Pointage, Paie, Congés, Missions, HSE,
-              Équipe, EPI/Profil) seront livrées dans les prompts 1.1 à 1.8 en
-              respectant le prototype <code>screen-ouv-*</code>.
-            </p>
-          </div>
-        </div>
-      </section>
+      <OuvIdentityBanner
+        initials={user.initials}
+        fullName={`${user.firstName} ${user.lastName}`}
+        qualification={user.workerQualification}
+        matricule={user.matricule}
+        avatarUrl={user.avatarUrl}
+        assignment={
+          assignment
+            ? {
+                siteCode: assignment.siteCode,
+                siteName: assignment.siteName,
+                teamLabel: assignment.teamLabel,
+                payrollDayLabel: assignment.payrollDayLabel,
+                chief: assignment.chief
+                  ? {
+                      firstName: assignment.chief.firstName,
+                      lastName: assignment.chief.lastName,
+                    }
+                  : null,
+              }
+            : null
+        }
+      />
 
-      {/* Navigation provisoire vers les 8 fonctions */}
-      <nav className="mt-4 grid grid-cols-2 gap-2.5">
-        {[
-          { href: "/ouv/pointage", label: "Pointer", icon: Clock, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
-          { href: "/ouv/paie", label: "Ma paie", icon: Wallet, color: "text-purple-600 bg-purple-50 border-purple-100" },
-          { href: "/ouv/conges", label: "Mes congés", icon: ClipboardList, color: "text-amber-700 bg-amber-50 border-amber-100" },
-          { href: "/ouv/missions", label: "Missions", icon: ClipboardList, color: "text-blue-600 bg-blue-50 border-blue-100" },
-          { href: "/ouv/hse", label: "HSE", icon: Shield, color: "text-rose-600 bg-rose-50 border-rose-100" },
-          { href: "/ouv/equipe", label: "Mon équipe", icon: Users, color: "text-teal-600 bg-teal-50 border-teal-100" },
-          { href: "/ouv/outils", label: "EPI / outils", icon: Construction, color: "text-orange-600 bg-orange-50 border-orange-100" },
-          { href: "/ouv/profil", label: "Mon profil", icon: UserCircle, color: "text-slate-700 bg-slate-100 border-slate-200" },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={`/${tenantSlug}${item.href}`}
-              className={`flex h-[76px] flex-col items-start justify-center gap-1 rounded-xl border px-3 text-sm font-semibold ${item.color}`}
-            >
-              <Icon className="h-6 w-6" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <main className="page mx-auto w-full max-w-screen-md px-3 pt-3.5">
+        <OuvPointageCard
+          state={todayClock.state}
+          arrivalTime={todayClock.arrivalTime}
+          departureTime={todayClock.departureTime}
+          totalHours={todayClock.totalHours}
+        />
+
+        <OuvKpiMini
+          lastNetSalary={latestPayslip?.netAmount ?? 0}
+          lastPaymentDate={latestPayslip?.paymentDate ?? null}
+          leavesRemaining={kpis.leavesRemaining}
+        />
+
+        {latestPayslip && (
+          <OuvBulletinCard
+            payslipId={latestPayslip.id}
+            periodLabel={latestPayslip.periodLabel ?? ""}
+            netAmount={latestPayslip.netAmount}
+            isNew={latestPayslip.isNew}
+          />
+        )}
+
+        <OuvQuickActions
+          leavesRemaining={kpis.leavesRemaining}
+          newMissionsCount={kpis.newMissionsCount}
+          teamCount={kpis.teamCount}
+          chiefFullName={chiefFullName}
+        />
+
+        {assignment?.chief?.whatsappUrl && chiefFullName && (
+          <OuvWhatsAppButton chiefFullName={chiefFullName} whatsappUrl={assignment.chief.whatsappUrl} />
+        )}
+      </main>
+    </>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <div className="h-12 animate-pulse bg-[#2A1B3D]" />
+      <div className="h-[120px] animate-pulse bg-gradient-to-br from-[#2A1B3D] to-[#7E22CE]" />
+      <main className="page mx-auto w-full max-w-screen-md space-y-3.5 px-3 pt-3.5">
+        <div className="h-[180px] animate-pulse rounded-2xl bg-white" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="h-[88px] animate-pulse rounded-xl bg-white" />
+          <div className="h-[88px] animate-pulse rounded-xl bg-white" />
+        </div>
+        <div className="h-[80px] animate-pulse rounded-2xl bg-purple-50" />
+        <div className="space-y-2.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-[76px] animate-pulse rounded-xl bg-white" />
+          ))}
+        </div>
+      </main>
+    </>
+  );
+}
+
+function DashboardError() {
+  return (
+    <main className="page mx-auto w-full max-w-screen-md px-3 pt-8 text-center">
+      <p className="text-base font-semibold text-rose-700">
+        Impossible de charger votre tableau de bord.
+      </p>
+      <p className="mt-1 text-sm text-slate-500">
+        Vérifie ta connexion 3G/4G puis réessaie.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-4 inline-flex h-12 items-center justify-center rounded-lg bg-purple-600 px-6 text-sm font-semibold text-white"
+      >
+        Réessayer
+      </button>
     </main>
   );
 }

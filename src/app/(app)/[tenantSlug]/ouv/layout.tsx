@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useParams, usePathname } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Head from "next/head";
-import { Home, Clock, Wallet, ClipboardList, User } from "lucide-react";
-import { clsx } from "clsx";
 import { useAuth } from "@/hooks/useAuth";
+import { OuvBottomNav } from "@/components/ouv/layout/OuvBottomNav";
 
 // Espace OUV : exclusivement WORKER (ouvriers de base BTP).
 // Mobile-first 414px · PWA installable · offline-first · tap targets XXL
@@ -14,26 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 // accès, ils voient un onglet supplémentaire dans /ouv/equipe (fn 1.7).
 const ALLOWED_ROLES = ["WORKER"];
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: "/ouv/dashboard", label: "Accueil", icon: Home },
-  { href: "/ouv/pointage", label: "Pointer", icon: Clock },
-  { href: "/ouv/paie", label: "Paie", icon: Wallet },
-  { href: "/ouv/missions", label: "Missions", icon: ClipboardList },
-  { href: "/ouv/profil", label: "Profil", icon: User },
-];
-
 export default function OuvLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const params = useParams<{ tenantSlug: string }>();
-  const tenantSlug = params?.tenantSlug ?? "";
 
   // Service worker offline-first (pointage, paie, missions, congés cache)
   useEffect(() => {
@@ -66,40 +47,11 @@ export default function OuvLayout({ children }: { children: React.ReactNode }) {
       <div
         data-ouv-screen
         data-rh-screen
-        className="ouv-shell min-h-[100dvh] bg-[#FAFAF7] pb-[88px]"
+        className="ouv-shell min-h-[100dvh] bg-[#FAFAF7] pb-[88px] lg:pb-0"
       >
         {children}
-        <BottomNav tenantSlug={tenantSlug} pathname={pathname} />
+        <OuvBottomNav />
       </div>
     </>
-  );
-}
-
-function BottomNav({ tenantSlug, pathname }: { tenantSlug: string; pathname: string | null }) {
-  return (
-    <nav
-      className="ouv-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-slate-200 bg-white"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      {NAV_ITEMS.map((item) => {
-        const fullHref = `/${tenantSlug}${item.href}`;
-        const isActive = pathname?.startsWith(fullHref) ?? false;
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={fullHref}
-            className={clsx(
-              "flex h-[68px] flex-col items-center justify-center gap-1 text-[11px] font-medium",
-              isActive ? "text-purple-600" : "text-slate-500"
-            )}
-            aria-label={item.label}
-          >
-            <Icon className={clsx("h-6 w-6", isActive && "stroke-purple-600")} />
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
   );
 }
