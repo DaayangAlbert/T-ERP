@@ -4,7 +4,8 @@ import { useState } from "react";
 import { MessageSquare, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useCommentVariance, type VarianceItem, type VarianceTotals } from "@/hooks/useDafFinance";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 
 const THRESHOLD_PERCENT = 5; // au-delà de ±5% on déclenche l'alerte visuelle
 
@@ -39,8 +40,8 @@ function VarianceBar({ percent }: { percent: number }) {
 function CommentDialog({ item, onClose }: { item: VarianceItem; onClose: () => void }) {
   const [text, setText] = useState(item.comment ?? "");
   const mut = useCommentVariance();
-  const { user } = useAuth();
-  const canEdit = user?.role === "DAF" || user?.role === "TENANT_ADMIN";
+  // Commentaire de variance : édition autorisée pour FULL sur DAF.
+  const canEdit = useAccess(MODULES.DAF).canEdit;
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-3" onClick={onClose}>

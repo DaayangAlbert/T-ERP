@@ -2,7 +2,8 @@
 
 import { CheckCircle2, Clock, Lock } from "lucide-react";
 import { useMonthlyClosing, useCloseMonth } from "@/hooks/useDafAccounting";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { clsx } from "clsx";
 
 interface Props {
@@ -10,10 +11,10 @@ interface Props {
 }
 
 export function MonthlyClosingChecklist({ period }: Props) {
-  const { user } = useAuth();
   const { data, isLoading } = useMonthlyClosing(period);
   const close = useCloseMonth(period);
-  const canAct = user?.role === "DAF";
+  // Clôture mensuelle : action de validation propre au DAF (FULL).
+  const canAct = useAccess(MODULES.DAF).canValidate;
 
   if (isLoading || !data) return <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />;
 

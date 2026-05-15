@@ -2,7 +2,8 @@
 
 import { RefreshCw } from "lucide-react";
 import { useSyncBanks } from "@/hooks/useDafTreasury";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { formatFCFA } from "@/lib/format";
 
 interface Props {
@@ -12,8 +13,9 @@ interface Props {
 
 export function TreasuryHeader({ consolidatedPosition, totalAvailable }: Props) {
   const sync = useSyncBanks();
-  const { user } = useAuth();
-  const canAct = user?.role === "DAF" || user?.role === "TENANT_ADMIN";
+  // Édition autorisée via matrice : FULL sur DAF = canEdit=true. Un DG en
+  // drill-down (READ) verra le bouton de sync désactivé.
+  const canAct = useAccess(MODULES.DAF).canEdit;
 
   return (
     <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 p-4 text-white shadow-brand sm:p-5">

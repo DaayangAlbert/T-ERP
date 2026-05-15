@@ -2,7 +2,8 @@
 
 import { TaxType, TaxAuthority, DeclarationStatus, PaymentStatus } from "@prisma/client";
 import { useTaxDeadlines, useDeclareTax, usePayTax } from "@/hooks/useDafFiscal";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { formatDate, formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
 
@@ -38,11 +39,12 @@ function urgencyTone(daysLeft: number): "danger" | "warning" | "default" {
 }
 
 export function TaxDeadlinesTable() {
-  const { user } = useAuth();
   const { data, isLoading } = useTaxDeadlines(60);
   const declare = useDeclareTax();
   const pay = usePayTax();
-  const canAct = user?.role === "DAF" || user?.role === "ACCOUNTANT";
+  // Déclaration et paiement TVA/IRPP/CNPS : DAF (FULL DAF) ou ACCOUNTANT
+  // (FULL CPT + READ DAF). Matrice : on lit CPT.canEdit qui couvre les deux.
+  const canAct = useAccess(MODULES.CPT).canEdit;
 
   if (isLoading || !data) return <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />;
 

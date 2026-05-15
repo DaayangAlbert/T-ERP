@@ -7,7 +7,8 @@ import { useApproveValidation, useBulkApprove } from "@/hooks/useValidations";
 import { RejectModal } from "@/components/validations/RejectModal";
 import { RequestInfoModal } from "@/components/validations/RequestInfoModal";
 import { WorkflowInline } from "./WorkflowInline";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
 
@@ -53,8 +54,12 @@ export function ValidationsList({ items, onChange }: { items: Item[]; onChange?:
   const [comment, setComment] = useState<Record<string, string>>({});
   const approve = useApproveValidation();
   const bulk = useBulkApprove();
-  const { user } = useAuth();
-  const canAct = user?.role === "DAF";
+  // L'autorisation d'agir vient de la matrice : DAF a canValidate=true sur
+  // MODULES.DAF (FULL), tandis que le DG (READ) a canValidate=false → en
+  // mode drill-down il voit les validations en cours mais ne peut pas les
+  // approuver/refuser.
+  const access = useAccess(MODULES.DAF);
+  const canAct = access.canValidate;
 
   const toggleSelect = (id: string) => {
     setSelected((s) => {

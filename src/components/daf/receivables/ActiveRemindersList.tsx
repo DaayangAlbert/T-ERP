@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ReminderLevel, ReminderChannel } from "@prisma/client";
 import { useActiveReminders, useSendReminder } from "@/hooks/useDafReceivables";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { formatDate, formatFCFA, formatRelativeDate } from "@/lib/format";
 import { clsx } from "clsx";
 
@@ -23,11 +24,12 @@ const CHANNEL_LABEL: Record<ReminderChannel, string> = {
 };
 
 export function ActiveRemindersList() {
-  const { user } = useAuth();
   const { data, isLoading } = useActiveReminders();
   const send = useSendReminder();
   const [openId, setOpenId] = useState<string | null>(null);
-  const canAct = user?.role === "DAF" || user?.role === "ACCOUNTANT";
+  // Relances clients : DAF (FULL) ou ACCOUNTANT (FULL sur CPT, READ sur DAF).
+  // L'autorisation est en réalité côté Comptabilité, donc on lit CPT.
+  const canAct = useAccess(MODULES.CPT).canEdit;
 
   if (isLoading || !data) return <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />;
 

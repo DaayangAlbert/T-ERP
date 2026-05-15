@@ -2,15 +2,16 @@
 
 import { Check, X, Clock } from "lucide-react";
 import { useEntriesToValidate, useValidateEntry, useRejectEntry } from "@/hooks/useDafAccounting";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { formatFCFA } from "@/lib/format";
 
 export function EntriesToValidateTable() {
-  const { user } = useAuth();
   const { data, isLoading } = useEntriesToValidate();
   const validate = useValidateEntry();
   const reject = useRejectEntry();
-  const canAct = user?.role === "DAF";
+  // Validation écritures comptables : DAF a FULL sur DAF, canValidate=true.
+  const canAct = useAccess(MODULES.DAF).canValidate;
 
   if (isLoading || !data) return <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />;
 

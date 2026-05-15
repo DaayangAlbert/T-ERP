@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Check, X, MessageCircleQuestion, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useN2Decision, usePoN2Pending, type PoN2Item } from "@/hooks/useDafPurchase";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 
 function fmt(amount: string): string {
   return new Intl.NumberFormat("fr-FR").format(Number(amount));
@@ -94,8 +95,9 @@ function DecisionDialog({
 
 export function PoN2PendingTable() {
   const { data, isLoading } = usePoN2Pending();
-  const { user } = useAuth();
-  const canDecide = user?.role === "DAF" || user?.role === "TENANT_ADMIN";
+  // Validation N2 achats : seul un FULL (canValidate) peut décider.
+  // Un DG en READ verra la liste sans pouvoir approuver/rejeter.
+  const canDecide = useAccess(MODULES.DAF).canValidate;
   const [target, setTarget] = useState<{ item: PoN2Item; decision: "APPROVE" | "REJECT" | "REQUEST_INFO" } | null>(null);
 
   if (isLoading || !data) {
