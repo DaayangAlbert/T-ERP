@@ -1,29 +1,23 @@
 import { redirect } from "next/navigation";
 import { Role } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { canAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
+import { RbacScope } from "@/components/rbac/RbacScope";
 
 /**
- * Layout exclusif au Directeur Général.
+ * Layout de l'espace Direction Générale.
  *
- * - Redirige vers /dashboard si l'utilisateur n'a pas Role.DG
- *   (le layout (app) parent a déjà vérifié la session — pas besoin de re-auth ici)
- * - Le breadcrumb "Espace DG > <fonction>" est rendu automatiquement par le
- *   composant Breadcrumbs du AuthenticatedShell, grâce à l'entrée
- *   `dg: "Espace DG"` dans SEGMENT_LABELS.
+ * Autorisation pilotée par la matrice centralisée (access-matrix.ts).
+ * DG = FULL · SG / SECRETARY_GENERAL / SUPER_ADMIN = READ (drill-down).
+ *
+ * Le breadcrumb "Espace DG > <fonction>" est rendu automatiquement par le
+ * composant Breadcrumbs du AuthenticatedShell.
  */
-export default async function DgLayout({ children }: { children: React.ReactNode }) {
+export default function DgLayout({ children }: { children: React.ReactNode }) {
   const session = getCurrentSession();
   if (!session) redirect("/");
+  if (!canAccess(session.role as Role, MODULES.DG)) redirect("/dashboard");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.sub },
-    select: { role: true },
-  });
-
-  if (!user || user.role !== Role.DG) {
-    redirect("/dashboard");
-  }
-
-  return <>{children}</>;
+  return <RbacScope module={MODULES.DG}>{children}</RbacScope>;
 }

@@ -2,14 +2,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Role } from "@prisma/client";
 import { useAuth } from "@/hooks/useAuth";
 import { WarehouseProvider } from "@/contexts/WarehouseContext";
+import { canAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
+import { ReadOnlyBanner } from "@/components/rbac/ReadOnlyBanner";
 
-const ALLOWED_ROLES = ["WAREHOUSE", "SITE_MANAGER", "WORKS_DIRECTOR", "TECH_DIRECTOR", "DG", "SUPER_ADMIN"];
-
+// Autorisation pilotée par la matrice centralisée (access-matrix.ts).
+// WAREHOUSE = FULL · SITE_MANAGER = SCOPE · DG / DAF / LOGISTICS / WORKS_DIRECTOR / TECH_DIRECTOR = READ.
 export default function MagLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
+  const authorized = user ? canAccess(user.role as Role, MODULES.MAG) : null;
 
   // Service worker partagé avec le CC
   useEffect(() => {
@@ -21,15 +26,14 @@ export default function MagLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (user && !ALLOWED_ROLES.includes(user.role)) {
-      router.replace("/dashboard");
-    }
-  }, [user, router]);
+    if (user && !authorized) router.replace("/dashboard");
+  }, [user, authorized, router]);
 
-  if (user && !ALLOWED_ROLES.includes(user.role)) return null;
+  if (user && !authorized) return null;
 
   return (
     <WarehouseProvider>
+      <ReadOnlyBanner module={MODULES.MAG} />
       <div data-rh-screen data-mag-screen className="rh-page">
         {children}
       </div>

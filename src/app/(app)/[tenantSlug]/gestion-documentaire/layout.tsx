@@ -1,22 +1,22 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/session";
 import { Role } from "@prisma/client";
+import { canAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
+import { RbacScope } from "@/components/rbac/RbacScope";
 
-// L'espace GED est piloté par Christelle EYENGA (ARCHIVIST) — référent
-// documentaire transverse. DG accède en lecture (drill-down audit/rapports),
-// TENANT_ADMIN pour la maintenance.
-const ALLOWED: Role[] = [Role.ARCHIVIST, Role.DG, Role.TENANT_ADMIN];
-
+// Autorisation pilotée par la matrice centralisée (access-matrix.ts).
+// ARCHIVIST / GED = FULL · DT / DAF / RH / WORKS_DIRECTOR / SG / etc. = READ.
 export default function GedLayout({ children }: { children: React.ReactNode }) {
   const session = getCurrentSession();
   if (!session) redirect("/");
-  if (!ALLOWED.includes(session.role as Role)) redirect("/dashboard");
+  if (!canAccess(session.role as Role, MODULES.GED)) redirect("/dashboard");
 
-  // Réutilise le wrapper data-rh-screen + data-ged-screen pour le protocole
-  // responsive partagé (audit-responsive.ts).
   return (
-    <div data-rh-screen data-ged-screen>
-      <div className="rh-page">{children}</div>
-    </div>
+    <RbacScope module={MODULES.GED}>
+      <div data-rh-screen data-ged-screen>
+        <div className="rh-page">{children}</div>
+      </div>
+    </RbacScope>
   );
 }

@@ -2,14 +2,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Role } from "@prisma/client";
 import { useAuth } from "@/hooks/useAuth";
 import { CcSiteProvider } from "@/contexts/CcSiteContext";
+import { canAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
+import { ReadOnlyBanner } from "@/components/rbac/ReadOnlyBanner";
 
-const ALLOWED_ROLES = ["SITE_MANAGER", "WORKS_DIRECTOR", "TECH_DIRECTOR", "DG", "SUPER_ADMIN"];
-
+// Autorisation pilotée par la matrice centralisée (access-matrix.ts).
+// SITE_MANAGER / WORKS_DIRECTOR = FULL · DG / DAF / TECH_DIRECTOR / WORKS_MANAGER / SG = READ.
 export default function CcLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
+  const authorized = user ? canAccess(user.role as Role, MODULES.CC) : null;
 
   // Service worker registration (PWA offline-first)
   useEffect(() => {
@@ -21,15 +26,14 @@ export default function CcLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (user && !ALLOWED_ROLES.includes(user.role)) {
-      router.replace("/dashboard");
-    }
-  }, [user, router]);
+    if (user && !authorized) router.replace("/dashboard");
+  }, [user, authorized, router]);
 
-  if (user && !ALLOWED_ROLES.includes(user.role)) return null;
+  if (user && !authorized) return null;
 
   return (
     <CcSiteProvider>
+      <ReadOnlyBanner module={MODULES.CC} />
       <div data-rh-screen data-cc-screen className="rh-page">
         {children}
       </div>

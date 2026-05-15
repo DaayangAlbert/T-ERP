@@ -1,19 +1,22 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/session";
 import { Role } from "@prisma/client";
+import { canAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
+import { RbacScope } from "@/components/rbac/RbacScope";
 
-// Le DG, le TENANT_ADMIN et le DAF lisent l'espace RH (drill-down).
-// Sandrine ONANA (HR) y accède en pleine action.
-const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
-
+// Autorisation pilotée par la matrice centralisée (access-matrix.ts).
+// HR = FULL · DG / DAF / SG / ARCHIVIST / WORKS_DIRECTOR = READ (drill-down).
 export default function RhLayout({ children }: { children: React.ReactNode }) {
   const session = getCurrentSession();
   if (!session) redirect("/");
-  if (!ALLOWED.includes(session.role as Role)) redirect("/dashboard");
+  if (!canAccess(session.role as Role, MODULES.RH)) redirect("/dashboard");
 
   return (
-    <div data-rh-screen>
-      <div className="rh-page">{children}</div>
-    </div>
+    <RbacScope module={MODULES.RH}>
+      <div data-rh-screen>
+        <div className="rh-page">{children}</div>
+      </div>
+    </RbacScope>
   );
 }
