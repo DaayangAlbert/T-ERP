@@ -2,27 +2,26 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-
-const GED_ROLES: Role[] = [Role.ARCHIVIST, Role.DG, Role.TENANT_ADMIN];
+import { getAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
 
 /**
- * Garde commune des routes /api/ged. Vérifie le rôle ARCHIVIST (ou DG en
- * lecture, TENANT_ADMIN pour maintenance) et renvoie la session.
+ * Garde commune des routes /api/ged.
  *
- * Usage :
- *   const guard = await guardGed();
- *   if (guard instanceof NextResponse) return guard;
- *   const { session } = guard;
+ * Autorisation déléguée à la matrice centrale (access-matrix.ts).
+ * ARCHIVIST / GED = FULL · presque tous les autres rôles = READ
+ * (le documentaire est transverse à l'entreprise).
  */
 export async function guardGed() {
   const session = getCurrentSession();
   if (!session?.tenantId) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
-  if (!GED_ROLES.includes(session.role as Role)) {
+  const access = getAccess(session.role as Role, MODULES.GED);
+  if (access.level === "NONE") {
     return NextResponse.json({ error: "Accès refusé · réservé GED" }, { status: 403 });
   }
-  return { session };
+  return { session, access };
 }
 
 /**

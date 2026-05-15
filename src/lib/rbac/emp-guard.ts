@@ -1,30 +1,39 @@
 import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { getCurrentSession } from "@/lib/session";
+import { getAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
 
-// EMP : EMPLOYEE (bureau) + WORKER (ouvriers) connectés peuvent consulter
-// LEUR espace personnel. Cette garde reste sur les deux rôles tant que
-// /api/ouv/* n'a pas dupliqué les endpoints équivalents (Bloc 1 Ouvrier).
-// L'UI /employe est en revanche restreinte aux EMPLOYEE uniquement.
-// Les autres rôles (DG, DAF, RH, etc.) n'ont aucune raison de naviguer dans
-// l'espace EMP d'un autre utilisateur — c'est une donnée RGPD/sociale stricte.
-const EMP_ROLES: Role[] = [Role.EMPLOYEE, Role.WORKER];
-
+/**
+ * Garde de l'espace EMP (espace personnel).
+ *
+ * Autorisation déléguée à la matrice centrale (access-matrix.ts). EMPLOYEE
+ * + WORKER y ont un accès OWN, ainsi que tous les rôles direction (DG, DAF,
+ * HR, etc.) pour leur PROPRE espace personnel.
+ *
+ * RGPD : `guardEmpOwnership(targetUserId)` doit être systématiquement
+ * utilisée sur les routes manipulant un userId — personne (même DG) ne
+ * consulte les données d'un autre utilisateur via /api/emp/*.
+ *
+ * Note : WORKER reste accepté ici tant que /api/ouv/* ne couvre pas tous
+ * les endpoints (rétro-compat avec le Bloc 0 OUV).
+ */
 export function guardEmp() {
   const session = getCurrentSession();
   if (!session?.tenantId) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
-  if (!EMP_ROLES.includes(session.role as Role)) {
+  const access = getAccess(session.role as Role, MODULES.EMP);
+  if (access.level === "NONE") {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
-  return { session };
+  return { session, access };
 }
 
 /**
  * Vérifie que `targetUserId` correspond bien à l'utilisateur connecté.
- * Si non, renvoie un 403 — un ouvrier ne peut JAMAIS consulter les données
- * personnelles d'un autre (bulletin, congé, pointage, profil).
+ * Si non, renvoie un 403 — personne ne consulte les données personnelles
+ * d'un autre via /api/emp/*.
  */
 export function guardEmpOwnership(targetUserId: string) {
   const guard = guardEmp();

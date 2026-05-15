@@ -1,27 +1,21 @@
 import { NextResponse } from "next/server";
-import { Role } from "@prisma/client";
-import { getCurrentSession } from "@/lib/session";
+import { guardModule } from "@/lib/rbac/guard";
+import { MODULES } from "@/lib/rbac/modules";
 
-// OUV : seul l'ouvrier (WORKER) connecté peut consulter SON espace personnel
-// mobile-first. Les autres rôles n'ont aucune raison de naviguer dans /ouv/*
-// d'un autre utilisateur — données RGPD/sociales strictes (Bloc 0 Ouvrier).
-const OUV_ROLES: Role[] = [Role.WORKER];
-
+/**
+ * Garde de l'espace OUV (PWA ouvrier).
+ *
+ * Délègue l'autorisation à la matrice centrale (access-matrix.ts).
+ * Seul Role.WORKER a OUV = OWN ; tous les autres sont NONE.
+ */
 export function guardOuv() {
-  const session = getCurrentSession();
-  if (!session?.tenantId) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  }
-  if (!OUV_ROLES.includes(session.role as Role)) {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
-  return { session };
+  return guardModule(MODULES.OUV);
 }
 
 /**
  * Vérifie que `targetUserId` correspond bien à l'ouvrier connecté. Un ouvrier
  * ne peut JAMAIS consulter les données personnelles d'un autre (bulletin, congé,
- * pointage, mission, HSE, EPI, profil).
+ * pointage, mission, HSE, EPI, profil). RGPD strict.
  */
 export function guardOuvOwnership(targetUserId: string) {
   const guard = guardOuv();

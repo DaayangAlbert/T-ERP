@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-
-const SG_ROLES: Role[] = [Role.SECRETARY_GENERAL, Role.DG, Role.TENANT_ADMIN];
+import { getAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
 
 export type SgPower =
   | "canManageCorporateGovernance"
@@ -13,22 +13,25 @@ export type SgPower =
   | "canReadAllDashboards";
 
 /**
- * Garde commune des routes /api/sg. Vérifie le rôle SECRETARY_GENERAL
- * (ou DG en lecture, TENANT_ADMIN pour maintenance) et optionnellement
- * un pouvoir spécial.
+ * Garde commune des routes /api/sg.
  *
- * Usage :
+ * Autorisation déléguée à la matrice centrale (access-matrix.ts).
+ * SECRETARY_GENERAL / SG = FULL · DG / ARCHIVIST = READ.
+ *
+ * Le `requiredPower` vérifie en plus un flag granulaire (uniquement appliqué
+ * au SECRETARY_GENERAL — le DG et TENANT_ADMIN passent outre car ils ont
+ * un accès direction global).
+ *
  *   const guard = await guardSg();                        // rôle seulement
  *   const guard = await guardSg("canManageLegalCases");   // rôle + pouvoir
- *   if (guard instanceof NextResponse) return guard;
- *   const { session } = guard;
  */
 export async function guardSg(requiredPower?: SgPower) {
   const session = getCurrentSession();
   if (!session?.tenantId) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
-  if (!SG_ROLES.includes(session.role as Role)) {
+  const access = getAccess(session.role as Role, MODULES.SG);
+  if (access.level === "NONE") {
     return NextResponse.json({ error: "Accès refusé · réservé Secrétaire Général" }, { status: 403 });
   }
 
@@ -53,7 +56,7 @@ export async function guardSg(requiredPower?: SgPower) {
     }
   }
 
-  return { session };
+  return { session, access };
 }
 
 /**
