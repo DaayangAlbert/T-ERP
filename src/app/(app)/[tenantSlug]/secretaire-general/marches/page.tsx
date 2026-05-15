@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { useSgContracts, type SgContractsFilters } from "@/hooks/useSgContracts";
 import { ContractsHeader } from "@/components/sg/marches/ContractsHeader";
 import { ContractsKpis } from "@/components/sg/marches/ContractsKpis";
@@ -14,8 +15,8 @@ import { NewContractModal } from "@/components/sg/marches/NewContractModal";
 import type { ContractingAuthorityType } from "@prisma/client";
 
 export default function MarchesPage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  const readOnly = !useAccess(MODULES.SG).canEdit;
 
   const [tab, setTab] = useState<ContractTab>("ACTIVE");
   const [q, setQ] = useState("");

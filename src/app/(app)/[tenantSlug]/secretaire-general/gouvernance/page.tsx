@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import {
   useGovernanceMeetings,
   useBoardMembers,
@@ -19,8 +21,10 @@ import { DecisionsRegisterCard } from "@/components/sg/gouvernance/DecisionsRegi
 import { CreateMeetingModal } from "@/components/sg/gouvernance/CreateMeetingModal";
 
 export default function GouvernancePage() {
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  // `isDg` reste utilisé pour l'affichage spécifique (sceau DG sur PV).
   const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  const readOnly = !useAccess(MODULES.SG).canEdit;
   const isDg = user?.role === "DG";
 
   const meetingsQ = useGovernanceMeetings();

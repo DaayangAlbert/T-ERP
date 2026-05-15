@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { useSgLegalCases, useLawyers, type LegalCasesFilters } from "@/hooks/useSgLegalCases";
 import { LegalCasesHeader } from "@/components/sg/contentieux/LegalCasesHeader";
 import { LegalCasesKpis } from "@/components/sg/contentieux/LegalCasesKpis";
@@ -15,8 +16,8 @@ import { LawyersDirectory } from "@/components/sg/contentieux/LawyersDirectory";
 type Tab = "OPEN" | "CLOSED" | "ALL";
 
 export default function ContentieuxPage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  const readOnly = !useAccess(MODULES.SG).canEdit;
 
   const [tab, setTab] = useState<Tab>("OPEN");
   const [q, setQ] = useState("");

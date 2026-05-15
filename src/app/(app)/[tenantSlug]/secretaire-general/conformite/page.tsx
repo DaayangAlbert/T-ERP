@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { useComplianceDashboard, useRegisters } from "@/hooks/useSgCompliance";
 import { ComplianceHeader } from "@/components/sg/conformite/ComplianceHeader";
 import { ComplianceStatusCard } from "@/components/sg/conformite/ComplianceStatusCard";
@@ -10,8 +11,8 @@ import { RegistersGrid } from "@/components/sg/conformite/RegistersGrid";
 import { RegisterDetailDrawer } from "@/components/sg/conformite/RegisterDetailDrawer";
 
 export default function ConformitePage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  const readOnly = !useAccess(MODULES.SG).canEdit;
 
   const dashQ = useComplianceDashboard();
   const regsQ = useRegisters();

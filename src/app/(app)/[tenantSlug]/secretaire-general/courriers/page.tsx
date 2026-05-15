@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import {
   useCorrespondences,
   useCorrespondencesAnalytics,
@@ -20,8 +21,8 @@ import { CorrespondenceDetailDrawer } from "@/components/sg/courriers/Correspond
 import { NewCorrespondenceWizard } from "@/components/sg/courriers/NewCorrespondenceWizard";
 
 export default function CourriersPage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  const readOnly = !useAccess(MODULES.SG).canEdit;
 
   const [tab, setTab] = useState<CorrespondenceTab>("INCOMING");
   const [q, setQ] = useState("");

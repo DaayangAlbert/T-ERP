@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Crown, Building2, Handshake } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { useSgInstitutions, useApprovals, type ApprovalItem } from "@/hooks/useSgInstitutions";
 import { InstitutionsHeader } from "@/components/sg/institutionnel/InstitutionsHeader";
 import { InstitutionsKpis } from "@/components/sg/institutionnel/InstitutionsKpis";
@@ -13,8 +14,8 @@ import { NewInstitutionModal } from "@/components/sg/institutionnel/NewInstituti
 import { ApprovalRenewalWizard } from "@/components/sg/institutionnel/ApprovalRenewalWizard";
 
 export default function InstitutionnelPage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "SECRETARY_GENERAL" && user?.role !== "TENANT_ADMIN";
+  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
+  const readOnly = !useAccess(MODULES.SG).canEdit;
 
   const instQ = useSgInstitutions();
   const apprQ = useApprovals();
