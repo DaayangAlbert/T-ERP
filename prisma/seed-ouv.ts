@@ -36,6 +36,8 @@ import {
   PayslipStatus,
   PayslipPaymentMethod,
   SalaryAdvanceStatus,
+  AttestationType,
+  AttestationStatus,
   SiteType,
   SiteStatus,
   Plan,
@@ -686,6 +688,48 @@ async function main() {
     });
   }
   console.log("  ✓ 1 avance Étienne (30 000 FCFA · récupérée sur paie avril)");
+
+  // ---------------------------------------------------------------
+  // 6quater) Attestations RH (fn 1.4)
+  // 1 attestation déjà livrée (READY) + 1 demande en attente (PENDING)
+  // ---------------------------------------------------------------
+  const attSalaryExists = await prisma.attestationRequest.findFirst({
+    where: { userId: etienne.id, type: AttestationType.SALARY },
+    select: { id: true },
+  });
+  if (!attSalaryExists) {
+    await prisma.attestationRequest.create({
+      data: {
+        tenantId,
+        userId: etienne.id,
+        type: AttestationType.SALARY,
+        purpose: "Ouverture compte épargne Afriland",
+        status: AttestationStatus.READY,
+        preparedAt: new Date("2026-04-22T10:30:00Z"),
+        documentUrl: "https://example.terp.cm/attestations/etienne-salaire-2026-04.pdf",
+        expectedReadyAt: new Date("2026-04-22T17:00:00Z"),
+        createdAt: new Date("2026-04-20T08:15:00Z"),
+      },
+    });
+  }
+  const attEmploymentExists = await prisma.attestationRequest.findFirst({
+    where: { userId: etienne.id, type: AttestationType.EMPLOYMENT },
+    select: { id: true },
+  });
+  if (!attEmploymentExists) {
+    await prisma.attestationRequest.create({
+      data: {
+        tenantId,
+        userId: etienne.id,
+        type: AttestationType.EMPLOYMENT,
+        purpose: "Dossier visa Espagne (mariage frère)",
+        status: AttestationStatus.PENDING,
+        expectedReadyAt: new Date(Date.now() + 48 * 3600 * 1000),
+        createdAt: new Date(Date.now() - 12 * 3600 * 1000),
+      },
+    });
+  }
+  console.log("  ✓ 2 AttestationRequest Étienne (1 READY · 1 PENDING)");
 
   // ---------------------------------------------------------------
   // 7) Joseph ESSAMA — gardien (isGuard=true)

@@ -131,6 +131,8 @@ model Tenant {
   missionAssignments        MissionAssignment[]
   hseIncidentReports        HseIncidentReport[]
   epiAssignments            EpiAssignment[]
+  // OUV — Attestations RH (fn 1.4)
+  attestationRequests       AttestationRequest[]
 
   @@index([parentId])
   @@map("tenants")
@@ -386,6 +388,9 @@ model User {
   hseReportsCreated             HseIncidentReport[]           @relation("HseReporter")
   hseReportsAssigned            HseIncidentReport[]           @relation("HseAssignee")
   epiAssignments                EpiAssignment[]               @relation("EpiOwner")
+  // OUV — Attestations RH (Bloc 1 fn 1.4)
+  attestationsRequested         AttestationRequest[]          @relation("AttestationRequester")
+  attestationsPrepared          AttestationRequest[]          @relation("AttestationPreparer")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -6649,4 +6654,58 @@ enum EpiStatus {
   DEFECTIVE
   REPLACED
   LOST
+}
+
+// ========================================
+// OUV — Attestations RH (Bloc 1 Ouvrier fn 1.4)
+// ========================================
+// L'ouvrier demande une attestation (salaire, travail, présence, congé pris,
+// autre). RH (Sandrine ONANA · role HR) prépare le PDF signé sous 48 h
+// ouvrées, l'upload sur R2 puis marque READY. L'ouvrier reçoit notification
+// WhatsApp et télécharge depuis l'app.
+
+model AttestationRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId          String // ouvrier demandeur
+  user            User     @relation("AttestationRequester", fields: [userId], references: [id], onDelete: Cascade)
+  type            AttestationType
+  purpose         String? // pour quoi faire ? ex : "ouverture compte Afriland", "dossier visa"
+  status          AttestationStatus @default(PENDING)
+  // Préparation côté RH
+  preparedById    String? // RH ou Comptable qui a préparé le PDF
+  preparedBy      User?    @relation("AttestationPreparer", fields: [preparedById], references: [id])
+  preparedAt      DateTime?
+  documentUrl     String? // URL R2 du PDF signé
+  // Échéance attendue (48h ouvrées après requestedAt) — recalculée si besoin
+  expectedReadyAt DateTime?
+  // Refus / annulation
+  rejectionReason String?
+  // Remise effective à l'ouvrier (téléchargement ou impression)
+  deliveredAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([userId, createdAt])
+  @@map("attestation_requests")
+}
+
+enum AttestationType {
+  SALARY // attestation de salaire
+  EMPLOYMENT // attestation de travail
+  PRESENCE // attestation de présence
+  LEAVE_TAKEN // attestation de congés pris
+  OTHER
+}
+
+enum AttestationStatus {
+  PENDING
+  IN_PREPARATION
+  READY
+  DELIVERED
+  REJECTED
+  CANCELLED
 }
