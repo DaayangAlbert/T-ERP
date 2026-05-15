@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
 import {
   CorrespondenceConfidentiality,
   CorrespondenceDirection,
@@ -162,7 +162,7 @@ async function nextReference(tenantId: string, direction: CorrespondenceDirectio
 }
 
 export async function POST(req: Request) {
-  const guard = await guardSg("canManageOfficialCorrespondence");
+  const guard = await guardSgMutation("canManageOfficialCorrespondence");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

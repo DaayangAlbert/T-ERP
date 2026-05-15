@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgMutation } from "@/lib/rbac/sg-guard";
 import { MeetingStatus, RegisterType } from "@prisma/client";
 import { z } from "zod";
 
@@ -18,7 +18,7 @@ const schema = z.object({
 // des décisions (incrémente entriesCount du RegulatoryRegister
 // BOARD_DECISIONS ou AG_DECISIONS).
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageCorporateGovernance");
+  const guard = await guardSgMutation("canManageCorporateGovernance");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

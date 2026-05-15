@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
 import {
   LegalCaseStatus,
   LegalPosition,
@@ -181,7 +181,7 @@ const CreateLegalCaseSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const guard = await guardSg("canManageLegalCases");
+  const guard = await guardSgMutation("canManageLegalCases");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

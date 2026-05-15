@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgMutation } from "@/lib/rbac/sg-guard";
 import { CorrespondenceStatus, GedAuditAction } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageOfficialCorrespondence");
+  const guard = await guardSgMutation("canManageOfficialCorrespondence");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
 import { ContractPhase, ContractingAuthorityType, LegalContractStatus, MarketContractStatus } from "@prisma/client";
 import { z } from "zod";
 
@@ -98,7 +98,7 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageMarketContracts");
+  const guard = await guardSgMutation("canManageMarketContracts");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgMutation } from "@/lib/rbac/sg-guard";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ const schema = z.object({
 // PATCH /api/sg/governance/meetings/:id/agenda — modifie l'ordre du jour.
 // Si approveByDg=true et que l'utilisateur a le rôle DG, marque le verrouillage.
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageCorporateGovernance");
+  const guard = await guardSgMutation("canManageCorporateGovernance");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

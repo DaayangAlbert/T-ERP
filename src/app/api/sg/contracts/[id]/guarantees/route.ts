@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgMutation } from "@/lib/rbac/sg-guard";
 import { GuaranteeStatus, GuaranteeType } from "@prisma/client";
 import { z } from "zod";
 
@@ -16,7 +16,7 @@ const schema = z.object({
 
 // POST /api/sg/contracts/:id/guarantees — émission d'une garantie bancaire
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageMarketContracts");
+  const guard = await guardSgMutation("canManageMarketContracts");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -60,6 +60,26 @@ export async function guardSg(requiredPower?: SgPower) {
 }
 
 /**
+ * Variante stricte de `guardSg` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès SG est `READ`
+ * — typiquement le DG en drill-down ou l'ARCHIVIST.
+ *
+ *   const guard = await guardSgMutation("canManageLegalCases");
+ *   // → 403 pour un DG (READ uniquement)
+ */
+export async function guardSgMutation(requiredPower?: SgPower) {
+  const guard = await guardSg(requiredPower);
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
+/**
  * Vérifie si le SG peut consulter en lecture les dashboards d'autres
  * directions (DAF, DT, RH...). Renvoie true si le flag est posé.
  * Le DG / TENANT_ADMIN bypass.

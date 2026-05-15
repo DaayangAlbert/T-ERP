@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgMutation } from "@/lib/rbac/sg-guard";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ const ProvisionSchema = z.object({
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardSg("canManageLegalCases");
+  const guard = await guardSgMutation("canManageLegalCases");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

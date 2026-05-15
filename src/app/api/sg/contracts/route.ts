@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
 import {
   ContractPhase,
   ContractingAuthorityType,
@@ -194,7 +194,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const guard = await guardSg("canManageMarketContracts");
+  const guard = await guardSgMutation("canManageMarketContracts");
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;
