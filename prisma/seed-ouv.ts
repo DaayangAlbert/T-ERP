@@ -38,6 +38,8 @@ import {
   SalaryAdvanceStatus,
   AttestationType,
   AttestationStatus,
+  ToolLoanStatus,
+  EmployeeDocumentType,
   SiteType,
   SiteStatus,
   Plan,
@@ -730,6 +732,101 @@ async function main() {
     });
   }
   console.log("  ✓ 2 AttestationRequest Étienne (1 READY · 1 PENDING)");
+
+  // ---------------------------------------------------------------
+  // 6quinquies) ToolLoans pour Étienne (fn 1.8)
+  // 3 outils sortis : marteau, mètre permanent, niveau en retard
+  // ---------------------------------------------------------------
+  const toolsData = [
+    {
+      toolName: "Marteau de coffreur",
+      toolCategory: "Coffrage",
+      issuedAt: new Date("2026-05-05T07:00:00Z"),
+      dueDate: new Date("2026-05-12T18:00:00Z"),
+      isPermanent: false,
+      status: ToolLoanStatus.ISSUED,
+    },
+    {
+      toolName: "Mètre ruban 5 m",
+      toolCategory: "Mesure",
+      issuedAt: new Date("2026-05-05T07:00:00Z"),
+      dueDate: null,
+      isPermanent: true,
+      status: ToolLoanStatus.ISSUED,
+    },
+    {
+      toolName: "Niveau à bulle 60 cm",
+      toolCategory: "Niveau",
+      issuedAt: new Date("2026-04-28T07:00:00Z"),
+      dueDate: new Date("2026-05-09T18:00:00Z"),
+      isPermanent: false,
+      status: ToolLoanStatus.ISSUED,
+    },
+  ];
+  for (const t of toolsData) {
+    const exists = await prisma.toolLoan.findFirst({
+      where: { userId: etienne.id, toolName: t.toolName, status: t.status },
+      select: { id: true },
+    });
+    if (!exists) {
+      await prisma.toolLoan.create({
+        data: {
+          tenantId,
+          userId: etienne.id,
+          toolName: t.toolName,
+          toolCategory: t.toolCategory,
+          issuedById: jeanKamga.id, // placeholder ; sera Lucas TIENTCHEU si MAG seed
+          issuedAt: t.issuedAt,
+          requestedAt: new Date(t.issuedAt.getTime() - 4 * 3600 * 1000),
+          dueDate: t.dueDate,
+          isPermanent: t.isPermanent,
+          status: t.status,
+          requestReason: "Mission coffrage pile P3",
+        },
+      });
+    }
+  }
+  console.log("  ✓ 3 ToolLoans Étienne (marteau + mètre permanent + niveau en retard)");
+
+  // ---------------------------------------------------------------
+  // 6sexies) Documents officiels Étienne (fn 1.8)
+  // CNI + Contrat + RIB pour la section "Mes documents"
+  // ---------------------------------------------------------------
+  const documentsData = [
+    {
+      type: EmployeeDocumentType.CONTRACT,
+      title: "Contrat CDI BatimCAM SA",
+      fileUrl: "https://example.terp.cm/docs/etienne-contrat-cdi-2020.pdf",
+    },
+    {
+      type: EmployeeDocumentType.CNI,
+      title: "Carte nationale d'identité",
+      fileUrl: "https://example.terp.cm/docs/etienne-cni-recto-verso.pdf",
+    },
+    {
+      type: EmployeeDocumentType.BANK_RIB,
+      title: "RIB Afriland First Bank",
+      fileUrl: "https://example.terp.cm/docs/etienne-rib-afriland.pdf",
+    },
+  ];
+  for (const d of documentsData) {
+    const exists = await prisma.employeeDocument.findFirst({
+      where: { userId: etienne.id, type: d.type, title: d.title },
+      select: { id: true },
+    });
+    if (!exists) {
+      await prisma.employeeDocument.create({
+        data: {
+          userId: etienne.id,
+          type: d.type,
+          title: d.title,
+          fileUrl: d.fileUrl,
+          uploadedBy: "rh-system",
+        },
+      });
+    }
+  }
+  console.log("  ✓ 3 EmployeeDocument Étienne (contrat + CNI + RIB)");
 
   // ---------------------------------------------------------------
   // 7) Joseph ESSAMA — gardien (isGuard=true)
