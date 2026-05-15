@@ -2,24 +2,32 @@
 -- (salaire, travail, présence, congé pris). RH prépare le PDF signé
 -- sous 48 h ouvrées et l'upload sur R2.
 
-CREATE TYPE "AttestationType" AS ENUM (
-  'SALARY',
-  'EMPLOYMENT',
-  'PRESENCE',
-  'LEAVE_TAKEN',
-  'OTHER'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AttestationType') THEN
+    CREATE TYPE "AttestationType" AS ENUM (
+      'SALARY',
+      'EMPLOYMENT',
+      'PRESENCE',
+      'LEAVE_TAKEN',
+      'OTHER'
+    );
+  END IF;
+END $$;
 
-CREATE TYPE "AttestationStatus" AS ENUM (
-  'PENDING',
-  'IN_PREPARATION',
-  'READY',
-  'DELIVERED',
-  'REJECTED',
-  'CANCELLED'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AttestationStatus') THEN
+    CREATE TYPE "AttestationStatus" AS ENUM (
+      'PENDING',
+      'IN_PREPARATION',
+      'READY',
+      'DELIVERED',
+      'REJECTED',
+      'CANCELLED'
+    );
+  END IF;
+END $$;
 
-CREATE TABLE "attestation_requests" (
+CREATE TABLE IF NOT EXISTS "attestation_requests" (
   "id"              TEXT NOT NULL,
   "tenantId"        TEXT NOT NULL,
   "userId"          TEXT NOT NULL,
@@ -37,19 +45,23 @@ CREATE TABLE "attestation_requests" (
   CONSTRAINT "attestation_requests_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "attestation_requests_tenantId_status_idx"
+CREATE INDEX IF NOT EXISTS "attestation_requests_tenantId_status_idx"
   ON "attestation_requests"("tenantId", "status");
 
-CREATE INDEX "attestation_requests_userId_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "attestation_requests_userId_createdAt_idx"
   ON "attestation_requests"("userId", "createdAt");
 
-ALTER TABLE "attestation_requests"
-  ADD CONSTRAINT "attestation_requests_tenantId_fkey"
-    FOREIGN KEY ("tenantId") REFERENCES "tenants"("id")
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT "attestation_requests_userId_fkey"
-    FOREIGN KEY ("userId") REFERENCES "users"("id")
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT "attestation_requests_preparedById_fkey"
-    FOREIGN KEY ("preparedById") REFERENCES "users"("id")
-    ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attestation_requests_tenantId_fkey') THEN
+    ALTER TABLE "attestation_requests"
+      ADD CONSTRAINT "attestation_requests_tenantId_fkey"
+        FOREIGN KEY ("tenantId") REFERENCES "tenants"("id")
+        ON DELETE CASCADE ON UPDATE CASCADE,
+      ADD CONSTRAINT "attestation_requests_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "users"("id")
+        ON DELETE CASCADE ON UPDATE CASCADE,
+      ADD CONSTRAINT "attestation_requests_preparedById_fkey"
+        FOREIGN KEY ("preparedById") REFERENCES "users"("id")
+        ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;
