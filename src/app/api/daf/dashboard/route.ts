@@ -113,25 +113,25 @@ export async function GET() {
       type: "VALIDATION",
       title: `Valider ${n2Pending.length} demande${n2Pending.length > 1 ? "s" : ""} en attente N2 DAF`,
       urgency: n2Pending.length > 5 ? "HIGH" : "NORMAL",
-      link: "/daf/validations",
+      link: "/direction-financiere/validations",
     },
     urgentTax > 0 && {
       type: "TAX",
       title: `Préparer ${urgentTax} dépôt${urgentTax > 1 ? "s" : ""} fiscaux dans les 7 jours`,
       urgency: "HIGH",
-      link: "/daf/fiscal",
+      link: "/direction-financiere/fiscal",
     },
     overdueReceivables > 50_000_000n && {
       type: "RECOVERY",
       title: `Relancer les créances échues (${(Number(overdueReceivables) / 1_000_000).toFixed(0)} M FCFA en retard)`,
       urgency: "NORMAL",
-      link: "/daf/recouvrement",
+      link: "/direction-financiere/recouvrement",
     },
     {
       type: "TREASURY",
       title: "Vérifier les rapprochements bancaires UBA et BICEC",
       urgency: "NORMAL",
-      link: "/daf/tresorerie",
+      link: "/direction-financiere/tresorerie",
     },
   ].filter(Boolean);
 

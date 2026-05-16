@@ -22,10 +22,17 @@ export async function POST(_req: Request, { params }: { params: { period: string
     return NextResponse.json({ error: "Le cycle n'est pas dans un statut validable N2" }, { status: 422 });
   }
 
-  await prisma.payrollCycle.update({
-    where: { id: cycle.id },
-    data: { status: "N3_PENDING", n2ValidatedAt: new Date() },
-  });
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.payrollCycle.update({
+      where: { id: cycle.id },
+      data: { status: "N3_PENDING", n2ValidatedAt: now },
+    }),
+    prisma.payslip.updateMany({
+      where: { payrollCycleId: cycle.id, tenantId: session.tenantId },
+      data: { status: "VALIDATED_N2", validatedN2At: now },
+    }),
+  ]);
 
   // Notification au DG
   const dg = await prisma.user.findFirst({
@@ -39,7 +46,7 @@ export async function POST(_req: Request, { params }: { params: { period: string
         type: "payroll_n2_validated",
         title: `Paie ${cycle.period} validée N2 par DAF`,
         body: "À valider en N3 pour finalisation.",
-        link: "/daf/paie",
+        link: "/direction-financiere/paie",
       },
     });
   }
