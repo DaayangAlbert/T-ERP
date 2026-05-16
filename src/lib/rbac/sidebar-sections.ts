@@ -69,6 +69,12 @@ export interface NavItem {
   href: string;
   icon: LucideIcon;
   badge?: { value: string; alert?: boolean };
+  /**
+   * Masque cet item quand le rôle qui consulte la sidebar est dans la liste.
+   * Utile pour qu'un superviseur (ex. DAF) ne voie pas les items qui font
+   * doublon avec son propre menu (ex. Tableau de bord du comptable).
+   */
+  hideForRoles?: Role[];
 }
 
 export interface NavSection {
@@ -199,7 +205,7 @@ const FULL: Record<Module, NavSection> = {
   CPT: {
     title: "Espace Comptabilité",
     items: [
-      { label: "Tableau de bord", href: "/comptable", icon: LayoutDashboard },
+      { label: "Tableau de bord", href: "/comptable", icon: LayoutDashboard, hideForRoles: [Role.DAF] },
       { label: "Saisie d'écritures", href: "/comptable/ecritures", icon: ClipboardList },
       { label: "Factures fournisseurs", href: "/comptable/factures-frns", icon: Receipt },
       { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
@@ -333,9 +339,16 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
 
   const sections: NavSection[] = [];
 
-  // 1) Sections complètes pour les modules propriétaires
+  // 1) Sections complètes pour les modules propriétaires. Filtre les items
+  //    marqués `hideForRoles` quand le rôle visiteur y est listé (anti-doublon
+  //    superviseur — ex: le DAF voit Espace Comptabilité sans son "Tableau de
+  //    bord" puisqu'il a déjà le sien dans /direction-financiere).
   for (const m of fullModules) {
-    sections.push(FULL[m]);
+    const section = FULL[m];
+    const filteredItems = section.items.filter(
+      (item) => !item.hideForRoles?.includes(role)
+    );
+    sections.push({ ...section, items: filteredItems });
   }
 
   // 2) Drill-down compact (si rôle lit ≥ 1 module autre que les siens)
