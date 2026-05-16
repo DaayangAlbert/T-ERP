@@ -102,6 +102,7 @@ const FULL: Record<Module, NavSection> = {
   DAF: {
     title: "Espace DAF",
     items: [
+      { label: "Tableau de bord DAF", href: "/direction-financiere", icon: Briefcase },
       { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
       { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
       { label: "Pilotage financier", href: "/direction-financiere/finances", icon: TrendingUp },
@@ -110,6 +111,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Achats & engagements", href: "/direction-financiere/achats", icon: ShoppingCart },
       { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
       { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
+      { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
       { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },
       { label: "Mon espace DAF", href: "/direction-financiere/profil", icon: User },
     ],
@@ -211,7 +213,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
       { label: "Trésorerie", href: "/comptable/tresorerie", icon: Coins },
       { label: "Actifs", href: "/comptable/actifs", icon: Package },
-      { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText },
+      { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText, hideForRoles: [Role.DAF] },
       { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
       { label: "Validations N1", href: "/comptable/validations", icon: CheckCircle2 },
     ],
