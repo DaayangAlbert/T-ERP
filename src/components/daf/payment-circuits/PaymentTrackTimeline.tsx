@@ -236,11 +236,14 @@ function BlockForm({
 
   const submit = async () => {
     if (reason.trim().length < 3) return;
+    // Auto-ajout du document en cours de saisie s'il n'a pas été
+    // explicitement ajouté via le bouton "Ajouter".
+    const finalDocs = newDoc.trim() ? [...docs, newDoc.trim()] : docs;
     await block.mutateAsync({
       trackId,
       stepId,
       reason: reason.trim(),
-      requiredDocuments: docs,
+      requiredDocuments: finalDocs,
     });
     onClose();
   };
@@ -255,12 +258,19 @@ function BlockForm({
         className="w-full rounded border border-line bg-white p-2 text-[12px]"
       />
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-          Documents à fournir
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+            Documents à fournir
+          </div>
+          {docs.length > 0 && (
+            <span className="rounded bg-primary-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary-700">
+              {docs.length} ajouté{docs.length > 1 ? "s" : ""}
+            </span>
+          )}
         </div>
         <ul className="mt-1 space-y-1">
           {docs.map((d, i) => (
-            <li key={i} className="flex items-center gap-1.5 text-[12px]">
+            <li key={i} className="flex items-center gap-1.5 rounded bg-white px-2 py-1 text-[12px]">
               <FileText className="h-3 w-3 text-ink-3" />
               <span className="flex-1">{d}</span>
               <button
@@ -279,6 +289,7 @@ function BlockForm({
             onChange={(e) => setNewDoc(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && newDoc.trim()) {
+                e.preventDefault();
                 setDocs([...docs, newDoc.trim()]);
                 setNewDoc("");
               }
@@ -299,6 +310,10 @@ function BlockForm({
             <PlusCircle className="h-3 w-3" /> Ajouter
           </button>
         </div>
+        <p className="mt-1 text-[10.5px] text-ink-3">
+          Tape Entrée ou clique Ajouter pour chaque pièce. Les pièces dans le champ au
+          moment de cliquer « Bloquer » sont aussi enregistrées automatiquement.
+        </p>
       </div>
       <div className="flex justify-end gap-1.5">
         <button
