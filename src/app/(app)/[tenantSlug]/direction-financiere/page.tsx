@@ -2,7 +2,8 @@
 
 import { Sliders } from "lucide-react";
 import { useDafDashboard } from "@/hooks/useDafDashboard";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { DafConsolidatedBanner } from "@/components/daf/dashboard/DafConsolidatedBanner";
 import { DafKpiRow } from "@/components/daf/dashboard/DafKpiRow";
 import { DafPrioritiesList } from "@/components/daf/dashboard/DafPrioritiesList";
@@ -10,9 +11,8 @@ import { TreasuryAreaChart } from "@/components/daf/dashboard/TreasuryAreaChart"
 import { OutflowsDonutChart } from "@/components/daf/dashboard/OutflowsDonutChart";
 
 export default function DafDashboardPage() {
-  const { user } = useAuth();
   const { data, isLoading, isError } = useDafDashboard();
-  const isReadOnly = user?.role !== "DAF";
+  const isReadOnly = !useAccess(MODULES.DAF).canEdit;
 
   if (isError) {
     return (

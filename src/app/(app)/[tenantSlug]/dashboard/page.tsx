@@ -4,8 +4,8 @@ import { getCurrentSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
 const ROLE_TO_PATH: Record<Role, string> = {
-  DG: "/dashboard/dg",
-  DAF: "/dashboard/daf",
+  DG: "/direction-generale",
+  DAF: "/direction-financiere",
   HR: "/dashboard/hr",
   TECH_DIRECTOR: "/dashboard/tech-director",
   WORKS_DIRECTOR: "/dashboard/works-director",
