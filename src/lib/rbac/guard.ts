@@ -60,3 +60,25 @@ export function guardModuleMutation(module: Module): ModuleGuardResult | NextRes
   }
   return result;
 }
+
+/**
+ * Helper léger pour les routes qui font déjà leur propre check session/ALLOWED
+ * (espaces DAF/RH/DT/CPT/LOG/CDT). Renvoie une 403 si le rôle n'a que READ
+ * sur le module, sinon `null` (continuer le flow normal).
+ *
+ *   const session = getCurrentSession();
+ *   if (!session?.tenantId) return …;
+ *   if (!ALLOWED.includes(session.role as Role)) return …;
+ *   const denied = denyIfReadOnly(session.role as Role, MODULES.DAF);
+ *   if (denied) return denied;
+ */
+export function denyIfReadOnly(role: Role, module: Module): NextResponse | null {
+  const access = getAccess(role, module);
+  if (!access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 }
+    );
+  }
+  return null;
+}

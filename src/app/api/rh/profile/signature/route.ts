@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { denyIfReadOnly } from "@/lib/rbac/guard";
+import { MODULES } from "@/lib/rbac/modules";
 import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +58,8 @@ export async function PATCH(req: Request) {
   if (!ALLOWED.includes(session.role as Role)) {
     return NextResponse.json({ error: "Réservé RH" }, { status: 403 });
   }
+  const denied = denyIfReadOnly(session.role as Role, MODULES.RH);
+  if (denied) return denied;
 
   const body = (await req.json().catch(() => ({}))) as Partial<SignatureConfig>;
   const settings = await prisma.rhSettings.findUnique({ where: { userId: session.sub } });
