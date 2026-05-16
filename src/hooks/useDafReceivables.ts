@@ -21,6 +21,7 @@ interface ReminderItem {
   lastReminderChannel: ReminderChannel | null;
   lastReminderResponse: boolean;
   reminderCount: number;
+  trackId: string | null;
 }
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {

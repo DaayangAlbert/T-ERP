@@ -21,6 +21,7 @@ export async function GET() {
     },
     include: {
       reminders: { orderBy: { sentAt: "desc" }, take: 1 },
+      paymentTrack: { select: { id: true } },
     },
     orderBy: { daysOverdue: "desc" },
     take: 50,
@@ -43,6 +44,7 @@ export async function GET() {
         lastReminderChannel: lastReminder?.channel ?? null,
         lastReminderResponse: lastReminder?.responseReceived ?? false,
         reminderCount: r.reminders.length,
+        trackId: r.paymentTrack?.id ?? null,
       };
     }),
   });

@@ -110,6 +110,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Cycle de paie", href: "/direction-financiere/paie", icon: CreditCard },
       { label: "Achats & engagements", href: "/direction-financiere/achats", icon: ShoppingCart },
       { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
+      { label: "Circuits de paiement", href: "/direction-financiere/circuits-paiement", icon: GitBranch },
       { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
       { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
       { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },

@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { GitBranch } from "lucide-react";
 import { ReminderLevel, ReminderChannel } from "@prisma/client";
 import { useActiveReminders, useSendReminder } from "@/hooks/useDafReceivables";
+import { useCircuitTemplates, useApplyCircuit } from "@/hooks/usePaymentCircuits";
 import { useAccess } from "@/hooks/useAccess";
 import { MODULES } from "@/lib/rbac/modules";
 import { formatDate, formatFCFA, formatRelativeDate } from "@/lib/format";
 import { clsx } from "clsx";
+import { PaymentTrackTimeline } from "@/components/daf/payment-circuits/PaymentTrackTimeline";
 
 const LEVEL_BADGE: Record<ReminderLevel, { label: string; cls: string }> = {
   R1_AMIABLE: { label: "R1 Amiable", cls: "bg-info/10 text-info" },
@@ -99,6 +103,15 @@ export function ActiveRemindersList() {
                   </div>
                 </div>
               )}
+
+              {/* Circuit de paiement : Timeline si attaché, sinon proposition d'application */}
+              <div className="mt-3 border-t border-line pt-3">
+                {r.trackId ? (
+                  <PaymentTrackTimeline trackId={r.trackId} />
+                ) : (
+                  canAct && <ApplyCircuitBlock receivableId={r.id} clientName={r.clientName} />
+                )}
+              </div>
             </li>
           );
         })}
@@ -148,5 +161,148 @@ function NewReminderForm({ onSubmit }: { onSubmit: (level: ReminderLevel, channe
         {pending ? "Escalade…" : "Escalader"}
       </button>
     </>
+  );
+}
+
+function ApplyCircuitBlock({
+  receivableId,
+  clientName,
+}: {
+  receivableId: string;
+  clientName: string;
+}) {
+  const { data, isLoading } = useCircuitTemplates();
+  const apply = useApplyCircuit();
+  const [open, setOpen] = useState(false);
+  const [templateId, setTemplateId] = useState("");
+  const [users, setUsers] = useState<Array<{ id: string; firstName: string; lastName: string; role: string }>>([]);
+  const [assignedToId, setAssignedToId] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/validations/eligible-approvers", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d: { items?: Array<{ id: string; name: string; role: string; position: string | null }> }) => {
+        setUsers(
+          (d.items ?? []).map((u) => {
+            const [firstName, ...rest] = u.name.split(" ");
+            return { id: u.id, firstName, lastName: rest.join(" "), role: u.role };
+          }),
+        );
+      })
+      .catch(() => setUsers([]));
+  }, [open]);
+
+  // Présélectionne un template dont le clientName matche.
+  useEffect(() => {
+    if (!data || templateId) return;
+    const match = data.items.find(
+      (t) => !t.archivedAt && t.clientName.toLowerCase() === clientName.toLowerCase(),
+    );
+    if (match) setTemplateId(match.id);
+    else if (data.items.length > 0) setTemplateId(data.items.find((t) => !t.archivedAt)?.id ?? "");
+  }, [data, templateId, clientName]);
+
+  const activeTemplates = (data?.items ?? []).filter((t) => !t.archivedAt);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-white px-2 text-[11.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+      >
+        <GitBranch className="h-3.5 w-3.5" /> Appliquer un circuit de paiement
+      </button>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="h-16 animate-pulse rounded bg-surface-alt" />;
+  }
+
+  if (activeTemplates.length === 0) {
+    return (
+      <div className="rounded-md border border-warning/30 bg-warning/5 p-2 text-[11.5px] text-warning">
+        Aucun circuit de paiement défini.{" "}
+        <Link
+          href="/direction-financiere/circuits-paiement"
+          className="font-semibold underline"
+        >
+          Créer le premier →
+        </Link>
+      </div>
+    );
+  }
+
+  const submit = async () => {
+    if (!templateId) return;
+    try {
+      await apply.mutateAsync({
+        receivableId,
+        templateId,
+        assignedToId: assignedToId || null,
+      });
+      setOpen(false);
+    } catch (err) {
+      alert(`Erreur : ${(err as Error).message}`);
+    }
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-primary-200 bg-primary-50/40 p-2 sm:p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-primary-800">
+        Appliquer un circuit de paiement
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <label className="text-[10.5px] font-medium uppercase tracking-wider text-ink-3">
+          Circuit
+          <select
+            value={templateId}
+            onChange={(e) => setTemplateId(e.target.value)}
+            className="mt-1 h-8 w-full rounded border border-line bg-white px-2 text-[12px] font-normal normal-case"
+          >
+            <option value="">— choisir —</option>
+            {activeTemplates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.stepCount} étapes)
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[10.5px] font-medium uppercase tracking-wider text-ink-3">
+          Personne en charge du suivi
+          <select
+            value={assignedToId}
+            onChange={(e) => setAssignedToId(e.target.value)}
+            className="mt-1 h-8 w-full rounded border border-line bg-white px-2 text-[12px] font-normal normal-case"
+          >
+            <option value="">— non assigné —</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.firstName} {u.lastName} ({u.role})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="flex justify-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="h-8 rounded-md border border-line bg-white px-3 text-[11.5px] font-medium text-ink-2"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={apply.isPending || !templateId}
+          className="h-8 rounded-md bg-primary-600 px-3 text-[11.5px] font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+        >
+          {apply.isPending ? "Application…" : "Appliquer"}
+        </button>
+      </div>
+    </div>
   );
 }
