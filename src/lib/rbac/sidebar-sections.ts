@@ -114,6 +114,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
       { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
       { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },
+      { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
       { label: "Mon espace DAF", href: "/direction-financiere/profil", icon: User },
     ],
   },
@@ -156,6 +157,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Conformité", href: "/secretaire-general/conformite", icon: Scale },
       { label: "Institutionnel", href: "/secretaire-general/institutionnel", icon: Briefcase },
       { label: "Courriers officiels", href: "/secretaire-general/courriers", icon: Mail, badge: { value: "12" } },
+      { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
     ],
   },
   DTRAV: {
@@ -217,6 +219,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText, hideForRoles: [Role.DAF] },
       { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
       { label: "Validations N1", href: "/comptable/validations", icon: CheckCircle2 },
+      { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
     ],
   },
   LOG: {

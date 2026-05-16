@@ -7,6 +7,7 @@ import { SgKpiRow } from "@/components/sg/dashboard/SgKpiRow";
 import { PriorityAlertsList } from "@/components/sg/dashboard/PriorityAlertsList";
 import { CapitalStructureCard } from "@/components/sg/dashboard/CapitalStructureCard";
 import { OfficialCalendarCard } from "@/components/sg/dashboard/OfficialCalendarCard";
+import { AssignedTracksWidget } from "@/components/daf/payment-circuits/AssignedTracksWidget";
 
 export default function SgDashboardPage() {
   const { data, isLoading, isError } = useSgDashboard();
@@ -51,6 +52,7 @@ export default function SgDashboardPage() {
       />
       <SgGreeting greeting={data.greeting} />
       <SgKpiRow kpis={data.kpis} />
+      <AssignedTracksWidget limit={3} />
       <PriorityAlertsList alerts={data.alerts} />
       <CapitalStructureCard
         capital={data.capitalStructure}

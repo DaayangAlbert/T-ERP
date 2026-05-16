@@ -110,6 +110,39 @@ export function useArchiveCircuitTemplate() {
 
 // ─── Tracks ───────────────────────────────────────────────────────────────
 
+export interface MyAssignedTrack {
+  id: string;
+  templateName: string;
+  receivable: {
+    id: string;
+    invoiceRef: string;
+    clientName: string;
+    amount: string;
+    daysOverdue: number;
+    status: string;
+  };
+  progress: { validated: number; total: number; percent: number };
+  currentStep: {
+    order: number;
+    label: string;
+    status: PaymentStepStatus;
+    blockedSince: string | null;
+  } | null;
+  isBlocked: boolean;
+  startedAt: string;
+  completedAt: string | null;
+}
+
+export function useMyAssignedTracks(includeCompleted = false) {
+  return useQuery({
+    queryKey: ["me", "payment-tracks", includeCompleted],
+    queryFn: () =>
+      getJson<{ items: MyAssignedTrack[] }>(
+        `/api/me/payment-tracks${includeCompleted ? "?includeCompleted=1" : ""}`,
+      ),
+  });
+}
+
 export function usePaymentTrack(trackId: string | null) {
   return useQuery({
     queryKey: ["daf", "payment-tracks", trackId],

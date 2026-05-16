@@ -9,6 +9,7 @@ import { DafKpiRow } from "@/components/daf/dashboard/DafKpiRow";
 import { DafPrioritiesList } from "@/components/daf/dashboard/DafPrioritiesList";
 import { TreasuryAreaChart } from "@/components/daf/dashboard/TreasuryAreaChart";
 import { OutflowsDonutChart } from "@/components/daf/dashboard/OutflowsDonutChart";
+import { AssignedTracksWidget } from "@/components/daf/payment-circuits/AssignedTracksWidget";
 
 export default function DafDashboardPage() {
   const { data, isLoading, isError } = useDafDashboard();
@@ -62,6 +63,8 @@ export default function DafDashboardPage() {
         <DafConsolidatedBanner position={data.consolidatedPosition} />
 
         <DafKpiRow primary={data.primaryKpis} secondary={data.secondaryKpis} />
+
+        <AssignedTracksWidget limit={3} />
 
         <DafPrioritiesList items={data.priorities} />
 

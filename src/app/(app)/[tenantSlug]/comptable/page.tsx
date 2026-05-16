@@ -7,6 +7,7 @@ import { CptPrioritiesList } from "@/components/comptable/dashboard/CptPrioritie
 import { CptActivityTimeline } from "@/components/comptable/dashboard/CptActivityTimeline";
 import { EntriesEvolutionChart } from "@/components/comptable/dashboard/EntriesEvolutionChart";
 import { JournalsDistributionDonut } from "@/components/comptable/dashboard/JournalsDistributionDonut";
+import { AssignedTracksWidget } from "@/components/daf/payment-circuits/AssignedTracksWidget";
 import { useTenant } from "@/hooks/useTenant";
 
 export default function ComptablePage() {
@@ -55,6 +56,7 @@ export default function ComptablePage() {
             cumulatedBudget={data.scope.cumulatedBudget}
           />
           <CptKpiRow kpis={data.kpis} />
+          <AssignedTracksWidget limit={3} />
           <CptPrioritiesList items={data.priorities} />
           <div className="grid gap-3 lg:grid-cols-2">
             <EntriesEvolutionChart data={data.entriesEvolution} />
