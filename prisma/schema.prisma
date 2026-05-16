@@ -135,6 +135,8 @@ model Tenant {
   attestationRequests       AttestationRequest[]
   // OUV — Prêts outils (fn 1.8)
   toolLoans                 ToolLoan[]
+  // DAF — Circuits de paiement
+  paymentCircuitTemplates   PaymentCircuitTemplate[]
 
   @@index([parentId])
   @@map("tenants")
@@ -396,6 +398,13 @@ model User {
   // OUV — Prêts outils (Bloc 1 fn 1.8)
   toolLoansBorrowed             ToolLoan[]                    @relation("ToolLoanBorrower")
   toolLoansIssued               ToolLoan[]                    @relation("ToolLoanIssuer")
+  // DAF — Circuits de paiement (workflow administratif client)
+  paymentCircuitTemplatesCreated   PaymentCircuitTemplate[]
+  paymentTracksAssigned            PaymentTrack[]               @relation("PaymentTrackAssignee")
+  paymentTracksCreated             PaymentTrack[]               @relation("PaymentTrackCreator")
+  paymentTrackStepsValidated       PaymentTrackStep[]           @relation("PaymentTrackStepValidator")
+  paymentTrackStepsBlocked         PaymentTrackStep[]           @relation("PaymentTrackStepBlocker")
+  paymentTrackStepDocsProvided     PaymentTrackStepDocument[]
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -1340,7 +1349,8 @@ model Receivable {
   siteId      String?
   daysOverdue Int              @default(0)
 
-  reminders Reminder[]
+  reminders    Reminder[]
+  paymentTrack PaymentTrack?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1392,6 +1402,156 @@ enum ReminderChannel {
   REGISTERED_MAIL
   PHONE
   BAILIFF
+}
+
+// ========================================
+// CIRCUITS DE PAIEMENT — workflow administratif client (marchés publics CM)
+// ========================================
+// Modélise le parcours qu'un dossier de paiement doit suivre côté client
+// (ex: Comptable Ministère → Contrôleur Financier → Payeur Spécialisé → ACCT).
+// Un template par marché/client, instancié pour chaque facture (Receivable).
+
+model PaymentCircuitTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  /// Libellé court (ex: "Circuit Mincom", "Circuit Mairie Yaoundé I").
+  name        String
+  /// Client/marché auquel le circuit s'applique. Texte libre (les clients ne
+  /// sont pas tous des entités Prisma à ce stade — alignement avec Receivable.clientName).
+  clientName  String
+  description String?  @db.Text
+
+  steps  PaymentCircuitTemplateStep[]
+  tracks PaymentTrack[]
+
+  createdById String
+  createdBy   User    @relation(fields: [createdById], references: [id])
+
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId, clientName])
+  @@map("payment_circuit_templates")
+}
+
+model PaymentCircuitTemplateStep {
+  id         String                 @id @default(cuid())
+  templateId String
+  template   PaymentCircuitTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  /// Ordre dans le circuit (1, 2, 3...).
+  order        Int
+  label        String  // "Comptable MINCOM", "Contrôleur Financier", etc.
+  description  String? @db.Text
+  /// Contact côté client à relancer pour faire avancer l'étape.
+  contactName  String?
+  contactRole  String?
+  contactPhone String?
+  contactEmail String?
+  /// Délai estimé pour franchir l'étape (jours), purement informatif.
+  estimatedDays Int?
+
+  trackSteps PaymentTrackStep[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([templateId, order])
+  @@index([templateId])
+  @@map("payment_circuit_template_steps")
+}
+
+/// Instance d'un circuit appliquée à un dossier de paiement (Receivable).
+model PaymentTrack {
+  id           String                 @id @default(cuid())
+  receivableId String                 @unique
+  receivable   Receivable             @relation(fields: [receivableId], references: [id], onDelete: Cascade)
+  templateId   String
+  template     PaymentCircuitTemplate @relation(fields: [templateId], references: [id])
+
+  /// Personne désignée par le DAF pour assurer le suivi de ce dossier.
+  assignedToId String?
+  assignedTo   User?   @relation("PaymentTrackAssignee", fields: [assignedToId], references: [id])
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  steps PaymentTrackStep[]
+
+  createdById String
+  createdBy   User    @relation("PaymentTrackCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([receivableId])
+  @@index([assignedToId])
+  @@map("payment_tracks")
+}
+
+model PaymentTrackStep {
+  id             String                     @id @default(cuid())
+  trackId        String
+  track          PaymentTrack               @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  templateStepId String
+  templateStep   PaymentCircuitTemplateStep @relation(fields: [templateStepId], references: [id])
+
+  /// Recopié du template pour permettre l'évolution du template sans casser l'historique.
+  order  Int
+  label  String
+
+  status PaymentStepStatus @default(PENDING)
+
+  validatedAt   DateTime?
+  validatedById String?
+  validatedBy   User?     @relation("PaymentTrackStepValidator", fields: [validatedById], references: [id])
+
+  /// Motif de blocage (note libre saisie par l'assigné ou le DAF).
+  blockedReason String?   @db.Text
+  blockedSince  DateTime?
+  blockedById   String?
+  blockedBy     User?     @relation("PaymentTrackStepBlocker", fields: [blockedById], references: [id])
+
+  documents PaymentTrackStepDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([trackId, order])
+  @@index([trackId, status])
+  @@map("payment_track_steps")
+}
+
+/// Documents/compléments demandés pour débloquer une étape.
+model PaymentTrackStepDocument {
+  id     String           @id @default(cuid())
+  stepId String
+  step   PaymentTrackStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  label    String
+  provided Boolean   @default(false)
+  providedAt   DateTime?
+  providedById String?
+  providedBy   User?     @relation(fields: [providedById], references: [id])
+  providedNote String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stepId, provided])
+  @@map("payment_track_step_documents")
+}
+
+enum PaymentStepStatus {
+  PENDING      // pas encore commencé
+  IN_PROGRESS  // en cours côté client
+  VALIDATED    // étape franchie
+  BLOCKED      // attente d'info / documents
 }
 
 // ========================================
