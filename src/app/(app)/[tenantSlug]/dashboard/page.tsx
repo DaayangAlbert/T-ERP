@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 const ROLE_TO_PATH: Record<Role, string> = {
   DG: "/dashboard/dg",
   DAF: "/dashboard/daf",
-  SG: "/dashboard/sg",
   HR: "/dashboard/hr",
   TECH_DIRECTOR: "/dashboard/tech-director",
   WORKS_DIRECTOR: "/dashboard/works-director",
@@ -16,7 +15,6 @@ const ROLE_TO_PATH: Record<Role, string> = {
   ACCOUNTANT: "/dashboard/accountant",
   LOGISTICS: "/dashboard/logistics",
   WAREHOUSE: "/dashboard/warehouse",
-  GED: "/dashboard/ged",
   ARCHIVIST: "/gestion-documentaire",
   SECRETARY_GENERAL: "/secretaire-general",
   EMPLOYEE: "/dashboard/employee",

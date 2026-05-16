@@ -565,7 +565,7 @@ enum Role {
   // Direction
   DG // Directeur Général
   DAF // Directeur Administratif et Financier
-  SG // Secrétaire Générale
+  SECRETARY_GENERAL // Secrétaire Général (juriste · gouvernance/corporate/juridique)
   HR // Responsable RH
 
   // Production
@@ -579,9 +579,7 @@ enum Role {
   ACCOUNTANT
   LOGISTICS
   WAREHOUSE // Magasinier
-  GED // Gestionnaire documentaire
   ARCHIVIST // Documentaliste-Archiviste (Référent documentaire transverse, canReadAllDocuments)
-  SECRETARY_GENERAL // Secrétaire Général (Élisabeth NDONGMO · juriste · gouvernance/corporate/juridique)
   EMPLOYEE // Employé bureau
 
   // Externe

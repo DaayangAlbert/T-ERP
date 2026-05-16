@@ -9,7 +9,7 @@ interface Props {
   initial: WorkflowSettings;
 }
 
-const ROLES = ["RH", "DAF", "DG", "TECH_DIRECTOR", "WORKS_DIRECTOR", "SG"];
+const ROLES = ["RH", "DAF", "DG", "TECH_DIRECTOR", "WORKS_DIRECTOR", "SECRETARY_GENERAL"];
 const TYPES = ["PAYROLL", "EXPENSE", "PURCHASE", "HIRING", "CONTRACT", "LEAVE", "OTHER"];
 
 export function WorkflowEditor({ initial }: Props) {

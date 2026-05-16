@@ -5,7 +5,7 @@ import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const APPROVER_ROLES: Role[] = [Role.DAF, Role.HR, Role.TECH_DIRECTOR, Role.WORKS_DIRECTOR, Role.SG];
+const APPROVER_ROLES: Role[] = [Role.DAF, Role.HR, Role.TECH_DIRECTOR, Role.WORKS_DIRECTOR, Role.SECRETARY_GENERAL];
 
 export async function GET() {
   const session = getCurrentSession();

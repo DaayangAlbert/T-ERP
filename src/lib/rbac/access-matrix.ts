@@ -20,9 +20,9 @@
  *   - WORKER n'a accès qu'à /ouv (OWN) et son espace personnel (OWN).
  *   - CANDIDATE n'a accès qu'à CAND (OWN) — totalement hors tenant.
  *
- * Note historique : l'enum Prisma `Role` contient encore certains doublons
- * (SG/SECRETARY_GENERAL, GED/ARCHIVIST). La matrice les traite comme aliases
- * en attendant la fusion (chantier P0).
+ * Note historique : les doublons d'enum Role (SG/SECRETARY_GENERAL,
+ * GED/ARCHIVIST) ont été fusionnés en mai 2026. Canonicalisé sur
+ * SECRETARY_GENERAL et ARCHIVIST (versions explicites).
  */
 
 import { Role } from "@prisma/client";
@@ -344,31 +344,8 @@ const MATRIX: Matrix = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════
-  // GED — Référent documentaire (alias temporaire de ARCHIVIST)
-  // ═══════════════════════════════════════════════════════════════════════
-  GED: {
-    GED: "FULL",
-    DG: "NONE",
-    DAF: "NONE",
-    RH: "NONE",
-    DT: "READ",
-    SG: "READ",
-    DTRAV: "READ",
-    CDT: "READ",
-    CC: "READ",
-    OUV: "NONE",
-    CPT: "READ",
-    LOG: "READ",
-    MAG: "READ",
-    IT: "NONE",
-    EMP: "OWN",
-    CAND: "NONE",
-    PLATFORM: "NONE",
-  },
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // ARCHIVIST — Documentaliste-Archiviste (canReadAllDocuments)
-  // Doublon historique avec GED — à fusionner P0.
+  // ARCHIVIST — Documentaliste-Archiviste (canReadAllDocuments).
+  // Fusionne l'ancien rôle GED (supprimé de l'enum Role).
   // ═══════════════════════════════════════════════════════════════════════
   ARCHIVIST: {
     GED: "FULL",
@@ -391,27 +368,9 @@ const MATRIX: Matrix = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SG / SECRETARY_GENERAL — Secrétaire Général (doublon historique)
+  // SECRETARY_GENERAL — Secrétaire Général.
+  // Fusionne l'ancien rôle SG (supprimé de l'enum Role).
   // ═══════════════════════════════════════════════════════════════════════
-  SG: {
-    SG: "FULL",
-    DG: "READ", // remontée DG
-    DAF: "READ",
-    RH: "READ",
-    DT: "READ",
-    DTRAV: "READ",
-    CDT: "READ",
-    CC: "READ",
-    OUV: "NONE",
-    CPT: "READ",
-    LOG: "READ",
-    MAG: "READ",
-    GED: "READ",
-    IT: "NONE",
-    EMP: "OWN",
-    CAND: "NONE",
-    PLATFORM: "NONE",
-  },
   SECRETARY_GENERAL: {
     SG: "FULL",
     DG: "READ",

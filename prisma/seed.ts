@@ -230,7 +230,7 @@ async function main() {
       email: "brigitte@batimcam.cm",
       firstName: "Brigitte",
       lastName: "FOTSO",
-      role: Role.SG,
+      role: Role.SECRETARY_GENERAL,
       position: "Secrétaire Générale",
       hireDate: new Date("2020-01-12"),
     },
@@ -2352,7 +2352,7 @@ async function main() {
   const hrForMsg = createdUsers.find((u) => u.role === Role.HR);
   const techForMsg = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
   const worksForMsg = createdUsers.find((u) => u.role === Role.WORKS_DIRECTOR);
-  const sgForMsg = createdUsers.find((u) => u.role === Role.SG);
+  const sgForMsg = createdUsers.find((u) => u.role === Role.SECRETARY_GENERAL);
 
   const strategicGroups = [
     {
@@ -2556,7 +2556,7 @@ async function main() {
   // ===== MESSAGERIE RH — Groupes (RH Bloc 2 / fn 2.3) =====
   const rhForMsg = createdUsers.find((u) => u.role === Role.HR);
   if (rhForMsg) {
-    const sgForMsgRh = createdUsers.find((u) => u.role === Role.SG);
+    const sgForMsgRh = createdUsers.find((u) => u.role === Role.SECRETARY_GENERAL);
     const accForRh = createdUsers.find((u) => u.role === Role.ACCOUNTANT);
     const techDirForRh = createdUsers.find((u) => u.role === Role.TECH_DIRECTOR);
     const rhGroups = [
@@ -3400,7 +3400,7 @@ async function main() {
   // ===== PROFIL DAF — Pouvoirs de signature (DAF Bloc 4 / fn 4.1) =====
   const dafForSignature = createdUsers.find((u) => u.role === Role.DAF);
   const dgForCoSign = createdUsers.find((u) => u.role === Role.DG);
-  const sgForCoSign = createdUsers.find((u) => u.role === Role.SG);
+  const sgForCoSign = createdUsers.find((u) => u.role === Role.SECRETARY_GENERAL);
   if (dafForSignature) {
     const coSigners = [dgForCoSign?.id, sgForCoSign?.id].filter((x): x is string => Boolean(x));
     await prisma.userSignaturePower.upsert({
