@@ -9,6 +9,37 @@ export const dynamic = "force-dynamic";
 
 const ALLOWED: Role[] = [Role.DAF, Role.ACCOUNTANT];
 
+const LEVEL_LABEL: Record<string, string> = {
+  R1_AMIABLE: "R1 Amiable",
+  R2_FIRM: "R2 Ferme",
+  R3_FORMAL_NOTICE: "R3 Mise en demeure",
+  LITIGATION: "Contentieux",
+};
+
+const CHANNEL_LABEL: Record<string, string> = {
+  EMAIL: "Email",
+  LETTER: "Lettre simple",
+  REGISTERED_MAIL: "LR/AR",
+  PHONE: "Téléphone",
+  BAILIFF: "Huissier",
+};
+
+function fmtFCFA(amount: bigint): string {
+  return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
+}
+
+/**
+ * Workflow interne d'escalade des relances.
+ *
+ * Le DAF (ou un comptable) déclare un nouveau niveau de relance. Cela :
+ *   1) crée un Reminder en DB (trace du niveau atteint, canal préconisé)
+ *   2) passe la créance en LITIGATION si niveau = LITIGATION
+ *   3) notifie in-app le comptable du tenant qui exécutera réellement
+ *      la relance (envoi mail, impression LR, appel téléphonique).
+ *
+ * Aucun envoi externe vers le client n'est effectué ici. L'exécution est
+ * la responsabilité de l'agent recouvrement assigné.
+ */
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = getCurrentSession();
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -35,7 +66,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       },
     });
 
-    // Si LITIGATION, faire passer le statut
     if (data.level === "LITIGATION") {
       await prisma.receivable.update({
         where: { id: receivable.id },
@@ -43,22 +73,51 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       });
     }
 
+    // Notification au comptable du tenant (responsable du suivi recouvrement
+    // par défaut). Si plusieurs comptables, on notifie le premier ACTIVE.
+    const accountant = await prisma.user.findFirst({
+      where: { tenantId: session.tenantId, role: Role.ACCOUNTANT, status: "ACTIVE" },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    let notifiedTo: string | null = null;
+    if (accountant && accountant.id !== session.sub) {
+      const levelLbl = LEVEL_LABEL[data.level] ?? data.level;
+      const channelLbl = CHANNEL_LABEL[data.channel] ?? data.channel;
+      await prisma.notification.create({
+        data: {
+          userId: accountant.id,
+          type: "receivable_reminder_escalated",
+          title: `Relance ${levelLbl} à exécuter`,
+          body: `${receivable.clientName} · ${receivable.invoiceRef} · ${fmtFCFA(receivable.amount)} · Canal préconisé : ${channelLbl}`,
+          link: "/direction-financiere/recouvrement",
+        },
+      });
+      notifiedTo = `${accountant.firstName} ${accountant.lastName}`;
+    }
+
     await prisma.auditLog.create({
       data: {
         tenantId: session.tenantId,
         userId: session.sub,
-        action: "receivable.reminder",
+        action: "receivable.reminder.escalated",
         entityType: "Receivable",
         entityId: receivable.id,
-        metadata: { invoiceRef: receivable.invoiceRef, level: data.level, channel: data.channel },
+        metadata: {
+          invoiceRef: receivable.invoiceRef,
+          level: data.level,
+          channel: data.channel,
+          notifiedTo: accountant?.id ?? null,
+        },
       },
     });
 
     return NextResponse.json({
       id: reminder.id,
-      note: process.env.RESEND_API_KEY
-        ? "Email/lettre envoyé via Resend"
-        : "Stub : RESEND_API_KEY non configuré, relance enregistrée en DB seulement",
+      level: data.level,
+      note: notifiedTo
+        ? `Niveau ${LEVEL_LABEL[data.level] ?? data.level} enregistré. ${notifiedTo} a été notifié(e) pour exécution.`
+        : `Niveau ${LEVEL_LABEL[data.level] ?? data.level} enregistré. Aucun comptable actif à notifier — exécution à organiser manuellement.`,
     });
   } catch (err) {
     if (err instanceof ZodError) {

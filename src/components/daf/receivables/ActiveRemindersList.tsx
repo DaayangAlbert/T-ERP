@@ -77,20 +77,26 @@ export function ActiveRemindersList() {
                     onClick={() => setOpenId(openId === r.id ? null : r.id)}
                     className="inline-flex h-9 items-center rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
                   >
-                    Nouvelle relance
+                    Escalader
                   </button>
                 )}
               </div>
 
               {openId === r.id && (
-                <div className="mt-3 grid gap-2 rounded-md border border-primary-200 bg-primary-50/40 p-3 sm:grid-cols-3">
-                  <NewReminderForm
-                    onSubmit={async (level, channel) => {
-                      const res = await send.mutateAsync({ id: r.id, level, channel });
-                      setOpenId(null);
-                      alert(`Relance ${level} via ${channel} enregistrée.\n${res.note}`);
-                    }}
-                  />
+                <div className="mt-3 space-y-2 rounded-md border border-primary-200 bg-primary-50/40 p-3">
+                  <p className="text-[11px] text-ink-3">
+                    L&apos;escalade met à jour le niveau du dossier et notifie le comptable
+                    responsable du suivi pour exécution de la relance.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <NewReminderForm
+                      onSubmit={async (level, channel) => {
+                        const res = await send.mutateAsync({ id: r.id, level, channel });
+                        setOpenId(null);
+                        alert(res.note);
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </li>
@@ -117,23 +123,29 @@ function NewReminderForm({ onSubmit }: { onSubmit: (level: ReminderLevel, channe
 
   return (
     <>
-      <select value={level} onChange={(e) => setLevel(e.target.value as ReminderLevel)} className="h-9 rounded-md border border-line bg-white px-2 text-[12.5px]">
-        {Object.entries(LEVEL_BADGE).map(([k, v]) => (
-          <option key={k} value={k}>{v.label}</option>
-        ))}
-      </select>
-      <select value={channel} onChange={(e) => setChannel(e.target.value as ReminderChannel)} className="h-9 rounded-md border border-line bg-white px-2 text-[12.5px]">
-        {Object.entries(CHANNEL_LABEL).map(([k, v]) => (
-          <option key={k} value={k}>{v}</option>
-        ))}
-      </select>
+      <label className="text-[10.5px] font-medium uppercase tracking-wider text-ink-3">
+        Nouveau niveau
+        <select value={level} onChange={(e) => setLevel(e.target.value as ReminderLevel)} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-[12.5px] font-normal normal-case">
+          {Object.entries(LEVEL_BADGE).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </select>
+      </label>
+      <label className="text-[10.5px] font-medium uppercase tracking-wider text-ink-3">
+        Canal préconisé
+        <select value={channel} onChange={(e) => setChannel(e.target.value as ReminderChannel)} className="mt-1 h-9 w-full rounded-md border border-line bg-white px-2 text-[12.5px] font-normal normal-case">
+          {Object.entries(CHANNEL_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+      </label>
       <button
         type="button"
         onClick={submit}
         disabled={pending}
-        className="inline-flex h-9 items-center justify-center rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600 disabled:opacity-60"
+        className="inline-flex h-9 items-center justify-center self-end rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600 disabled:opacity-60"
       >
-        {pending ? "Envoi…" : "Envoyer"}
+        {pending ? "Escalade…" : "Escalader"}
       </button>
     </>
   );
