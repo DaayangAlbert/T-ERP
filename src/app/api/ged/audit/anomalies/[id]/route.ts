@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGed, guardGedMutation } from "@/lib/rbac/ged-guard";
 import { GedAuditAction, Role } from "@prisma/client";
 import { z } from "zod";
 
@@ -16,7 +16,7 @@ const schema = z.object({
 //   - RESOLVE     : marque résolu avec horodate + notes obligatoires
 // Réservé ARCHIVIST/TENANT_ADMIN.
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

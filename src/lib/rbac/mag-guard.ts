@@ -44,6 +44,23 @@ export async function guardMagWarehouse() {
   return { session, warehouse, access };
 }
 
+/**
+ * Variante stricte de `guardMagWarehouse` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès MAG est READ
+ * — typiquement DG/DAF/LOGISTICS/WORKS_DIRECTOR/TECH_DIRECTOR en drill-down.
+ */
+export async function guardMagWarehouseMutation() {
+  const guard = await guardMagWarehouse();
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
 export function isWarehouseSiteAllowed(allowed: string[] | null, siteId: string): boolean {
   return isSiteAllowed(allowed, siteId);
 }

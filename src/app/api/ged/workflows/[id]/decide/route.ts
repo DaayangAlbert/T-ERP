@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGedMutation } from "@/lib/rbac/ged-guard";
 import { GedAuditAction, StepStatus, WorkflowStatus } from "@prisma/client";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ interface StepDef {
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -47,6 +47,25 @@ export async function guardIt(
   return { session, access };
 }
 
+/**
+ * Variante stricte de `guardIt` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès IT est READ
+ * — typiquement SUPER_ADMIN en audit plateforme.
+ */
+export async function guardItMutation(
+  requiredFlag?: "canManageUsers" | "canManageRoles" | "canManageTenantSettings" | "canManageIntegrations" | "canViewTechnicalLogs"
+) {
+  const guard = await guardIt(requiredFlag);
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
 const PROTECTED_ROLES: Role[] = [Role.DG, Role.SUPER_ADMIN, Role.TENANT_ADMIN];
 
 /**

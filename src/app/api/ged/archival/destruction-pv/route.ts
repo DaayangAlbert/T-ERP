@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGedMutation } from "@/lib/rbac/ged-guard";
 import { ArchivalStatus, GedAuditAction, Role } from "@prisma/client";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ const schema = z.object({
 // Réservé ARCHIVIST avec contre-signature DG (logiquement) — ici on autorise
 // ARCHIVIST seul (le DG signe le PDF côté UI/process humain).
 export async function POST(req: Request) {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

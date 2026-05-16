@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGedMutation } from "@/lib/rbac/ged-guard";
 import { GedAuditAction, Role } from "@prisma/client";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ const schema = z.object({
 // - hold:false → libère
 // Crée le retentionRecord s'il n'existait pas (avec une duaEndDate par défaut à 99 ans).
 export async function POST(req: Request) {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -25,6 +25,23 @@ export async function guardGed() {
 }
 
 /**
+ * Variante stricte de `guardGed` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès GED est READ
+ * — quasi tous les rôles non-ARCHIVIST.
+ */
+export async function guardGedMutation() {
+  const guard = await guardGed();
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
+/**
  * Préfixes de classifications interdits à l'ARCHIVIST même avec
  * canReadAllDocuments=true. Conforme à la note du profil :
  * « SAUF documents les plus confidentiels (paie individuelle BS_,

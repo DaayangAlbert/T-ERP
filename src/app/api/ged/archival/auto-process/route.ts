@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGedMutation } from "@/lib/rbac/ged-guard";
 import { ArchivalStatus, GedAuditAction, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 //  - retourne les compteurs et un résumé.
 // Réservé ARCHIVIST/TENANT_ADMIN.
 export async function POST() {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardGed } from "@/lib/rbac/ged-guard";
+import { guardGed, guardGedMutation } from "@/lib/rbac/ged-guard";
 import { Confidentiality, SpaceType } from "@prisma/client";
 import { z } from "zod";
 
@@ -110,7 +110,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const guard = await guardGed();
+  const guard = await guardGedMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

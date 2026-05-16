@@ -33,6 +33,23 @@ export async function guardDtravSite(siteId: string) {
   return { session, siteId, allowed, access };
 }
 
+/**
+ * Variante stricte de `guardDtravSite` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès DTRAV est READ
+ * — typiquement DG/DAF/TECH_DIRECTOR/SG en drill-down.
+ */
+export async function guardDtravSiteMutation(siteId: string) {
+  const guard = await guardDtravSite(siteId);
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
 export function isDtravRole(role: string | undefined | null): boolean {
   return !!role && canAccess(role as Role, MODULES.DTRAV);
 }

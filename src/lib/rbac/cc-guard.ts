@@ -50,3 +50,20 @@ export async function guardCcSite(requestedSiteId?: string) {
   }
   return { session, siteId: allowed[0], access };
 }
+
+/**
+ * Variante stricte de `guardCcSite` pour les routes de mutation
+ * (POST/PATCH/DELETE). Refuse les rôles dont l'accès CC est READ
+ * — typiquement DG/DT/SG/WORKS_MANAGER en drill-down.
+ */
+export async function guardCcSiteMutation(requestedSiteId?: string) {
+  const guard = await guardCcSite(requestedSiteId);
+  if (guard instanceof NextResponse) return guard;
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
