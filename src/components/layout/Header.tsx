@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, ChevronDown, Menu, Search } from "lucide-react";
+import { ChevronDown, Menu, Search } from "lucide-react";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiStore } from "@/stores/ui-store";
 import { Logo } from "./Logo";
 import { TenantBadge } from "./TenantBadge";
+import { NotificationsBell } from "./NotificationsBell";
 
 interface Props {
   onProfileClick?: () => void;
@@ -40,13 +41,7 @@ export function Header({ onProfileClick, onTenantClick }: Props) {
       </div>
 
       <div className="ml-auto flex items-center gap-1 px-2">
-        <button
-          className="relative grid h-9 w-9 place-items-center rounded text-white/70 hover:bg-white/8"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-red-500" />
-        </button>
+        <NotificationsBell />
       </div>
 
       {user && (
