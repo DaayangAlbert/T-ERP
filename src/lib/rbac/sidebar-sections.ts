@@ -201,13 +201,11 @@ const FULL: Record<Module, NavSection> = {
   CPT: {
     title: "Espace Comptabilité",
     items: [
-      { label: "Tableau de bord", href: "/comptable", icon: LayoutDashboard },
       { label: "Saisie d'écritures", href: "/comptable/ecritures", icon: ClipboardList },
       { label: "Factures fournisseurs", href: "/comptable/factures-frns", icon: Receipt },
       { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
       { label: "Trésorerie", href: "/comptable/tresorerie", icon: Coins },
       { label: "Actifs", href: "/comptable/actifs", icon: Package },
-      { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText },
       { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
       { label: "Validations N1", href: "/comptable/validations", icon: CheckCircle2 },
     ],
