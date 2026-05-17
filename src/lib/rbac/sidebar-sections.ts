@@ -97,6 +97,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Mes objectifs", href: "/direction-generale/objectifs", icon: Target },
       { label: "Trésorerie prévisionnelle", href: "/direction-generale/tresorerie-previsionnelle", icon: TrendingUp },
       { label: "Reporting CA", href: "/direction-generale/reporting-ca", icon: ClipboardList },
+      { label: "Recouvrements en cours", href: "/direction-generale/recouvrements", icon: Receipt },
     ],
   },
   DAF: {
@@ -145,6 +146,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Sous-traitance", href: "/direction-technique/sous-traitance", icon: HardHat, badge: { value: "42" } },
       { label: "QHSE", href: "/direction-technique/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
       { label: "Rapports techniques", href: "/direction-technique/rapports", icon: BarChart3 },
+      { label: "Recouvrements en cours", href: "/direction-technique/recouvrements", icon: Receipt },
     ],
   },
   SG: {
