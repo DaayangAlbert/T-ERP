@@ -18,6 +18,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { useProfile, useUpdateProfile, useChangePassword } from "@/hooks/useProfile";
+import { compressImage } from "@/lib/image-compress";
 import { updateProfileSchema, changePasswordSchema, type UpdateProfileInput, type ChangePasswordInput } from "@/schemas/user";
 import { formatDate, formatRelativeDate } from "@/lib/format";
 import { Field, inputClass } from "@/components/auth/LoginForm";
@@ -286,23 +287,34 @@ function IdentityForm({ profile }: { profile: NonNullable<ReturnType<typeof useP
     }
   };
 
-  const handlePhotoChange = (file: File | null) => {
+  const handlePhotoChange = async (file: File | null) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setServerMsg({ tone: "error", text: "Le fichier doit etre une image." });
+      setServerMsg({ tone: "error", text: "Le fichier doit être une image." });
       return;
     }
-    if (file.size > 1_500_000) {
-      setServerMsg({ tone: "error", text: "Image trop volumineuse (1,5 Mo max)." });
+    // 10 Mo en entrée — compression côté client réduira à ~150 ko en base64.
+    if (file.size > 10_000_000) {
+      setServerMsg({ tone: "error", text: "Image trop volumineuse (10 Mo max en entrée)." });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setValue("avatarUrl", reader.result, { shouldDirty: true, shouldValidate: true });
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const result = await compressImage(file, {
+        maxDimension: 512,
+        quality: 0.85,
+        outputType: "image/jpeg",
+      });
+      setValue("avatarUrl", result.dataUrl, { shouldDirty: true, shouldValidate: true });
+      setServerMsg({
+        tone: "ok",
+        text: `Photo compressée : ${result.originalSizeKb} ko → ${result.compressedSizeKb} ko (${result.width}×${result.height}).`,
+      });
+    } catch (err) {
+      setServerMsg({
+        tone: "error",
+        text: err instanceof Error ? err.message : "Compression échouée.",
+      });
+    }
   };
 
   return (
