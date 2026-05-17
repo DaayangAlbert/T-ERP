@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Circle, AlertOctagon, Loader2, FileText, PlusCircle, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Circle, AlertOctagon, Loader2, FileText, PlusCircle, X, UserCog } from "lucide-react";
 import { clsx } from "clsx";
 import { Role } from "@prisma/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import {
   useBlockStep,
   useUnblockStep,
   useToggleDocument,
+  useAssignTrack,
   type PaymentStepStatus,
 } from "@/hooks/usePaymentCircuits";
 
@@ -55,6 +56,7 @@ export function PaymentTrackTimeline({ trackId }: Props) {
   const toggleDoc = useToggleDocument();
 
   const [blockingStepId, setBlockingStepId] = useState<string | null>(null);
+  const [reassigning, setReassigning] = useState(false);
 
   if (isLoading || !data) {
     return <div className="h-32 animate-pulse rounded-lg bg-surface-alt" />;
@@ -71,14 +73,23 @@ export function PaymentTrackTimeline({ trackId }: Props) {
     <section className="space-y-3 rounded-xl border border-line bg-white p-3 shadow-card sm:p-4">
       {/* En-tête */}
       <header className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-2">
-        <div>
+        <div className="min-w-0 flex-1">
           <h3 className="text-[13px] font-semibold text-ink">{data.template.name}</h3>
-          <p className="mt-0.5 text-[11.5px] text-ink-3">
-            {data.receivable.clientName} · {data.receivable.invoiceRef} ·
-            assigné à{" "}
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[11.5px] text-ink-3">
+            {data.receivable.clientName} · {data.receivable.invoiceRef} · assigné à{" "}
             <span className="font-medium text-ink">
               {data.assignedTo ? `${data.assignedTo.firstName} ${data.assignedTo.lastName}` : "—"}
             </span>
+            {isDafOrAdmin && (
+              <button
+                type="button"
+                onClick={() => setReassigning(!reassigning)}
+                className="inline-flex items-center gap-1 rounded border border-line bg-white px-1.5 py-0.5 text-[10.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                title="Changer la personne en charge"
+              >
+                <UserCog className="h-3 w-3" /> Réassigner
+              </button>
+            )}
           </p>
         </div>
         <div className="text-right">
@@ -93,6 +104,14 @@ export function PaymentTrackTimeline({ trackId }: Props) {
           </div>
         </div>
       </header>
+
+      {reassigning && isDafOrAdmin && (
+        <ReassignForm
+          trackId={data.id}
+          currentAssigneeId={data.assignedTo?.id ?? null}
+          onClose={() => setReassigning(false)}
+        />
+      )}
 
       {/* Étapes */}
       <ol className="space-y-2">
@@ -126,42 +145,65 @@ export function PaymentTrackTimeline({ trackId }: Props) {
                         </div>
                       )}
                       {step.status === "BLOCKED" && step.blockedReason && (
-                        <div className="mt-1 rounded border border-danger/30 bg-danger/5 p-2 text-[11px] text-danger">
-                          <strong>Bloqué</strong>
-                          {step.blockedSince && ` ${formatRelative(step.blockedSince)}`} :{" "}
-                          {step.blockedReason}
-                          {step.documents.length > 0 && (
-                            <ul className="mt-1.5 space-y-0.5">
-                              {step.documents.map((d) => (
-                                <li key={d.id} className="flex items-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      toggleDoc.mutate({
-                                        trackId: data.id,
-                                        stepId: step.id,
-                                        docId: d.id,
-                                      })
-                                    }
-                                    disabled={!canAct}
-                                    className={clsx(
-                                      "h-4 w-4 rounded border flex items-center justify-center text-white text-[10px]",
-                                      d.provided
-                                        ? "bg-success border-success"
-                                        : "bg-white border-line-2 hover:border-success",
+                        <div className="mt-1 space-y-2 rounded border border-danger/30 bg-danger/5 p-2 text-[11px] text-danger">
+                          <div>
+                            <strong>Bloqué</strong>
+                            {step.blockedSince && ` ${formatRelative(step.blockedSince)}`}
+                            {step.blockedBy && ` par ${step.blockedBy.firstName} ${step.blockedBy.lastName}`}
+                            {" : "}
+                            {step.blockedReason}
+                          </div>
+                          <div className="rounded bg-white/60 p-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-danger/80">
+                                Pièces à compléter
+                              </span>
+                              <span className="font-mono text-[10px] text-danger/70">
+                                {step.documents.filter((d) => d.provided).length}/{step.documents.length}
+                              </span>
+                            </div>
+                            {step.documents.length === 0 ? (
+                              <p className="mt-1 text-[10.5px] italic text-danger/70">
+                                Aucune pièce spécifique demandée — déblocage manuel via « Lever blocage ».
+                              </p>
+                            ) : (
+                              <ul className="mt-1 space-y-0.5">
+                                {step.documents.map((d) => (
+                                  <li key={d.id} className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleDoc.mutate({
+                                          trackId: data.id,
+                                          stepId: step.id,
+                                          docId: d.id,
+                                        })
+                                      }
+                                      disabled={!canAct}
+                                      className={clsx(
+                                        "h-4 w-4 rounded border flex items-center justify-center text-white text-[10px]",
+                                        d.provided
+                                          ? "bg-success border-success"
+                                          : "bg-white border-line-2 hover:border-success",
+                                      )}
+                                      title={d.provided ? "Fourni — cliquer pour annuler" : "À fournir — cliquer pour marquer comme fourni"}
+                                    >
+                                      {d.provided && "✓"}
+                                    </button>
+                                    <FileText className="h-3 w-3 flex-shrink-0 text-ink-3" />
+                                    <span className={clsx("flex-1", d.provided && "line-through text-ink-3")}>
+                                      {d.label}
+                                    </span>
+                                    {d.providedAt && (
+                                      <span className="text-[9.5px] text-ink-3">
+                                        {formatRelative(d.providedAt)}
+                                      </span>
                                     )}
-                                    title={d.provided ? "Fourni" : "À fournir"}
-                                  >
-                                    {d.provided && "✓"}
-                                  </button>
-                                  <FileText className="h-3 w-3 flex-shrink-0 text-ink-3" />
-                                  <span className={clsx(d.provided && "line-through text-ink-3")}>
-                                    {d.label}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -330,6 +372,88 @@ function BlockForm({
           className="h-8 rounded-md bg-danger px-3 text-[11.5px] font-semibold text-white hover:bg-danger/90 disabled:opacity-60"
         >
           {block.isPending ? "Blocage…" : "Bloquer l'étape"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface EligibleUser {
+  id: string;
+  name: string;
+  role: string;
+  position: string | null;
+}
+
+function ReassignForm({
+  trackId,
+  currentAssigneeId,
+  onClose,
+}: {
+  trackId: string;
+  currentAssigneeId: string | null;
+  onClose: () => void;
+}) {
+  const assign = useAssignTrack();
+  const [users, setUsers] = useState<EligibleUser[]>([]);
+  const [selected, setSelected] = useState<string>(currentAssigneeId ?? "");
+
+  useEffect(() => {
+    fetch("/api/daf/payment-tracks/eligible-assignees", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d: { items?: EligibleUser[] }) => setUsers(d.items ?? []))
+      .catch(() => setUsers([]));
+  }, []);
+
+  const submit = async () => {
+    try {
+      await assign.mutateAsync({
+        trackId,
+        assignedToId: selected || null,
+      });
+      onClose();
+    } catch (err) {
+      alert(`Erreur : ${(err as Error).message}`);
+    }
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-primary-200 bg-primary-50/40 p-2 sm:p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-primary-800">
+        Changer la personne en charge du suivi
+      </div>
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        className="h-8 w-full rounded border border-line bg-white px-2 text-[12px]"
+      >
+        <option value="">— Aucun responsable —</option>
+        {users.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name} ({u.role})
+            {u.position ? ` · ${u.position}` : ""}
+          </option>
+        ))}
+      </select>
+      <p className="text-[10.5px] text-ink-3">
+        La nouvelle personne désignée recevra une notification in-app et verra
+        ce dossier sur son tableau de bord + sa page « Suivi paiement assigné ».
+      </p>
+      <div className="flex justify-end gap-1.5">
+        <button
+          type="button"
+          onClick={onClose}
+          className="h-8 rounded-md border border-line bg-white px-3 text-[11.5px] font-medium text-ink-2"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={assign.isPending || selected === (currentAssigneeId ?? "")}
+          className="h-8 rounded-md bg-primary-600 px-3 text-[11.5px] font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+        >
+          {assign.isPending ? "Réassignation…" : "Réassigner"}
         </button>
       </div>
     </div>
