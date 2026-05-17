@@ -140,6 +140,12 @@ export function useMyAssignedTracks(includeCompleted = false) {
       getJson<{ items: MyAssignedTrack[] }>(
         `/api/me/payment-tracks${includeCompleted ? "?includeCompleted=1" : ""}`,
       ),
+    // Toujours re-fetch au mount : un track vient peut-être d'être assigné
+    // au user. staleTime=0 évite un faux 0-track lors de la première visite
+    // après une réassignation côté DAF.
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
 

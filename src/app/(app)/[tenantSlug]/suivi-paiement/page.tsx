@@ -77,7 +77,15 @@ export default function SuiviPaiementPage() {
         <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line p-8 text-center text-[13px] text-ink-3">
-          Aucun dossier de paiement à suivre. Tu seras notifié(e) dès qu&apos;un DAF te désignera.
+          <p>Aucun dossier de paiement à suivre. Tu seras notifié(e) dès qu&apos;un DAF te désignera.</p>
+          {user && (
+            <p className="mt-3 font-mono text-[10.5px] text-ink-3/70">
+              Connecté en : {user.firstName} {user.lastName} ({user.role}) — id={user.id.slice(0, 12)}…
+              <br />
+              Si tu attendais des dossiers, vérifie auprès du DAF que l&apos;assignation a bien été
+              faite sur cet identifiant. Recharge la page (Ctrl+F5) pour forcer un re-fetch.
+            </p>
+          )}
         </div>
       ) : (
         <ul className="space-y-3">

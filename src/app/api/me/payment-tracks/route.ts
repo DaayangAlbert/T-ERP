@@ -48,7 +48,13 @@ export async function GET(req: Request) {
     orderBy: [{ completedAt: "asc" }, { receivable: { daysOverdue: "desc" } }],
   });
 
-  return NextResponse.json({
+  const response = NextResponse.json({
+    _meta: {
+      userId: session.sub,
+      role: session.role,
+      tenantId: session.tenantId,
+      tracksFound: tracks.length,
+    },
     items: tracks.map((t) => {
       const validated = t.steps.filter((s) => s.status === "VALIDATED").length;
       const total = t.steps.length;
@@ -82,4 +88,6 @@ export async function GET(req: Request) {
       };
     }),
   });
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  return response;
 }
