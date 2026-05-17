@@ -50,7 +50,14 @@ export function useUpdateProfile() {
       }
       return res.json();
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      // L'espace EMP utilise sa propre queryKey ["emp", "profile"] — on
+      // l'invalide aussi pour que l'avatar se rafraîchisse immédiatement
+      // sur /employe/profil après upload.
+      qc.invalidateQueries({ queryKey: ["emp", "profile"] });
+      qc.invalidateQueries({ queryKey: ["auth", "me"] });
+    },
   });
 }
 

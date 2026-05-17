@@ -5,6 +5,7 @@ import { User, Edit3, Download, FileText, Shield, Phone, MapPin, Cake, Heart, Bu
 import { clsx } from "clsx";
 import { useEmpProfile, useEmpDocuments, useEmpPolicies, useRequestProfileModification, type EmpDocument } from "@/hooks/useEmpProfile";
 import { useTenant } from "@/hooks/useTenant";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 const MODIFIABLE_FIELDS: { code: string; label: string; type: string }[] = [
   { code: "phoneMobile", label: "Téléphone mobile", type: "tel" },
@@ -84,6 +85,9 @@ export default function EmpProfilPage() {
           </button>
         </div>
       </article>
+
+      {/* Photo de profil — modifiable directement par le salarié */}
+      <AvatarUploader compact />
 
       {/* Informations personnelles */}
       <section className="rounded-xl border border-line bg-white p-3">
