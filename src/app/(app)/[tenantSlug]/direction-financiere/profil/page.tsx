@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Briefcase, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { AlertPreferencesCard } from "@/components/daf/profile/AlertPreferencesCard";
 import { SignaturePowerCard } from "@/components/daf/profile/SignaturePowerCard";
 import { ProxiesCard } from "@/components/daf/profile/ProxiesCard";
@@ -37,6 +38,8 @@ export default function DafProfilePage() {
           Préférences alertes, habilitations de signature, mandats actifs, agenda financier.
         </p>
       </header>
+
+      <AvatarUploader />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <AlertPreferencesCard />

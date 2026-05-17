@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Mail, Building2, Bell, Shield } from "lucide-react";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 interface AssignedData {
   isDirection: boolean;
@@ -26,6 +27,8 @@ export default function ComptableProfilePage() {
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon espace comptable</h1>
         <p className="mt-1 text-[12.5px] text-ink-3">Profil, paie, messagerie comptable, préférences alertes.</p>
       </header>
+
+      <AvatarUploader />
 
       <div className="grid gap-3 lg:grid-cols-2">
         {!data?.isDirection && (

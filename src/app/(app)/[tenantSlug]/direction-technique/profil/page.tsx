@@ -8,6 +8,7 @@ import { fr } from "date-fns/locale";
 import { Bell, Pen, Calendar, MessageSquare, Save } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/hooks/useAuth";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 interface DtProfileResponse {
   alertsConfig: {
@@ -105,6 +106,8 @@ export default function DtProfilePage() {
           {user ? `${user.firstName} ${user.lastName} · ` : ""}Préférences alertes, habilitations, agenda, messagerie technique.
         </p>
       </header>
+
+      <AvatarUploader />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {/* Préférences alertes techniques */}

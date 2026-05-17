@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Bell, Shield, Calendar, Mail } from "lucide-react";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 interface ProfileData {
   user: { firstName: string; lastName: string; role: string; position: string | null; category: string | null };
@@ -28,6 +29,8 @@ export default function DtravProfilePage() {
           Profil, chantiers assignés, préférences alertes, agenda chantier.
         </p>
       </header>
+
+      <AvatarUploader />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-line bg-white p-4 shadow-card">
