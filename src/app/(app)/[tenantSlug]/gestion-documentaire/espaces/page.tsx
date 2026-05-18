@@ -10,6 +10,9 @@ import { TransverseSpacesTable } from "@/components/ged/espaces/TransverseSpaces
 import { ConstructionSitesSpacesTable } from "@/components/ged/espaces/ConstructionSitesSpacesTable";
 import { SpaceDetailDrawer } from "@/components/ged/espaces/SpaceDetailDrawer";
 import { NewSpaceModal } from "@/components/ged/espaces/NewSpaceModal";
+import { ImportDocumentModal } from "@/components/ged/documents/ImportDocumentModal";
+import { UnclassifiedDocumentsCard } from "@/components/ged/documents/UnclassifiedDocumentsCard";
+import { Upload } from "lucide-react";
 import { Confidentiality } from "@prisma/client";
 
 export default function GedEspacesPage() {
@@ -24,6 +27,12 @@ export default function GedEspacesPage() {
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
 
   const filters: GedSpacesFilters = useMemo(
     () => ({
@@ -107,6 +116,20 @@ export default function GedEspacesPage() {
         </>
       )}
 
+      {/* Carte « Documents à classer » — visible uniquement quand il y en a */}
+      {!readOnly && <UnclassifiedDocumentsCard readOnly={readOnly} />}
+
+      {/* Bouton flottant « Importer » global (raccourci sans ouvrir un espace) */}
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => setShowImport(true)}
+          className="fixed bottom-6 right-6 z-40 inline-flex h-12 items-center gap-2 rounded-full bg-violet-600 px-4 text-[13px] font-semibold text-white shadow-lg hover:bg-violet-700"
+        >
+          <Upload className="h-4 w-4" /> Importer un document
+        </button>
+      )}
+
       <SpaceDetailDrawer
         spaceId={openId}
         readOnly={readOnly}
@@ -117,6 +140,24 @@ export default function GedEspacesPage() {
           onClose={() => setShowNew(false)}
           onCreated={(id) => setOpenId(id)}
         />
+      )}
+      {showImport && (
+        <ImportDocumentModal
+          onClose={() => setShowImport(false)}
+          onUploaded={(res) =>
+            showToast(
+              res.internalReference
+                ? `Document importé · ${res.internalReference}`
+                : "Document importé — à classer manuellement (préfixe non détecté)",
+            )
+          }
+        />
+      )}
+
+      {toast && (
+        <div className="pointer-events-none fixed bottom-24 left-1/2 z-[80] -translate-x-1/2 rounded-lg bg-ink px-4 py-2 text-[12.5px] font-semibold text-white shadow-lg">
+          {toast}
+        </div>
       )}
     </div>
   );

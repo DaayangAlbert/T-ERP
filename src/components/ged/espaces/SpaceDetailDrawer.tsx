@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Folder, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Folder, ChevronDown, ChevronRight, Upload } from "lucide-react";
 import { Confidentiality } from "@prisma/client";
 import { useGedSpaceDetail, useUpdateSpaceAccessPolicy } from "@/hooks/useGedSpaces";
+import { ImportDocumentModal } from "@/components/ged/documents/ImportDocumentModal";
 
 const CATEGORY_LABEL: Record<string, { label: string; icon: string }> = {
   MARKETS: { label: "Marchés & contrats", icon: "📜" },
@@ -39,6 +40,7 @@ export function SpaceDetailDrawer({ spaceId, readOnly, onClose }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [confEdit, setConfEdit] = useState<Confidentiality | null>(null);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const mut = useUpdateSpaceAccessPolicy(spaceId ?? "");
 
@@ -63,14 +65,25 @@ export function SpaceDetailDrawer({ spaceId, readOnly, onClose }: Props) {
               <div className="mt-0.5 font-mono text-[11px] text-ink-3">{data.space.code}</div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-lg text-ink-3 hover:bg-surface-alt"
-            aria-label="Fermer"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            {!readOnly && data?.space.id && (
+              <button
+                type="button"
+                onClick={() => setShowImport(true)}
+                className="inline-flex h-9 items-center gap-1 rounded-md bg-violet-600 px-2.5 text-[11.5px] font-semibold text-white hover:bg-violet-700"
+              >
+                <Upload className="h-3.5 w-3.5" /> Importer
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="grid h-9 w-9 place-items-center rounded-lg text-ink-3 hover:bg-surface-alt"
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -246,6 +259,17 @@ export function SpaceDetailDrawer({ spaceId, readOnly, onClose }: Props) {
           )}
         </div>
       </aside>
+
+      {showImport && data?.space && (
+        <ImportDocumentModal
+          defaultSpaceId={data.space.id}
+          defaultSpaceName={data.space.name}
+          onClose={() => setShowImport(false)}
+          onUploaded={() => {
+            /* useUploadDocument invalide automatiquement les queries ged */
+          }}
+        />
+      )}
     </div>
   );
 }
