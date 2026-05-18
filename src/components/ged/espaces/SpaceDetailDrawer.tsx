@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Folder, ChevronDown, ChevronRight, Upload } from "lucide-react";
+import { X, Folder, ChevronDown, ChevronRight, Upload, FileText } from "lucide-react";
 import { Confidentiality } from "@prisma/client";
-import { useGedSpaceDetail, useUpdateSpaceAccessPolicy } from "@/hooks/useGedSpaces";
+import {
+  useGedSpaceDetail,
+  useGedSpaceDocuments,
+  useUpdateSpaceAccessPolicy,
+} from "@/hooks/useGedSpaces";
 import { ImportDocumentModal } from "@/components/ged/documents/ImportDocumentModal";
 
 const CATEGORY_LABEL: Record<string, { label: string; icon: string }> = {
@@ -43,6 +47,7 @@ export function SpaceDetailDrawer({ spaceId, readOnly, onClose }: Props) {
   const [showImport, setShowImport] = useState(false);
 
   const mut = useUpdateSpaceAccessPolicy(spaceId ?? "");
+  const docsQ = useGedSpaceDocuments(spaceId, { page: 1 });
 
   useEffect(() => {
     if (data?.space.confidentiality) setConfEdit(data.space.confidentiality);
@@ -199,6 +204,68 @@ export function SpaceDetailDrawer({ spaceId, readOnly, onClose }: Props) {
                         </li>
                       );
                     })}
+                  </ul>
+                )}
+              </section>
+
+              {/* Documents récents */}
+              <section>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <h3 className="text-[12.5px] font-semibold text-ink">
+                    Documents récents{docsQ.data ? ` (${docsQ.data.total})` : ""}
+                  </h3>
+                  {docsQ.data && docsQ.data.total > docsQ.data.documents.length && (
+                    <span className="text-[10.5px] text-ink-3">
+                      {docsQ.data.documents.length} affichés sur {docsQ.data.total}
+                    </span>
+                  )}
+                </div>
+                {docsQ.isLoading ? (
+                  <div className="h-20 animate-pulse rounded-lg bg-surface-alt" />
+                ) : !docsQ.data || docsQ.data.documents.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-line p-3 text-center text-[11.5px] text-ink-3">
+                    Aucun document dans cet espace pour l'instant.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-line rounded-lg border border-line bg-white">
+                    {docsQ.data.documents.slice(0, 10).map((d) => (
+                      <li key={d.id} className="px-3 py-2">
+                        <div className="flex items-start gap-2">
+                          <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="truncate text-[12px] font-semibold text-ink">{d.name}</span>
+                              {d.classificationPrefix && (
+                                <span className="rounded bg-violet-100 px-1 py-0.5 font-mono text-[9.5px] font-semibold text-violet-700">
+                                  {d.classificationPrefix}
+                                </span>
+                              )}
+                              {d.status === "DRAFT" && (
+                                <span className="rounded bg-amber-100 px-1 py-0.5 text-[9.5px] font-semibold text-amber-700">
+                                  Brouillon
+                                </span>
+                              )}
+                              {d.confidentiality === "CONFIDENTIAL" && (
+                                <span className="rounded bg-rose-100 px-1 py-0.5 text-[9.5px] font-semibold text-rose-700">
+                                  Confidentiel
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10.5px] text-ink-3">
+                              {d.reference && <span className="font-mono">{d.reference}</span>}
+                              <span>{formatVolume(d.sizeBytes)}</span>
+                              <span>
+                                {new Date(d.createdAt).toLocaleDateString("fr-FR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </section>
