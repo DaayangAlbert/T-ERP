@@ -12,7 +12,7 @@ export function SiteSwitcher() {
 
   if (isLoading || !activeChantier) {
     return (
-      <div className="sticky top-14 z-20 mb-3 h-12 animate-pulse rounded-xl bg-gradient-to-r from-primary-600 to-violet-700" />
+      <div className="sticky top-14 z-20 mb-3 h-12 animate-pulse rounded-xl border border-line bg-surface-alt" />
     );
   }
 
@@ -23,14 +23,14 @@ export function SiteSwitcher() {
 
   return (
     <>
-      <div className="sticky top-14 z-20 mb-3 rounded-xl bg-gradient-to-r from-primary-600 via-violet-700 to-primary-700 text-white shadow-md">
+      <div className="sticky top-14 z-20 mb-3 rounded-xl border border-line bg-white shadow-sm">
         <div className="flex flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
-          <MapPin className="h-4 w-4 shrink-0" />
+          <MapPin className="h-4 w-4 shrink-0 text-ink-3" />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] font-semibold leading-tight">
+            <div className="truncate text-[13px] font-semibold leading-tight text-ink">
               {activeChantier.code} · {activeChantier.name}
             </div>
-            <div className="truncate text-[11px] text-white/70 leading-tight">
+            <div className="truncate text-[11px] text-ink-3 leading-tight">
               {activeChantier.client} · {activeChantier.progress}% · Livraison{" "}
               {new Date(activeChantier.plannedEndDate).toLocaleDateString("fr-FR")}
             </div>
@@ -47,8 +47,8 @@ export function SiteSwitcher() {
                   className={clsx(
                     "shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium transition",
                     s.id === activeChantier.id
-                      ? "border-white bg-white text-primary-700"
-                      : "border-white/30 bg-white/10 text-white hover:bg-white/20"
+                      ? "border-ink bg-ink text-white"
+                      : "border-line bg-white text-ink-2 hover:border-ink-3"
                   )}
                 >
                   {s.code}
@@ -60,7 +60,7 @@ export function SiteSwitcher() {
               type="button"
               onClick={() => setDrawerOpen(true)}
               style={{ minHeight: 40 }}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md bg-white/15 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-white/25"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-line bg-white px-3 py-1.5 text-[12px] font-medium text-ink-2 hover:border-ink-3"
             >
               Changer chantier <ChevronDown className="h-3.5 w-3.5" />
             </button>

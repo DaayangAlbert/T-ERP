@@ -58,8 +58,8 @@ export default function DtravValidationsPage() {
         </p>
       </header>
 
-      <section className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 p-3 text-[12.5px] text-primary-700">
-        <Shield className="h-4 w-4" />
+      <section className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-3 text-[12.5px] text-ink-2">
+        <Shield className="h-4 w-4 text-ink-3" />
         <strong>
           Validations DTrav · {data?.totalCount ?? 0} en attente ·{" "}
           {availableChantiers.length} chantier{availableChantiers.length > 1 ? "s" : ""}
