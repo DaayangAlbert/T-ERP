@@ -55,6 +55,8 @@ import {
   Mail,
   Landmark,
   Gavel,
+  History,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 import { Role } from "@prisma/client";
@@ -97,7 +99,14 @@ const FULL: Record<Module, NavSection> = {
       { label: "Mes objectifs", href: "/direction-generale/objectifs", icon: Target },
       { label: "Trésorerie prévisionnelle", href: "/direction-generale/tresorerie-previsionnelle", icon: TrendingUp },
       { label: "Reporting CA", href: "/direction-generale/reporting-ca", icon: ClipboardList },
+      { label: "Validations N3", href: "/direction-generale/validations", icon: CheckCircle2, badge: { value: "0", alert: true } },
+      { label: "Rapports DAF à valider", href: "/direction-generale/rapports-daf", icon: Coins },
+      { label: "Rapports DT à valider", href: "/direction-generale/rapports-dt", icon: FileText },
+      { label: "Rapports DTrav à valider", href: "/direction-generale/rapports-dtrav", icon: FileText },
+      { label: "Rapports QHSE à valider", href: "/direction-generale/rapports-qhse", icon: ShieldAlert },
       { label: "Recouvrements en cours", href: "/direction-generale/recouvrements", icon: Receipt },
+      { label: "Personnel & coûts", href: "/direction-generale/personnel", icon: Users },
+      { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
     ],
   },
   DAF: {
@@ -105,6 +114,7 @@ const FULL: Record<Module, NavSection> = {
     items: [
       { label: "Tableau de bord DAF", href: "/direction-financiere", icon: Briefcase },
       { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
+      { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
       { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
       { label: "Pilotage financier", href: "/direction-financiere/finances", icon: TrendingUp },
       { label: "Validations N2", href: "/direction-financiere/validations", icon: CheckCircle2, badge: { value: "5", alert: true } },
@@ -115,6 +125,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
       { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
       { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },
+      { label: "Rapports mensuels (DG)", href: "/direction-financiere/rapports-mensuels", icon: FileText },
       { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
       { label: "Mon espace DAF", href: "/direction-financiere/profil", icon: User },
     ],
@@ -124,9 +135,11 @@ const FULL: Record<Module, NavSection> = {
     items: [
       { label: "Tableau de bord RH", href: "/ressources-humaines", icon: LayoutDashboard },
       { label: "Personnel", href: "/ressources-humaines/personnel", icon: Users, badge: { value: "487" } },
+      { label: "Contrats de travail", href: "/ressources-humaines/contrats", icon: ScrollText },
       { label: "Saisie de paie", href: "/ressources-humaines/paie", icon: CreditCard, badge: { value: "Avr", alert: true } },
       { label: "Recrutement", href: "/ressources-humaines/recrutement", icon: Briefcase, badge: { value: "12" } },
       { label: "Congés & absences", href: "/ressources-humaines/conges", icon: Calendar, badge: { value: "7", alert: true } },
+      { label: "Avances sur salaire", href: "/ressources-humaines/avances", icon: Wallet },
       { label: "Formations", href: "/ressources-humaines/formations", icon: GraduationCap },
       { label: "Visites médicales", href: "/ressources-humaines/medical", icon: ScrollText, badge: { value: "5", alert: true } },
       { label: "Disciplinaire", href: "/ressources-humaines/disciplinaire", icon: Shield, badge: { value: "3" } },
@@ -146,19 +159,25 @@ const FULL: Record<Module, NavSection> = {
       { label: "Sous-traitance", href: "/direction-technique/sous-traitance", icon: HardHat, badge: { value: "42" } },
       { label: "QHSE", href: "/direction-technique/qhse", icon: ShieldAlert, badge: { value: "3", alert: true } },
       { label: "Rapports techniques", href: "/direction-technique/rapports", icon: BarChart3 },
+      { label: "Rapports mensuels", href: "/direction-technique/rapports-mensuels", icon: FileText },
+      { label: "Rapports QHSE", href: "/direction-technique/rapports-qhse", icon: ShieldAlert },
       { label: "Recouvrements en cours", href: "/direction-technique/recouvrements", icon: Receipt },
+      { label: "Trésorerie chantiers", href: "/historique-tresorerie", icon: History },
     ],
   },
   SG: {
     title: "Espace SG",
     items: [
       { label: "Tableau de bord", href: "/secretaire-general", icon: LayoutDashboard },
-      { label: "Marchés & contrats", href: "/secretaire-general/marches", icon: ScrollText, badge: { value: "6" } },
-      { label: "CA & Gouvernance", href: "/secretaire-general/gouvernance", icon: Landmark, badge: { value: "23j", alert: true } },
-      { label: "Contentieux", href: "/secretaire-general/contentieux", icon: Gavel, badge: { value: "4", alert: true } },
+      // Badges alimentés dynamiquement par useSidebarBadges → /api/sg/sidebar-badges
+      { label: "Marchés & contrats", href: "/secretaire-general/marches", icon: ScrollText },
+      { label: "CA & Gouvernance", href: "/secretaire-general/gouvernance", icon: Landmark },
+      { label: "Contentieux", href: "/secretaire-general/contentieux", icon: Gavel },
       { label: "Conformité", href: "/secretaire-general/conformite", icon: Scale },
       { label: "Institutionnel", href: "/secretaire-general/institutionnel", icon: Briefcase },
-      { label: "Courriers officiels", href: "/secretaire-general/courriers", icon: Mail, badge: { value: "12" } },
+      { label: "Courriers officiels", href: "/secretaire-general/courriers", icon: Mail },
+      { label: "Rapports chantiers", href: "/secretaire-general/rapports-chantiers", icon: ClipboardList },
+      { label: "Annuaire personnel", href: "/secretaire-general/annuaire", icon: Users },
       { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
     ],
   },
@@ -173,6 +192,8 @@ const FULL: Record<Module, NavSection> = {
       { label: "Approvisionnements", href: "/directeur-travaux/appros", icon: Package },
       { label: "Documents chantier", href: "/directeur-travaux/documents", icon: FileText },
       { label: "Validations N1", href: "/directeur-travaux/validations", icon: CheckCircle2 },
+      { label: "Rapports CDT à valider", href: "/directeur-travaux/rapports-cdt", icon: FileText },
+      { label: "Mes rapports mensuels", href: "/directeur-travaux/rapports-mensuels", icon: FileText },
       { label: "Reporting MOA", href: "/directeur-travaux/reporting", icon: BarChart3 },
     ],
   },
@@ -185,6 +206,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Sous-traitants", href: "/conducteur-travaux/soustraitants", icon: HardHat },
       { label: "Visites externes", href: "/conducteur-travaux/visites", icon: Briefcase },
       { label: "Réceptions techniques", href: "/conducteur-travaux/receptions", icon: ClipboardCheck },
+      { label: "Rapports hebdomadaires", href: "/conducteur-travaux/rapports", icon: FileText },
     ],
   },
   CC: {
@@ -194,19 +216,28 @@ const FULL: Record<Module, NavSection> = {
       { label: "Pointage équipes", href: "/chef-chantier/pointage", icon: ClipboardCheck },
       { label: "Production", href: "/chef-chantier/production", icon: ClipboardList },
       { label: "Réceptions", href: "/chef-chantier/livraisons", icon: Package },
+      { label: "Documents chantier", href: "/chef-chantier/documents", icon: FolderOpen },
+      { label: "Rapports d'avancement", href: "/chef-chantier/rapports", icon: FileText },
       { label: "HSE & incidents", href: "/chef-chantier/hse", icon: ShieldAlert },
       { label: "Mes équipes", href: "/chef-chantier/equipes", icon: Users },
+      { label: "Planning & équipes", href: "/chef-chantier/planning", icon: Calendar },
+      { label: "Validations équipe", href: "/chef-chantier/validations", icon: CheckCircle2 },
+      { label: "Heures supplémentaires", href: "/chef-chantier/heures-sup", icon: Clock },
+      { label: "Mon espace CC", href: "/chef-chantier/profil", icon: User },
     ],
   },
+  // Section "chantier" uniquement (l'espace personnel ouvrier vit dans
+  // OUV_PERSONAL, ajouté séparément par getSidebarSections quand WORKER
+  // a OUV en OWN — voir plus bas).
   OUV: {
     title: "Espace Ouvrier",
     items: [
       { label: "Accueil", href: "/ouv/dashboard", icon: LayoutDashboard },
       { label: "Pointer", href: "/ouv/pointage", icon: ClipboardCheck },
-      { label: "Ma paie", href: "/ouv/paie", icon: CreditCard },
-      { label: "Mes congés", href: "/ouv/conges", icon: Calendar },
       { label: "Mes missions", href: "/ouv/missions", icon: ClipboardList },
-      { label: "Mon profil", href: "/ouv/profil", icon: User },
+      { label: "Mon équipe", href: "/ouv/equipe", icon: HardHat },
+      { label: "Mes outils & EPI", href: "/ouv/outils", icon: Wrench },
+      { label: "Sécurité (HSE)", href: "/ouv/hse", icon: ShieldAlert },
     ],
   },
   CPT: {
@@ -217,6 +248,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Factures fournisseurs", href: "/comptable/factures-frns", icon: Receipt },
       { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
       { label: "Trésorerie", href: "/comptable/tresorerie", icon: Coins },
+      { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
       { label: "Actifs", href: "/comptable/actifs", icon: Package },
       { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText, hideForRoles: [Role.DAF] },
       { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
@@ -239,6 +271,7 @@ const FULL: Record<Module, NavSection> = {
     title: "Espace Magasinier",
     items: [
       { label: "Tableau de bord", href: "/magasin", icon: LayoutDashboard },
+      { label: "Demandes chantier", href: "/magasin/demandes", icon: ListChecks },
       { label: "Entrées stock", href: "/magasin/entrees", icon: Package },
       { label: "Sorties stock", href: "/magasin/sorties", icon: ShoppingCart },
       { label: "Catalogue", href: "/magasin/catalogue", icon: ClipboardList },
@@ -317,6 +350,23 @@ const READ_ITEM: Record<Module, NavItem> = {
 };
 
 /**
+ * Section "Mon espace" pour l'ouvrier — items "personnels" séparés de la
+ * section "Espace Ouvrier" (qui regroupe les outils chantier). Pointe
+ * vers les routes /ouv/* (PWA mobile-first) plutôt que /employe/*.
+ *
+ * Affichée par getSidebarSections() quand le rôle est WORKER (OUV=OWN).
+ */
+const OUV_PERSONAL: NavSection = {
+  title: "Mon espace",
+  items: [
+    { label: "Mon profil", href: "/ouv/profil", icon: User },
+    { label: "Ma paie", href: "/ouv/paie", icon: CreditCard },
+    { label: "Mes congés", href: "/ouv/conges", icon: Calendar },
+    { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
+  ],
+};
+
+/**
  * Construit la sidebar pour un rôle donné en lisant la matrice d'accès.
  *
  * Composition :
@@ -324,6 +374,9 @@ const READ_ITEM: Record<Module, NavItem> = {
  *   2) Une section "Drill-down" regroupant les vues READ (si ≥ 1 module READ).
  *   3) Section "Mon espace" (EMP) si le rôle a OWN sur EMP — déjà inclus
  *      en FULL si applicable.
+ *   4) Cas particulier OUV en OWN (WORKER) : la sidebar n'affiche
+ *      normalement rien (OWN ≠ FULL/SCOPE), donc on ajoute manuellement
+ *      la section "Espace Ouvrier" (chantier) + "Mon espace" (perso).
  *
  * Exemple — DG :
  *   - FULL : DG → section "Espace DG" (5 items)
@@ -351,7 +404,14 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   //    marqués `hideForRoles` quand le rôle visiteur y est listé (anti-doublon
   //    superviseur — ex: le DAF voit Espace Comptabilité sans son "Tableau de
   //    bord" puisqu'il a déjà le sien dans /direction-financiere).
+  //
+  // Cas particulier : le SITE_MANAGER (Chef de Chantier) a MAG=SCOPE dans
+  // la matrice (pour permettre l'accès lecture aux stocks de son
+  // chantier), mais on ne veut PAS lui afficher la section "Espace
+  // Magasinier" complète dans la sidebar — ce n'est pas son métier.
   for (const m of fullModules) {
+    if (role === Role.SITE_MANAGER && m === MODULES.MAG) continue;
+
     const section = FULL[m];
     const filteredItems = section.items.filter(
       (item) => !item.hideForRoles?.includes(role)
@@ -360,7 +420,18 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   }
 
   // 2) Drill-down compact (si rôle lit ≥ 1 module autre que les siens)
-  if (readModules.length > 0) {
+  //    Exceptions :
+  //    - SITE_MANAGER (CC) a READ sur CDT/LOG/GED par cohérence métier
+  //      (remontée vers Conducteur Travaux) mais ces vues ne sont pas
+  //      son métier — on les retire de sa sidebar pour rester focalisé.
+  //    - ARCHIVIST (Référent Documentaire) a READ sur 10 modules métier
+  //      uniquement pour supporter canReadAllDocuments (lecture des docs
+  //      de toutes les directions). Sa sidebar reste 100% documentaire.
+  if (
+    readModules.length > 0 &&
+    role !== Role.SITE_MANAGER &&
+    role !== Role.ARCHIVIST
+  ) {
     sections.push({
       title: "Drill-down (lecture)",
       readOnly: true,
@@ -369,8 +440,22 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   }
 
   // 3) "Mon espace" personnel pour les rôles qui ont OWN sur EMP (mais pas FULL)
-  if (ownModules.includes(MODULES.EMP) && !fullModules.includes(MODULES.EMP)) {
+  //    Cas particulier WORKER : skip — il a son propre OUV_PERSONAL qui
+  //    pointe vers /ouv/* (PWA), évite le doublon avec FULL.EMP qui
+  //    pointe vers /employe/*.
+  if (
+    ownModules.includes(MODULES.EMP) &&
+    !fullModules.includes(MODULES.EMP) &&
+    role !== Role.WORKER
+  ) {
     sections.push(FULL.EMP);
+  }
+
+  // 4) Cas WORKER (ouvrier) — OUV=OWN ne déclencherait rien sinon.
+  //    Affiche la section chantier puis l'espace perso ouvrier.
+  if (ownModules.includes(MODULES.OUV) && !fullModules.includes(MODULES.OUV)) {
+    sections.push(FULL.OUV);
+    sections.push(OUV_PERSONAL);
   }
 
   return sections;
