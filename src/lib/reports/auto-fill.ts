@@ -35,46 +35,85 @@ function daysInMonth(period: Date): number {
 }
 
 export interface DafKpis {
+  // 1) Performance financière
   revenueMonthXAF: bigint;
   revenueYtdXAF: bigint;
   expensesMonthXAF: bigint;
   grossMarginXAF: bigint;
   grossMarginPercent: number;
+  netMarginXAF: bigint;
+  netMarginPercent: number;
+  ebitdaXAF: bigint;
+  ebitdaPercent: number;
 
+  // 2) Trésorerie
   cashBalanceXAF: bigint;
+  cashVariationXAF: bigint;
   creditLinesUsedXAF: bigint;
   creditLinesAvailableXAF: bigint;
+  capacityAutofinancingXAF: bigint;
 
+  // 3) Créances clients
   accountsReceivableXAF: bigint;
   overdueReceivablesXAF: bigint;
+  doubtfulReceivablesXAF: bigint;
   dso: number;
 
+  // 4) Dettes fournisseurs
   accountsPayableXAF: bigint;
   overduePayablesXAF: bigint;
   dpo: number;
 
+  // 5) Structure financière
+  workingCapitalNeedXAF: bigint;
+  capexMonthXAF: bigint;
+
+  // 6) Paie
   payrollMassMonthXAF: bigint;
   payrollHeadcount: number;
   payrollVsRevenuePercent: number;
 
+  // 7) Fiscal
+  vatCollectedXAF: bigint;
+  vatDeductibleXAF: bigint;
+  vatDueXAF: bigint;
+  corporateTaxProvisionXAF: bigint;
+
   /** Liste des champs qui ont été remplis (pour feedback UI). */
   filledFields: string[];
   /** Sources consolidées (label tenant + nombre d'enregistrements). */
-  sources: { tenantIds: string[]; billings: number; invoices: number; payslips: number; banks: number };
+  sources: {
+    tenantIds: string[];
+    billings: number;
+    invoices: number;
+    payslips: number;
+    banks: number;
+    fixedAssets: number;
+    previousMonthFound: boolean;
+  };
 }
+
+/** Taux IS Cameroun (entreprise standard 2026). */
+const CORPORATE_TAX_RATE = 0.30;
+/** Seuil "créance douteuse" = échue depuis plus de 90 jours. */
+const DOUBTFUL_RECEIVABLE_DAYS = 90;
 
 export async function computeDafKpis(tenantId: string, period: Date): Promise<DafKpis> {
   const scopeIds = await resolveScope(tenantId);
   const periodStart = startOfMonth(period);
   const periodEnd = startOfNextMonth(period);
   const yearStart = startOfYear(period);
+  const previousMonthStart = new Date(
+    Date.UTC(period.getUTCFullYear(), period.getUTCMonth() - 1, 1),
+  );
   const now = new Date();
+  const ninetyDaysAgo = new Date(now.getTime() - DOUBTFUL_RECEIVABLE_DAYS * 86_400_000);
   const monthLabel = `${periodStart.getUTCFullYear()}-${String(periodStart.getUTCMonth() + 1).padStart(2, "0")}`;
 
-  // ── ProgressBilling : CA produit (côté client) ─────────────────────────
+  // ── ProgressBilling : CA + TVA collectée ──────────────────────────────
   const billingsMonth = await prisma.progressBilling.findMany({
     where: { tenantId: { in: scopeIds }, period: monthLabel },
-    select: { amountHt: true, status: true, netToReceive: true, dueDate: true, paidAmount: true },
+    select: { amountHt: true, vatAmount: true, status: true, netToReceive: true, dueDate: true, paidAmount: true },
   });
   const billingsYtd = await prisma.progressBilling.findMany({
     where: {
@@ -88,11 +127,12 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
       tenantId: { in: scopeIds },
       status: { notIn: ["PAID"] },
     },
-    select: { netToReceive: true, paidAmount: true, dueDate: true },
+    select: { netToReceive: true, paidAmount: true, dueDate: true, status: true },
   });
 
   const revenueMonthXAF = billingsMonth.reduce((s, b) => s + b.amountHt, 0n);
   const revenueYtdXAF = billingsYtd.reduce((s, b) => s + b.amountHt, 0n);
+  const vatCollectedXAF = billingsMonth.reduce((s, b) => s + (b.vatAmount ?? 0n), 0n);
   const accountsReceivableXAF = allOpenBillings.reduce(
     (s, b) => s + b.netToReceive - (b.paidAmount ?? 0n),
     0n,
@@ -100,11 +140,15 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
   const overdueReceivablesXAF = allOpenBillings
     .filter((b) => b.dueDate < now)
     .reduce((s, b) => s + b.netToReceive - (b.paidAmount ?? 0n), 0n);
+  // Créances douteuses = échues > 90j OU explicitement en litige (DISPUTED)
+  const doubtfulReceivablesXAF = allOpenBillings
+    .filter((b) => b.status === "DISPUTED" || b.dueDate < ninetyDaysAgo)
+    .reduce((s, b) => s + b.netToReceive - (b.paidAmount ?? 0n), 0n);
 
-  // ── SupplierInvoice : charges + dettes fournisseurs ───────────────────
+  // ── SupplierInvoice : charges + dettes + TVA déductible ───────────────
   const invoicesMonth = await prisma.supplierInvoice.findMany({
     where: { tenantId: { in: scopeIds }, invoiceDate: { gte: periodStart, lt: periodEnd } },
-    select: { amountHt: true, amountTtc: true, status: true },
+    select: { amountHt: true, amountTtc: true, vatAmount: true, status: true },
   });
   const allOpenInvoices = await prisma.supplierInvoice.findMany({
     where: {
@@ -115,6 +159,7 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
   });
 
   const expensesMonthXAF = invoicesMonth.reduce((s, i) => s + i.amountHt, 0n);
+  const vatDeductibleXAF = invoicesMonth.reduce((s, i) => s + (i.vatAmount ?? 0n), 0n);
   const accountsPayableXAF = allOpenInvoices.reduce((s, i) => s + i.amountTtc, 0n);
   const overduePayablesXAF = allOpenInvoices
     .filter((i) => i.dueDate < now)
@@ -132,6 +177,15 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
     0n,
   );
 
+  // ── Variation trésorerie depuis le rapport précédent ──────────────────
+  const previousReport = await prisma.dafMonthlyFinancialReport.findFirst({
+    where: { tenantId, period: previousMonthStart, status: { in: ["VALIDATED", "SUBMITTED"] } },
+    select: { cashBalanceXAF: true },
+  });
+  const cashVariationXAF = previousReport
+    ? cashBalanceXAF - previousReport.cashBalanceXAF
+    : 0n;
+
   // ── Payslip : masse salariale + effectifs ─────────────────────────────
   const payslips = await prisma.payslip.findMany({
     where: { tenantId: { in: scopeIds }, period: { gte: periodStart, lt: periodEnd } },
@@ -143,12 +197,44 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
   );
   const payrollHeadcount = new Set(payslips.map((p) => p.userId)).size;
 
+  // ── FixedAsset : CAPEX du mois (acquisitions) ─────────────────────────
+  const newAssets = await prisma.fixedAsset.findMany({
+    where: {
+      tenantId: { in: scopeIds },
+      acquisitionDate: { gte: periodStart, lt: periodEnd },
+    },
+    select: { grossValue: true },
+  });
+  const capexMonthXAF = newAssets.reduce((s, a) => s + a.grossValue, 0n);
+
   // ── KPIs dérivés ──────────────────────────────────────────────────────
   const grossMarginXAF = revenueMonthXAF - expensesMonthXAF;
   const grossMarginPercent =
     revenueMonthXAF > 0n
       ? Number(((grossMarginXAF * 10000n) / revenueMonthXAF)) / 100
       : 0;
+  // Marge nette = marge brute − masse salariale (approximation simplifiée)
+  const netMarginXAF = grossMarginXAF - payrollMassMonthXAF;
+  const netMarginPercent =
+    revenueMonthXAF > 0n
+      ? Number(((netMarginXAF * 10000n) / revenueMonthXAF)) / 100
+      : 0;
+  // EBITDA ≈ marge brute − masse salariale (sans amortissements/intérêts)
+  const ebitdaXAF = netMarginXAF;
+  const ebitdaPercent = netMarginPercent;
+  // Capacité d'autofinancement ≈ marge nette (approximation simplifiée)
+  const capacityAutofinancingXAF = netMarginXAF > 0n ? netMarginXAF : 0n;
+  // BFR = encours clients − dettes fournisseurs (formule simplifiée, sans stocks)
+  const workingCapitalNeedXAF = accountsReceivableXAF - accountsPayableXAF;
+  // IS provisionné = taux IS × marge brute (approximation, > 0)
+  const corporateTaxProvisionXAF =
+    grossMarginXAF > 0n
+      ? BigInt(Math.round(Number(grossMarginXAF) * CORPORATE_TAX_RATE))
+      : 0n;
+  // TVA due = max(0, collectée − déductible)
+  const vatDueXAF =
+    vatCollectedXAF > vatDeductibleXAF ? vatCollectedXAF - vatDeductibleXAF : 0n;
+
   const dim = daysInMonth(period);
   const dso =
     revenueMonthXAF > 0n
@@ -167,12 +253,23 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
   if (revenueMonthXAF > 0n) filledFields.push("CA mois");
   if (revenueYtdXAF > 0n) filledFields.push("CA YTD");
   if (expensesMonthXAF > 0n) filledFields.push("Charges mois");
-  if (cashBalanceXAF > 0n || banks.length > 0) filledFields.push("Trésorerie");
+  if (grossMarginXAF !== 0n) filledFields.push("Marge brute");
+  if (netMarginXAF !== 0n) filledFields.push("Marge nette / EBITDA");
+  if (banks.length > 0) filledFields.push("Trésorerie");
+  if (previousReport) filledFields.push("Variation trésorerie");
+  if (capacityAutofinancingXAF > 0n) filledFields.push("CAF");
   if (accountsReceivableXAF > 0n) filledFields.push("Créances clients");
   if (overdueReceivablesXAF > 0n) filledFields.push("Créances échues");
+  if (doubtfulReceivablesXAF > 0n) filledFields.push("Créances douteuses");
   if (accountsPayableXAF > 0n) filledFields.push("Dettes fournisseurs");
   if (overduePayablesXAF > 0n) filledFields.push("Dettes échues");
+  if (workingCapitalNeedXAF !== 0n) filledFields.push("BFR");
+  if (capexMonthXAF > 0n) filledFields.push("CAPEX");
   if (payrollMassMonthXAF > 0n) filledFields.push("Masse salariale");
+  if (vatCollectedXAF > 0n) filledFields.push("TVA collectée");
+  if (vatDeductibleXAF > 0n) filledFields.push("TVA déductible");
+  if (vatDueXAF > 0n) filledFields.push("TVA due");
+  if (corporateTaxProvisionXAF > 0n) filledFields.push("IS provisionné");
 
   return {
     revenueMonthXAF,
@@ -180,22 +277,37 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
     expensesMonthXAF,
     grossMarginXAF,
     grossMarginPercent: Math.round(grossMarginPercent * 10) / 10,
+    netMarginXAF,
+    netMarginPercent: Math.round(netMarginPercent * 10) / 10,
+    ebitdaXAF,
+    ebitdaPercent: Math.round(ebitdaPercent * 10) / 10,
 
     cashBalanceXAF,
+    cashVariationXAF,
     creditLinesUsedXAF,
     creditLinesAvailableXAF,
+    capacityAutofinancingXAF,
 
     accountsReceivableXAF,
     overdueReceivablesXAF,
+    doubtfulReceivablesXAF,
     dso: Math.round(dso * 10) / 10,
 
     accountsPayableXAF,
     overduePayablesXAF,
     dpo: Math.round(dpo * 10) / 10,
 
+    workingCapitalNeedXAF,
+    capexMonthXAF,
+
     payrollMassMonthXAF,
     payrollHeadcount,
     payrollVsRevenuePercent: Math.round(payrollVsRevenuePercent * 10) / 10,
+
+    vatCollectedXAF,
+    vatDeductibleXAF,
+    vatDueXAF,
+    corporateTaxProvisionXAF,
 
     filledFields,
     sources: {
@@ -204,6 +316,8 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
       invoices: invoicesMonth.length,
       payslips: payslips.length,
       banks: banks.length,
+      fixedAssets: newAssets.length,
+      previousMonthFound: Boolean(previousReport),
     },
   };
 }
