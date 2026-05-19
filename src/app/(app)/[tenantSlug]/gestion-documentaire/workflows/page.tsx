@@ -7,6 +7,7 @@ import { useGedWorkflows, useEscalateWorkflow, type WorkflowInstanceRow } from "
 import { useAuth } from "@/hooks/useAuth";
 import { WorkflowPipelineVisual } from "@/components/ged/workflows/WorkflowPipelineVisual";
 import { WorkflowDetailDrawer } from "@/components/ged/workflows/WorkflowDetailDrawer";
+import { WorkflowTemplatesSection } from "@/components/ged/workflows/WorkflowTemplatesSection";
 
 function fmtDate(s: string | null): string {
   if (!s) return "—";
@@ -166,20 +167,9 @@ export default function GedWorkflowsPage() {
         </ul>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">Templates de workflows</h2>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {data.templates.map((t) => (
-            <div key={t.id} className="rounded-xl border border-line bg-white p-3">
-              <div className="font-mono text-[10.5px] text-violet-700">{t.code}</div>
-              <div className="text-[13px] font-semibold text-ink">{t.name}</div>
-              <div className="mt-1 text-[11px] text-ink-3">
-                {t.stepsCount} étape{t.stepsCount > 1 ? "s" : ""}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <WorkflowTemplatesSection
+        canEdit={user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN"}
+      />
 
       <WorkflowDetailDrawer
         workflowId={openId}

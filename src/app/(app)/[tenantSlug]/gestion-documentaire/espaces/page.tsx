@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useGedSpaces, type GedSpacesFilters } from "@/hooks/useGedSpaces";
 import { SpacesHeader } from "@/components/ged/espaces/SpacesHeader";
@@ -25,7 +26,11 @@ export default function GedEspacesPage() {
   const [minIndex, setMinIndex] = useState<number | "">("");
   const [minVol, setMinVol] = useState<number | "">("");
 
-  const [openId, setOpenId] = useState<string | null>(null);
+  // Permet l'ouverture directe d'un espace via /espaces?openId=<id>
+  // (utilisé par les liens depuis le dashboard GED).
+  const searchParams = useSearchParams();
+  const initialOpenId = searchParams.get("openId");
+  const [openId, setOpenId] = useState<string | null>(initialOpenId);
   const [showNew, setShowNew] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [toast, setToast] = useState<string | null>(null);

@@ -32,7 +32,7 @@ export function SpacesOverviewGrid({ spaces }: Props) {
           return (
             <Link
               key={s.id}
-              href={s.id === "AGGREGATED_SITES" ? "/gestion-documentaire/espaces?tab=sites" : `/gestion-documentaire/espaces/${s.id}`}
+              href={s.id === "AGGREGATED_SITES" ? "/gestion-documentaire/espaces?tab=sites" : `/gestion-documentaire/espaces?openId=${s.id}`}
               className="rounded-lg border border-line bg-surface-alt/40 p-3 transition hover:border-violet-300 hover:bg-violet-50"
             >
               <div className="flex items-center gap-2">

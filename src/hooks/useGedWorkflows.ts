@@ -135,6 +135,166 @@ export function useEscalateWorkflow(id: string) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// CRUD Templates de workflow
+// ─────────────────────────────────────────────────────────────────────
+
+export type WorkflowStepRole =
+  | "DG"
+  | "DAF"
+  | "SECRETARY_GENERAL"
+  | "HR"
+  | "TECH_DIRECTOR"
+  | "WORKS_DIRECTOR"
+  | "WORKS_MANAGER"
+  | "SITE_MANAGER"
+  | "WORKER"
+  | "ACCOUNTANT"
+  | "LOGISTICS"
+  | "WAREHOUSE"
+  | "ARCHIVIST"
+  | "EMPLOYEE"
+  | "EXTERNAL";
+
+export interface WorkflowStepInput {
+  stepIndex: number;
+  name: string;
+  role: WorkflowStepRole;
+  mandatory: boolean;
+  slaHours: number;
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  steps: WorkflowStepInput[];
+  active: boolean;
+  instancesCount: number;
+  classificationsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkflowTemplateDetail extends Omit<WorkflowTemplate, "classificationsCount"> {
+  classifications: Array<{ id: string; prefix: string; name: string; active: boolean }>;
+}
+
+export function useGedWorkflowTemplates() {
+  return useQuery({
+    queryKey: ["ged", "workflow-templates"],
+    queryFn: async (): Promise<{ templates: WorkflowTemplate[] }> => {
+      const res = await fetch("/api/ged/workflows/templates", { credentials: "same-origin" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+  });
+}
+
+export function useGedWorkflowTemplate(id: string | null) {
+  return useQuery({
+    queryKey: ["ged", "workflow-template", id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<WorkflowTemplateDetail> => {
+      const res = await fetch(`/api/ged/workflows/templates/${id}`, {
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+  });
+}
+
+function invalidateTemplates(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ["ged", "workflow-templates"] });
+  qc.invalidateQueries({ queryKey: ["ged", "workflow-template"] });
+  qc.invalidateQueries({ queryKey: ["ged", "workflows"] });
+}
+
+export interface CreateTemplateInput {
+  code: string;
+  name: string;
+  description?: string | null;
+  steps: WorkflowStepInput[];
+  classificationIds?: string[];
+}
+
+export function useCreateWorkflowTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateTemplateInput) => {
+      const res = await fetch("/api/ged/workflows/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return res.json() as Promise<{
+        ok: true;
+        template: { id: string; code: string; name: string };
+      }>;
+    },
+    onSuccess: () => invalidateTemplates(qc),
+  });
+}
+
+export interface UpdateTemplateInput {
+  name?: string;
+  description?: string | null;
+  steps?: WorkflowStepInput[];
+  active?: boolean;
+  classificationIds?: string[];
+}
+
+export function useUpdateWorkflowTemplate(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: UpdateTemplateInput) => {
+      const res = await fetch(`/api/ged/workflows/templates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => invalidateTemplates(qc),
+  });
+}
+
+export function useDeleteWorkflowTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, force }: { id: string; force?: boolean }) => {
+      const res = await fetch(
+        `/api/ged/workflows/templates/${id}${force ? "?force=1" : ""}`,
+        { method: "DELETE", credentials: "same-origin" },
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${res.status}`);
+      }
+      return res.json() as Promise<{ ok: true; deleted: "soft" | "hard" }>;
+    },
+    onSuccess: () => invalidateTemplates(qc),
+  });
+}
+
 export function useCancelWorkflow(id: string) {
   const qc = useQueryClient();
   return useMutation({
