@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Pause, Play, ExternalLink, UserPlus } from "lucide-react";
+import { Pause, Play, ExternalLink, UserPlus, Crown } from "lucide-react";
 import { FirstAdminModal } from "./FirstAdminModal";
+import { FirstDgModal } from "./FirstDgModal";
 
 export interface TenantRow {
   id: string;
@@ -41,6 +42,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [firstAdminFor, setFirstAdminFor] = useState<TenantRow | null>(null);
+  const [firstDgFor, setFirstDgFor] = useState<TenantRow | null>(null);
 
   async function suspend(t: TenantRow) {
     const reason = prompt(`Raison de la suspension de ${t.name} ?`)?.trim();
@@ -183,11 +185,19 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                             type="button"
                             onClick={() => setFirstAdminFor(t)}
                             className="rounded px-2 py-1 text-[11px] font-semibold bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25"
-                            title="Créer le premier administrateur"
+                            title="Créer le premier administrateur (IT)"
                           >
                             <UserPlus className="inline h-3 w-3" /> 1<sup>er</sup> admin
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => setFirstDgFor(t)}
+                          className="rounded px-2 py-1 text-[11px] font-semibold bg-amber-500/15 text-amber-200 hover:bg-amber-500/25"
+                          title="Créer le Directeur Général (1 seul autorisé par tenant)"
+                        >
+                          <Crown className="inline h-3 w-3" /> 1<sup>er</sup> DG
+                        </button>
                         {isSuspended ? (
                           <button
                             type="button"
@@ -229,6 +239,13 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
           tenantId={firstAdminFor.id}
           tenantName={firstAdminFor.name}
           onClose={() => setFirstAdminFor(null)}
+        />
+      )}
+      {firstDgFor && (
+        <FirstDgModal
+          tenantId={firstDgFor.id}
+          tenantName={firstDgFor.name}
+          onClose={() => setFirstDgFor(null)}
         />
       )}
     </div>
