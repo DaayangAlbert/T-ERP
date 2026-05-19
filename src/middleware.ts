@@ -137,9 +137,14 @@ export function middleware(request: NextRequest) {
       // renverra l'utilisateur vers "/" si besoin.
       return NextResponse.next();
     }
-    const url = request.nextUrl.clone();
-    url.pathname = `/${slug}${pathname}`;
-    return NextResponse.redirect(url);
+    // En standalone derrière nginx, request.nextUrl.clone() peut hériter
+    // de l'origine interne (http://localhost:3000) au lieu du host public.
+    // On force l'origine via Host + X-Forwarded-Proto (envoyés par nginx).
+    const host = request.headers.get("host") ?? request.nextUrl.host;
+    const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+    const search = request.nextUrl.search;
+    const target = `${proto}://${host}/${slug}${pathname}${search}`;
+    return NextResponse.redirect(target);
   }
 
   // Cas B : pathname commence par un slug (forme canonique).
