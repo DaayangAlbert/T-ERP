@@ -51,6 +51,7 @@ import {
   GitBranch,
   Tags,
   Archive,
+  FolderArchive,
   Scale,
   Mail,
   Landmark,
@@ -90,23 +91,49 @@ export interface NavSection {
 // Sections complètes par module (vue FULL — pour le rôle propriétaire)
 // ════════════════════════════════════════════════════════════════════════
 
+// Sous-sections DG — la sidebar DG est split en 3 thématiques pour
+// rester lisible (la composition est faite dans `getSidebarSections`).
+const DG_PILOTAGE: NavSection = {
+  title: "Pilotage",
+  items: [
+    { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
+    { label: "Consolidation groupe", href: "/direction-generale/consolidation", icon: Building2 },
+    { label: "Mes objectifs", href: "/direction-generale/objectifs", icon: Target },
+  ],
+};
+
+const DG_FINANCE: NavSection = {
+  title: "Finance & trésorerie",
+  items: [
+    { label: "Trésorerie prévisionnelle", href: "/direction-generale/tresorerie-previsionnelle", icon: TrendingUp },
+    { label: "Reporting CA", href: "/direction-generale/reporting-ca", icon: ClipboardList },
+    { label: "Recouvrements en cours", href: "/direction-generale/recouvrements", icon: Receipt },
+    { label: "Personnel & coûts", href: "/direction-generale/personnel", icon: Users },
+    { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
+  ],
+};
+
+const DG_VALIDATIONS: NavSection = {
+  title: "Validations & rapports",
+  items: [
+    { label: "Validations N3", href: "/direction-generale/validations", icon: CheckCircle2, badge: { value: "0", alert: true } },
+    { label: "Rapports DAF à valider", href: "/direction-generale/rapports-daf", icon: Coins },
+    { label: "Rapports DT à valider", href: "/direction-generale/rapports-dt", icon: FileText },
+    { label: "Rapports DTrav à valider", href: "/direction-generale/rapports-dtrav", icon: FileText },
+    { label: "Rapports QHSE à valider", href: "/direction-generale/rapports-qhse", icon: ShieldAlert },
+  ],
+};
+
 const FULL: Record<Module, NavSection> = {
   DG: {
+    // Section "plate" — utilisée comme fallback. La sidebar DG réelle est
+    // composée des 3 sub-sections `DG_PILOTAGE`, `DG_FINANCE`,
+    // `DG_VALIDATIONS` dans `getSidebarSections`.
     title: "Espace DG",
     items: [
-      { label: "Tableau de bord DG", href: "/dashboard/dg", icon: Crown },
-      { label: "Consolidation groupe", href: "/direction-generale/consolidation", icon: Building2 },
-      { label: "Mes objectifs", href: "/direction-generale/objectifs", icon: Target },
-      { label: "Trésorerie prévisionnelle", href: "/direction-generale/tresorerie-previsionnelle", icon: TrendingUp },
-      { label: "Reporting CA", href: "/direction-generale/reporting-ca", icon: ClipboardList },
-      { label: "Validations N3", href: "/direction-generale/validations", icon: CheckCircle2, badge: { value: "0", alert: true } },
-      { label: "Rapports DAF à valider", href: "/direction-generale/rapports-daf", icon: Coins },
-      { label: "Rapports DT à valider", href: "/direction-generale/rapports-dt", icon: FileText },
-      { label: "Rapports DTrav à valider", href: "/direction-generale/rapports-dtrav", icon: FileText },
-      { label: "Rapports QHSE à valider", href: "/direction-generale/rapports-qhse", icon: ShieldAlert },
-      { label: "Recouvrements en cours", href: "/direction-generale/recouvrements", icon: Receipt },
-      { label: "Personnel & coûts", href: "/direction-generale/personnel", icon: Users },
-      { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
+      ...DG_PILOTAGE.items,
+      ...DG_FINANCE.items,
+      ...DG_VALIDATIONS.items,
     ],
   },
   DAF: {
@@ -283,6 +310,7 @@ const FULL: Record<Module, NavSection> = {
     title: "Espace GED",
     items: [
       { label: "Tableau de bord", href: "/gestion-documentaire", icon: LayoutDashboard },
+      { label: "Tous les documents", href: "/gestion-documentaire/documents", icon: FolderArchive },
       { label: "Espaces documentaires", href: "/gestion-documentaire/espaces", icon: FolderOpen, badge: { value: "28" } },
       { label: "Workflows", href: "/gestion-documentaire/workflows", icon: GitBranch, badge: { value: "12", alert: true } },
       { label: "Nomenclature", href: "/gestion-documentaire/nomenclature", icon: Tags, badge: { value: "72" } },
@@ -412,6 +440,13 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   for (const m of fullModules) {
     if (role === Role.SITE_MANAGER && m === MODULES.MAG) continue;
 
+    // Cas particulier DG : la section "Espace DG" est split en 3
+    // sous-sections thématiques pour rester lisible.
+    if (role === Role.DG && m === MODULES.DG) {
+      sections.push(DG_PILOTAGE, DG_FINANCE, DG_VALIDATIONS);
+      continue;
+    }
+
     const section = FULL[m];
     const filteredItems = section.items.filter(
       (item) => !item.hideForRoles?.includes(role)
@@ -432,10 +467,22 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
     role !== Role.SITE_MANAGER &&
     role !== Role.ARCHIVIST
   ) {
+    // Pour le DG, Vue Stocks/Logistique/Documentaire pointent vers des
+    // pages condensées dédiées (`/direction-generale/vue-*`) plutôt que
+    // vers les écrans bruts des autres profils.
+    const dgOverrides: Partial<Record<Module, NavItem>> =
+      role === Role.DG
+        ? {
+            MAG: { ...READ_ITEM.MAG, label: "Vue Stocks", href: "/direction-generale/vue-stocks" },
+            LOG: { ...READ_ITEM.LOG, label: "Vue Logistique", href: "/direction-generale/vue-logistique" },
+            GED: { ...READ_ITEM.GED, label: "Vue Documentaire", href: "/direction-generale/vue-documentaire" },
+          }
+        : {};
+
     sections.push({
       title: "Drill-down (lecture)",
       readOnly: true,
-      items: readModules.map((m) => READ_ITEM[m]),
+      items: readModules.map((m) => dgOverrides[m] ?? READ_ITEM[m]),
     });
   }
 

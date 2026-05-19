@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Confidentiality, Role } from "@prisma/client";
+import type { Confidentiality, DocStatus, Role } from "@prisma/client";
 
 export interface UploadDocumentInput {
   file: File;
@@ -110,6 +110,121 @@ export interface UnclassifiedDocument {
   classificationPrefix: string | null;
   classificationName: string | null;
   missing: { classification: boolean; space: boolean };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Vue exhaustive archiviste (GET /api/ged/documents/all)
+// ─────────────────────────────────────────────────────────────────────
+
+export interface GedDocument {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+  url: string;
+  createdAt: string;
+  status: DocStatus;
+  confidentiality: Confidentiality;
+  category: string | null;
+  folder: string | null;
+  internalReference: string | null;
+  authorId: string;
+  authorName: string;
+  authorRole: Role | null;
+  siteId: string | null;
+  siteCode: string | null;
+  siteName: string | null;
+  spaceId: string | null;
+  spaceCode: string | null;
+  spaceName: string | null;
+  spaceIcon: string | null;
+  classificationId: string | null;
+  classificationPrefix: string | null;
+  classificationName: string | null;
+  classificationCategory: string | null;
+}
+
+export interface AllDocumentsResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  pages: number;
+  items: GedDocument[];
+  facets: { bySpace: Record<string, number> };
+}
+
+export interface AllDocumentsFilters {
+  spaceId?: string | null;
+  classificationId?: string;
+  siteId?: string;
+  authorId?: string;
+  status?: DocStatus;
+  confidentiality?: Confidentiality;
+  q?: string;
+  from?: string;
+  to?: string;
+  unclassified?: boolean;
+  page?: number;
+  pageSize?: number;
+  sort?: "newest" | "oldest" | "name" | "size";
+}
+
+export function useGedAllDocuments(filters: AllDocumentsFilters = {}) {
+  const qs = new URLSearchParams();
+  if (filters.spaceId) qs.set("spaceId", filters.spaceId);
+  if (filters.classificationId) qs.set("classificationId", filters.classificationId);
+  if (filters.siteId) qs.set("siteId", filters.siteId);
+  if (filters.authorId) qs.set("authorId", filters.authorId);
+  if (filters.status) qs.set("status", filters.status);
+  if (filters.confidentiality) qs.set("confidentiality", filters.confidentiality);
+  if (filters.q) qs.set("q", filters.q);
+  if (filters.from) qs.set("from", filters.from);
+  if (filters.to) qs.set("to", filters.to);
+  if (filters.unclassified) qs.set("unclassified", "1");
+  if (filters.page) qs.set("page", String(filters.page));
+  if (filters.pageSize) qs.set("pageSize", String(filters.pageSize));
+  if (filters.sort) qs.set("sort", filters.sort);
+  return useQuery({
+    queryKey: ["ged", "documents", "all", filters],
+    queryFn: async (): Promise<AllDocumentsResponse> => {
+      const r = await fetch(`/api/ged/documents/all?${qs.toString()}`, {
+        credentials: "same-origin",
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${r.status}`);
+      }
+      return r.json();
+    },
+    placeholderData: (prev) => prev,
+  });
+}
+
+export interface BulkClassifyInput {
+  documentIds: string[];
+  spaceId?: string | null;
+  classificationId?: string | null;
+  folder?: string | null;
+}
+
+export function useBulkClassify() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: BulkClassifyInput) => {
+      const r = await fetch("/api/ged/documents/bulk-classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(input),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error ?? `HTTP ${r.status}`);
+      }
+      return r.json() as Promise<{ ok: true; updated: number; skipped: number }>;
+    },
+    onSuccess: () => invalidateGed(qc),
+  });
 }
 
 export function useUnclassifiedDocuments(opts: { page?: number; includeRecent?: boolean } = {}) {
