@@ -32,7 +32,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   await logAdminAction({
     session,
-    action: "PAYMENT_RECORDED",
+    action: "INVOICE_REMINDER_SENT",
     targetType: "SaasInvoice",
     targetId: invoice.id,
     targetDescription: `Relance #${invoice.reminderCount + 1} · ${invoice.reference}`,

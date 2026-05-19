@@ -30,7 +30,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Identifiants invalides" }, { status: 401 });
   }
 
-  // MFA OTP (stub MVP) — si activé, on demande l'OTP. Vrai TOTP en V2.
+  // MFA OTP — vrai TOTP en V2. Le stub "DEMO/123456" n'est plus accepté
+  // en production : refuser le login si on rencontre un mfaSecret=DEMO en prod.
   if (admin.mfaEnabled) {
     if (!otp) {
       return NextResponse.json(
@@ -38,11 +39,27 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
-    // En MVP : on accepte un code constant "123456" si mfaSecret == "DEMO"
-    // (à remplacer par speakeasy.totp.verify en V2)
-    if (!(admin.mfaSecret === "DEMO" && otp === "123456")) {
+    const isProd = process.env.NODE_ENV === "production";
+    if (admin.mfaSecret === "DEMO") {
+      if (isProd) {
+        console.error(`[admin-login] Compte ${admin.email} a mfaSecret=DEMO en prod — refus.`);
+        return NextResponse.json(
+          { error: "MFA non configuré pour ce compte — contactez le support" },
+          { status: 401 },
+        );
+      }
+      // Dev/staging only : on accepte le code magique "123456"
+      if (otp !== "123456") {
+        return NextResponse.json(
+          { error: "Code MFA invalide", needsOtp: true },
+          { status: 401 },
+        );
+      }
+    } else {
+      // TODO V2 : speakeasy.totp.verify({ secret: admin.mfaSecret, token: otp })
+      // Pour l'instant on refuse tout autre secret faute d'implémentation TOTP.
       return NextResponse.json(
-        { error: "Code MFA invalide", needsOtp: true },
+        { error: "MFA non implémenté pour ce compte — contactez le support" },
         { status: 401 },
       );
     }

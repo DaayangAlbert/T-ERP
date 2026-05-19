@@ -56,7 +56,9 @@ export function useSidebarBadges(): Record<string, SidebarBadge | null> {
         correspondencesPending: number;
       }>;
     },
-    enabled: role === Role.SECRETARY_GENERAL || role === Role.TENANT_ADMIN,
+    // Le TENANT_ADMIN n'a pas accès au module SG (matrice RBAC retourne 403)
+    // — on ne fetch que pour SECRETARY_GENERAL pour éviter le spam 403 console.
+    enabled: role === Role.SECRETARY_GENERAL,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });

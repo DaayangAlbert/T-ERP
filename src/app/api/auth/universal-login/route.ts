@@ -52,12 +52,26 @@ export async function POST(req: Request) {
                 { status: 401 },
               );
             }
-            // MVP : on accepte un code constant "123456" si mfaSecret == "DEMO"
-            // (à remplacer par speakeasy.totp.verify en V2)
-            const otpOk = admin.mfaSecret === "DEMO" && otp === "123456";
-            if (!otpOk) {
+            // Stub DEMO refusé en production (sécurité).
+            const isProd = process.env.NODE_ENV === "production";
+            if (admin.mfaSecret === "DEMO") {
+              if (isProd) {
+                console.error(`[universal-login] ${admin.email} mfaSecret=DEMO en prod — refus.`);
+                return NextResponse.json(
+                  { error: "MFA non configuré — contactez le support" },
+                  { status: 401 },
+                );
+              }
+              if (otp !== "123456") {
+                return NextResponse.json(
+                  { error: "Code MFA invalide", needsOtp: true },
+                  { status: 401 },
+                );
+              }
+            } else {
+              // TODO V2 : speakeasy.totp.verify({ secret: admin.mfaSecret, token: otp })
               return NextResponse.json(
-                { error: "Code MFA invalide", needsOtp: true },
+                { error: "MFA non implémenté — contactez le support" },
                 { status: 401 },
               );
             }
