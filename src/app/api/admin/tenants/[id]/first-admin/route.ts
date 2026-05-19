@@ -78,6 +78,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       status: UserStatus.ACTIVE,
       passwordHash,
       emailVerified: false,
+      // 1er admin du tenant = pleins pouvoirs IT (gestion users / rôles /
+      // settings / intégrations / logs). Sans ces flags, le guard `guardIt`
+      // refuse même la modification d'un profil ("Pouvoir manquant").
+      canManageUsers: true,
+      canManageRoles: true,
+      canManageTenantSettings: true,
+      canManageIntegrations: true,
+      canViewTechnicalLogs: true,
     },
     select: { id: true, email: true, firstName: true, lastName: true },
   });
