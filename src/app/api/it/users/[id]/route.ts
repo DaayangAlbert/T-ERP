@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { guardIt, isProtectedTarget } from "@/lib/rbac/it-guard";
-import { UserStatus } from "@prisma/client";
+import { Role, UserStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+
+// Rôles que l'IT ne peut PAS attribuer via PATCH (idem création).
+// SUPER_ADMIN = plateforme. TENANT_ADMIN = 1 seul par tenant (SUPER_ADMIN).
+const CRITICAL_ROLES_PATCH: Role[] = [Role.SUPER_ADMIN, Role.TENANT_ADMIN];
 
 const patchSchema = z.object({
   firstName: z.string().optional(),
@@ -12,6 +16,7 @@ const patchSchema = z.object({
   phone: z.string().nullable().optional(),
   position: z.string().nullable().optional(),
   status: z.nativeEnum(UserStatus).optional(),
+  role: z.nativeEnum(Role).optional(),
   assignedSiteIds: z.array(z.string()).optional(),
   // Champs étendus pour cohérence avec le formulaire de création
   category: z.string().nullable().optional(),
@@ -152,18 +157,63 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const before = await prisma.user.findFirst({
     where: { id: params.id, tenantId: session.tenantId },
-    select: { firstName: true, lastName: true, phone: true, position: true, status: true, assignedSiteIds: true },
+    select: { firstName: true, lastName: true, phone: true, position: true, status: true, role: true, assignedSiteIds: true },
   });
   if (!before) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
+  // Garde-fou changement de rôle : l'IT ne peut pas promouvoir vers
+  // SUPER_ADMIN ou TENANT_ADMIN.
+  if (parsed.data.role && CRITICAL_ROLES_PATCH.includes(parsed.data.role)) {
+    return NextResponse.json(
+      { error: `Promotion vers ${parsed.data.role} interdite — workflow super-admin requis` },
+      { status: 403 },
+    );
+  }
+
   // Convertir les dates ISO en Date pour Prisma
-  const { hireDate, dateOfBirth, ...rest } = parsed.data;
+  const { hireDate, dateOfBirth, role: newRole, ...rest } = parsed.data;
   const updateData: Record<string, unknown> = { ...rest };
   if (hireDate !== undefined) {
     updateData.hireDate = hireDate ? new Date(hireDate) : null;
   }
   if (dateOfBirth !== undefined) {
     updateData.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+  }
+
+  // Side-effects sur les pouvoirs quand le rôle change :
+  // - Promotion vers DG → tous les pouvoirs métier + IT activés
+  // - Démotion depuis DG → tous les pouvoirs reset (sinon ex-DG garde admin)
+  if (newRole && newRole !== before.role) {
+    updateData.role = newRole;
+    if (newRole === Role.DG) {
+      Object.assign(updateData, {
+        canManageUsers: true,
+        canManageRoles: true,
+        canManageTenantSettings: true,
+        canManageIntegrations: true,
+        canViewTechnicalLogs: true,
+        canManageBilling: true,
+        canManageCorporateGovernance: true,
+        canManageMarketContracts: true,
+        canManageLegalCases: true,
+        canManageOfficialCorrespondence: true,
+      });
+    } else if (before.role === Role.DG) {
+      // Démotion : on retire tous les pouvoirs critiques. Si le nouveau
+      // rôle a besoin de certains flags, l'IT les ré-octroie ensuite.
+      Object.assign(updateData, {
+        canManageUsers: false,
+        canManageRoles: false,
+        canManageTenantSettings: false,
+        canManageIntegrations: false,
+        canViewTechnicalLogs: false,
+        canManageBilling: false,
+        canManageCorporateGovernance: false,
+        canManageMarketContracts: false,
+        canManageLegalCases: false,
+        canManageOfficialCorrespondence: false,
+      });
+    }
   }
 
   const updated = await prisma.user.update({

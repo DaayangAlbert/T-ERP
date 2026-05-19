@@ -16,6 +16,24 @@ const SITE_ROLES = new Set([
   "LOGISTICS",
 ]);
 
+// Rôles modifiables par l'IT (idem création — SUPER_ADMIN / TENANT_ADMIN exclus).
+const ROLE_OPTIONS = [
+  { value: "DG", label: "Directeur Général" },
+  { value: "DAF", label: "DAF" },
+  { value: "TECH_DIRECTOR", label: "Directeur Technique" },
+  { value: "WORKS_DIRECTOR", label: "Directeur de Travaux" },
+  { value: "WORKS_MANAGER", label: "Conducteur de Travaux" },
+  { value: "SITE_MANAGER", label: "Chef de Chantier" },
+  { value: "HR", label: "Responsable RH" },
+  { value: "ACCOUNTANT", label: "Comptable" },
+  { value: "SECRETARY_GENERAL", label: "Secrétaire Général(e)" },
+  { value: "ARCHIVIST", label: "Référent Documentaire" },
+  { value: "WAREHOUSE", label: "Magasinier" },
+  { value: "LOGISTICS", label: "Logisticien" },
+  { value: "EMPLOYEE", label: "Employé bureau" },
+  { value: "WORKER", label: "Ouvrier" },
+] as const;
+
 interface SiteOption {
   id: string;
   code: string;
@@ -67,6 +85,9 @@ export default function EditUserPage() {
 
   const [loaded, setLoaded] = useState(false);
   const [originalRole, setOriginalRole] = useState("EMPLOYEE");
+  // role éditable séparément du originalRole (qui sert juste à afficher
+  // l'avant + à savoir si on a changé pour SITE_ROLES).
+  const [role, setRole] = useState("EMPLOYEE");
   const [originalEmail, setOriginalEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -115,6 +136,7 @@ export default function EditUserPage() {
         const json = (await res.json()) as { user: UserData };
         const u = json.user;
         setOriginalRole(u.role);
+        setRole(u.role);
         setOriginalEmail(u.email);
         setFirstName(u.firstName);
         setLastName(u.lastName);
@@ -181,6 +203,9 @@ export default function EditUserPage() {
       firstName,
       lastName,
       phone: phone || null,
+      // N'envoyer le rôle que s'il a changé — évite d'écraser des side-effects
+      // que la route applique sur changement de rôle.
+      ...(role !== originalRole ? { role } : {}),
       position: position || null,
       category: category || null,
       contractType: contractType || null,
@@ -275,8 +300,32 @@ export default function EditUserPage() {
 
           <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
             <Legend>Poste &amp; statut</Legend>
-            <Field label="Rôle (verrouillé)">
-              <input disabled value={originalRole} className={`${INPUT} bg-surface-alt text-ink-3 font-mono text-xs`} />
+            <Field
+              label="Rôle"
+              hint={
+                role !== originalRole
+                  ? `⚠ Changement de rôle : ${originalRole} → ${role}. ` +
+                    (role === "DG"
+                      ? "Tous les pouvoirs DG seront activés."
+                      : originalRole === "DG"
+                        ? "Les pouvoirs DG seront révoqués."
+                        : "")
+                  : "Modifier le rôle adapte automatiquement les pouvoirs (promotion/démotion)."
+              }
+            >
+              <select value={role} onChange={(e) => setRole(e.target.value)} className={INPUT}>
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+                {/* Si le user actuel a un rôle non-listé (SUPER_ADMIN/TENANT_ADMIN), on l'affiche en disabled */}
+                {!ROLE_OPTIONS.some((r) => r.value === originalRole) && (
+                  <option value={originalRole} disabled>
+                    {originalRole} (verrouillé)
+                  </option>
+                )}
+              </select>
             </Field>
             <Field label="Statut">
               <select value={status} onChange={(e) => setStatus(e.target.value)} className={INPUT}>
@@ -431,11 +480,22 @@ export default function EditUserPage() {
 const INPUT =
   "mt-1 w-full rounded-md border border-line-2 bg-white px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
-function Field({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  className,
+  hint,
+  children,
+}: {
+  label: string;
+  className?: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className={`block ${className ?? ""}`}>
       <span className="text-xs font-medium text-ink-2">{label}</span>
       {children}
+      {hint && <span className="mt-0.5 block text-[11px] text-ink-3">{hint}</span>}
     </label>
   );
 }
