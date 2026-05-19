@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
 
-  const protectedCheck = await isProtectedTarget(params.id);
+  const protectedCheck = await isProtectedTarget(params.id, session.sub);
   if (protectedCheck.blocked) {
     return NextResponse.json({ error: protectedCheck.reason }, { status: 403 });
   }

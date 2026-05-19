@@ -71,8 +71,20 @@ const PROTECTED_ROLES: Role[] = [Role.DG, Role.SUPER_ADMIN, Role.TENANT_ADMIN];
 /**
  * Renvoie true si la modification du `targetUser` par l'IT_ADMIN est interdite
  * (DG ne peut être désactivé, IT_ADMIN ne peut pas se promouvoir DG, etc.).
+ *
+ * Exception : un utilisateur peut TOUJOURS éditer son propre compte
+ * (changement de mot de passe, mise à jour profil, etc.). Passe
+ * `currentUserId` pour activer cette exception.
  */
-export async function isProtectedTarget(targetUserId: string): Promise<{ blocked: boolean; reason?: string }> {
+export async function isProtectedTarget(
+  targetUserId: string,
+  currentUserId?: string,
+): Promise<{ blocked: boolean; reason?: string }> {
+  // Auto-édition toujours autorisée — un user peut toucher à son propre profil
+  // sans passer par un workflow DG.
+  if (currentUserId && targetUserId === currentUserId) {
+    return { blocked: false };
+  }
   const target = await prisma.user.findUnique({
     where: { id: targetUserId },
     select: { role: true },

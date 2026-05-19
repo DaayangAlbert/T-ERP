@@ -128,8 +128,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
 
-  // Garde-fou : ne pas modifier un compte protégé (DG, SUPER_ADMIN, autre TENANT_ADMIN)
-  const protectedCheck = await isProtectedTarget(params.id);
+  // Garde-fou : ne pas modifier un compte protégé (DG, SUPER_ADMIN, autre
+  // TENANT_ADMIN). On passe session.sub pour autoriser l'auto-édition.
+  const protectedCheck = await isProtectedTarget(params.id, session.sub);
   if (protectedCheck.blocked) {
     await prisma.auditLog.create({
       data: {
