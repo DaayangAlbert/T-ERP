@@ -158,7 +158,7 @@ export function CandidateSignupForm() {
       <div className="text-center text-xs">
         <span className="text-ink-3">Déjà inscrit ? </span>
         <Link
-          href="/cand/login"
+          href="/?login=1"
           className="font-medium text-primary-700 hover:underline"
         >
           Se connecter

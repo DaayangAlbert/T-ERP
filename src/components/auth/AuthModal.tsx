@@ -83,17 +83,7 @@ export function AuthModal({ open, defaultTab = "login", defaultPick = "candidate
           </div>
 
           {tab === "login" ? (
-            <>
-              <LoginForm onSuccess={onClose} />
-              <div className="mt-4 border-t border-line pt-3 text-center">
-                <a
-                  href="/cand/login"
-                  className="text-[12px] text-ink-3 hover:text-primary-700"
-                >
-                  Vous êtes candidat à un poste ? Aller à l&apos;espace candidat →
-                </a>
-              </div>
-            </>
+            <LoginForm onSuccess={onClose} />
           ) : (
             <>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">

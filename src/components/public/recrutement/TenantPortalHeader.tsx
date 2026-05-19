@@ -37,14 +37,14 @@ export function TenantPortalHeader({ tenantName, primaryColor, logoUrl }: Props)
         </Link>
         <div className="flex items-center gap-2">
           <Link
-            href="/cand/login"
+            href="/?login=1"
             className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-alt md:inline-block"
           >
             Espace candidat
           </Link>
           <a
             href="#spontanee"
-            className="rounded-md px-4 py-2 text-sm font-medium text-white shadow-brand hover:opacity-90"
+            className="rounded-md px-2.5 py-1.5 text-[11px] font-medium text-white shadow-brand hover:opacity-90 sm:px-4 sm:py-2 sm:text-sm"
             style={{ background: primaryColor ?? "#A855F7" }}
           >
             Candidature spontanée

@@ -33,7 +33,8 @@ export function AdminSidebar({ adminName }: { adminName: string }) {
   const pathname = usePathname();
   async function logout() {
     await fetch("/api/admin/auth/logout", { method: "POST" });
-    window.location.href = "/admin/login";
+    // Auth unifiée : retour à la landing (modale de login accessible via bouton Connexion)
+    window.location.href = "/";
   }
   return (
     <aside

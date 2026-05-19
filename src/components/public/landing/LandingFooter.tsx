@@ -74,7 +74,7 @@ export function LandingFooter() {
             2010/012 (Cameroun).
           </span>
           <Link
-            href="/admin/login"
+            href="/?login=1"
             className="rounded-md border border-cyan-400/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-300/80 hover:border-cyan-400/60 hover:text-cyan-200"
             title="Réservé aux super-admins Anthropic"
           >

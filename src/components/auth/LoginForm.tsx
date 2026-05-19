@@ -29,7 +29,7 @@ export function LoginForm({ onSuccess }: Props) {
 
   const onSubmit = async (data: LoginInput) => {
     setServerError(null);
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/api/auth/universal-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -39,20 +39,21 @@ export function LoginForm({ onSuccess }: Props) {
       setServerError(json.error ?? "Connexion échouée");
       return;
     }
-    setUser(json.user, "");
-    let slug: string | null = json.user.tenantSlug ?? null;
-    if (json.user.tenantId) {
-      const meRes = await fetch("/api/auth/me");
-      if (meRes.ok) {
-        const me = await meRes.json();
-        if (me.user?.tenant) {
-          setTenant(me.user.tenant);
-          slug = me.user.tenant.slug ?? slug;
+    // Hydrate les stores client pour les comptes utilisateur tenant.
+    // Pour platformAdmin, on a un autre cookie + pas de store côté client.
+    if (json.type === "user" || json.type === "candidate") {
+      setUser(json.user, "");
+      if (json.user.tenantId && json.type === "user") {
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const me = await meRes.json();
+          if (me.user?.tenant) setTenant(me.user.tenant);
         }
       }
     }
     onSuccess?.();
-    router.push(slug ? `/${slug}/dashboard` : "/");
+    // Le backend décide vers où rediriger selon le type de compte détecté.
+    router.push(json.redirectUrl ?? "/");
     router.refresh();
   };
 
