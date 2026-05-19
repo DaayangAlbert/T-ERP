@@ -42,6 +42,9 @@ async function main() {
   }
 
   // 1) Pouvoirs spéciaux + MFA
+  // Note mai 2026 — l'IT_ADMIN absorbe le périmètre ARCHIVIST (référent
+  // documentaire transverse). On active donc également canReadAllDocuments
+  // pour qu'il puisse gérer la GED en plus de l'infrastructure technique.
   await prisma.user.update({
     where: { id: itAdmin.id },
     data: {
@@ -50,10 +53,11 @@ async function main() {
       canManageTenantSettings: true,
       canManageIntegrations: true,
       canViewTechnicalLogs: true,
+      canReadAllDocuments: true, // périmètre archiviste fusionné (mai 2026)
       twoFactorEnabled: true,
     },
   });
-  console.log(`  ✓ Pouvoirs spéciaux IT octroyés + MFA actif`);
+  console.log(`  ✓ Pouvoirs spéciaux IT + Archive transverse octroyés + MFA actif`);
 
   // 2) Intégrations
   await prisma.integration.deleteMany({ where: { tenantId: tenant.id } });

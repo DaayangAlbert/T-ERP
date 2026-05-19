@@ -426,10 +426,14 @@ const MATRIX: Matrix = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════
-  // TENANT_ADMIN — Administrateur IT du tenant
+  // TENANT_ADMIN — Administrateur IT du tenant.
+  // Fusion mai 2026 : l'IT_ADMIN absorbe le périmètre ARCHIVIST (référent
+  // documentaire transverse) — un seul "super-utilisateur" tenant pilote
+  // la plateforme technique ET la gouvernance documentaire.
   // ═══════════════════════════════════════════════════════════════════════
   TENANT_ADMIN: {
     IT: "FULL",
+    GED: "FULL", // espace archiviste intégré à la sidebar IT
     DG: "NONE",
     DAF: "NONE",
     RH: "NONE",
@@ -442,7 +446,6 @@ const MATRIX: Matrix = {
     CPT: "NONE",
     LOG: "NONE",
     MAG: "NONE",
-    GED: "NONE",
     EMP: "OWN",
     CAND: "NONE",
     PLATFORM: "NONE",
