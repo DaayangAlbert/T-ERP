@@ -30,8 +30,14 @@ export async function GET(req: Request) {
     ? Math.round((items.filter((t) => t.paymentStatus === "PAID").length / items.length) * 100)
     : 100;
 
-  // TVA crédit synthèse (par convention, si solde TVA déductible > collectée)
-  const vatCredit = 0; // placeholder
+  // Crédit TVA = somme des montants négatifs des échéances VAT déclarées
+  // (TVA déductible > collectée sur la période). null si aucune donnée VAT.
+  const vatDeclarations = items.filter(
+    (t) => t.type === "VAT" && t.declarationStatus !== "PENDING" && t.amount !== null,
+  );
+  const vatCredit = vatDeclarations.length
+    ? vatDeclarations.reduce((s, t) => (t.amount! < 0n ? s + -t.amount! : s), 0n).toString()
+    : null;
 
   return NextResponse.json({
     items: items.map((t) => {

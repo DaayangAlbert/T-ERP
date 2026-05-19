@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed complémentaire — GED · Référent documentaire (Christelle EYENGA · Bloc 0).
  *

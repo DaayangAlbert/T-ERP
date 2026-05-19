@@ -34,6 +34,12 @@ const prisma = new PrismaClient();
 const PWD = "Demo2026!";
 
 async function main() {
+  if (process.env.NODE_ENV === "production" && !process.env.ALLOW_SEED_PROD) {
+    throw new Error(
+      "Seed refusé en production. Définir ALLOW_SEED_PROD=1 pour forcer (déconseillé).",
+    );
+  }
+
   console.log("🌱 Seeding T-ERP...");
 
   // Hash du mot de passe commun aux comptes démo
@@ -157,6 +163,12 @@ async function main() {
       primaryColor: "#A855F7",
       isGroup: true, // Phase 2 / fn 1.2 — société mère du groupe
       sector: "Holding",
+      // Coordonnées affichées sur les bulletins officiels et documents internes
+      contactAddress: "1254, Rue Koloko — Bonapriso — Douala",
+      contactPhone: "+237 6 12 34 56 78 / +237 6 98 76 54 32",
+      contactEmail: "contact@batimcam.cm",
+      websiteUrl: "www.batimcam.cm",
+      drhSignatoryName: "Mme Marie ETOUNDI, DRH",
     },
   });
   console.log(`✓ Tenant mère : ${tenant.name} (${tenant.slug}) · isGroup=true`);
@@ -213,7 +225,15 @@ async function main() {
       employeeId: "EMP-2018-00001",
       position: "Directeur Général",
       category: "Cadre Sup HC",
+      professionalCategory: "Cadre HC · Classe 1",
+      echelon: "HC",
+      classCategory: "Classe 1",
+      indiceSalarial: 850,
+      coefficientSalarial: 2.10,
+      department: "Direction Générale",
+      familyStatus: "Marié, 2 enfants",
       cnpsNumber: "10-1000001-A",
+      cnpsCardNumber: "1230001234",
       hireDate: new Date("2018-03-02"),
     },
     {
@@ -224,6 +244,14 @@ async function main() {
       employeeId: "EMP-2019-00012",
       position: "Directrice Administrative et Financière",
       category: "Cadre 12",
+      professionalCategory: "Cadre 12 · Échelon 3",
+      echelon: "E3",
+      classCategory: "Classe 12",
+      indiceSalarial: 620,
+      coefficientSalarial: 1.65,
+      department: "Direction Financière",
+      familyStatus: "Mariée, 3 enfants",
+      cnpsCardNumber: "1230001235",
       hireDate: new Date("2019-06-15"),
     },
     {

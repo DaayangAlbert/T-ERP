@@ -1,3 +1,4 @@
+require("./_guard-prod");
 // Seed minimal pour rendre tous les modules DTrav fonctionnels avec les bons
 // champs Prisma (siteplanning sans tenantId/dates, sitephase orderIndex/plannedStart,
 // siteMilestone code/description/contractDueDate, etc.).

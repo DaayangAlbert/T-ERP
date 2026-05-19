@@ -36,7 +36,7 @@ export default function GedDashboardPage() {
     );
   }
 
-  const firstName = user?.firstName ?? "Christelle";
+  const firstName = user?.firstName ?? "";
 
   return (
     <div className="space-y-3">

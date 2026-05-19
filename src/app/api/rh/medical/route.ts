@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, MedicalVisitType, FitnessVerdict } from "@prisma/client";
-import { getSyntheticPersonnel } from "@/lib/rh-personnel";
 
 export const dynamic = "force-dynamic";
 
@@ -22,61 +21,12 @@ const VERDICT_LABEL: Record<FitnessVerdict, string> = {
   TEMPORARILY_UNFIT: "Inapte temporaire",
 };
 
-async function ensureSeed(tenantId: string) {
-  const existing = await prisma.medicalVisit.count({ where: { tenantId } });
-  if (existing >= 30) return;
-  const pool = getSyntheticPersonnel(487).slice(0, 30);
-  const now = Date.now();
-  for (const [i, p] of pool.entries()) {
-    // 5 visites en retard (échéance passée, non complétée) → indices 0..4
-    // 24 visites prévues ce mois (scheduledAt dans 1-25j) → indices 5..28
-    // 1 visite passée complétée → index 29
-    let scheduledAt: Date;
-    let completedAt: Date | null = null;
-    let verdict: FitnessVerdict | null = null;
-    let restrictions: string | null = null;
-
-    if (i < 5) {
-      // En retard
-      scheduledAt = new Date(now - (5 + i * 7) * 86_400_000);
-    } else if (i < 29) {
-      // Programmées ce mois
-      scheduledAt = new Date(now + (1 + (i - 5)) * 86_400_000);
-    } else {
-      // Passée et complétée
-      scheduledAt = new Date(now - 14 * 86_400_000);
-      completedAt = new Date(now - 13 * 86_400_000);
-      verdict = "FIT";
-    }
-    if (i % 7 === 0 && i >= 30) {
-      verdict = "FIT_WITH_RESTRICTIONS";
-      restrictions = "Port de charges limité 15 kg";
-    }
-    await prisma.medicalVisit.create({
-      data: {
-        tenantId,
-        employeeKey: p.id,
-        employeeName: `${p.firstName} ${p.lastName}`,
-        type: ["HIRING", "PERIODIC", "RETURN_TO_WORK", "PERIODIC", "PERIODIC"][i % 5] as MedicalVisitType,
-        scheduledAt,
-        completedAt,
-        fitnessVerdict: verdict,
-        restrictions,
-        doctor: "Dr. NGOUFO Pierre — Médecin du travail BatimCAM",
-        nextVisitDue: new Date(now + 365 * 86_400_000),
-      },
-    });
-  }
-}
-
 export async function GET(req: Request) {
   const session = getCurrentSession();
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   if (!ALLOWED.includes(session.role as Role)) {
     return NextResponse.json({ error: "Réservé RH / DG / DAF" }, { status: 403 });
   }
-
-  await ensureSeed(session.tenantId);
 
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode") ?? "all"; // upcoming / overdue / fitness / all
@@ -119,9 +69,6 @@ export async function GET(req: Request) {
     fitWithoutRestrictions: enriched.filter((v) => v.fitnessVerdict === "FIT").length,
     fitWithRestrictions: enriched.filter((v) => v.fitnessVerdict === "FIT_WITH_RESTRICTIONS").length,
   };
-  // Synthétiser pour cohérence narratif (462 aptes, 18 avec restrictions)
-  if (summary.fitWithoutRestrictions < 100) summary.fitWithoutRestrictions = 462;
-  if (summary.fitWithRestrictions < 5) summary.fitWithRestrictions = 18;
 
   return NextResponse.json({ items, summary, mode });
 }

@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed Super-Admin Anthropic (PROMPT 0).
  *

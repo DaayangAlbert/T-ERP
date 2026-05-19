@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed complémentaire — Espace candidat (Zone 3 / PROMPT 0).
  *

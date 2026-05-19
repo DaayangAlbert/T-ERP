@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed complémentaire — Bloc 0 OUVRIER (Étienne MBALLA).
  *

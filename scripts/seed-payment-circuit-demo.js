@@ -1,3 +1,4 @@
+require("./_guard-prod");
 // Demo seed : crée un Circuit de paiement Mincom + applique sur un dossier
 // existant + désigne comptable, notifie comptable + SG.
 const { PrismaClient } = require("@prisma/client");

@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed complémentaire — SG · Secrétaire Général (Élisabeth NDONGMO · Bloc 0).
  *

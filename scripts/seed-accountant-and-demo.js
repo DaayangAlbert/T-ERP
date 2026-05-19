@@ -1,3 +1,4 @@
+require("./_guard-prod");
 // Crée un comptable BatimCAM s'il n'existe pas + (re)lance la demo
 // circuit de paiement.
 const { PrismaClient } = require("@prisma/client");

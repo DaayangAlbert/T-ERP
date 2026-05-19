@@ -1,3 +1,4 @@
+import "./_guard-prod";
 /**
  * Seed complémentaire — données Employé / Ouvrier (Bloc 0 EMP).
  *
