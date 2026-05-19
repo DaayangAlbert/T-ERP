@@ -15,12 +15,14 @@ import {
   CreditCard,
   ScrollText,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 import { clsx } from "clsx";
 import {
   useDafMonthlyReport,
   useUpdateDafReport,
   useSubmitDafReport,
+  useAutoFillDafReport,
   type DafReportDetail,
 } from "@/hooks/useDafMonthlyReports";
 
@@ -108,6 +110,7 @@ export default function DafReportDetailPage() {
   const { data: report, isLoading } = useDafMonthlyReport(params.id);
   const update = useUpdateDafReport(params.id);
   const submit = useSubmitDafReport(params.id);
+  const autoFill = useAutoFillDafReport(params.id);
 
   const [draft, setDraft] = useState<DraftState>({});
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -324,7 +327,25 @@ export default function DafReportDetailPage() {
       ))}
 
       {editable && (
-        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-line bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t border-line bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+          <button
+            type="button"
+            onClick={() => {
+              if (!confirm("Pré-remplir tous les KPIs financiers depuis la base de données ?\n\nCela écrasera les valeurs actuelles : CA, charges, marge, trésorerie, créances, dettes, masse salariale. Les sections narratives et les champs Fiscal seront conservés.")) return;
+              autoFill.mutate(undefined, {
+                onSuccess: (res) => {
+                  setFeedback(
+                    `Pré-rempli depuis la DB · ${res.filledFields.length} champs (${res.filledFields.join(", ")}) · sources : ${res.sources.billings} factures clients · ${res.sources.invoices} factures fournisseurs · ${res.sources.payslips} bulletins · ${res.sources.banks} comptes bancaires`,
+                  );
+                },
+                onError: (e: Error) => setFeedback(e.message),
+              });
+            }}
+            disabled={autoFill.isPending}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-violet-300 bg-violet-50 px-3 text-[12.5px] font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" /> {autoFill.isPending ? "Calcul..." : "Pré-remplir depuis la DB"}
+          </button>
           <button
             type="button"
             onClick={save}

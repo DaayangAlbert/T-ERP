@@ -154,3 +154,26 @@ export function useSubmitDafReport(id: string) {
     },
   });
 }
+
+export interface AutoFillResult {
+  ok: true;
+  filledFields: string[];
+  sources: {
+    tenantIds: string[];
+    billings: number;
+    invoices: number;
+    payslips: number;
+    banks: number;
+  };
+}
+
+export function useAutoFillDafReport(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => getJson<AutoFillResult>(`/api/daf/monthly-reports/${id}/auto-fill`, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["daf", "monthly-reports"] });
+      qc.invalidateQueries({ queryKey: ["daf", "monthly-report", id] });
+    },
+  });
+}
