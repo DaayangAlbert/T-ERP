@@ -186,13 +186,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (newRole && newRole !== before.role) {
     updateData.role = newRole;
     if (newRole === Role.DG) {
+      // canManageBilling exclu (n'existe pas sur User).
       Object.assign(updateData, {
         canManageUsers: true,
         canManageRoles: true,
         canManageTenantSettings: true,
         canManageIntegrations: true,
         canViewTechnicalLogs: true,
-        canManageBilling: true,
+        canReadAllDocuments: true,
+        canReadAllDashboards: true,
         canManageCorporateGovernance: true,
         canManageMarketContracts: true,
         canManageLegalCases: true,
@@ -207,7 +209,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         canManageTenantSettings: false,
         canManageIntegrations: false,
         canViewTechnicalLogs: false,
-        canManageBilling: false,
+        canReadAllDocuments: false,
+        canReadAllDashboards: false,
         canManageCorporateGovernance: false,
         canManageMarketContracts: false,
         canManageLegalCases: false,

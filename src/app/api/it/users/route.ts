@@ -191,7 +191,8 @@ export async function POST(req: Request) {
       contractType: parsed.data.contractType,
       hireDate: parsed.data.hireDate ? new Date(parsed.data.hireDate) : null,
       assignedSiteIds: parsed.data.assignedSiteIds ?? [],
-      // Pouvoirs DG : pilotage métier + gestion users + paramètres tenant
+      // Pouvoirs DG : pilotage métier + gestion users + paramètres tenant.
+      // canManageBilling exclu (n'existe pas sur User — uniquement PlatformAdmin).
       ...(isDg
         ? {
             canManageUsers: true,
@@ -199,7 +200,8 @@ export async function POST(req: Request) {
             canManageTenantSettings: true,
             canManageIntegrations: true,
             canViewTechnicalLogs: true,
-            canManageBilling: true,
+            canReadAllDocuments: true,
+            canReadAllDashboards: true,
             canManageCorporateGovernance: true,
             canManageMarketContracts: true,
             canManageLegalCases: true,

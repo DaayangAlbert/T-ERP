@@ -95,12 +95,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       emailVerified: false,
       // Le DG a TOUS les pouvoirs métier + IT pour piloter son tenant
       // sans dépendre de workflow externe.
+      // NB: canManageBilling n'existe pas sur User (uniquement PlatformAdmin) —
+      // la facturation SaaS est gérée côté super-admin.
       canManageUsers: true,
       canManageRoles: true,
       canManageTenantSettings: true,
       canManageIntegrations: true,
       canViewTechnicalLogs: true,
-      canManageBilling: true,
+      canReadAllDocuments: true,
+      canReadAllDashboards: true,
       canManageCorporateGovernance: true,
       canManageMarketContracts: true,
       canManageLegalCases: true,
