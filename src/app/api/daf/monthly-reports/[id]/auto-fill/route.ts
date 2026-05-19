@@ -93,6 +93,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   return NextResponse.json({
     ok: true,
     filledFields: kpis.filledFields,
+    warnings: kpis.warnings,
     sources: kpis.sources,
   });
 }

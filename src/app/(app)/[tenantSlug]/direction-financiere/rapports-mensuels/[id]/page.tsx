@@ -220,7 +220,7 @@ export default function DafReportDetailPage() {
       )}
 
       {feedback && (
-        <div className="rounded-lg border border-line bg-surface-alt p-2.5 text-[12px] text-ink-2">
+        <div className="whitespace-pre-line rounded-lg border border-line bg-surface-alt p-2.5 text-[12px] text-ink-2">
           {feedback}
         </div>
       )}
@@ -331,12 +331,19 @@ export default function DafReportDetailPage() {
           <button
             type="button"
             onClick={() => {
-              if (!confirm("Pré-remplir tous les KPIs financiers depuis la base de données ?\n\nCela écrasera les valeurs actuelles : CA, charges, marge, trésorerie, créances, dettes, masse salariale. Les sections narratives et les champs Fiscal seront conservés.")) return;
+              if (!confirm("Pré-remplir tous les KPIs financiers depuis la base de données ?\n\nCela écrasera les valeurs actuelles : CA, charges, marges, trésorerie, créances, dettes, BFR, CAPEX, masse salariale, TVA, IS provisionné.\n\nLes 4 champs sans source DB (dette LT/CT, gearing, échéances fiscales 30j, cotisations à jour) et les 10 sections narratives sont conservés.")) return;
               autoFill.mutate(undefined, {
                 onSuccess: (res) => {
-                  setFeedback(
-                    `Pré-rempli depuis la DB · ${res.filledFields.length} champs (${res.filledFields.join(", ")}) · sources : ${res.sources.billings} factures clients · ${res.sources.invoices} factures fournisseurs · ${res.sources.payslips} bulletins · ${res.sources.banks} comptes bancaires`,
-                  );
+                  const lines = [
+                    `Pré-rempli pour la période ${res.sources.periodLabel} · ${res.filledFields.length} champs · scope = ${res.sources.tenantIds.length} tenant(s)`,
+                    `Sources : ${res.sources.billings} factures clients · ${res.sources.invoices} factures fournisseurs · ${res.sources.payslips} bulletins · ${res.sources.banks} comptes bancaires · ${res.sources.fixedAssets} immobilisations`,
+                  ];
+                  if (res.warnings.length > 0) {
+                    lines.push("");
+                    lines.push("⚠️  AVERTISSEMENTS :");
+                    res.warnings.forEach((w) => lines.push(`  • ${w}`));
+                  }
+                  setFeedback(lines.join("\n"));
                 },
                 onError: (e: Error) => setFeedback(e.message),
               });

@@ -27,9 +27,6 @@ function startOfMonth(period: Date): Date {
 function startOfNextMonth(period: Date): Date {
   return new Date(Date.UTC(period.getUTCFullYear(), period.getUTCMonth() + 1, 1));
 }
-function startOfYear(period: Date): Date {
-  return new Date(Date.UTC(period.getUTCFullYear(), 0, 1));
-}
 function daysInMonth(period: Date): number {
   return new Date(period.getUTCFullYear(), period.getUTCMonth() + 1, 0).getUTCDate();
 }
@@ -81,9 +78,16 @@ export interface DafKpis {
 
   /** Liste des champs qui ont été remplis (pour feedback UI). */
   filledFields: string[];
+  /**
+   * Avertissements pour le DAF : par ex. "snapshots maintenant" si on
+   * remplit un rapport d'un mois passé.
+   */
+  warnings: string[];
   /** Sources consolidées (label tenant + nombre d'enregistrements). */
   sources: {
     tenantIds: string[];
+    periodLabel: string;
+    isPastMonth: boolean;
     billings: number;
     invoices: number;
     payslips: number;
@@ -102,7 +106,6 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
   const scopeIds = await resolveScope(tenantId);
   const periodStart = startOfMonth(period);
   const periodEnd = startOfNextMonth(period);
-  const yearStart = startOfYear(period);
   const previousMonthStart = new Date(
     Date.UTC(period.getUTCFullYear(), period.getUTCMonth() - 1, 1),
   );
@@ -115,10 +118,14 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
     where: { tenantId: { in: scopeIds }, period: monthLabel },
     select: { amountHt: true, vatAmount: true, status: true, netToReceive: true, dueDate: true, paidAmount: true },
   });
+  // YTD : tous les billings dont period appartient à la même année,
+  // de janvier jusqu'au mois inclus du rapport. On filtre par chaîne
+  // "YYYY-MM" car ProgressBilling.period est un String, pas un DateTime.
+  const yearStr = String(periodStart.getUTCFullYear());
   const billingsYtd = await prisma.progressBilling.findMany({
     where: {
       tenantId: { in: scopeIds },
-      createdAt: { gte: yearStart, lt: periodEnd },
+      period: { startsWith: yearStr, lte: monthLabel },
     },
     select: { amountHt: true },
   });
@@ -249,6 +256,30 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
       ? Number((payrollMassMonthXAF * 10000n) / revenueMonthXAF) / 100
       : 0;
 
+  // Avertissements : si on remplit un rapport pour un mois passé, les
+  // champs "snapshot" (trésorerie, AR/AP) reflètent l'état ACTUEL et
+  // non l'état du dernier jour du mois — le DAF doit le savoir.
+  const currentMonthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  );
+  const isPastMonth = periodEnd <= currentMonthStart;
+  const warnings: string[] = [];
+  if (isPastMonth) {
+    warnings.push(
+      "Mois passé : trésorerie / créances ouvertes / dettes fournisseurs / BFR / DSO / DPO reflètent l'état actuel de la DB, pas celui du dernier jour du mois. À corriger manuellement pour avoir un snapshot historique exact.",
+    );
+  }
+  if (!previousReport && period.getUTCMonth() > 0) {
+    warnings.push(
+      "Aucun rapport DAF validé pour le mois précédent → variation trésorerie = 0 (à compléter manuellement si besoin).",
+    );
+  }
+  if (revenueMonthXAF === 0n && billingsMonth.length === 0) {
+    warnings.push(
+      `Aucune facturation client (ProgressBilling) avec period="${monthLabel}" → CA = 0. Vérifier que la compta a bien enregistré les situations du mois.`,
+    );
+  }
+
   const filledFields: string[] = [];
   if (revenueMonthXAF > 0n) filledFields.push("CA mois");
   if (revenueYtdXAF > 0n) filledFields.push("CA YTD");
@@ -310,8 +341,11 @@ export async function computeDafKpis(tenantId: string, period: Date): Promise<Da
     corporateTaxProvisionXAF,
 
     filledFields,
+    warnings,
     sources: {
       tenantIds: scopeIds,
+      periodLabel: monthLabel,
+      isPastMonth,
       billings: billingsMonth.length,
       invoices: invoicesMonth.length,
       payslips: payslips.length,

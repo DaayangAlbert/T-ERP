@@ -158,12 +158,17 @@ export function useSubmitDafReport(id: string) {
 export interface AutoFillResult {
   ok: true;
   filledFields: string[];
+  warnings: string[];
   sources: {
     tenantIds: string[];
+    periodLabel: string;
+    isPastMonth: boolean;
     billings: number;
     invoices: number;
     payslips: number;
     banks: number;
+    fixedAssets: number;
+    previousMonthFound: boolean;
   };
 }
 
