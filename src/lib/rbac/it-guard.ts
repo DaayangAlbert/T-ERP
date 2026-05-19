@@ -66,11 +66,19 @@ export async function guardItMutation(
   return guard;
 }
 
-const PROTECTED_ROLES: Role[] = [Role.DG, Role.SUPER_ADMIN, Role.TENANT_ADMIN];
+// SUPER_ADMIN reste hors-tenant (table platformAdmin), donc inaccessible
+// au TENANT_ADMIN par scope tenant — gardé en filet de sécurité.
+// TENANT_ADMIN est protégé : un TENANT_ADMIN ne peut pas modifier un autre
+// TENANT_ADMIN (anti-prise de pouvoir entre co-admins du même tenant).
+// DG retiré de la liste : le TENANT_ADMIN est l'owner du contrat SaaS et
+// doit pouvoir gérer le DG (suspension, remplacement, etc.) sans dépendre
+// du SUPER_ADMIN T-ERP.
+const PROTECTED_ROLES: Role[] = [Role.SUPER_ADMIN, Role.TENANT_ADMIN];
 
 /**
- * Renvoie true si la modification du `targetUser` par l'IT_ADMIN est interdite
- * (DG ne peut être désactivé, IT_ADMIN ne peut pas se promouvoir DG, etc.).
+ * Renvoie true si la modification du `targetUser` par l'IT_ADMIN est interdite.
+ * Bloque les rôles platformAdmin (SUPER_ADMIN) et les autres TENANT_ADMIN
+ * du même tenant. Le DG est gérable par le TENANT_ADMIN.
  *
  * Exception : un utilisateur peut TOUJOURS éditer son propre compte
  * (changement de mot de passe, mise à jour profil, etc.). Passe

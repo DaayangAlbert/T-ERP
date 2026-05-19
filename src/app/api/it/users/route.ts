@@ -10,8 +10,12 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
-// Rôles critiques nécessitant workflow DG
-const CRITICAL_ROLES: Role[] = [Role.DG, Role.SUPER_ADMIN, Role.TENANT_ADMIN];
+// Rôles critiques que l'IT ne peut PAS créer directement.
+// - SUPER_ADMIN : interdit (compte plateforme, hors tenant)
+// - TENANT_ADMIN : interdit (1 seul par tenant, créé par SUPER_ADMIN au provisioning)
+// DG retiré : le TENANT_ADMIN peut créer/remplacer le DG via /informatique/users/new.
+// Quand role=DG est créé via cette route, on lui donne tous les pouvoirs métier.
+const CRITICAL_ROLES: Role[] = [Role.SUPER_ADMIN, Role.TENANT_ADMIN];
 
 const createSchema = z.object({
   firstName: z.string().min(1),
@@ -164,6 +168,10 @@ export async function POST(req: Request) {
   const initialPassword = Math.random().toString(36).slice(2, 12) + "A1!";
   const passwordHash = await hashPassword(initialPassword);
 
+  // Si on crée un DG, on lui donne tous les pouvoirs métier + IT pour
+  // qu'il puisse piloter son tenant sans dépendre du workflow super-admin.
+  const isDg = parsed.data.role === Role.DG;
+
   const created = await prisma.user.create({
     data: {
       tenantId: session.tenantId,
@@ -177,6 +185,21 @@ export async function POST(req: Request) {
       contractType: parsed.data.contractType,
       hireDate: parsed.data.hireDate ? new Date(parsed.data.hireDate) : null,
       assignedSiteIds: parsed.data.assignedSiteIds ?? [],
+      // Pouvoirs DG : pilotage métier + gestion users + paramètres tenant
+      ...(isDg
+        ? {
+            canManageUsers: true,
+            canManageRoles: true,
+            canManageTenantSettings: true,
+            canManageIntegrations: true,
+            canViewTechnicalLogs: true,
+            canManageBilling: true,
+            canManageCorporateGovernance: true,
+            canManageMarketContracts: true,
+            canManageLegalCases: true,
+            canManageOfficialCorrespondence: true,
+          }
+        : {}),
       // Identité personnelle
       matricule: parsed.data.matricule || null,
       dateOfBirth: parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null,

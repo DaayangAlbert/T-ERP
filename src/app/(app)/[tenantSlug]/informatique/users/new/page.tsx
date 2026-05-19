@@ -5,22 +5,25 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, UserPlus, Building2, Copy, Check } from "lucide-react";
 
-// Rôles autorisés pour l'IT_ADMIN (CRITICAL_ROLES exclus côté API).
-// L'IT ne peut PAS créer : DG, SUPER_ADMIN, TENANT_ADMIN — workflow DG requis.
+// Rôles que l'IT_ADMIN peut créer/remplacer dans son tenant.
+// Exclus (CRITICAL_ROLES côté API) : SUPER_ADMIN, TENANT_ADMIN.
+// DG est autorisé : le TENANT_ADMIN gère le DG de son tenant (suspension,
+// remplacement, etc.) sans dépendre du SUPER_ADMIN T-ERP.
 const ROLE_OPTIONS = [
-  { value: "EMPLOYEE", label: "Employé bureau" },
-  { value: "WORKER", label: "Ouvrier" },
-  { value: "SITE_MANAGER", label: "Chef de Chantier" },
-  { value: "WORKS_MANAGER", label: "Conducteur de Travaux" },
-  { value: "WORKS_DIRECTOR", label: "Directeur de Travaux" },
-  { value: "TECH_DIRECTOR", label: "Directeur Technique" },
-  { value: "WAREHOUSE", label: "Magasinier" },
-  { value: "LOGISTICS", label: "Logisticien" },
-  { value: "ACCOUNTANT", label: "Comptable" },
-  { value: "HR", label: "Responsable RH" },
+  { value: "DG", label: "Directeur Général" },
   { value: "DAF", label: "DAF" },
+  { value: "TECH_DIRECTOR", label: "Directeur Technique" },
+  { value: "WORKS_DIRECTOR", label: "Directeur de Travaux" },
+  { value: "WORKS_MANAGER", label: "Conducteur de Travaux" },
+  { value: "SITE_MANAGER", label: "Chef de Chantier" },
+  { value: "HR", label: "Responsable RH" },
+  { value: "ACCOUNTANT", label: "Comptable" },
   { value: "SECRETARY_GENERAL", label: "Secrétaire Général(e)" },
   { value: "ARCHIVIST", label: "Référent Documentaire" },
+  { value: "WAREHOUSE", label: "Magasinier" },
+  { value: "LOGISTICS", label: "Logisticien" },
+  { value: "EMPLOYEE", label: "Employé bureau" },
+  { value: "WORKER", label: "Ouvrier" },
 ] as const;
 
 const CONTRACT_OPTIONS = ["CDI", "CDD", "STAGE", "JOURNALIER", "INTERIM"] as const;
