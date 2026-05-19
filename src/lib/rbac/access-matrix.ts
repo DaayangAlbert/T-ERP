@@ -97,18 +97,21 @@ const MATRIX: Matrix = {
     DG: "FULL",
     DAF: "READ",
     RH: "READ",
-    DT: "READ",
+    DT: "READ", // couvre déjà DTRAV/CDT/CC dans la vue technique
     SG: "READ",
-    DTRAV: "READ",
-    CDT: "READ",
-    CC: "READ",
-    OUV: "NONE", // PWA ouvrier réservé au terrain
-    CPT: "READ",
+    // CC / DTRAV / CDT retirés du drill-down DG : doublons avec Vue Technique
+    DTRAV: "NONE",
+    CDT: "NONE",
+    CC: "NONE",
+    OUV: "NONE",
+    // CPT retiré : doublon avec Vue Finance (DAF)
+    CPT: "NONE",
+    // LOG / MAG / GED gardés mais redirigés vers pages condensées DG
     LOG: "READ",
     MAG: "READ",
     GED: "READ",
-    IT: "NONE", // sauf flag canManageTenantSettings (géré ailleurs)
-    EMP: "OWN", // le DG a SON espace personnel (paie, congés, profil)
+    IT: "NONE",
+    EMP: "OWN",
     CAND: "NONE",
     PLATFORM: "NONE",
   },
@@ -119,7 +122,9 @@ const MATRIX: Matrix = {
   DAF: {
     DAF: "FULL",
     CPT: "FULL", // DAF supervise la compta
-    DG: "READ",
+    // Pas de drill-down DG depuis l'espace DAF : la DG est hiérarchiquement
+    // au-dessus, ses vues consolidées ne lui sont pas destinées.
+    DG: "NONE",
     DTRAV: "READ", // suivi financier chantiers
     CDT: "READ",
     CC: "READ",
@@ -269,7 +274,13 @@ const MATRIX: Matrix = {
     MAG: "NONE",
     GED: "NONE",
     IT: "NONE",
-    EMP: "NONE", // l'ouvrier a son propre espace /ouv, pas /employe
+    // EMP en OWN : permet à l'ouvrier d'utiliser les APIs /api/emp/*
+    // (payslips détaillés, profil enrichi) en plus de ses APIs /api/ouv/*.
+    // Choix de design : on harmonise la vue paie/profil entre cadre et
+    // ouvrier (cf. /ouv/paie et /ouv/profil qui réutilisent les
+    // composants EMP). La sidebar évite le doublon en n'ajoutant pas
+    // FULL.EMP pour WORKER (qui a déjà OUV_PERSONAL).
+    EMP: "OWN",
     CAND: "NONE",
     PLATFORM: "NONE",
   },
@@ -373,18 +384,18 @@ const MATRIX: Matrix = {
   // ═══════════════════════════════════════════════════════════════════════
   SECRETARY_GENERAL: {
     SG: "FULL",
-    DG: "READ",
-    DAF: "READ",
-    RH: "READ",
-    DT: "READ",
-    DTRAV: "READ",
-    CDT: "READ",
-    CC: "READ",
+    DG: "NONE",
+    DAF: "NONE",
+    RH: "NONE",
+    DT: "NONE",
+    DTRAV: "NONE",
+    CDT: "NONE",
+    CC: "NONE",
     OUV: "NONE",
-    CPT: "READ",
-    LOG: "READ",
-    MAG: "READ",
-    GED: "READ",
+    CPT: "NONE",
+    LOG: "NONE",
+    MAG: "NONE",
+    GED: "NONE",
     IT: "NONE",
     EMP: "OWN",
     CAND: "NONE",

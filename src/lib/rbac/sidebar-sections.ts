@@ -124,6 +124,60 @@ const DG_VALIDATIONS: NavSection = {
   ],
 };
 
+const DG_STRATEGIE: NavSection = {
+  title: "Stratégie & risques",
+  items: [
+    { label: "Calendrier & décisions", href: "/direction-generale/gouvernance", icon: Landmark },
+    { label: "Suivi contentieux", href: "/direction-generale/contentieux-consolide", icon: Gavel },
+    { label: "Engagements financiers", href: "/direction-generale/engagements", icon: Wallet },
+    { label: "Conformité & agréments", href: "/direction-generale/conformite-synthese", icon: ShieldCheck },
+    { label: "Pipeline commercial", href: "/direction-generale/pipeline-commercial", icon: Target },
+    { label: "Fournisseurs", href: "/direction-generale/fournisseurs", icon: Building2 },
+  ],
+};
+
+// Sous-sections DAF — même logique que DG : sidebar split en 4 thématiques
+// pour rester lisible. La composition est faite dans `getSidebarSections`.
+const DAF_PILOTAGE: NavSection = {
+  title: "Pilotage",
+  items: [
+    { label: "Tableau de bord DAF", href: "/direction-financiere", icon: Briefcase },
+    { label: "Pilotage financier", href: "/direction-financiere/finances", icon: TrendingUp },
+    { label: "Mon espace DAF", href: "/direction-financiere/profil", icon: User },
+  ],
+};
+
+const DAF_TRESORERIE: NavSection = {
+  title: "Trésorerie & comptabilité",
+  items: [
+    { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
+    { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
+    { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
+    { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
+  ],
+};
+
+const DAF_CYCLES: NavSection = {
+  title: "Cycles de gestion",
+  items: [
+    { label: "Cycle de paie", href: "/direction-financiere/paie", icon: CreditCard },
+    { label: "Achats & engagements", href: "/direction-financiere/achats", icon: ShoppingCart },
+    { label: "Circuits de paiement", href: "/direction-financiere/circuits-paiement", icon: GitBranch },
+    { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
+    { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
+  ],
+};
+
+const DAF_VALIDATIONS: NavSection = {
+  title: "Validations & rapports",
+  items: [
+    { label: "Validations N2", href: "/direction-financiere/validations", icon: CheckCircle2, badge: { value: "5", alert: true } },
+    { label: "Rapports mensuels (DG)", href: "/direction-financiere/rapports-mensuels", icon: FileText },
+    { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },
+    { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
+  ],
+};
+
 const FULL: Record<Module, NavSection> = {
   DG: {
     // Section "plate" — utilisée comme fallback. La sidebar DG réelle est
@@ -134,27 +188,19 @@ const FULL: Record<Module, NavSection> = {
       ...DG_PILOTAGE.items,
       ...DG_FINANCE.items,
       ...DG_VALIDATIONS.items,
+      ...DG_STRATEGIE.items,
     ],
   },
   DAF: {
+    // Section "plate" — fallback. La sidebar DAF réelle est composée
+    // des 4 sub-sections `DAF_PILOTAGE`, `DAF_TRESORERIE`, `DAF_CYCLES`,
+    // `DAF_VALIDATIONS` dans `getSidebarSections`.
     title: "Espace DAF",
     items: [
-      { label: "Tableau de bord DAF", href: "/direction-financiere", icon: Briefcase },
-      { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
-      { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
-      { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
-      { label: "Pilotage financier", href: "/direction-financiere/finances", icon: TrendingUp },
-      { label: "Validations N2", href: "/direction-financiere/validations", icon: CheckCircle2, badge: { value: "5", alert: true } },
-      { label: "Cycle de paie", href: "/direction-financiere/paie", icon: CreditCard },
-      { label: "Achats & engagements", href: "/direction-financiere/achats", icon: ShoppingCart },
-      { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
-      { label: "Circuits de paiement", href: "/direction-financiere/circuits-paiement", icon: GitBranch },
-      { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
-      { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
-      { label: "Rapports & exports", href: "/direction-financiere/rapports", icon: BarChart3 },
-      { label: "Rapports mensuels (DG)", href: "/direction-financiere/rapports-mensuels", icon: FileText },
-      { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },
-      { label: "Mon espace DAF", href: "/direction-financiere/profil", icon: User },
+      ...DAF_PILOTAGE.items,
+      ...DAF_TRESORERIE.items,
+      ...DAF_CYCLES.items,
+      ...DAF_VALIDATIONS.items,
     ],
   },
   RH: {
@@ -440,10 +486,17 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   for (const m of fullModules) {
     if (role === Role.SITE_MANAGER && m === MODULES.MAG) continue;
 
-    // Cas particulier DG : la section "Espace DG" est split en 3
+    // Cas particulier DG : la section "Espace DG" est split en 4
     // sous-sections thématiques pour rester lisible.
     if (role === Role.DG && m === MODULES.DG) {
-      sections.push(DG_PILOTAGE, DG_FINANCE, DG_VALIDATIONS);
+      sections.push(DG_PILOTAGE, DG_FINANCE, DG_VALIDATIONS, DG_STRATEGIE);
+      continue;
+    }
+    // Même logique pour le DAF : sidebar split en 4 sous-sections
+    // (Pilotage, Trésorerie & comptabilité, Cycles de gestion,
+    // Validations & rapports).
+    if (role === Role.DAF && m === MODULES.DAF) {
+      sections.push(DAF_PILOTAGE, DAF_TRESORERIE, DAF_CYCLES, DAF_VALIDATIONS);
       continue;
     }
 
