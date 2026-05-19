@@ -25,6 +25,23 @@ const createSchema = z.object({
   hireDate: z.string().optional(),
   assignedSiteIds: z.array(z.string()).optional(),
   requireMfa: z.boolean().optional(),
+  // Identité personnelle (cf page profil employé)
+  matricule: z.string().max(40).optional(),
+  dateOfBirth: z.string().optional(),
+  cniNumber: z.string().max(40).optional(),
+  phoneMobile: z.string().max(40).optional().nullable(),
+  personalEmail: z.string().email().optional().or(z.literal("")),
+  address: z.string().max(240).optional(),
+  familyStatus: z.string().max(80).optional(),
+  emergencyContactName: z.string().max(120).optional(),
+  emergencyContactPhone: z.string().max(40).optional(),
+  // Informations professionnelles complémentaires
+  cnpsNumber: z.string().max(40).optional(),
+  niu: z.string().max(40).optional(),
+  professionalCategory: z.string().max(80).optional(),
+  bankName: z.string().max(80).optional(),
+  bankAgency: z.string().max(80).optional(),
+  rib: z.string().max(60).optional(),
 });
 
 export async function GET(req: Request) {
@@ -160,6 +177,23 @@ export async function POST(req: Request) {
       contractType: parsed.data.contractType,
       hireDate: parsed.data.hireDate ? new Date(parsed.data.hireDate) : null,
       assignedSiteIds: parsed.data.assignedSiteIds ?? [],
+      // Identité personnelle
+      matricule: parsed.data.matricule || null,
+      dateOfBirth: parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null,
+      cniNumber: parsed.data.cniNumber || null,
+      phoneMobile: parsed.data.phoneMobile || null,
+      personalEmail: parsed.data.personalEmail || null,
+      address: parsed.data.address || null,
+      familyStatus: parsed.data.familyStatus || null,
+      emergencyContactName: parsed.data.emergencyContactName || null,
+      emergencyContactPhone: parsed.data.emergencyContactPhone || null,
+      // Informations professionnelles complémentaires
+      cnpsNumber: parsed.data.cnpsNumber || null,
+      niu: parsed.data.niu || null,
+      professionalCategory: parsed.data.professionalCategory || null,
+      bankName: parsed.data.bankName || null,
+      bankAgency: parsed.data.bankAgency || null,
+      rib: parsed.data.rib || null,
       passwordHash,
       twoFactorEnabled: false, // setup au premier login si MFA requis
       emailVerified: false,

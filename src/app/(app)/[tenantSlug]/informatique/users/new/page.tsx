@@ -60,6 +60,23 @@ export default function NewUserPage() {
   const [requireMfa, setRequireMfa] = useState(false);
   const [assignedSiteIds, setAssignedSiteIds] = useState<string[]>([]);
   const [siteFilter, setSiteFilter] = useState("");
+  // Identité personnelle (alignée sur la page profil employé)
+  const [matricule, setMatricule] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [cniNumber, setCniNumber] = useState("");
+  const [phoneMobile, setPhoneMobile] = useState("");
+  const [personalEmail, setPersonalEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [familyStatus, setFamilyStatus] = useState("");
+  const [emergencyContactName, setEmergencyContactName] = useState("");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState("");
+  // Informations professionnelles complémentaires
+  const [cnpsNumber, setCnpsNumber] = useState("");
+  const [niu, setNiu] = useState("");
+  const [professionalCategory, setProfessionalCategory] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAgency, setBankAgency] = useState("");
+  const [rib, setRib] = useState("");
 
   const [sites, setSites] = useState<SiteOption[]>([]);
   const [loadingSites, setLoadingSites] = useState(true);
@@ -118,6 +135,21 @@ export default function NewUserPage() {
       hireDate: hireDate ? new Date(hireDate).toISOString() : undefined,
       assignedSiteIds: showSiteSelector ? assignedSiteIds : undefined,
       requireMfa,
+      matricule: matricule || undefined,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : undefined,
+      cniNumber: cniNumber || undefined,
+      phoneMobile: phoneMobile || undefined,
+      personalEmail: personalEmail || undefined,
+      address: address || undefined,
+      familyStatus: familyStatus || undefined,
+      emergencyContactName: emergencyContactName || undefined,
+      emergencyContactPhone: emergencyContactPhone || undefined,
+      cnpsNumber: cnpsNumber || undefined,
+      niu: niu || undefined,
+      professionalCategory: professionalCategory || undefined,
+      bankName: bankName || undefined,
+      bankAgency: bankAgency || undefined,
+      rib: rib || undefined,
     };
     const res = await fetch("/api/it/users", {
       method: "POST",
@@ -326,6 +358,138 @@ export default function NewUserPage() {
                 />
                 Imposer MFA à la première connexion
               </label>
+            </Field>
+            <Field label="Matricule employeur">
+              <input
+                value={matricule}
+                onChange={(e) => setMatricule(e.target.value)}
+                placeholder="Ex: BTC-2024-0142"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Catégorie pro grille BTP">
+              <input
+                value={professionalCategory}
+                onChange={(e) => setProfessionalCategory(e.target.value)}
+                placeholder="Ex: Catégorie 8 · échelon 3"
+                className={INPUT}
+              />
+            </Field>
+          </fieldset>
+
+          <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+            <Legend>Identité personnelle</Legend>
+            <Field label="Date de naissance">
+              <input
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                className={INPUT}
+              />
+            </Field>
+            <Field label="N° CNI">
+              <input
+                value={cniNumber}
+                onChange={(e) => setCniNumber(e.target.value)}
+                placeholder="Ex: 123456789"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Téléphone perso">
+              <input
+                type="tel"
+                value={phoneMobile}
+                onChange={(e) => setPhoneMobile(e.target.value)}
+                placeholder="+237 ..."
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Email perso">
+              <input
+                type="email"
+                value={personalEmail}
+                onChange={(e) => setPersonalEmail(e.target.value)}
+                placeholder="prenom@gmail.com"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Adresse" className="sm:col-span-2">
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Ex: Yaoundé · Mvog-Mbi · BP 1234"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Situation familiale">
+              <input
+                value={familyStatus}
+                onChange={(e) => setFamilyStatus(e.target.value)}
+                placeholder="Ex: Marié · 3 enfants"
+                className={INPUT}
+              />
+            </Field>
+            <div className="hidden sm:block" />
+            <Field label="Contact d'urgence (nom)">
+              <input
+                value={emergencyContactName}
+                onChange={(e) => setEmergencyContactName(e.target.value)}
+                placeholder="Nom et prénom"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Contact d'urgence (téléphone)">
+              <input
+                type="tel"
+                value={emergencyContactPhone}
+                onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                placeholder="+237 ..."
+                className={INPUT}
+              />
+            </Field>
+          </fieldset>
+
+          <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+            <Legend>Données légales & bancaires</Legend>
+            <Field label="N° CNPS">
+              <input
+                value={cnpsNumber}
+                onChange={(e) => setCnpsNumber(e.target.value)}
+                placeholder="Ex: 10-1234567"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="NIU (DGI)">
+              <input
+                value={niu}
+                onChange={(e) => setNiu(e.target.value)}
+                placeholder="Ex: F218014203187"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Banque">
+              <input
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Ex: Afriland First Bank"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="Agence">
+              <input
+                value={bankAgency}
+                onChange={(e) => setBankAgency(e.target.value)}
+                placeholder="Ex: Yaoundé Centre"
+                className={INPUT}
+              />
+            </Field>
+            <Field label="RIB" className="sm:col-span-2">
+              <input
+                value={rib}
+                onChange={(e) => setRib(e.target.value)}
+                placeholder="CM21 1234 5678 9012 3456 789"
+                className={`${INPUT} font-mono`}
+              />
             </Field>
           </fieldset>
 

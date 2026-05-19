@@ -162,6 +162,7 @@ const DAF_CYCLES: NavSection = {
   items: [
     { label: "Cycle de paie", href: "/direction-financiere/paie", icon: CreditCard },
     { label: "Achats & engagements", href: "/direction-financiere/achats", icon: ShoppingCart },
+    { label: "Engagements financiers", href: "/direction-financiere/engagements", icon: Wallet },
     { label: "Circuits de paiement", href: "/direction-financiere/circuits-paiement", icon: GitBranch },
     { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
     { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
@@ -369,6 +370,7 @@ const FULL: Record<Module, NavSection> = {
     items: [
       { label: "Tableau de bord IT", href: "/informatique", icon: LayoutDashboard },
       { label: "Utilisateurs", href: "/informatique/users", icon: Users },
+      { label: "Demandes modif. profil", href: "/informatique/change-requests", icon: ClipboardList },
       { label: "Paramètres tenant", href: "/informatique/settings", icon: Settings },
       { label: "Chantiers (admin)", href: "/informatique/sites", icon: Building2 },
       { label: "Intégrations", href: "/informatique/integrations", icon: Network },
