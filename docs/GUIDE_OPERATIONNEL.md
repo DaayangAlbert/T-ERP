@@ -81,7 +81,7 @@ L'agent IA pourra lire ces fichiers comme contexte.
    - Créer la structure de dossiers
    - Installer les dépendances
    - Te demander confirmation à chaque étape clé
-4. À la fin : `pnpm dev` doit afficher la page d'accueil sur localhost:3000
+4. À la fin : `pnpm dev` doit afficher la page d'accueil sur localhost:5000
 
 **Si ça bloque :** demande à l'agent un état des lieux. "Donne-moi un résumé de ce qui est fait et ce qui ne marche pas."
 
@@ -177,7 +177,7 @@ postgresql://user:pass@ep-xxx.neon.tech/terp?sslmode=require
 127.0.0.1  admin.terp.local
 ```
 
-Puis accéder via `http://batimcam.terp.local:3000` au lieu de localhost.
+Puis accéder via `http://batimcam.terp.local:5000` au lieu de localhost.
 
 ### Railway dépasse le free tier
 
@@ -214,3 +214,68 @@ Trois priorités la semaine 2 :
 
 Bonne chance Albert. Tu as le matériel, l'organisation, et la méthode.
 Le seul ingrédient manquant maintenant, c'est l'exécution. 🚀
+
+---
+
+## ANNEXE A — PIPELINE DE RAPPORTS TECHNIQUES
+
+T-ERP intègre cinq rapports métier qui remontent l'information du terrain jusqu'au COMEX. Chaque rapport suit le même cycle de vie : `DRAFT → SUBMITTED → VALIDATED` (ou `REJECTED` avec motif). Toutes les transitions notifient les destinataires via la cloche de notifications.
+
+### Vue d'ensemble
+
+| Rapport | Périodicité | Auteur | Validateur | Page auteur | Page validateur |
+|---|---|---|---|---|---|
+| **Avancement chantier** | Mensuel (ou ad hoc) | Chef de Chantier | Directeur de Travaux | `/chef-chantier/rapports` | `/directeur-travaux/validations` |
+| **Hebdomadaire CDT** | Hebdomadaire | Conducteur de Travaux | Directeur de Travaux | `/conducteur-travaux/rapports` | `/directeur-travaux/rapports-cdt` |
+| **Mensuel technique DT** | Mensuel | Directeur Technique | Directeur Général | `/direction-technique/rapports-mensuels` | `/direction-generale/rapports-dt` |
+| **Mensuel synthétique DTrav** | Mensuel | Directeur de Travaux | Directeur Général | `/directeur-travaux/rapports-mensuels` | `/direction-generale/rapports-dtrav` |
+| **Sinistralité QHSE** | Mensuel | Responsable QHSE (TECH_DIRECTOR) | Directeur Général | `/direction-technique/rapports-qhse` | `/direction-generale/rapports-qhse` |
+
+### Mécanique commune
+
+- **Brouillon (`DRAFT`)** — l'auteur saisit librement, peut sauvegarder à tout moment, peut supprimer.
+- **Soumis (`SUBMITTED`)** — verrouillé pour l'auteur, l'édition est désactivée. Une notification est envoyée à tous les destinataires du tenant ayant le rôle de validation.
+- **Validé (`VALIDATED`)** — le rapport est figé, le visa du validateur (nom + date) est imprimé sur le PDF dans le cadre de signatures, l'auteur reçoit une notification.
+- **Refusé (`REJECTED`)** — le rapport repasse en brouillon éditable. Le motif du refus est affiché en bandeau rouge dans l'éditeur et imprimé sur le PDF. L'auteur reçoit une notification avec le motif.
+
+### Export PDF
+
+Chaque rapport dispose d'un export PDF dès qu'il est soumis (statut `SUBMITTED` ou `VALIDATED`). Le PDF est constitué :
+- d'une **page de garde** avec le logo du tenant, le titre, la période, les KPI clés et le bloc émetteur/date d'émission ;
+- d'un **corps** avec sections numérotées (tableaux KPIs + narratives + recommandations) et en-tête/pied de page fixes (`Page X / Y`) ;
+- d'un **cadre de validation** en bas avec les zones de signature dématérialisées (signature CDT ou auteur + visa validateur).
+
+Endpoints PDF : `/api/{role}/.../[id]/pdf` (voir le détail dans le code).
+
+### Pré-remplissage des chantiers
+
+Pour les rapports CDT et DT qui couvrent plusieurs chantiers, deux routes helper alimentent le formulaire :
+- `/api/cdt/available-sites` → chantiers actifs du portefeuille du CDT, avec effectif moyen et incidents HSE des 7 derniers jours pré-calculés ;
+- `/api/dt/portfolio-sites` → tous les chantiers du tenant (et filiales) avec marge, avancement physique/financier, NC ouvertes, suggestions d'incidents HSE des 30 derniers jours.
+
+Dans l'éditeur DT, un bouton **« ⟲ Recalculer agrégats »** recalcule automatiquement les KPI portefeuille à partir des snapshots de chantiers saisis.
+
+### Auto-calcul TF1/TG (QHSE)
+
+Le rapport QHSE inclut un bouton **« ⟲ Recalcul TF1/TG »** qui calcule :
+- `TF1 = (LTI × 1 000 000) / heures travaillées` (taux de fréquence)
+- `TG = (jours perdus × 1 000) / heures travaillées` (taux de gravité)
+
+Le responsable peut ensuite ajuster manuellement si nécessaire.
+
+### Badges dynamiques de la sidebar
+
+L'entrée de chaque page validateur affiche un compteur badge des rapports en attente, alimenté en temps réel (refresh 60 s) par `/api/reports/sidebar-badges`. Exemples :
+- DTrav : « Validations N1 [3] » et « Rapports CDT à valider [1] »
+- DG : « Rapports DT à valider [1] », « Rapports DTrav à valider [1] », « Rapports QHSE à valider [1] »
+- Auteurs : badge rouge alert si un de leurs rapports a été refusé et attend correction.
+
+### Données de démonstration
+
+Trois scripts seeds idempotents alimentent la base avec des données réalistes :
+1. `node scripts/seed-progress-reports.mjs` — 3 rapports CC (Janvier validé, Février soumis, Mars brouillon) + 2 historiques (Nov/Déc 2025) pour Jean-Marie BIWOLE sur CHT-2026-031.
+2. `node scripts/seed-cdt-weekly-report.mjs` + `seed-dt-monthly-report.mjs` + `seed-dtrav-monthly-report.mjs` + `seed-qhse-monthly-report.mjs` — 1 rapport courant `SUBMITTED` pour chaque module sur Avril 2026.
+3. `node scripts/seed-historical-reports.mjs` — 3 mois historiques `VALIDATED` (Janvier, Février, Mars 2026) pour DT/DTrav/QHSE et 3 semaines historiques pour CDT.
+
+Au total après seeds : ~17 rapports répartis entre les 5 modules, couvrant tous les statuts (DRAFT/SUBMITTED/VALIDATED) et permettant de tester le pipeline complet.
+

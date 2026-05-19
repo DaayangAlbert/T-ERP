@@ -23,6 +23,23 @@ export const metadata: Metadata = {
     icon: "/logo-terp.svg",
     shortcut: "/logo-terp.svg",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "T-ERP",
+    statusBarStyle: "default",
+  },
+  // Nouveau standard PWA (remplace apple-mobile-web-app-capable pour les navigateurs modernes)
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport = {
+  themeColor: "#A855F7",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

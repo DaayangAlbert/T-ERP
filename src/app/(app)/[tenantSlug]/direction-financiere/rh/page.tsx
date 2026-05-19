@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { LineChart, ShieldCheck, UserMinus, TimerReset, HandCoins } from "lucide-react";
+import { LineChart, ShieldCheck, UserMinus, TimerReset, HandCoins, Users } from "lucide-react";
 import { clsx } from "clsx";
 import { HrFinancialOverview } from "@/components/daf/hr/HrFinancialOverview";
 import { SocialProvisionsTable } from "@/components/daf/hr/SocialProvisionsTable";
 import { DeparturesTable } from "@/components/daf/hr/DeparturesTable";
 import { OvertimeAnalysis } from "@/components/daf/hr/OvertimeAnalysis";
 import { SubsidiesTracker } from "@/components/daf/hr/SubsidiesTracker";
+import { PersonnelCoutsPanel } from "@/components/daf/hr/PersonnelCoutsPanel";
 
-type Tab = "overview" | "provisions" | "departures" | "overtime" | "subsidies";
+type Tab = "overview" | "personnel" | "provisions" | "departures" | "overtime" | "subsidies";
 
 const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
   { key: "overview", label: "Vue financière DAF", icon: <LineChart className="h-3.5 w-3.5" /> },
+  { key: "personnel", label: "Personnel & coûts", icon: <Users className="h-3.5 w-3.5" /> },
   { key: "provisions", label: "Provisions sociales", icon: <ShieldCheck className="h-3.5 w-3.5" /> },
   { key: "departures", label: "Départs et indemnités", icon: <UserMinus className="h-3.5 w-3.5" /> },
   { key: "overtime", label: "Heures supplémentaires", icon: <TimerReset className="h-3.5 w-3.5" /> },
@@ -52,6 +54,7 @@ export default function DafRhPage() {
       </div>
 
       {tab === "overview" && <HrFinancialOverview />}
+      {tab === "personnel" && <PersonnelCoutsPanel />}
       {tab === "provisions" && <SocialProvisionsTable />}
       {tab === "departures" && <DeparturesTable />}
       {tab === "overtime" && <OvertimeAnalysis />}

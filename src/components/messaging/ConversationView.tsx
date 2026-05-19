@@ -1,14 +1,38 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ArrowLeft, Phone, Search, Video } from "lucide-react";
-import { useMessages, useSendMessage, type ConversationItem } from "@/hooks/useMessaging";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, MoreVertical, Phone, Search, Video } from "lucide-react";
+import { useMessages, useSendAttachment, useSendMessage, type ConversationItem } from "@/hooks/useMessaging";
 import { MessageBubble } from "./MessageBubble";
 import { Composer } from "./Composer";
+import { CallSimulator } from "./CallSimulator";
+
+const ROLE_LABEL: Record<string, string> = {
+  DG: "Directeur Général",
+  DAF: "Directeur Admin. & Financier",
+  HR: "Responsable RH",
+  SECRETARY_GENERAL: "Secrétaire Général",
+  TECH_DIRECTOR: "Directeur Technique",
+  WORKS_DIRECTOR: "Directeur Travaux",
+  WORKS_MANAGER: "Conducteur Travaux",
+  SITE_MANAGER: "Chef Chantier",
+  ACCOUNTANT: "Comptable",
+  LOGISTICS: "Logistique",
+  WAREHOUSE: "Magasinier",
+  ARCHIVIST: "Archiviste",
+  EMPLOYEE: "Employé",
+  WORKER: "Ouvrier",
+  TENANT_ADMIN: "Administrateur",
+};
 
 interface Props {
   conversation: ConversationItem;
   onBack?: () => void;
+  /** Si true, démarre automatiquement un appel audio à l'ouverture
+   *  (utilisé par les liens externes `/messagerie?call=<userId>`). */
+  autoStartCall?: boolean;
+  /** Callback appelé une fois l'auto-start consommé (pour reset le flag). */
+  onCallStartConsumed?: () => void;
 }
 
 const TONES = ["#2A1B3D", "#0F766E", "#9F580A", "#7C3AED", "#7C2D12", "#9333EA"];
@@ -40,10 +64,17 @@ function dayLabel(iso: string): string {
     .toUpperCase();
 }
 
-export function ConversationView({ conversation, onBack }: Props) {
+export function ConversationView({
+  conversation,
+  onBack,
+  autoStartCall,
+  onCallStartConsumed,
+}: Props) {
   const { data, isLoading } = useMessages(conversation.id);
   const send = useSendMessage(conversation.id);
+  const sendAttachment = useSendAttachment(conversation.id);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [callKind, setCallKind] = useState<"audio" | "video" | null>(null);
 
   // Scroll to bottom whenever new messages land
   useEffect(() => {
@@ -51,6 +82,15 @@ export function ConversationView({ conversation, onBack }: Props) {
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [data?.items.length]);
+
+  // Auto-start d'appel quand le parent passe le flag (lien externe
+  // /messagerie?call=<userId> qui veut déclencher l'appel direct).
+  useEffect(() => {
+    if (autoStartCall && !callKind) {
+      setCallKind("audio");
+      onCallStartConsumed?.();
+    }
+  }, [autoStartCall, callKind, onCallStartConsumed]);
 
   const headerInitials = conversation.isGroup
     ? conversation.name
@@ -67,48 +107,84 @@ export function ConversationView({ conversation, onBack }: Props) {
   // Group messages by day for separators
   const items = data?.items ?? [];
 
+  const subtitle = conversation.isGroup
+    ? `${conversation.otherUsers.length + 1} membres`
+    : conversation.otherUsers[0]
+      ? ROLE_LABEL[conversation.otherUsers[0].role] ?? conversation.otherUsers[0].role
+      : "";
+
   return (
-    <div className="flex h-full flex-col bg-surface-alt">
-      <header className="flex items-center gap-3 border-b border-line bg-white px-4 py-2.5">
+    <div className="flex h-full flex-col">
+      <header className="flex items-center gap-3 border-b border-line bg-primary-500 px-3 py-2.5 text-white">
         {onBack && (
           <button
             onClick={onBack}
-            className="grid h-8 w-8 place-items-center rounded-md text-ink-3 hover:bg-surface-alt md:hidden"
+            className="grid h-8 w-8 place-items-center rounded-md hover:bg-white/15 md:hidden"
             aria-label="Retour à la liste"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
         )}
         <div
-          className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-[11.5px] font-semibold text-white"
+          className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full text-[11.5px] font-semibold text-white ring-2 ring-white/30"
           style={{ background: tone }}
         >
           {headerInitials}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-semibold text-ink">{conversation.name}</div>
-          <div className="text-[11px] text-ink-3">
-            {conversation.isGroup
-              ? `${conversation.otherUsers.length + 1} membres`
-              : conversation.otherUsers[0]
-                ? `${conversation.otherUsers[0].role}`
-                : ""}
-          </div>
+          <div className="truncate text-[14px] font-semibold">{conversation.name}</div>
+          <div className="truncate text-[11px] text-white/75">{subtitle}</div>
         </div>
-        <div className="flex items-center gap-1 text-ink-3">
-          <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-surface-alt" disabled title="Appel (J6+)">
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => setCallKind("audio")}
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15"
+            title="Appel audio"
+            aria-label="Appel audio"
+          >
             <Phone className="h-4 w-4" />
           </button>
-          <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-surface-alt" disabled title="Vidéo (J6+)">
+          <button
+            onClick={() => setCallKind("video")}
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15"
+            title="Appel vidéo"
+            aria-label="Appel vidéo"
+          >
             <Video className="h-4 w-4" />
           </button>
-          <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-surface-alt" disabled title="Recherche (J6+)">
+          <button
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 disabled:opacity-50"
+            disabled
+            title="Rechercher dans la conversation (à venir)"
+            aria-label="Rechercher"
+          >
             <Search className="h-4 w-4" />
+          </button>
+          <button
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 disabled:opacity-50"
+            disabled
+            title="Plus d'options (à venir)"
+            aria-label="Plus d'options"
+          >
+            <MoreVertical className="h-4 w-4" />
           </button>
         </div>
       </header>
 
-      <div ref={scrollRef} className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      {callKind && (
+        <CallSimulator
+          kind={callKind}
+          contactName={conversation.name}
+          contactInitials={headerInitials}
+          contactColor={tone}
+          onHangup={() => setCallKind(null)}
+        />
+      )}
+
+      <div
+        ref={scrollRef}
+        className="flex-1 space-y-1 overflow-y-auto px-3 py-4 chat-bg"
+      >
         {isLoading && (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -154,6 +230,9 @@ export function ConversationView({ conversation, onBack }: Props) {
         disabled={!conversation.id}
         onSend={async (content) => {
           await send.mutateAsync(content);
+        }}
+        onSendAttachment={async (input) => {
+          await sendAttachment.mutateAsync(input);
         }}
       />
     </div>

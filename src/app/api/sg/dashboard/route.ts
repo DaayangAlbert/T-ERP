@@ -65,7 +65,7 @@ export async function GET() {
     }),
     prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { name: true, taxId: true, cnpsId: true },
+      select: { name: true, taxId: true, cnpsId: true, slug: true },
     }),
     prisma.clientContract.count({
       where: { tenantId, status: MarketContractStatus.ACTIVE, phase: { in: ACTIVE_CONTRACT_PHASES } },
@@ -167,7 +167,7 @@ export async function GET() {
       icon: "AlertOctagon",
       title: `Renouvellement ${a.approvalName}`,
       detail: `Délivrant ${a.deliveringAuthority} · expire ${daysLeft < 0 ? `il y a ${Math.abs(daysLeft)} j` : `dans ${daysLeft} j`}`,
-      cta: { label: "Traiter", href: `/${tenant?.taxId ? "batimcam" : "batimcam"}/secretaire-general/conformite#approval-${a.id}` },
+      cta: { label: "Traiter", href: `/${tenant?.slug ?? ""}/secretaire-general/conformite#approval-${a.id}` },
     });
   }
 

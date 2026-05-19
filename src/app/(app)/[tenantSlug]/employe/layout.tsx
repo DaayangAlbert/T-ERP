@@ -3,15 +3,21 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Head from "next/head";
+import { Role } from "@prisma/client";
 import { useAuth } from "@/hooks/useAuth";
 import { EmployeeProvider } from "@/contexts/EmployeeContext";
+import { getAccess } from "@/lib/rbac/access-matrix";
+import { MODULES } from "@/lib/rbac/modules";
 
-// Espace EMP : exclusivement EMPLOYEE (employé bureau).
-// Les ouvriers (WORKER) ont leur propre espace mobile-first /ouv depuis le
-// Bloc 0 Ouvrier (mai 2026). Les autres profils (DG, DAF, RH, etc.) ne
-// consultent PAS l'espace personnel d'un autre utilisateur — ce serait
-// une fuite RGPD/sociale stricte.
-const ALLOWED_ROLES = ["EMPLOYEE"];
+// Espace EMP : ouvert à tout rôle ayant un accès non-NONE à EMP dans la
+// matrice (EMPLOYEE en FULL, et toutes les directions en OWN — pour leur
+// PROPRE espace). La protection RGPD est faite côté API par guardEmp +
+// guardEmpOwnership : personne ne consulte les données d'un autre user.
+// Les ouvriers (WORKER) ont leur propre espace mobile-first /ouv.
+function canAccessEmp(role: string | null | undefined): boolean {
+  if (!role) return false;
+  return getAccess(role as Role, MODULES.EMP).level !== "NONE";
+}
 
 export default function EmpLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -27,12 +33,12 @@ export default function EmpLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (user && !ALLOWED_ROLES.includes(user.role)) {
+    if (user && !canAccessEmp(user.role)) {
       router.replace("/dashboard");
     }
   }, [user, router]);
 
-  if (user && !ALLOWED_ROLES.includes(user.role)) return null;
+  if (user && !canAccessEmp(user.role)) return null;
 
   return (
     <EmployeeProvider>

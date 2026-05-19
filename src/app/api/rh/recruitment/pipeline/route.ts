@@ -1,7 +1,13 @@
+/**
+ * Pipeline kanban recrutement — branche sur la BDD (model Application).
+ *
+ * Retourne 5 colonnes (RECEIVED, SHORTLISTED, INTERVIEW, OFFER, HIRED)
+ * avec leurs candidatures triées par score décroissant.
+ */
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, AppStage } from "@prisma/client";
-import { getEffectiveStage, getSyntheticApplications } from "@/lib/rh-recruitment";
 
 export const dynamic = "force-dynamic";
 
@@ -34,21 +40,32 @@ export async function GET() {
     return NextResponse.json({ error: "Réservé RH / DG / DAF" }, { status: 403 });
   }
 
-  const apps = getSyntheticApplications();
+  const apps = await prisma.application.findMany({
+    where: {
+      jobOffer: { tenantId: session.tenantId },
+      stage: { in: COLUMNS_ORDER },
+    },
+    include: {
+      user: { select: { firstName: true, lastName: true, desiredLocation: true } },
+      jobOffer: { select: { title: true, region: true } },
+    },
+    orderBy: [{ score: "desc" }, { appliedAt: "desc" }],
+  });
+
   const columns = COLUMNS_ORDER.map((stage) => {
     const items = apps
-      .filter((a) => getEffectiveStage(a) === stage)
-      .sort((a, b) => b.scoring.overall - a.scoring.overall)
+      .filter((a) => a.stage === stage)
       .map((a) => ({
         id: a.id,
-        candidateName: a.candidateName,
-        position: a.position,
-        region: a.region,
-        appliedAt: a.appliedAt,
-        scoreOverall: a.scoring.overall,
+        candidateName: `${a.user.firstName} ${a.user.lastName}`,
+        position: a.jobOffer.title,
+        region: a.user.desiredLocation ?? a.jobOffer.region ?? "—",
+        appliedAt: a.appliedAt.toISOString(),
+        scoreOverall: a.score ?? 0,
         stage,
       }));
     return { stage, label: STAGE_LABEL[stage], count: items.length, items };
   });
+
   return NextResponse.json({ columns });
 }

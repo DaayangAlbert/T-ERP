@@ -6,6 +6,7 @@ import { getCurrentSession } from "@/lib/session";
 import { denyIfReadOnly } from "@/lib/rbac/guard";
 import { MODULES } from "@/lib/rbac/modules";
 import { assignTrackSchema } from "@/schemas/payment-circuits";
+import { paymentTrackLinkForUser } from "@/lib/notifications/payment-track-link";
 
 export const dynamic = "force-dynamic";
 
@@ -51,13 +52,14 @@ export async function POST(req: Request, { params }: { params: { trackId: string
     });
 
     if (data.assignedToId && data.assignedToId !== session.sub) {
+      const link = await paymentTrackLinkForUser(data.assignedToId);
       await prisma.notification.create({
         data: {
           userId: data.assignedToId,
           type: "payment_track_assigned",
           title: `Suivi paiement assigné · ${track.template.name}`,
           body: `${track.receivable.clientName} · ${track.receivable.invoiceRef}`,
-          link: "/direction-financiere/recouvrement",
+          link,
         },
       });
     }

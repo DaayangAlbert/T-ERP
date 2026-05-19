@@ -39,16 +39,14 @@ export default function CcDashboardPage() {
 
   return (
     <div id="screen-cc-dashboard" className="space-y-3">
-      <header className="-mx-3 sm:-mx-4 md:-mx-6 sticky top-14 z-20 bg-gradient-to-r from-primary-600 via-violet-700 to-primary-700 px-3 py-2 text-white shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <div className="text-[11px] uppercase opacity-80">Chantier</div>
-            <div className="truncate text-[14px] font-semibold">
-              {site ? `${site.code} · ${site.name}` : "Chargement…"}
-            </div>
+      <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
+        <div className="min-w-0">
+          <div className="text-[10.5px] uppercase tracking-wider text-ink-3">Chantier</div>
+          <div className="truncate text-[14px] font-semibold text-ink">
+            {site ? `${site.code} · ${site.name}` : "Chargement…"}
           </div>
-          <SyncStatusBadge />
         </div>
+        <SyncStatusBadge />
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

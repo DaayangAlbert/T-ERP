@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Pin, BellOff } from "lucide-react";
+import { Search, Pin, BellOff, MessageSquarePlus, MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { clsx } from "clsx";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -12,6 +12,14 @@ interface Props {
   activeId: string | null;
   onSelect: (id: string) => void;
   loading?: boolean;
+  /** Current user's display name shown in the header (e.g., "Albert D."). */
+  currentUserLabel?: string;
+  /** Current user's avatar URL. If null, initials are used. */
+  currentUserAvatarUrl?: string | null;
+  /** Current user's initials (e.g., "AD") shown if no avatar URL. */
+  currentUserInitials?: string;
+  /** Opens the "New chat / New group" modal. */
+  onNewChat?: () => void;
 }
 
 const TONES = ["#2A1B3D", "#0F766E", "#9F580A", "#7C3AED", "#7C2D12", "#9333EA"];
@@ -38,7 +46,16 @@ function timeLabel(iso: string | null): string {
 
 type FilterTab = "all" | "unread" | "groups";
 
-export function ConversationList({ items, activeId, onSelect, loading }: Props) {
+export function ConversationList({
+  items,
+  activeId,
+  onSelect,
+  loading,
+  currentUserLabel,
+  currentUserAvatarUrl,
+  currentUserInitials,
+  onNewChat,
+}: Props) {
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<FilterTab>("all");
 
@@ -51,6 +68,48 @@ export function ConversationList({ items, activeId, onSelect, loading }: Props) 
 
   return (
     <div className="flex h-full flex-col bg-white">
+      {/* WhatsApp-style header: user avatar left, action icons right */}
+      <div className="flex items-center justify-between gap-2 bg-primary-500 px-3 py-2.5 text-white">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {currentUserAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={currentUserAvatarUrl}
+              alt=""
+              className="h-9 w-9 flex-shrink-0 rounded-full object-cover ring-2 ring-white/30"
+            />
+          ) : (
+            <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-white/20 text-[12px] font-semibold ring-2 ring-white/30">
+              {currentUserInitials ?? "?"}
+            </div>
+          )}
+          <span className="truncate text-[14px] font-semibold">
+            {currentUserLabel ?? "Messagerie"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onNewChat}
+            disabled={!onNewChat}
+            title="Nouvelle discussion"
+            aria-label="Nouvelle discussion"
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 disabled:opacity-50"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Plus d'options (à venir)"
+            aria-label="Plus d'options"
+            className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/15 disabled:opacity-50"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
       <div className="border-b border-line p-3">
         <div className="flex items-center gap-2 rounded-md border border-line bg-surface-alt px-3">
           <Search className="h-4 w-4 text-ink-3" />

@@ -13,6 +13,12 @@ export async function GET() {
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const endOfDay = new Date(startOfDay.getTime() + 86_400_000);
 
+  // Si le warehouse est de scope DIRECTION/CENTRAL (siteId null), il
+  // n'a pas de livraisons chantier — on retourne une liste vide.
+  if (!warehouse.site) {
+    return NextResponse.json({ items: [] });
+  }
+
   const items = await prisma.delivery.findMany({
     where: {
       siteId: warehouse.site.id,

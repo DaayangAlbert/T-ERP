@@ -19,47 +19,62 @@ export async function GET() {
 
   const scopeIds = await getTenantScopeIds(session.tenantId);
 
-  const [activeSites, allManagers, validations, dtAlerts] = await Promise.all([
-    prisma.site.findMany({
-      where: { tenantId: { in: scopeIds }, status: { not: SiteStatus.ARCHIVED } },
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        client: true,
-        status: true,
-        type: true,
-        region: true,
-        budget: true,
-        progress: true,
-        physicalProgress: true,
-        financialProgress: true,
-        margin: true,
-        marginTarget: true,
-        deviationPercent: true,
-        actualSpentAmount: true,
-        plannedEndDate: true,
-        managerId: true,
-      },
-    }),
-    prisma.user.findMany({
-      where: { role: Role.WORKS_DIRECTOR, status: "ACTIVE" },
-      select: { id: true, firstName: true, lastName: true },
-    }),
-    prisma.validation.findMany({
-      where: {
-        tenantId: session.tenantId,
-        status: "PENDING",
-        dtValidationRequired: true,
-      },
-      select: { id: true },
-    }),
-    prisma.dtAlert.findMany({
-      where: { tenantId: session.tenantId, resolved: false },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-  ]);
+  const [activeSites, allManagers, validations, dtAlerts, workforceCount, lastMajorIncident] =
+    await Promise.all([
+      prisma.site.findMany({
+        where: { tenantId: { in: scopeIds }, status: { not: SiteStatus.ARCHIVED } },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          client: true,
+          status: true,
+          type: true,
+          region: true,
+          budget: true,
+          progress: true,
+          physicalProgress: true,
+          financialProgress: true,
+          margin: true,
+          marginTarget: true,
+          deviationPercent: true,
+          actualSpentAmount: true,
+          plannedEndDate: true,
+          managerId: true,
+        },
+      }),
+      prisma.user.findMany({
+        where: { role: Role.WORKS_DIRECTOR, status: "ACTIVE" },
+        select: { id: true, firstName: true, lastName: true },
+      }),
+      prisma.validation.findMany({
+        where: {
+          tenantId: session.tenantId,
+          status: "PENDING",
+          dtValidationRequired: true,
+        },
+        select: { id: true },
+      }),
+      prisma.dtAlert.findMany({
+        where: { tenantId: session.tenantId, resolved: false },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.siteWorkforceMember.count({
+        where: {
+          site: { tenantId: { in: scopeIds }, status: { not: SiteStatus.ARCHIVED } },
+          endedAt: null,
+        },
+      }),
+      prisma.hseIncident.findFirst({
+        where: {
+          site: { tenantId: { in: scopeIds } },
+          severity: { in: ["HIGH", "CRITICAL"] },
+        },
+        orderBy: { occurredAt: "desc" },
+        select: { occurredAt: true },
+      }),
+    ]);
 
   const totalBudget = activeSites.reduce((s, x) => s + Number(x.budget), 0);
   const cumulativeProductionYtd = activeSites.reduce(
@@ -75,8 +90,10 @@ export async function GET() {
 
   // KPIs
   const activeCount = activeSites.length;
-  const headcountOnSite = 487; // valeur de démo cohérente avec le prototype
-  const hseRecord = 142; // jours sans accident
+  const headcountOnSite = workforceCount;
+  const hseRecord = lastMajorIncident
+    ? Math.floor((Date.now() - lastMajorIncident.occurredAt.getTime()) / 86_400_000)
+    : 365;
 
   // Avancement physique vs financier (par chantier — top 6 visibles)
   const progressVsFinancial = activeSites

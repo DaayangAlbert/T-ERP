@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardEmp } from "@/lib/rbac/emp-guard";
+import { createPayslipVerification } from "@/lib/payroll/payroll-verification";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,8 @@ export async function GET(req: Request) {
     orderBy: { period: "desc" },
     select: {
       id: true,
+      tenantId: true,
+      userId: true,
       period: true,
       periodLabel: true,
       paymentDate: true,
@@ -35,6 +38,10 @@ export async function GET(req: Request) {
       paymentReference: true,
       paymentBankAccount: true,
       status: true,
+      verificationUuid: true,
+      verificationCode: true,
+      verificationHash: true,
+      verifiedPublicUrl: true,
     },
   });
 
@@ -44,12 +51,43 @@ export async function GET(req: Request) {
     year,
     total: payslips.length,
     cumulNet,
-    payslips: payslips.map((p) => ({
-      ...p,
-      grossAmount: Number(p.grossAmount),
-      netAmount: Number(p.netAmount),
-      cnpsAmount: Number(p.cnpsAmount),
-      irppAmount: Number(p.irppAmount),
-    })),
+    payslips: await Promise.all(
+      payslips.map(async (p) => {
+        const hasVerification = Boolean(p.verificationUuid && p.verificationCode && p.verificationHash && p.verifiedPublicUrl);
+        const verification = hasVerification
+          ? { verifiedPublicUrl: p.verifiedPublicUrl! }
+          : createPayslipVerification({
+              tenantId: p.tenantId,
+              userId: p.userId,
+              periodIso: p.period.toISOString(),
+            });
+        if (!hasVerification) {
+          await prisma.payslip.update({
+            where: { id: p.id },
+            data: {
+              verificationUuid: "verificationUuid" in verification ? verification.verificationUuid : undefined,
+              verificationCode: "verificationCode" in verification ? verification.verificationCode : undefined,
+              verificationHash: "verificationHash" in verification ? verification.verificationHash : undefined,
+              verifiedPublicUrl: verification.verifiedPublicUrl,
+            },
+          });
+        }
+        return {
+          id: p.id,
+          period: p.period,
+          periodLabel: p.periodLabel,
+          paymentDate: p.paymentDate,
+          overtimeHours: p.overtimeHours,
+          paymentReference: p.paymentReference,
+          paymentBankAccount: p.paymentBankAccount,
+          status: p.status,
+          grossAmount: Number(p.grossAmount),
+          netAmount: Number(p.netAmount),
+          cnpsAmount: Number(p.cnpsAmount),
+          irppAmount: Number(p.irppAmount),
+          verifiedPublicUrl: verification.verifiedPublicUrl,
+        };
+      })
+    ),
   });
 }

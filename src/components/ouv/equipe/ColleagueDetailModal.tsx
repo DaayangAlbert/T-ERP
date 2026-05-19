@@ -1,8 +1,8 @@
 "use client";
 
-import { X, Phone, Loader2, MapPin, Briefcase, Award } from "lucide-react";
+import { X, Loader2, MapPin, Briefcase, Award } from "lucide-react";
 import { useColleague } from "@/hooks/useOuvTeam";
-import { WhatsAppDeepLink } from "@/components/ouv/equipe/WhatsAppDeepLink";
+import { ContactActions } from "@/components/contact/ContactActions";
 
 interface Props {
   isOpen: boolean;
@@ -73,29 +73,17 @@ export function ColleagueDetailModal({ isOpen, colleagueId, onClose }: Props) {
                 <InfoLine
                   icon={Award}
                   label="Ancienneté"
-                  value={`${c.yearsOnSite} an${c.yearsOnSite > 1 ? "s" : ""} BatimCAM`}
+                  value={`${c.yearsOnSite} an${c.yearsOnSite > 1 ? "s" : ""} dans l'entreprise`}
                 />
               )}
             </div>
 
-            {c.phoneE164 ? (
-              <div className="grid grid-cols-2 gap-2.5">
-                {c.whatsappUrl && <WhatsAppDeepLink whatsappUrl={c.whatsappUrl} />}
-                {c.telUrl && (
-                  <a
-                    href={c.telUrl}
-                    className="flex min-h-[56px] items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white text-[14px] font-bold text-slate-700"
-                  >
-                    <Phone className="h-5 w-5" />
-                    Appel
-                  </a>
-                )}
-              </div>
-            ) : (
-              <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-center text-[12.5px] text-slate-600">
-                Téléphone non partagé — pas sur le même chantier
-              </p>
-            )}
+            {/* Contact via messagerie interne (pas de tel:/WhatsApp externe) */}
+            <ContactActions userId={c.id} variant="full" size="lg" className="grid grid-cols-2" />
+
+            <p className="mt-2 text-center text-[11px] text-slate-500">
+              Message ou appel via la messagerie T-ERP
+            </p>
 
             <p className="mt-4 text-center text-[11px] text-slate-400">
               Contact strictement professionnel · pas de données personnelles affichées

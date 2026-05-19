@@ -50,6 +50,15 @@ export async function GET(req: Request) {
     include: { site: { select: { code: true, name: true, client: true } } },
   });
 
+  // OVERDUE est calculé à la volée : une situation ISSUED dont la dueDate est
+  // passée bascule visuellement en OVERDUE. Le statut DB reste ISSUED tant
+  // qu'aucun job de bascule n'est branché.
+  const now = Date.now();
+  const effectiveStatus = (b: typeof items[number]): string => {
+    if (b.status === BillingStatus.ISSUED && b.dueDate.getTime() < now) return "OVERDUE";
+    return b.status;
+  };
+
   return NextResponse.json({
     items: items.map((b) => ({
       id: b.id,
@@ -67,13 +76,13 @@ export async function GET(req: Request) {
       paidAmount: b.paidAmount ? Number(b.paidAmount) : null,
       dueDate: b.dueDate.toISOString(),
       paidAt: b.paidAt?.toISOString() ?? null,
-      status: b.status,
+      status: effectiveStatus(b),
     })),
     counts: {
       toIssue: items.filter((b) => b.status === "DRAFT" || b.status === "VALIDATED").length,
-      issued: items.filter((b) => b.status === "ISSUED").length,
-      paid: items.filter((b) => b.status === "PAID").length,
-      overdue: items.filter((b) => b.status === "OVERDUE").length,
+      issued: items.filter((b) => effectiveStatus(b) === "ISSUED").length,
+      paid: items.filter((b) => b.status === "PAID" || b.status === "PARTIALLY_PAID").length,
+      overdue: items.filter((b) => effectiveStatus(b) === "OVERDUE").length,
     },
     scope: { isDirection: allowed === null },
   });

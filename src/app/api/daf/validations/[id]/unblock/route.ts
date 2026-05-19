@@ -5,13 +5,20 @@ import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.DAF, Role.TENANT_ADMIN];
+const ALLOWED: Role[] = [Role.DAF, Role.DG, Role.TENANT_ADMIN];
+
+// Mapping rôle → étape workflow vers laquelle la reprise réassigne.
+const STEP_BY_ROLE: Partial<Record<Role, string>> = {
+  [Role.DAF]: "DAF",
+  [Role.DG]: "DG",
+  [Role.TENANT_ADMIN]: "DAF",
+};
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = getCurrentSession();
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   if (!ALLOWED.includes(session.role as Role)) {
-    return NextResponse.json({ error: "Action réservée DAF" }, { status: 403 });
+    return NextResponse.json({ error: "Action réservée DAF / DG" }, { status: 403 });
   }
 
   const body = (await req.json().catch(() => ({}))) as { action?: "RELANCE" | "TAKE_OVER"; note?: string };
@@ -22,11 +29,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   });
   if (!v) return NextResponse.json({ error: "Validation introuvable ou non bloquée" }, { status: 404 });
 
+  const callerRole = session.role as Role;
+  const takeOverStep = STEP_BY_ROLE[callerRole] ?? "DAF";
+  const actorLabel = callerRole === Role.DG ? "DG" : "DAF";
+
   if (action === "TAKE_OVER") {
-    // DAF reprend la main : devient validateur courant
+    // Reprise : le superviseur (DAF ou DG) devient validateur courant à son étape.
     await prisma.validation.update({
       where: { id: v.id },
-      data: { currentApproverId: session.sub, currentStep: "DAF" },
+      data: { currentApproverId: session.sub, currentStep: takeOverStep },
     });
   }
   // RELANCE : on log l'action mais on ne change pas le workflow
@@ -39,7 +50,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         {
           type: action === "TAKE_OVER" ? "TAKE_OVER" : "RELANCE",
           authorId: session.sub,
-          message: body.note ?? (action === "TAKE_OVER" ? "Reprise par DAF" : "Validateur relancé par DAF"),
+          message: body.note ?? (action === "TAKE_OVER" ? `Reprise par ${actorLabel}` : `Validateur relancé par ${actorLabel}`),
           at: new Date().toISOString(),
         },
       ] as object,

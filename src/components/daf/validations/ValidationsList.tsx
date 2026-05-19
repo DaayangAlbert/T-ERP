@@ -8,7 +8,7 @@ import { RejectModal } from "@/components/validations/RejectModal";
 import { RequestInfoModal } from "@/components/validations/RequestInfoModal";
 import { WorkflowInline } from "./WorkflowInline";
 import { useAccess } from "@/hooks/useAccess";
-import { MODULES } from "@/lib/rbac/modules";
+import { MODULES, type Module } from "@/lib/rbac/modules";
 import { formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
 
@@ -47,7 +47,21 @@ interface Item {
   ageDays: number;
 }
 
-export function ValidationsList({ items, onChange }: { items: Item[]; onChange?: () => void }) {
+interface ValidationsListProps {
+  items: Item[];
+  onChange?: () => void;
+  /** Module utilisé pour la vérification canValidate (défaut DAF = N2). */
+  module?: Module;
+  /** Libellé du niveau pour les messages ("N2" / "N3"). */
+  levelLabel?: string;
+}
+
+export function ValidationsList({
+  items,
+  onChange,
+  module = MODULES.DAF,
+  levelLabel = "N2",
+}: ValidationsListProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [rejectId, setRejectId] = useState<{ id: string; title: string } | null>(null);
   const [infoId, setInfoId] = useState<{ id: string; title: string } | null>(null);
@@ -55,10 +69,8 @@ export function ValidationsList({ items, onChange }: { items: Item[]; onChange?:
   const approve = useApproveValidation();
   const bulk = useBulkApprove();
   // L'autorisation d'agir vient de la matrice : DAF a canValidate=true sur
-  // MODULES.DAF (FULL), tandis que le DG (READ) a canValidate=false → en
-  // mode drill-down il voit les validations en cours mais ne peut pas les
-  // approuver/refuser.
-  const access = useAccess(MODULES.DAF);
+  // MODULES.DAF (FULL), DG a canValidate=true sur MODULES.DG.
+  const access = useAccess(module);
   const canAct = access.canValidate;
 
   const toggleSelect = (id: string) => {
@@ -90,7 +102,7 @@ export function ValidationsList({ items, onChange }: { items: Item[]; onChange?:
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-success/30 bg-success/5 p-6 text-center text-[13px] text-success">
-        ✓ Aucune validation N2 en attente.
+        ✓ Aucune validation {levelLabel} en attente.
       </div>
     );
   }
@@ -103,8 +115,9 @@ export function ValidationsList({ items, onChange }: { items: Item[]; onChange?:
           return (
             <li
               key={v.id}
+              id={`validation-${v.id}`}
               className={clsx(
-                "rounded-xl border bg-white p-3 shadow-card sm:p-4",
+                "rounded-xl border bg-white p-3 shadow-card transition-all sm:p-4",
                 isSelected ? "border-primary-300 ring-2 ring-primary-100" : "border-line"
               )}
             >

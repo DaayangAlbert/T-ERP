@@ -1,207 +1,403 @@
-/* Bulletin officiel — styles HTML + impression */
+/* ═══════════════════════════════════════════════════════════════════════
+   Bulletin officiel T-ERP BTP — Template 4 colonnes (réplique maquette)
+   ═══════════════════════════════════════════════════════════════════════ */
 
 .bulletin-frame {
-  background: #e8e8e8;
-  padding: 24px;
-  margin: -20px;
-  border-radius: 8px;
+  /* Étend le bulletin sur toute la largeur disponible.
+     Le calc() neutralise le padding hérité du layout principal pour que le
+     bulletin colle aux bords gauche/droite de la zone de contenu. */
+  background: #e5e5e5;
+  padding: 0;
+  margin: -20px -20px 0;
+  border-radius: 0;
 }
 
 .bulletin {
-  max-width: 1100px;
-  margin: 0 auto;
+  /* Aucune contrainte de largeur : occupe 100 % de la frame */
+  width: 100%;
+  max-width: none;
+  margin: 0;
   background: #fff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  font-family: "Inter", Arial, "Helvetica Neue", Helvetica, sans-serif;
+  color: #1f2937;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.bul-mono { font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums; }
+.bul-num  { font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums; text-align: right; }
+.bul-neg  { color: #be123c; }
+.bul-i    { width: 11px; height: 11px; color: #6b7280; flex-shrink: 0; }
+
+/* ─────────── EN-TÊTE ─────────── */
+.bul-header {
+  display: grid;
+  grid-template-columns: 1.45fr 1.05fr 1.4fr;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: flex-start;
+}
+
+.bul-h-left { display: flex; gap: 12px; }
+.bul-logo-wrap { flex-shrink: 0; }
+.bul-logo { width: 84px; height: 84px; object-fit: contain; }
+.bul-logo-fb {
+  width: 84px; height: 84px;
+  background: linear-gradient(135deg, #5b21b6, #4f46e5);
+  color: #fff; display: grid; place-items: center;
+  font-weight: 800; font-size: 24px; border-radius: 8px;
+}
+
+.bul-h-company { min-width: 0; flex: 1; }
+.bul-company-name { font-weight: 800; font-size: 17px; color: #1f2937; letter-spacing: 0.02em; }
+.bul-company-tag  { font-size: 10.5px; color: #6b7280; margin-top: 1px; margin-bottom: 6px; }
+.bul-company-meta { display: flex; flex-direction: column; gap: 2px; }
+.bul-coord-row { display: flex; align-items: center; gap: 5px; font-size: 11px; line-height: 1.3; }
+.bul-coord-row dt { color: #4b5563; font-weight: 600; margin: 0; }
+.bul-coord-row dd { color: #1f2937; margin: 0; }
+
+.bul-h-center { text-align: center; padding-top: 2px; }
+.bul-title {
+  font-size: 28px; font-weight: 900;
+  background: linear-gradient(135deg, #5b21b6 0%, #6d28d9 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  letter-spacing: 0.03em; margin: 0; line-height: 1;
+}
+.bul-subtitle { font-size: 14px; font-weight: 700; color: #6d28d9; margin-top: 4px; letter-spacing: 0.05em; }
+.bul-period-pill {
+  display: inline-block; margin-top: 8px;
+  background: #ede9fe; color: #5b21b6;
+  padding: 4px 14px; border-radius: 999px;
+  font-size: 11px; font-weight: 600;
+}
+.bul-compliance { font-size: 10.5px; color: #6b7280; margin: 8px 0 0; font-style: italic; line-height: 1.45; }
+
+.bul-h-right { display: flex; gap: 8px; align-items: flex-start; }
+.bul-meta-table { border-collapse: collapse; font-size: 10.5px; flex: 1; }
+.bul-meta-table th, .bul-meta-table td { border: 1px solid #d1d5db; padding: 4px 8px; }
+.bul-meta-table th {
+  background: #f3f4f6; color: #374151; font-weight: 700;
+  text-align: left; white-space: nowrap; font-size: 9.5px;
+  letter-spacing: 0.03em;
+}
+.bul-meta-table td { background: #fff; color: #111827; text-align: right; }
+
+.bul-verif { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+.bul-qr { width: 84px; height: 84px; }
+.bul-qr svg { display: block; }
+.bul-verif-txt { font-size: 8.5px; color: #6b7280; text-align: center; line-height: 1.3; }
+.bul-verif-code {
+  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-size: 9.5px; color: #4b5563;
+  font-weight: 600; letter-spacing: 0.04em;
+}
+
+/* ─────────── EMPLOYÉ + RÉCAP ─────────── */
+.bul-employee {
+  display: grid;
+  grid-template-columns: 1.25fr 1.75fr;
+  gap: 12px;
+  padding: 12px 22px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bul-emp-card {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: #fff; padding: 10px 12px; border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+.bul-emp-photo {
+  width: 96px; height: 96px; flex-shrink: 0;
+  border-radius: 50%; overflow: hidden;
+  border: 3px solid #f3f4f6;
+  background: #e5e7eb;
+  display: grid; place-items: center;
+}
+.bul-emp-photo-img { width: 100%; height: 100%; object-fit: cover; }
+.bul-emp-photo-fb { font-size: 26px; font-weight: 700; color: #6b7280; }
+.bul-emp-info { flex: 1; min-width: 0; }
+.bul-emp-name {
+  font-size: 17px; font-weight: 800;
+  color: #5b21b6; margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+.bul-emp-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3px 18px; margin: 0;
+}
+.bul-emp-row { display: flex; gap: 6px; font-size: 10.5px; line-height: 1.45; }
+.bul-emp-row dt { color: #6b7280; font-weight: 700; min-width: 92px; flex-shrink: 0; }
+.bul-emp-row dd { color: #1f2937; margin: 0; min-width: 0; flex: 1; }
+.bul-emp-sep { color: #9ca3af; margin-right: 2px; }
+
+.bul-recap-wrap {
+  background: #fff; border-radius: 6px; overflow: hidden;
+  border: 1px solid #e5e7eb;
+  display: flex; flex-direction: column;
+}
+.bul-recap-band {
+  background: linear-gradient(90deg, #ede9fe 0%, #fce7f3 100%);
+  color: #5b21b6;
+  font-weight: 800; letter-spacing: 0.06em;
+  padding: 6px 12px; font-size: 11px;
+}
+.bul-recap-body {
+  display: grid; grid-template-columns: 1.4fr 1fr;
+  gap: 12px; padding: 10px 12px; flex: 1;
+}
+.bul-recap-rows { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.bul-recap-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11.5px;
+  border-bottom: 1px dashed #f3f4f6; padding-bottom: 4px;
+}
+.bul-recap-row:last-child { border-bottom: none; padding-bottom: 0; }
+.bul-recap-lbl { color: #4b5563; }
+.bul-recap-val { font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums; font-weight: 600; color: #111827; }
+
+.bul-kpis { display: flex; flex-direction: column; gap: 6px; }
+.bul-kpi {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 6px;
+  background: #fff; border: 1px solid #e5e7eb;
+}
+.bul-kpi-icn {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 6px; display: grid; place-items: center;
+  color: #fff;
+}
+.bul-kpi-emerald .bul-kpi-icn { background: #10b981; }
+.bul-kpi-violet  .bul-kpi-icn { background: #8b5cf6; }
+.bul-kpi-amber   .bul-kpi-icn { background: #f59e0b; }
+.bul-kpi-body { min-width: 0; flex: 1; }
+.bul-kpi-lbl { font-size: 9.5px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; font-weight: 600; }
+.bul-kpi-val {
+  font-weight: 800; font-size: 13px; color: #1f2937;
+  font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ─────────── 4 COLONNES ─────────── */
+.bul-cols {
+  display: grid;
+  grid-template-columns: 1.25fr 1.5fr 1.5fr 1fr;
+  /* align-items: stretch est implicite en grid, mais on le rend explicite
+     pour garantir que les 4 colonnes prennent la hauteur de la plus
+     longue (col 2 RETENUES en général). Combiné avec height:100% sur
+     .bul-col et flex:1 sur le body, ça permet de pousser le bandeau
+     TOTAL en bas de chaque colonne, comme sur la maquette. */
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.bul-col {
+  display: flex; flex-direction: column;
+  height: 100%;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 4px;
   overflow: hidden;
 }
-
-.bul-main {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 11px;
-  color: #000;
+.bul-col-band {
+  color: #fff; font-weight: 800;
+  letter-spacing: 0.05em; padding: 7px 12px;
+  font-size: 11.5px;
 }
+.bul-band-violet { background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); }
+.bul-band-rose   { background: linear-gradient(90deg, #be123c 0%, #dc2626 100%); }
+.bul-band-sky    { background: linear-gradient(90deg, #1d4ed8 0%, #0284c7 100%); }
+.bul-band-amber  { background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%); }
 
-.bul-main td,
-.bul-main th {
-  border: 1px solid #999;
-  padding: 6px 10px;
-  vertical-align: middle;
+.bul-col-content { flex: 1; display: flex; flex-direction: column; }
+
+.bul-col-head, .bul-line {
+  display: grid;
+  grid-template-columns: 38px 1fr 60px 50px 80px;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 10px;
 }
-
-.bul-empty {
-  background: #fff;
+.bul-col-head {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 700; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 0.04em; font-size: 9px;
 }
-
-.bul-period em {
-  font-style: italic;
-}
-
-.bul-cell-center {
-  text-align: center;
-}
-
-.bul-cell-left {
-  text-align: left;
-}
-
-.bul-cell-right {
-  text-align: right;
-}
-
-.bul-cell-bold {
-  font-weight: 600;
-}
-
-.bul-cell-bold-lg {
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.bul-mono {
-  font-family: "IBM Plex Mono", "Consolas", monospace;
-  font-variant-numeric: tabular-nums;
+.bul-line {
   font-size: 10.5px;
+  border-bottom: 1px dashed #f3f4f6;
+  min-height: 22px;
+}
+.bul-line:last-child { border-bottom: none; }
+.bul-c-code { font-size: 9.5px; color: #6b7280; }
+.bul-c-lbl  { color: #1f2937; }
+.bul-c-base, .bul-c-rate, .bul-c-amt { font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums; color: #4b5563; }
+.bul-line-amt { color: #111827; font-weight: 700; }
+.num { text-align: right; }
+.bul-empty-line { padding: 6px 10px; font-size: 10px; color: #9ca3af; font-style: italic; text-align: center; }
+
+.bul-subhead {
+  padding: 4px 10px;
+  font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.bul-subhead-rose { background: #fef2f2; color: #b91c1c; }
+.bul-subhead-sky  { background: #eff6ff; color: #1d4ed8; }
+
+.bul-subtotal {
+  display: flex; justify-content: space-between;
+  padding: 4px 10px;
+  font-size: 10.5px; font-weight: 700;
+  background: #f9fafb; color: #374151;
+  border-top: 1px solid #e5e7eb;
 }
 
-.bul-title-band {
-  background: #fef3c7;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.bul-head-mint {
-  background: #d1f2eb;
-  text-align: center;
-}
-
-.bul-cell-mint-soft {
-  background: #e8f5e9;
-}
-
-.bul-cell-yellow {
-  background: #fff8c5;
-}
-
-.bul-employer {
-  background: #d6e4f5;
-  vertical-align: top !important;
-  padding: 8px 12px !important;
-}
-
-.bul-employer-name {
-  text-align: center;
-  font-weight: 700;
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.bul-employer-meta {
-  font-size: 10.5px;
-  line-height: 1.55;
-}
-
-.bul-codes-header th {
-  background: #5da9d8;
+.bul-col-total {
   color: #fff;
-  font-weight: 700;
-  text-align: center;
-  font-size: 11px;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 12px;
+  font-weight: 800; font-size: 11.5px;
+  letter-spacing: 0.04em;
+}
+.bul-col-total .bul-num { font-size: 13px; color: #fff; }
+.bul-total-violet { background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); }
+.bul-total-rose   { background: linear-gradient(90deg, #be123c 0%, #dc2626 100%); }
+.bul-total-sky    { background: linear-gradient(90deg, #1d4ed8 0%, #0284c7 100%); }
+
+/* ─────────── COLONNE SYNTHÈSE ─────────── */
+.bul-col-synth { background: #fff; }
+/* flex:1 sur le corps des lignes pour que NET À PAYER + EN TOUTES LETTRES
+   restent collés en bas de la colonne, alignés avec les TOTAL des autres
+   colonnes. */
+.bul-synth-body { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.bul-synth-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11.5px;
+  padding-bottom: 4px; border-bottom: 1px dashed #f3f4f6;
+}
+.bul-synth-row:last-child { border-bottom: none; padding-bottom: 0; }
+.bul-synth-row .bul-num { color: #1f2937; font-weight: 600; }
+.bul-synth-strong { font-weight: 700; color: #1f2937; font-size: 12px; }
+.bul-synth-strong .bul-num { font-weight: 700; font-size: 13px; }
+
+.bul-net-box {
+  margin: 8px 14px;
+  background: #ecfdf5;
+  border: 1px solid #10b981; border-radius: 6px;
+  padding: 12px 14px; text-align: center;
+}
+.bul-net-lbl {
+  font-size: 11px; font-weight: 800; color: #047857;
+  letter-spacing: 0.06em;
+}
+.bul-net-val {
+  font-size: 22px; font-weight: 900; color: #047857;
+  font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums;
+  margin-top: 2px; letter-spacing: -0.01em;
 }
 
-.bul-line td,
-.bul-line-italic td {
-  padding: 5px 8px;
+.bul-words-box {
+  margin: 0 14px 14px;
+  background: #fff7ed;
+  border: 1px solid #fdba74; border-radius: 6px;
+  padding: 8px 10px; text-align: center;
 }
-.bul-line-italic td {
-  font-style: italic;
+.bul-words-lbl {
+  font-size: 10px; font-weight: 800; color: #c2410c;
+  letter-spacing: 0.06em;
 }
-
-.bul-totals td {
-  background: #f7f7f7;
-  border-top: 2px solid #555;
-}
-
-.bul-net td {
-  border-top: 2px solid #555;
+.bul-words-txt {
+  font-size: 11px; color: #7c2d12; margin-top: 4px;
+  line-height: 1.4; font-style: italic;
 }
 
-.bul-cell-net-label {
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.bul-cell-net-value {
-  font-weight: 700;
-  font-size: 14px;
-  background: #fef3c7;
-}
-
-.bul-cumul {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #f7f7f7;
-  border-top: 1px solid #999;
-  font-size: 10.5px;
-  color: #333;
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
+/* ─────────── PIED ─────────── */
+.bul-foot {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr 0.7fr 1fr 1.3fr;
+  /* Aligne la hauteur des 5 blocs (cumuls / congés / absences / infos
+     / authentification) — la plus haute (CUMULS) impose sa taille aux
+     autres pour un rendu carré et propre. */
+  align-items: stretch;
   gap: 8px;
+  padding: 12px;
+  background: #fafafa;
+  border-top: 1px solid #e5e7eb;
+}
+/* Chaque bloc du pied prend la même apparence "carte" que les 4
+   colonnes principales : bordure fine + coin arrondi + fond blanc. */
+.bul-foot-block {
+  min-width: 0;
+  height: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.bul-foot-title {
+  font-size: 9.5px; font-weight: 800; color: #6b7280;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding-bottom: 4px; margin-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.bul-cumul-meta {
-  color: #666;
-  font-style: italic;
+.bul-cumul-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.bul-cumul-table th, .bul-cumul-table td { padding: 3px 6px; }
+.bul-cumul-table th {
+  font-weight: 700; color: #6b7280;
+  text-transform: uppercase; font-size: 8.5px;
+  letter-spacing: 0.04em; text-align: left;
 }
+.bul-cumul-table th.num, .bul-cumul-table td.num {
+  text-align: right;
+  font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums;
+}
+.bul-cumul-table tbody tr { border-bottom: 1px dotted #f3f4f6; }
+.bul-cumul-total td { font-weight: 800; border-top: 1.5px solid #d1d5db; padding-top: 5px; }
 
-/* === IMPRESSION === */
+.bul-mini { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.bul-mini-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; }
+.bul-mini-row dt { color: #6b7280; }
+.bul-mini-row dd { margin: 0; color: #1f2937; font-weight: 700; font-family: "IBM Plex Mono", "Consolas", monospace; font-variant-numeric: tabular-nums; }
+.bul-mini-strong { color: #047857 !important; font-size: 12px !important; }
+
+.bul-foot-auth { position: relative; }
+.bul-auth-meta { font-size: 9.5px; color: #4b5563; line-height: 1.6; margin-bottom: 8px; }
+.bul-sig-row { display: flex; align-items: flex-end; gap: 8px; }
+.bul-sig { flex: 1; min-width: 0; }
+.bul-sig-img { display: block; max-width: 140px; height: auto; }
+.bul-sig-placeholder { font-size: 9px; color: #9ca3af; font-style: italic; padding: 14px 0; border-bottom: 1px solid #d1d5db; width: 120px; }
+.bul-sig-name { font-size: 10px; color: #1f2937; font-weight: 700; margin-top: 4px; }
+.bul-stamp { width: 88px; height: 88px; flex-shrink: 0; opacity: 0.9; transform: rotate(-8deg); }
+
+/* ─────────── STRIP BAS ─────────── */
+.bul-strip {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 7px 22px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  font-size: 9px; color: #6b7280;
+}
+.bul-strip-l { display: inline-flex; align-items: center; gap: 5px; }
+.bul-strip-r { font-weight: 600; color: #4b5563; }
+
+/* ─────────── IMPRESSION ─────────── */
 @media print {
-  /* Hide app shell on print */
-  header,
-  aside,
-  nav[aria-label="Fil d'Ariane"],
-  .bulletin-actions {
-    display: none !important;
-  }
-
-  /* Reset main column padding */
-  body,
-  main,
-  .animate-screen-fade-in {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: #fff !important;
-  }
-
-  .bulletin-frame {
-    background: #fff !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .bulletin {
-    box-shadow: none !important;
-    max-width: 100% !important;
-  }
-
-  /* Force backgrounds and colors so cells stay readable */
-  *,
-  *::before,
-  *::after {
+  header, aside, nav[aria-label="Fil d'Ariane"], .bulletin-actions { display: none !important; }
+  body, main, .animate-screen-fade-in { padding: 0 !important; margin: 0 !important; background: #fff !important; }
+  .bulletin-frame { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+  .bulletin { box-shadow: none !important; max-width: 100% !important; font-size: 10px; }
+  *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-
-  /* Avoid breaking the table across pages mid-row */
-  .bul-main tr {
-    page-break-inside: avoid;
-  }
-
-  @page {
-    size: A4;
-    margin: 12mm;
-  }
+  .bul-cols { page-break-inside: avoid; }
+  .bul-foot { page-break-inside: avoid; }
+  @page { size: A4 landscape; margin: 6mm; }
 }

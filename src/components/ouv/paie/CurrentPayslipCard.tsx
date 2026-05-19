@@ -1,19 +1,23 @@
 "use client";
 
-import { FileText, Share2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { FileText, MessageSquare } from "lucide-react";
 import type { CurrentPayslipResponse } from "@/hooks/useOuvPayslips";
 
 interface Props {
   payslip: CurrentPayslipResponse["payslip"];
   onOpenPdf: () => void;
-  onShareWhatsapp: () => void;
-  sharing: boolean;
+  /** Ancien handler WhatsApp — conservé pour compatibilité, ignoré ici. */
+  onShareWhatsapp?: () => void;
+  sharing?: boolean;
 }
 
 // Card gradient violet (#2A1B3D → #7E22CE) avec montant 32px + 2 boutons
-// "Voir bulletin" (blanc · violet) et "WhatsApp" (vert #25D366).
-// Mirror direct du bloc "Bulletin actuel" de screen-ouv-paie.
-export function CurrentPayslipCard({ payslip, onOpenPdf, onShareWhatsapp, sharing }: Props) {
+// "Voir bulletin" (blanc · violet) et "Messagerie" (lien vers /messagerie
+// pour partager via la messagerie interne — remplace l'ancien lien
+// WhatsApp externe).
+export function CurrentPayslipCard({ payslip, onOpenPdf }: Props) {
   if (!payslip) {
     return (
       <div className="mb-3.5 rounded-2xl bg-gradient-to-br from-[#2A1B3D] to-[#7E22CE] p-5 text-white">
@@ -50,26 +54,32 @@ export function CurrentPayslipCard({ payslip, onOpenPdf, onShareWhatsapp, sharin
         {statusChip}
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onOpenPdf}
-          className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[14px] font-bold text-purple-700 transition active:scale-[0.98]"
-        >
-          <FileText className="h-5 w-5" />
-          Voir bulletin
-        </button>
-        <button
-          type="button"
-          onClick={onShareWhatsapp}
-          disabled={sharing}
-          className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-[14px] font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
-        >
-          {sharing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Share2 className="h-5 w-5" />}
-          WhatsApp
-        </button>
-      </div>
+      <PayslipActions onOpenPdf={onOpenPdf} />
     </article>
+  );
+}
+
+function PayslipActions({ onOpenPdf }: { onOpenPdf: () => void }) {
+  const params = useParams<{ tenantSlug: string }>();
+  const tenantSlug = params?.tenantSlug ?? "";
+  return (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={onOpenPdf}
+        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-white text-[14px] font-bold text-purple-700 transition active:scale-[0.98]"
+      >
+        <FileText className="h-5 w-5" />
+        Voir bulletin
+      </button>
+      <Link
+        href={tenantSlug ? `/${tenantSlug}/messagerie` : "/messagerie"}
+        className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 text-[14px] font-bold text-white transition active:scale-[0.98] hover:bg-white/20"
+      >
+        <MessageSquare className="h-5 w-5" />
+        Messagerie
+      </Link>
+    </div>
   );
 }
 

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Role } from "@prisma/client";
-import { ChevronLeft, Eye } from "lucide-react";
+import { ChevronLeft, ChevronDown, Eye } from "lucide-react";
 import { clsx } from "clsx";
 import { useUiStore } from "@/stores/ui-store";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenantHref } from "@/hooks/useTenantHref";
+import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 import { getSidebarSections, type NavSection } from "@/lib/rbac/sidebar-sections";
+
+const COLLAPSED_STORAGE_KEY = "terp-sidebar-collapsed-sections";
 
 /**
  * Sidebar pilotée par la matrice d'accès centrale.
@@ -29,6 +32,7 @@ export function Sidebar() {
   const { user } = useAuth();
 
   const sections: NavSection[] = getSidebarSections(user?.role as Role | undefined);
+  const badgeOverrides = useSidebarBadges();
 
   // SSR-safe: assume widescreen until client measures
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
@@ -47,6 +51,33 @@ export function Sidebar() {
     if (mobileSidebarOpen) closeMobileSidebar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  // État collapse par section (persisté en localStorage). Par défaut tout
+  // est ouvert ; l'utilisateur peut replier des sections pour réduire la
+  // hauteur de la sidebar.
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(COLLAPSED_STORAGE_KEY);
+      if (raw) setCollapsedSections(JSON.parse(raw) as Record<string, boolean>);
+    } catch {
+      // ignore parse errors
+    }
+    setHydrated(true);
+  }, []);
+
+  const toggleSection = (title: string) => {
+    setCollapsedSections((prev) => {
+      const next = { ...prev, [title]: !prev[title] };
+      try {
+        localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // localStorage may be unavailable in private mode
+      }
+      return next;
+    });
+  };
 
   return (
     <>
@@ -89,7 +120,14 @@ export function Sidebar() {
           </button>
         </div>
 
-        {sections.map((section) => (
+        {sections.map((section) => {
+          // Collapsible activé uniquement quand le titre est visible
+          // (mode non compact). En compact ou avant hydratation, la
+          // section reste développée.
+          const collapsible = !visualCompact && hydrated;
+          const isCollapsed = collapsible && collapsedSections[section.title] === true;
+
+          return (
           <div key={section.title}>
             {visualCompact ? (
               <div
@@ -97,20 +135,36 @@ export function Sidebar() {
                 aria-label={section.title}
               />
             ) : (
-              <div
+              <button
+                type="button"
+                onClick={() => collapsible && toggleSection(section.title)}
+                disabled={!collapsible}
+                aria-expanded={!isCollapsed}
                 className={clsx(
-                  "flex items-center gap-1 px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[.1em]",
-                  section.readOnly ? "text-amber-300/70" : "text-white/45"
+                  "flex w-full items-center gap-1 px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[.1em] transition-colors",
+                  section.readOnly ? "text-amber-300/70" : "text-white/45",
+                  collapsible && "cursor-pointer hover:text-white/80",
                 )}
               >
                 {section.readOnly && <Eye className="h-3 w-3" aria-hidden />}
-                <span>{section.title}</span>
-              </div>
+                <span className="flex-1 text-left">{section.title}</span>
+                {collapsible && (
+                  <ChevronDown
+                    className={clsx(
+                      "h-3 w-3 transition-transform duration-150",
+                      isCollapsed && "-rotate-90",
+                    )}
+                    aria-hidden
+                  />
+                )}
+              </button>
             )}
-            {section.items.map((item) => {
+            {!isCollapsed && section.items.map((item) => {
               const href = tenantHref(item.href);
               const active = pathname === href || pathname.startsWith(`${href}/`);
               const Icon = item.icon;
+              const override = badgeOverrides[item.href];
+              const effectiveBadge = override !== undefined ? override : item.badge;
               return (
                 <Link
                   key={item.href}
@@ -130,24 +184,25 @@ export function Sidebar() {
                 >
                   <Icon className="h-4 w-4 flex-shrink-0 opacity-85" />
                   {!visualCompact && <span className="flex-1 truncate">{item.label}</span>}
-                  {item.badge && (
+                  {effectiveBadge && (
                     <span
                       className={clsx(
                         "rounded-full px-1.5 text-[10px] font-semibold",
                         visualCompact && "absolute right-2 top-1 px-1 text-[9px]",
-                        item.badge.alert
+                        effectiveBadge.alert
                           ? "bg-red-500 text-white"
                           : "bg-white/10 text-white/85"
                       )}
                     >
-                      {item.badge.value}
+                      {effectiveBadge.value}
                     </span>
                   )}
                 </Link>
               );
             })}
           </div>
-        ))}
+          );
+        })}
       </aside>
     </>
   );

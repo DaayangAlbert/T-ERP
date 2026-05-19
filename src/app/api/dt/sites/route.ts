@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   const scopeIds = await getTenantScopeIds(session.tenantId);
 
-  const where: Parameters<typeof prisma.site.findMany>[0] extends { where?: infer W } ? W : never = {
+  const where: Record<string, unknown> = {
     tenantId: { in: scopeIds },
   };
   if (status && Object.values(SiteStatus).includes(status as SiteStatus)) {

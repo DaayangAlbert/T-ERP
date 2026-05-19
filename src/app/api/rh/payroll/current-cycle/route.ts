@@ -1,7 +1,18 @@
+/**
+ * Cycle de paie courant (du mois). Si aucun cycle n'existe pour le mois en
+ * cours, on crée un cycle DRAFT initialisé avec l'effectif réel actif.
+ *
+ * KPIs calculés depuis la BDD :
+ *   - totalBulletins      = nb users actifs (potentiel de bulletins)
+ *   - inputsSaved         = count PayrollInput réels sur le cycle
+ *   - journaliersTotal    = count users contractType=JOURNALIER
+ *   - overtimeHours       = sum des heures sup saisies
+ *   - advancesCount       = count inputs catégorie="Avances"
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { Role } from "@prisma/client";
+import { Role, ContractType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,33 +25,54 @@ export async function GET() {
     return NextResponse.json({ error: "Réservé RH / DG / DAF" }, { status: 403 });
   }
 
+  const tenantId = session.tenantId;
   const period = new Date().toISOString().slice(0, 7);
-  let cycle = await prisma.payrollCycle.findFirst({
-    where: { tenantId: session.tenantId, period },
+
+  // Effectif actif → potentiel bulletins
+  const activeHeadcount = await prisma.user.count({
+    where: {
+      tenantId,
+      status: "ACTIVE",
+      role: { notIn: ["CANDIDATE", "SUPER_ADMIN"] },
+    },
   });
+
+  // Création opportuniste du cycle s'il n'existe pas
+  let cycle = await prisma.payrollCycle.findFirst({ where: { tenantId, period } });
   if (!cycle) {
     cycle = await prisma.payrollCycle.findFirst({
-      where: { tenantId: session.tenantId },
+      where: { tenantId },
       orderBy: { period: "desc" },
     });
   }
   if (!cycle) {
     cycle = await prisma.payrollCycle.create({
       data: {
-        tenantId: session.tenantId,
+        tenantId,
         period,
         status: "DRAFT",
         startedAt: new Date(),
-        totalBulletins: 487,
+        totalBulletins: activeHeadcount,
       },
     });
   }
 
-  // Compteur saisies
-  const inputsCount = await prisma.payrollInput.count({ where: { payrollCycleId: cycle.id } });
-  const journaliersCount = 175;
-  const overtimeHours = 1248;
-  const advancesCount = 32;
+  // Stats réelles sur le cycle courant
+  const [inputsCount, journaliersCount, overtimeAgg, advancesCount] = await Promise.all([
+    prisma.payrollInput.count({ where: { payrollCycleId: cycle.id } }),
+    prisma.user.count({
+      where: { tenantId, status: "ACTIVE", contractType: ContractType.JOURNALIER },
+    }),
+    prisma.payrollInput.aggregate({
+      where: { payrollCycleId: cycle.id },
+      _sum: { overtimeHours: true },
+    }),
+    prisma.payrollInput.count({
+      where: { payrollCycleId: cycle.id, advances: { gt: 0n } },
+    }),
+  ]);
+
+  const totalBulletins = cycle.totalBulletins || activeHeadcount;
 
   return NextResponse.json({
     id: cycle.id,
@@ -52,12 +84,12 @@ export async function GET() {
     n2ValidatedAt: cycle.n2ValidatedAt?.toISOString() ?? null,
     n3ValidatedAt: cycle.n3ValidatedAt?.toISOString() ?? null,
     paidAt: cycle.paidAt?.toISOString() ?? null,
-    totalBulletins: cycle.totalBulletins || 487,
+    totalBulletins,
     kpis: {
-      totalBulletins: cycle.totalBulletins || 487,
-      inputsSaved: Math.max(inputsCount, 142),
+      totalBulletins,
+      inputsSaved: inputsCount,
       journaliersTotal: journaliersCount,
-      overtimeHours,
+      overtimeHours: Math.round(overtimeAgg._sum.overtimeHours ?? 0),
       advancesCount,
     },
   });

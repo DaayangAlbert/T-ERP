@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { createPayslipVerification } from "@/lib/payroll/payroll-verification";
 
 export const dynamic = "force-dynamic";
 
@@ -23,15 +24,23 @@ export async function GET(req: Request) {
       take: limit,
       select: {
         id: true,
+        tenantId: true,
+        userId: true,
         period: true,
+        periodEnd: true,
         paymentDate: true,
         paymentMode: true,
+        paymentBankAccount: true,
         grossAmount: true,
         netAmount: true,
         socialCharges: true,
         fiscalCharges: true,
         status: true,
         pdfUrl: true,
+        verificationUuid: true,
+        verificationCode: true,
+        verificationHash: true,
+        verifiedPublicUrl: true,
       },
     }),
   ]);
@@ -42,19 +51,55 @@ export async function GET(req: Request) {
     _avg: { netAmount: true },
   });
 
-  return NextResponse.json({
-    items: items.map((p) => ({
+  const serializedItems = await Promise.all(
+    items.map(async (p) => {
+      const hasVerification = Boolean(p.verificationUuid && p.verificationCode && p.verificationHash && p.verifiedPublicUrl);
+      const verification = hasVerification
+        ? {
+            verificationUuid: p.verificationUuid!,
+            verificationCode: p.verificationCode!,
+            verifiedPublicUrl: p.verifiedPublicUrl!,
+          }
+        : createPayslipVerification({
+            tenantId: p.tenantId,
+            userId: p.userId,
+            periodIso: p.period.toISOString(),
+          });
+
+      if (!hasVerification) {
+        await prisma.payslip.update({
+          where: { id: p.id },
+          data: {
+            verificationUuid: verification.verificationUuid,
+            verificationCode: verification.verificationCode,
+            verificationHash: "verificationHash" in verification ? verification.verificationHash : undefined,
+            verifiedPublicUrl: verification.verifiedPublicUrl,
+          },
+        });
+      }
+
+      return {
       id: p.id,
       period: p.period.toISOString(),
+      periodEnd: p.periodEnd?.toISOString() ?? null,
       paymentDate: p.paymentDate.toISOString(),
       paymentMode: p.paymentMode,
+      paymentBankAccount: p.paymentBankAccount,
       grossAmount: p.grossAmount.toString(),
       netAmount: p.netAmount.toString(),
       socialCharges: p.socialCharges.toString(),
       fiscalCharges: p.fiscalCharges.toString(),
       status: p.status,
       pdfUrl: p.pdfUrl,
-    })),
+      verificationUuid: verification.verificationUuid,
+      verificationCode: verification.verificationCode,
+      verifiedPublicUrl: verification.verifiedPublicUrl,
+    };
+    })
+  );
+
+  return NextResponse.json({
+    items: serializedItems,
     page,
     limit,
     total,

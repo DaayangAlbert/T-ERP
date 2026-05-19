@@ -26,27 +26,81 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") ?? "50", 10) || 50));
   const before = url.searchParams.get("before"); // ISO timestamp for pagination
 
-  const messages = await prisma.message.findMany({
-    where: {
-      conversationId: params.id,
-      ...(before ? { createdAt: { lt: new Date(before) } } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    select: {
-      id: true,
-      content: true,
-      attachmentUrl: true,
-      attachmentName: true,
-      attachmentSize: true,
-      isSystem: true,
-      createdAt: true,
-      senderId: true,
-      sender: {
-        select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true },
+  // Tolérance binaire Prisma : si le query_engine en mémoire n'a pas encore
+  // été régénéré (cf. Windows / fichier .dll verrouillé par next dev),
+  // attachmentType et voiceNote peuvent ne pas être reconnus. On retombe
+  // alors sur un SELECT minimal pour ne pas bloquer toute la messagerie.
+  let messages: Array<{
+    id: string;
+    content: string;
+    attachmentUrl: string | null;
+    attachmentName: string | null;
+    attachmentSize: number | null;
+    attachmentType: string | null;
+    isSystem: boolean;
+    createdAt: Date;
+    senderId: string;
+    sender: { id: string; firstName: string; lastName: string; avatarUrl: string | null; role: string };
+    voiceNote: { durationSec: number; transcript: string | null } | null;
+  }>;
+  try {
+    messages = await prisma.message.findMany({
+      where: {
+        conversationId: params.id,
+        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
       },
-    },
-  });
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        content: true,
+        attachmentUrl: true,
+        attachmentName: true,
+        attachmentSize: true,
+        attachmentType: true,
+        isSystem: true,
+        createdAt: true,
+        senderId: true,
+        sender: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true },
+        },
+        voiceNote: {
+          select: { durationSec: true, transcript: true },
+        },
+      },
+    });
+  } catch (err) {
+    console.warn(
+      "[GET /api/conversations/:id/messages] Fallback minimal SELECT (probable client Prisma non régénéré) :",
+      (err as Error).message,
+    );
+    const fallback = await prisma.message.findMany({
+      where: {
+        conversationId: params.id,
+        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        content: true,
+        attachmentUrl: true,
+        attachmentName: true,
+        attachmentSize: true,
+        isSystem: true,
+        createdAt: true,
+        senderId: true,
+        sender: {
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true, role: true },
+        },
+      },
+    });
+    messages = fallback.map((m) => ({
+      ...m,
+      attachmentType: null,
+      voiceNote: null,
+    }));
+  }
 
   // Mark as read
   await prisma.conversationParticipant.update({
@@ -63,6 +117,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         attachmentUrl: m.attachmentUrl,
         attachmentName: m.attachmentName,
         attachmentSize: m.attachmentSize,
+        attachmentType: m.attachmentType,
+        voiceNote: m.voiceNote,
         isSystem: m.isSystem,
         createdAt: m.createdAt.toISOString(),
         senderId: m.senderId,
@@ -127,6 +183,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         attachmentUrl: null,
         attachmentName: null,
         attachmentSize: null,
+        attachmentType: null,
+        voiceNote: null,
       },
       { status: 201 }
     );

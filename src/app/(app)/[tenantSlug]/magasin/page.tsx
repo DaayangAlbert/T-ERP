@@ -1,13 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Package, TrendingDown, AlertTriangle, ClipboardList, Truck, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Package, TrendingDown, AlertTriangle, ClipboardList, Truck, ArrowDownToLine, ArrowUpFromLine, Building2, Eye } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import {
+  WarehouseFilter,
+  DEFAULT_WAREHOUSE_FILTER,
+  warehouseFilterToQuery,
+  type WarehouseFilterValue,
+} from "@/components/magasin/WarehouseFilter";
 
 interface MagDashboard {
-  warehouse: { id: string; code: string; name: string; keeperId?: string | null; site: { code: string; name: string } };
+  consolidated: boolean;
+  filtered?: boolean;
+  warehouse: { id: string; code: string; name: string; keeperId?: string | null; site: { code: string; name: string } | null };
   kpis: {
     totalValue: number;
     stockedArticles: number;
@@ -16,7 +25,21 @@ interface MagDashboard {
     movementsTodayOut: number;
     ruptureCount: number;
     pendingInventoryCount: number;
+    warehouseCount: number;
   };
+  byWarehouse: Array<{
+    id: string;
+    code: string;
+    name: string;
+    scope?: string;
+    ownerDirection?: string | null;
+    siteCode: string | null;
+    siteName: string | null;
+    articleCount: number;
+    totalValue: number;
+    movementsToday: number;
+    ruptureCount: number;
+  }>;
   ruptures: Array<{
     articleCode: string;
     articleName: string;
@@ -24,8 +47,10 @@ interface MagDashboard {
     unit: string;
     minThreshold: number | null;
     daysOfCover: number;
+    warehouseCode?: string;
+    warehouseName?: string;
   }>;
-  pendingInventories: Array<{ id: string; type: string; scope: string; plannedDate: string; status: string }>;
+  pendingInventories: Array<{ id: string; type: string; scope: string; plannedDate: string; status: string; warehouseCode?: string }>;
   expectedDeliveries: Array<{ id: string; scheduledAt: string; status: string; deliveryNoteRef: string | null }>;
   recentMovements: Array<{
     id: string;
@@ -38,14 +63,23 @@ interface MagDashboard {
     unit: string;
     totalValue: number;
     occurredAt: string;
+    warehouseCode?: string;
   }>;
 }
 
 export default function MagDashboardPage() {
+  const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilterValue>(
+    DEFAULT_WAREHOUSE_FILTER,
+  );
+  const filterQs = warehouseFilterToQuery(warehouseFilter);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["mag", "dashboard"],
+    queryKey: ["mag", "dashboard", warehouseFilter],
     queryFn: async (): Promise<MagDashboard> => {
-      const res = await fetch("/api/mag/dashboard", { credentials: "same-origin" });
+      const res = await fetch(
+        `/api/mag/dashboard${filterQs ? `?${filterQs}` : ""}`,
+        { credentials: "same-origin" },
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
@@ -70,6 +104,13 @@ export default function MagDashboardPage() {
         </div>
         <SyncStatusBadge />
       </section>
+
+      {/* Filtres chantier / direction / magasin — visible uniquement
+          dans la vue consolidée (DG/DAF/etc.). En mode mono-magasin
+          (keeper), pas pertinent. */}
+      {(data?.consolidated || data?.filtered) && (
+        <WarehouseFilter value={warehouseFilter} onChange={setWarehouseFilter} />
+      )}
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Kpi label="Valeur stock" value={data ? `${(data.kpis.totalValue / 1_000_000).toFixed(1)} M` : "—"} icon={Package} />
@@ -126,6 +167,66 @@ export default function MagDashboardPage() {
         <QuickAction href="/magasin/catalogue?onlyRuptures=1" icon={AlertTriangle} label="Ruptures" tone="warning" />
       </section>
 
+      {/* Répartition par magasin — visible uniquement en vue consolidée */}
+      {data?.consolidated && data.byWarehouse.length > 0 && (
+        <section className="rounded-xl border border-line bg-white p-3 shadow-card">
+          <h2 className="mb-2 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">
+            <Building2 className="h-3.5 w-3.5" /> Répartition par magasin
+            <span className="ml-auto rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">
+              <Eye className="mr-1 inline h-2.5 w-2.5" /> Vue groupe · {data.byWarehouse.length} magasins
+            </span>
+          </h2>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {data.byWarehouse.map((w) => {
+              const share = data.kpis.totalValue > 0 ? (w.totalValue / data.kpis.totalValue) * 100 : 0;
+              return (
+                <li
+                  key={w.id}
+                  className="rounded-md border border-line bg-surface-alt/30 p-3 transition hover:border-primary-300"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-semibold text-ink">{w.name}</div>
+                      <div className="text-[11px] text-ink-3">
+                        <span className="font-mono">{w.code}</span> · {w.siteCode} · {w.siteName}
+                      </div>
+                    </div>
+                    {w.ruptureCount > 0 && (
+                      <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">
+                        {w.ruptureCount} rupture{w.ruptureCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-end justify-between gap-2">
+                    <div>
+                      <div className="font-mono text-[16px] font-bold tabular-nums text-ink">
+                        {(w.totalValue / 1_000_000).toFixed(1)} M
+                      </div>
+                      <div className="text-[10.5px] text-ink-3">
+                        {w.articleCount} article{w.articleCount > 1 ? "s" : ""}
+                        {w.movementsToday > 0 && ` · ${w.movementsToday} mvt jour`}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[11.5px] font-semibold text-primary-700">
+                        {share.toFixed(0)} %
+                      </div>
+                      <div className="text-[10px] text-ink-3">du stock</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary-500 to-violet-500"
+                      style={{ width: `${share}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {data && data.ruptures.length > 0 && (
         <section className="rounded-xl border border-danger/30 bg-danger/5 p-3">
           <h2 className="mb-2 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-danger">
@@ -139,7 +240,14 @@ export default function MagDashboardPage() {
                 className="flex items-center justify-between gap-3 rounded-md bg-white p-3 text-[12.5px]"
               >
                 <div className="min-w-0">
-                  <div className="font-medium text-ink">{r.articleCode} · {r.articleName}</div>
+                  <div className="font-medium text-ink">
+                    {r.articleCode} · {r.articleName}
+                    {r.warehouseCode && (
+                      <span className="ml-2 rounded bg-line/60 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink-3">
+                        {r.warehouseCode}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[11.5px] text-ink-3">Seuil min : {r.minThreshold} {r.unit}</div>
                 </div>
                 <div className="text-right">
@@ -173,7 +281,14 @@ export default function MagDashboardPage() {
                     {isIn ? <ArrowDownToLine className="h-4 w-4" /> : <ArrowUpFromLine className="h-4 w-4" />}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-ink">{m.articleCode} · {m.articleName}</div>
+                    <div className="font-medium text-ink">
+                      {m.articleCode} · {m.articleName}
+                      {m.warehouseCode && (
+                        <span className="ml-2 rounded bg-line/60 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink-3">
+                          {m.warehouseCode}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] text-ink-3">
                       {m.reference} · {m.quantity} {m.unit} · {new Date(m.occurredAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                     </div>

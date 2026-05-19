@@ -58,11 +58,17 @@ export async function GET() {
         take: 6,
         orderBy: { dueDate: "asc" },
       }),
+      // Activité récente : toutes les écritures du périmètre, pas seulement
+      // celles du user connecté. Un comptable principal doit voir l'activité
+      // de son équipe (comptables chantier). On expose le créateur en plus.
       prisma.entry.findMany({
-        where: { ...tenantFilter, ...baseSiteFilter, createdById: session.sub },
+        where: { ...tenantFilter, ...baseSiteFilter },
         orderBy: { createdAt: "desc" },
         take: 10,
-        include: { site: { select: { code: true, name: true } } },
+        include: {
+          site: { select: { code: true, name: true } },
+          createdBy: { select: { firstName: true, lastName: true, role: true } },
+        },
       }),
     ]);
 
@@ -142,6 +148,8 @@ export async function GET() {
       entryDate: e.entryDate.toISOString(),
       siteCode: e.site?.code ?? null,
       status: e.status,
+      createdBy: `${e.createdBy.firstName} ${e.createdBy.lastName}`,
+      createdByRole: e.createdBy.role,
     })),
     entriesEvolution,
     journalDistribution: journalDist,

@@ -1,111 +1,76 @@
+import { createElement, type ReactElement } from "react";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { guardOuv } from "@/lib/rbac/ouv-guard";
-import { buildPayslipPdf, type PayslipPdfData } from "@/lib/payslip-pdf";
+import { generatePayslipQrDataUrl, getPublicPayslipUrl } from "@/lib/payroll/payroll-pdf";
+import { loadEnrichedPayslip } from "@/lib/payroll/load-enriched-payslip";
+import { PayslipPDF } from "@/components/payroll/PayslipPDF";
 
-export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // @react-pdf/renderer requiert Node (pas Edge)
+export const dynamic = "force-dynamic";
 
-// GET /api/ouv/payslips/:id/pdf — bulletin PDF généré côté serveur.
-// Pas de token de partage ici (l'ouvrier consulte SON bulletin via session).
-// Le partage WhatsApp tiers passe par /api/emp/payslips/:id/pdf?token=…
-// (déjà livré, accepte les tokens signés émis par share-whatsapp).
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
+// GET /api/ouv/payslips/:id/pdf — bulletin PDF officiel pour les ouvriers.
+//
+// Harmonisé avec /api/payslips/:id/pdf (cadres) : utilise exactement le
+// même composant PayslipPDF (4 colonnes GAINS / RETENUES / CHARGES /
+// SYNTHÈSE, pied avec cumuls + congés + absences + infos + auth). La
+// seule différence est la garde RBAC (guardOuv → seul WORKER consulte
+// SON propre bulletin via session).
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   const guard = guardOuv();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
 
-  const payslip = await prisma.payslip.findFirst({
-    where: { id: ctx.params.id, userId: session.sub },
-    select: {
-      period: true,
-      periodLabel: true,
-      periodEnd: true,
-      paymentDate: true,
-      paymentBankAccount: true,
-      paymentReference: true,
-      baseSalary: true,
-      overtimeAmount: true,
-      overtimeHours: true,
-      overtimeHours125: true,
-      overtimeHours150: true,
-      overtimeHours200: true,
-      seniorityBonus: true,
-      transportAllowance: true,
-      grossAmount: true,
-      cnpsAmount: true,
-      irppAmount: true,
-      otherDeductions: true,
-      netAmount: true,
-      workedDays: true,
-      reportedHours: true,
-      user: {
-        select: {
-          firstName: true,
-          lastName: true,
-          matricule: true,
-          employeeId: true,
-          position: true,
-          professionalCategory: true,
-          cnpsNumber: true,
-          niu: true,
-          hireDate: true,
-          bankName: true,
-          bankAgency: true,
-          rib: true,
-        },
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    null;
+
+  try {
+    // ownerUserId verrouille au userId connecté → l'ouvrier ne peut
+    // consulter QUE son propre bulletin (cf. loadEnrichedPayslip).
+    const detail = await loadEnrichedPayslip({
+      payslipId: params.id,
+      ownerUserId: session.sub,
+      clientIp,
+    });
+
+    if (!detail) {
+      return NextResponse.json({ error: "Bulletin introuvable" }, { status: 404 });
+    }
+
+    const publicUrl = getPublicPayslipUrl(detail.verifiedPublicUrl, req.url);
+    const qrDataUrl = await generatePayslipQrDataUrl(publicUrl);
+
+    const element = createElement(PayslipPDF, {
+      payslip: detail,
+      qrDataUrl,
+      publicUrl,
+    }) as unknown as ReactElement<DocumentProps>;
+    const buffer = await renderToBuffer(element);
+
+    const period = new Date(detail.period);
+    const filename = `bulletin_${detail.user.lastName}_${period.getFullYear()}_${String(period.getMonth() + 1).padStart(2, "0")}.pdf`;
+
+    return new NextResponse(new Uint8Array(buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        // inline: ouvre dans l'onglet (cohérent avec l'ancien flow OUV
+        // qui faisait window.open). Pas de cache (sensible).
+        "Content-Disposition": `inline; filename="${filename}"`,
+        "Content-Length": String(buffer.length),
+        "Cache-Control": "no-store",
       },
-    },
-  });
-  if (!payslip) {
-    return NextResponse.json({ error: "Bulletin introuvable" }, { status: 404 });
+    });
+  } catch (err) {
+    console.error(
+      "[GET /api/ouv/payslips/:id/pdf] PDF generation failed:",
+      (err as Error).message,
+    );
+    return NextResponse.json(
+      { error: "Génération du bulletin échouée", detail: (err as Error).message },
+      { status: 500 },
+    );
   }
-
-  const data: PayslipPdfData = {
-    period: payslip.period,
-    periodLabel: payslip.periodLabel,
-    periodEnd: payslip.periodEnd,
-    paymentDate: payslip.paymentDate,
-    paymentBankAccount: payslip.paymentBankAccount,
-    paymentReference: payslip.paymentReference,
-    baseSalary: payslip.baseSalary ? Number(payslip.baseSalary) : 0,
-    overtimeAmount: Number(payslip.overtimeAmount),
-    overtimeHours: payslip.overtimeHours,
-    overtimeHours125: payslip.overtimeHours125,
-    overtimeHours150: payslip.overtimeHours150,
-    overtimeHours200: payslip.overtimeHours200,
-    seniorityBonus: Number(payslip.seniorityBonus),
-    transportAllowance: Number(payslip.transportAllowance),
-    grossAmount: Number(payslip.grossAmount),
-    cnpsAmount: Number(payslip.cnpsAmount),
-    irppAmount: Number(payslip.irppAmount),
-    otherDeductions: Number(payslip.otherDeductions),
-    netAmount: Number(payslip.netAmount),
-    workedDays: payslip.workedDays,
-    reportedHours: payslip.reportedHours,
-    employee: {
-      fullName: `${payslip.user.firstName} ${payslip.user.lastName}`,
-      matricule: payslip.user.matricule ?? payslip.user.employeeId ?? "—",
-      position: payslip.user.position,
-      professionalCategory: payslip.user.professionalCategory,
-      cnpsNumber: payslip.user.cnpsNumber,
-      niu: payslip.user.niu,
-      hireDate: payslip.user.hireDate,
-      bankInfo: payslip.user.bankName
-        ? `${payslip.user.bankName}${payslip.user.bankAgency ? ` · ${payslip.user.bankAgency}` : ""}`
-        : null,
-    },
-  };
-
-  const pdfBuffer = await buildPayslipPdf(data);
-  const filename = `bulletin-${payslip.periodLabel ?? payslip.period.toISOString().slice(0, 7)}-${payslip.user.lastName}.pdf`;
-
-  return new NextResponse(new Uint8Array(pdfBuffer), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${filename}"`,
-      "Cache-Control": "private, max-age=300",
-    },
-  });
 }

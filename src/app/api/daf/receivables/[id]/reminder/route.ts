@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { sendReminderSchema } from "@/schemas/receivables";
 import { Role } from "@prisma/client";
+import { paymentTrackLinkForRole } from "@/lib/notifications/payment-track-link";
 
 export const dynamic = "force-dynamic";
 
@@ -77,7 +78,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // par défaut). Si plusieurs comptables, on notifie le premier ACTIVE.
     const accountant = await prisma.user.findFirst({
       where: { tenantId: session.tenantId, role: Role.ACCOUNTANT, status: "ACTIVE" },
-      select: { id: true, firstName: true, lastName: true },
+      select: { id: true, role: true, firstName: true, lastName: true },
     });
 
     let notifiedTo: string | null = null;
@@ -90,7 +91,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
           type: "receivable_reminder_escalated",
           title: `Relance ${levelLbl} à exécuter`,
           body: `${receivable.clientName} · ${receivable.invoiceRef} · ${fmtFCFA(receivable.amount)} · Canal préconisé : ${channelLbl}`,
-          link: "/direction-financiere/recouvrement",
+          link: paymentTrackLinkForRole(accountant.role),
         },
       });
       notifiedTo = `${accountant.firstName} ${accountant.lastName}`;

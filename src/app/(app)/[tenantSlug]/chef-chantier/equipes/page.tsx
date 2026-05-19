@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Phone, MessageCircle, Search, Check, X } from "lucide-react";
+import { Search, Check, X } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import { ContactActions } from "@/components/contact/ContactActions";
 
 interface Worker {
   userId: string;
@@ -41,11 +42,9 @@ export default function EquipesPage() {
 
   return (
     <div id="screen-cc-equipes" className="space-y-3">
-      <header className="-mx-3 sm:-mx-4 md:-mx-6 sticky top-14 z-20 bg-gradient-to-r from-primary-600 via-violet-700 to-primary-700 px-3 py-2 text-white shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-[14px] font-semibold">Mes équipes</h1>
-          <SyncStatusBadge />
-        </div>
+      <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
+        <h1 className="text-[16px] font-semibold text-ink">Mes équipes</h1>
+        <SyncStatusBadge />
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">
@@ -80,15 +79,8 @@ export default function EquipesPage() {
                   {team.workers.length} ouvrier{team.workers.length > 1 ? "s" : ""}
                 </div>
               </div>
-              {team.leader?.phone && (
-                <a
-                  href={`tel:${team.leader.phone}`}
-                  style={{ minHeight: 44 }}
-                  className="inline-flex items-center gap-1 rounded-md bg-success px-3 text-[12px] font-medium text-white"
-                >
-                  <Phone className="h-3.5 w-3.5" /> Appeler
-                </a>
-              )}
+              {/* Contact du chef d'équipe : géré via la ligne worker
+                  marquée isLeader plus bas (avec ContactActions interne). */}
             </header>
             <ul className="divide-y divide-line">
               {team.workers.map((w) => (
@@ -134,30 +126,7 @@ function WorkerRow({ worker }: { worker: Worker }) {
         </div>
         <div className="truncate text-[11px] text-ink-3">{worker.position}</div>
       </div>
-      <div className="flex shrink-0 gap-1">
-        {worker.phone && (
-          <>
-            <a
-              href={`tel:${worker.phone}`}
-              style={{ minHeight: 40, minWidth: 40 }}
-              className="grid place-items-center rounded-md border border-line bg-white text-primary-700"
-              aria-label="Appeler"
-            >
-              <Phone className="h-4 w-4" />
-            </a>
-            <a
-              href={`https://wa.me/${worker.phone.replace(/\D/g, "")}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ minHeight: 40, minWidth: 40, backgroundColor: "#25D366" }}
-              className="grid place-items-center rounded-md text-white"
-              aria-label="WhatsApp"
-            >
-              <MessageCircle className="h-4 w-4" />
-            </a>
-          </>
-        )}
-      </div>
+      <ContactActions userId={worker.userId} size="md" />
     </li>
   );
 }

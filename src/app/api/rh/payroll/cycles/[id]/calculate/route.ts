@@ -1,42 +1,33 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
-import { Role } from "@prisma/client";
+import { calculatePayrollCycle } from "@/lib/payroll/calculate-cycle";
+import { canCalculatePayroll } from "@/lib/payroll/payroll-access";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.HR, Role.TENANT_ADMIN];
-
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const session = getCurrentSession();
-  if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (!ALLOWED.includes(session.role as Role)) {
-    return NextResponse.json({ error: "Lancement réservé RH" }, { status: 403 });
+  if (!session?.tenantId) return NextResponse.json({ error: "Non authentifie" }, { status: 401 });
+  if (!canCalculatePayroll(session.role)) {
+    return NextResponse.json({ error: "Lancement reserve RH" }, { status: 403 });
   }
 
-  const cycle = await prisma.payrollCycle.findFirst({
-    where: { id: params.id, tenantId: session.tenantId },
-  });
-  if (!cycle) return NextResponse.json({ error: "Cycle introuvable" }, { status: 404 });
-
-  await prisma.payrollCycle.update({
-    where: { id: cycle.id },
-    data: {
-      status: "CALCULATED",
-      calculatedAt: new Date(),
-    },
-  });
-
-  await prisma.auditLog.create({
-    data: {
+  try {
+    const result = await calculatePayrollCycle({
+      cycleId: params.id,
       tenantId: session.tenantId,
-      userId: session.sub,
-      action: "payroll.calculate",
-      entityType: "PayrollCycle",
-      entityId: cycle.id,
-      metadata: { period: cycle.period },
-    },
-  });
-
-  return NextResponse.json({ ok: true, status: "CALCULATED" });
+      actorUserId: session.sub,
+    });
+    return NextResponse.json({ ok: true, ...result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "PAYROLL_CALCULATION_FAILED";
+    if (message === "PAYROLL_CYCLE_NOT_FOUND") {
+      return NextResponse.json({ error: "Cycle introuvable" }, { status: 404 });
+    }
+    if (message === "PAYROLL_CYCLE_LOCKED" || message === "PAYROLL_CYCLE_ALREADY_VALIDATED") {
+      return NextResponse.json({ error: "Cycle verrouille, validation deja engagee" }, { status: 422 });
+    }
+    console.error("[POST /api/rh/payroll/cycles/:id/calculate]", err);
+    return NextResponse.json({ error: "Erreur calcul paie" }, { status: 500 });
+  }
 }

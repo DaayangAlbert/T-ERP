@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, type LeaveType } from "@prisma/client";
-import { getSyntheticPersonnel } from "@/lib/rh-personnel";
 import { LEAVE_TYPE_COLOR as TYPE_COLOR } from "@/lib/emp-labels";
 
 export const dynamic = "force-dynamic";
@@ -32,12 +31,26 @@ export async function GET(req: Request) {
     },
   });
 
-  // Sélection : top 25 employés concernés (priorité requests réelles + complément synthétique)
+  // Sélection : employés réels avec demande sur le mois, complétés par les
+  // collaborateurs actifs sans demande pour garnir le calendrier (max 25).
   const employees = new Map<string, string>();
   for (const r of requests) employees.set(r.employeeKey, r.employeeName);
-  const synthetic = getSyntheticPersonnel(487).slice(0, 25 - employees.size);
-  for (const p of synthetic) {
-    if (!employees.has(p.id)) employees.set(p.id, `${p.firstName} ${p.lastName}`);
+
+  if (employees.size < 25) {
+    const additionalUsers = await prisma.user.findMany({
+      where: {
+        tenantId: session.tenantId,
+        status: "ACTIVE",
+        role: { notIn: ["CANDIDATE", "SUPER_ADMIN", "TENANT_ADMIN"] },
+        id: { notIn: Array.from(employees.keys()) },
+      },
+      select: { id: true, firstName: true, lastName: true },
+      orderBy: { lastName: "asc" },
+      take: 25 - employees.size,
+    });
+    for (const u of additionalUsers) {
+      employees.set(u.id, `${u.firstName} ${u.lastName}`);
+    }
   }
 
   const rows = Array.from(employees.entries()).map(([key, name]) => {

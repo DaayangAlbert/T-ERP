@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getTenantScopeIds } from "@/lib/tenant";
-import { Role } from "@prisma/client";
+import { Role, CptEntryStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -60,14 +60,54 @@ export async function GET(req: Request) {
     },
   });
 
+  // Agrégation des EntryLine YTD par siteId :
+  //   revenueYtd     = somme crédits sur 70x/75x (ventes & produits)
+  //   directCosts    = somme débits sur 60x / 611 (achats + sous-traitance)
+  //   indirectCosts  = somme débits sur autres 6xx
+  const siteIds = sites.map((s) => s.id);
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const lines =
+    siteIds.length === 0
+      ? []
+      : await prisma.entryLine.findMany({
+          where: {
+            siteId: { in: siteIds },
+            entry: {
+              tenantId: { in: scopeIds },
+              status: CptEntryStatus.VALIDATED,
+              entryDate: { gte: yearStart },
+            },
+          },
+          select: { siteId: true, accountCode: true, debit: true, credit: true },
+        });
+
+  type SiteAgg = { revenue: bigint; direct: bigint; indirect: bigint };
+  const aggBySite = new Map<string, SiteAgg>();
+  for (const l of lines) {
+    if (!l.siteId) continue;
+    const cur = aggBySite.get(l.siteId) ?? { revenue: 0n, direct: 0n, indirect: 0n };
+    const cls = l.accountCode.slice(0, 1);
+    const class2 = l.accountCode.slice(0, 2);
+    const class3 = l.accountCode.slice(0, 3);
+    if (cls === "7") {
+      cur.revenue += l.credit - l.debit; // produit : crédit positif
+    } else if (cls === "6") {
+      const isDirect = class2 === "60" || class3 === "611";
+      const amount = l.debit - l.credit; // charge : débit positif
+      if (isDirect) cur.direct += amount;
+      else cur.indirect += amount;
+    }
+    aggBySite.set(l.siteId, cur);
+  }
+
   const rows: ProfitabilityRow[] = sites.map((s) => {
-    const budget = Number(s.budget);
-    const revenueYtd = Math.round(budget * (s.progress / 100) * 0.85);
-    const totalCostBase = revenueYtd * (1 - Math.max(s.margin, 0) / 100);
-    const directCosts = Math.round(totalCostBase * 0.78);
-    const indirectCosts = Math.round(totalCostBase * 0.22);
+    const agg = aggBySite.get(s.id) ?? { revenue: 0n, direct: 0n, indirect: 0n };
+    const revenueYtd = agg.revenue;
+    const directCosts = agg.direct;
+    const indirectCosts = agg.indirect;
     const grossMargin = revenueYtd - directCosts - indirectCosts;
-    const marginPercent = revenueYtd === 0 ? 0 : (grossMargin / revenueYtd) * 100;
+    const marginPercent =
+      revenueYtd === 0n ? 0 : (Number(grossMargin) / Number(revenueYtd)) * 100;
     return {
       siteId: s.id,
       code: s.code,

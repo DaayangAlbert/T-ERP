@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { useAccess } from "@/hooks/useAccess";
 import { MODULES } from "@/lib/rbac/modules";
 import { useComplianceDashboard, useRegisters } from "@/hooks/useSgCompliance";
@@ -9,6 +10,7 @@ import { ComplianceStatusCard } from "@/components/sg/conformite/ComplianceStatu
 import { UpcomingDeadlinesTable } from "@/components/sg/conformite/UpcomingDeadlinesTable";
 import { RegistersGrid } from "@/components/sg/conformite/RegistersGrid";
 import { RegisterDetailDrawer } from "@/components/sg/conformite/RegisterDetailDrawer";
+import { NewComplianceEntryModal } from "@/components/sg/conformite/NewComplianceEntryModal";
 
 export default function ConformitePage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -18,6 +20,7 @@ export default function ConformitePage() {
   const regsQ = useRegisters();
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   function showToast(msg: string) {
@@ -54,6 +57,20 @@ export default function ConformitePage() {
         deadlines90d={dashQ.data.counts.deadlines90d}
         onExportAudit={exportAudit}
       />
+
+      {!readOnly && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvelle entrée
+          </button>
+        </div>
+      )}
+
+      {createOpen && <NewComplianceEntryModal onClose={() => setCreateOpen(false)} />}
 
       <ComplianceStatusCard data={dashQ.data} />
 

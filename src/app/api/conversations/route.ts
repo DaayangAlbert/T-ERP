@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { createConversationSchema } from "@/schemas/messaging";
+import { canCreateGroup, canInitiateDm, isCadre } from "@/lib/rbac/messaging-access";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +125,25 @@ export async function POST(req: Request) {
   try {
     const data = createConversationSchema.parse(await req.json());
 
+    // Récupère le rôle de l'initiateur pour les contrôles RBAC
+    const me = await prisma.user.findUnique({
+      where: { id: session.sub },
+      select: { role: true },
+    });
+    if (!me) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    const isGroupRequested = data.isGroup || data.participantIds.length > 1;
+
+    // RBAC : seul un cadre peut créer un groupe
+    if (isGroupRequested && !canCreateGroup(me.role)) {
+      return NextResponse.json(
+        { error: "Seuls les cadres peuvent créer un groupe." },
+        { status: 403 }
+      );
+    }
+
     // Validate that all participants belong to the same tenant
     const participants = await prisma.user.findMany({
       where: { id: { in: data.participantIds }, tenantId: session.tenantId },
@@ -134,6 +154,24 @@ export async function POST(req: Request) {
         { error: "Un ou plusieurs participants invalides pour ce tenant" },
         { status: 400 }
       );
+    }
+
+    // RBAC : si l'initiateur n'est pas cadre, il ne peut DM que sa hiérarchie
+    // (pour un groupe, les cadres sont les seuls à pouvoir créer — donc ce
+    // check ne s'applique qu'aux DM 1-1).
+    if (!isCadre(me.role)) {
+      for (const targetId of data.participantIds) {
+        const allowed = await canInitiateDm(session.sub, me.role, targetId);
+        if (!allowed) {
+          return NextResponse.json(
+            {
+              error:
+                "Vous ne pouvez initier une discussion qu'avec votre chef hiérarchique ou le DRH.",
+            },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const memberIds = Array.from(new Set([...data.participantIds, session.sub]));

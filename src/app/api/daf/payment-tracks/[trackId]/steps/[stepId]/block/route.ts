@@ -4,6 +4,7 @@ import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { blockStepSchema } from "@/schemas/payment-circuits";
+import { paymentTrackLinkForUser } from "@/lib/notifications/payment-track-link";
 
 export const dynamic = "force-dynamic";
 
@@ -69,13 +70,14 @@ export async function POST(
 
     const otherUserId = isAssignee ? track.createdById : track.assignedToId;
     if (otherUserId && otherUserId !== session.sub) {
+      const link = await paymentTrackLinkForUser(otherUserId);
       await prisma.notification.create({
         data: {
           userId: otherUserId,
           type: "payment_step_blocked",
           title: `Étape bloquée · ${step.label}`,
           body: `${track.receivable.clientName} · ${track.receivable.invoiceRef} · Motif : ${data.reason.slice(0, 120)}`,
-          link: "/direction-financiere/recouvrement",
+          link,
         },
       });
     }

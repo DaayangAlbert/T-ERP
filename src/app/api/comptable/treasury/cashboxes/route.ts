@@ -38,6 +38,47 @@ export async function GET() {
     },
   });
 
+  // KPI entrées/sorties du jour : on agrège les lignes d'écritures validées
+  // sur les comptes classe 5 (521 banques / 531 caisse siège / 532 caisses
+  // chantiers) ET les CashboxMovement du jour, en respectant le périmètre
+  // chantiers du comptable.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const entryLinesToday = await prisma.entryLine.findMany({
+    where: {
+      accountCode: { startsWith: "5" },
+      entry: {
+        tenantId: session.tenantId,
+        status: "VALIDATED",
+        entryDate: { gte: todayStart },
+        ...(allowed !== null ? { siteId: { in: allowed } } : {}),
+      },
+    },
+    select: { debit: true, credit: true },
+  });
+  const cashboxMovementsToday = await prisma.cashboxMovement.findMany({
+    where: {
+      occurredAt: { gte: todayStart },
+      cashbox: {
+        site: { tenantId: session.tenantId },
+        ...(allowed !== null ? { siteId: { in: allowed } } : {}),
+      },
+    },
+    select: { direction: true, amount: true },
+  });
+
+  let inToday = 0n;
+  let outToday = 0n;
+  for (const l of entryLinesToday) {
+    inToday += l.debit;
+    outToday += l.credit;
+  }
+  for (const m of cashboxMovementsToday) {
+    if (m.direction === "IN") inToday += m.amount;
+    else outToday += m.amount;
+  }
+
   return NextResponse.json({
     items: cashboxes.map((c) => ({
       id: c.id,
@@ -55,6 +96,11 @@ export async function GET() {
         occurredAt: m.occurredAt.toISOString(),
       })),
     })),
+    today: {
+      inflow: inToday.toString(),
+      outflow: outToday.toString(),
+      net: (inToday - outToday).toString(),
+    },
     scope: { isDirection: allowed === null },
   });
 }

@@ -40,7 +40,9 @@ const styles = StyleSheet.create({
 });
 
 function fmt(v: string): string {
-  return new Intl.NumberFormat("fr-FR").format(Number(v)) + " FCFA";
+  // Normalise les espaces fins (U+202F, U+00A0, U+2009) en espace classique :
+  // certains visualiseurs PDF affichent un fallback "/" si le glyphe manque.
+  return new Intl.NumberFormat("fr-FR").format(Number(v)).replace(/[   ]/g, " ") + " FCFA";
 }
 
 export function IncomeAttestationPDF({ user, tenant, year, data, generatedAt }: Props) {

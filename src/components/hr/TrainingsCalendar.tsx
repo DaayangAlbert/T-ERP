@@ -8,6 +8,7 @@ import { clsx } from "clsx";
 
 const STATUS_BADGE: Record<TrainingStatus, string> = {
   PLANNED: "bg-info/10 text-info",
+  CONFIRMED: "bg-primary-100 text-primary-700",
   IN_PROGRESS: "bg-warning/10 text-warning",
   COMPLETED: "bg-success/10 text-success",
   CANCELLED: "bg-ink-3/10 text-ink-3",

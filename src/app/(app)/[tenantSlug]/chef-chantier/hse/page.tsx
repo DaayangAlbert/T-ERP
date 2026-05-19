@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ShieldCheck, X, Check } from "lucide-react";
+import { AlertTriangle, ShieldCheck, X, Check, Plus, Pencil, ClipboardCheck } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
+import { NcEditorModal, type NcDraft } from "@/components/qhse/NcEditorModal";
 
 interface HseData {
   kpis: {
     daysSinceSerious: number;
     tf1: number;
+    tf1Incidents?: number;
+    tf1WorkforceCount?: number;
     ytdIncidents: number;
     epiToCheck: number;
-    bctVisitDays: number;
+    bctVisitDays: number | null;
   };
   recentIncidents: Array<{ id: string; type: string; severity: string; description: string; occurredAt: string }>;
   safetyTalk: {
@@ -23,7 +26,28 @@ interface HseData {
     completedAt: string | null;
     attendeesCount: number | null;
   };
+  site: { id: string; code: string; name: string } | null;
+  ncs: Array<{
+    id: string;
+    category: "QUALITY" | "SAFETY" | "ENVIRONMENT" | "REGULATORY" | "DOCUMENTATION";
+    criticality: "MINOR" | "MAJOR" | "CRITICAL";
+    description: string;
+    correctiveAction: string | null;
+    dueDate: string | null;
+    status: "OPEN" | "ACTION_PLANNED" | "IN_PROGRESS" | "CLOSED" | "REJECTED";
+    ownerId: string | null;
+    owner: string | null;
+    createdAt: string;
+    closedAt: string | null;
+  }>;
+  staff: Array<{ id: string; fullName: string; role: string }>;
 }
+
+const NC_CRIT_BADGE: Record<string, string> = {
+  MINOR: "bg-ink-3/10 text-ink-3",
+  MAJOR: "bg-amber-100 text-amber-800",
+  CRITICAL: "bg-rose-100 text-rose-700",
+};
 
 const INCIDENT_TYPES: Array<{ value: string; label: string; severity: string }> = [
   { value: "NEAR_MISS", label: "Presqu'accident", severity: "LOW" },
@@ -47,6 +71,7 @@ const IMMEDIATE_ACTIONS = [
 export default function HsePage() {
   const qc = useQueryClient();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [ncDraft, setNcDraft] = useState<NcDraft | null>(null);
 
   const { data } = useQuery({
     queryKey: ["cc", "hse-dashboard"],
@@ -68,11 +93,9 @@ export default function HsePage() {
 
   return (
     <div id="screen-cc-hse" className="space-y-3">
-      <header className="-mx-3 sm:-mx-4 md:-mx-6 sticky top-14 z-20 bg-gradient-to-r from-primary-600 via-violet-700 to-primary-700 px-3 py-2 text-white shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-[14px] font-semibold">HSE</h1>
-          <SyncStatusBadge />
-        </div>
+      <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
+        <h1 className="text-[16px] font-semibold text-ink">HSE &amp; incidents</h1>
+        <SyncStatusBadge />
       </header>
 
       <section className="rounded-xl bg-gradient-to-br from-red-500 to-red-700 p-4 shadow-card">
@@ -98,7 +121,10 @@ export default function HsePage() {
       <section className="grid grid-cols-2 gap-2">
         <Kpi label="Incidents YTD" value={(data?.kpis.ytdIncidents ?? 0).toString()} />
         <Kpi label="EPI à vérifier" value={(data?.kpis.epiToCheck ?? 0).toString()} accent="warning" />
-        <Kpi label="Visite BCT" value={`J+${data?.kpis.bctVisitDays ?? 0}`} />
+        <Kpi
+          label="Visite BCT"
+          value={data?.kpis.bctVisitDays != null ? `J+${data.kpis.bctVisitDays}` : "—"}
+        />
         <Kpi label="Causeries S" value={data?.safetyTalk.completedAt ? "✓ Faite" : "À faire"} accent={data?.safetyTalk.completedAt ? "success" : "warning"} />
       </section>
 
@@ -162,10 +188,110 @@ export default function HsePage() {
         </section>
       )}
 
+      {data?.site && (
+        <section className="rounded-xl border border-line bg-white shadow-card">
+          <header className="flex items-center justify-between border-b border-line px-3 py-2">
+            <h2 className="text-[12px] font-semibold uppercase tracking-wider text-ink-3">
+              Non-conformités du chantier
+            </h2>
+            <button
+              type="button"
+              onClick={() =>
+                setNcDraft({
+                  siteId: data.site!.id,
+                  category: "QUALITY",
+                  criticality: "MAJOR",
+                  description: "",
+                  correctiveAction: null,
+                  ownerId: null,
+                  dueDate: null,
+                  status: "OPEN",
+                })
+              }
+              style={{ minHeight: 40 }}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white"
+            >
+              <Plus className="h-3.5 w-3.5" /> Déclarer
+            </button>
+          </header>
+          {data.ncs.length === 0 ? (
+            <p className="px-3 py-4 text-center text-[12px] text-ink-3">
+              Aucune non-conformité enregistrée. Utilise « Déclarer » pour signaler un problème (qualité, sécurité, environnement) avec la solution adoptée.
+            </p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {data.ncs.slice(0, 8).map((n) => (
+                <li key={n.id} className="p-3 text-[12.5px]">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={clsx("rounded-full px-1.5 py-0.5 text-[10px] font-semibold", NC_CRIT_BADGE[n.criticality])}>
+                        {n.criticality}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wider text-ink-3">{n.category}</span>
+                      <span className={clsx(
+                        "rounded px-1.5 py-0.5 text-[10.5px] font-medium",
+                        n.status === "CLOSED" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800",
+                      )}>
+                        {n.status}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNcDraft({
+                          id: n.id,
+                          siteId: data.site!.id,
+                          category: n.category,
+                          criticality: n.criticality,
+                          description: n.description,
+                          correctiveAction: n.correctiveAction,
+                          ownerId: n.ownerId,
+                          dueDate: n.dueDate,
+                          status: n.status,
+                        })
+                      }
+                      style={{ minHeight: 36 }}
+                      className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 text-[11.5px] text-ink-2"
+                    >
+                      <Pencil className="h-3 w-3" /> Modifier
+                    </button>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-ink-2">{n.description}</p>
+                  {n.correctiveAction ? (
+                    <p className="mt-1 whitespace-pre-wrap text-[12px] text-emerald-700">
+                      <ClipboardCheck className="mr-1 inline h-3 w-3" />
+                      <strong>Solution :</strong> {n.correctiveAction}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11.5px] italic text-amber-700">Action corrective à renseigner.</p>
+                  )}
+                  <div className="mt-1 text-[11px] text-ink-3">
+                    {n.owner ? `Resp. ${n.owner} · ` : ""}déclarée le {new Date(n.createdAt).toLocaleDateString("fr-FR")}
+                    {n.dueDate && ` · échéance ${new Date(n.dueDate).toLocaleDateString("fr-FR")}`}
+                    {n.status === "CLOSED" && n.closedAt && ` · résolue le ${new Date(n.closedAt).toLocaleDateString("fr-FR")}`}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       {wizardOpen && (
         <IncidentWizard
           onClose={() => setWizardOpen(false)}
           onCreated={() => qc.invalidateQueries({ queryKey: ["cc", "hse-dashboard"] })}
+        />
+      )}
+
+      {ncDraft && data?.site && (
+        <NcEditorModal
+          initial={ncDraft}
+          sites={[data.site]}
+          staff={data.staff}
+          lockSite
+          invalidateKeys={[["cc", "hse-dashboard"], ["sg", "site-synthesis"]]}
+          onClose={() => setNcDraft(null)}
         />
       )}
     </div>

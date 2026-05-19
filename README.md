@@ -36,7 +36,7 @@ cp .env.example .env.local
 # Éditer .env.local avec :
 #   DATABASE_URL (Neon ou local)
 #   JWT_SECRET (générer : openssl rand -base64 32)
-#   NEXT_PUBLIC_APP_URL=http://localhost:3000
+#   NEXT_PUBLIC_APP_URL=http://localhost:5000
 
 # 3. Initialiser la base
 pnpm prisma migrate dev --name init
@@ -46,7 +46,7 @@ pnpm prisma db seed
 pnpm dev
 ```
 
-Application disponible sur `http://localhost:3000`.
+Application disponible sur `http://localhost:5000`.
 
 Pour tester le multi-tenant en local, ajouter dans `/etc/hosts` :
 ```
@@ -55,12 +55,12 @@ Pour tester le multi-tenant en local, ajouter dans `/etc/hosts` :
 127.0.0.1  njoya.terp.local
 ```
 
-Et accéder via `http://batimcam.terp.local:3000`.
+Et accéder via `http://batimcam.terp.local:5000`.
 
 ## Comptes démo (après seed)
 
-- Portail public : `http://app.terp.local:3000`
-- Tenant BatimCAM : `http://batimcam.terp.local:3000`
+- Portail public : `http://app.terp.local:5000`
+- Tenant BatimCAM : `http://batimcam.terp.local:5000`
   - DG : `albert@batimcam.cm` / `Demo2026!`
   - DAF : `marie@batimcam.cm` / `Demo2026!`
   - Informaticien : `olivier@batimcam.cm` / `Demo2026!`

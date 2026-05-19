@@ -120,26 +120,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Code ${data.code} déjà utilisé` }, { status: 409 });
     }
 
-    const created = await prisma.site.create({
-      data: {
-        tenantId: session.tenantId,
-        code: data.code,
-        name: data.name,
-        client: data.client,
-        type: data.type,
-        region: data.region || null,
-        budget: BigInt(data.budget),
-        startDate: data.startDate,
-        plannedEndDate: data.plannedEndDate,
-        progress: data.progress,
-        margin: data.margin,
-        status: data.status,
-        managerId: data.managerId || null,
-      },
+    // Crée le chantier ET son magasin associé (scope=CHANTIER) en
+    // transaction : chaque chantier doit avoir son Warehouse pour
+    // tracer le stock (cf. sync-warehouses-from-sites.js).
+    const warehouseCode = `MAG-${data.code}`;
+    const created = await prisma.$transaction(async (tx) => {
+      const site = await tx.site.create({
+        data: {
+          tenantId: session.tenantId!,
+          code: data.code,
+          name: data.name,
+          client: data.client,
+          type: data.type,
+          region: data.region || null,
+          budget: BigInt(data.budget),
+          startDate: data.startDate,
+          plannedEndDate: data.plannedEndDate,
+          progress: data.progress,
+          margin: data.margin,
+          status: data.status,
+          managerId: data.managerId || null,
+        },
+      });
+
+      // Si un magasin avec ce code existe déjà dans le tenant (rare,
+      // ex: warehouse créé manuellement avant), on saute la création
+      // pour ne pas violer l'unique (tenantId, code).
+      const existingMag = await tx.warehouse.findFirst({
+        where: { tenantId: session.tenantId!, code: warehouseCode },
+        select: { id: true },
+      });
+      if (!existingMag) {
+        await tx.warehouse.create({
+          data: {
+            tenantId: session.tenantId!,
+            siteId: site.id,
+            code: warehouseCode,
+            name: `Magasin ${site.name}`,
+            scope: "CHANTIER",
+            keeperId: site.managerId,
+          },
+        });
+      }
+
+      return site;
     });
 
     return NextResponse.json(
-      { id: created.id, code: created.code, name: created.name },
+      { id: created.id, code: created.code, name: created.name, warehouseCode },
       { status: 201 }
     );
   } catch (err) {

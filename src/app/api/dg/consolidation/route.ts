@@ -122,13 +122,15 @@ export async function GET() {
     // entre les filiales (60/25/15 du total) si la filiale a 0 users propre.
     let effectiveHeadcount = headcount;
     if (!t.isParent && headcount === 0) {
+      // Si la filiale n'a pas de users propres (cas typique : tous les users
+      // sont rattachés à la holding mère pour la démo), on distribue
+      // équitablement l'effectif mère entre les filiales — heuristique
+      // visuelle générique sans hardcoded slugs.
       const parentHc = headcountMap.get(parent.id) ?? 0;
-      const distribution: Record<string, number> = {
-        "batimcam-yaounde": Math.round(parentHc * 0.45),
-        "batimcam-douala": Math.round(parentHc * 0.35),
-        "batimcam-logistique": Math.round(parentHc * 0.2),
-      };
-      effectiveHeadcount = distribution[t.slug] ?? Math.max(1, Math.round(parentHc / parent.children.length));
+      effectiveHeadcount = Math.max(
+        1,
+        Math.round(parentHc / Math.max(1, parent.children.length)),
+      );
     }
     // Trésorerie estimée à 18 % du CA (même heuristique que /api/dashboard/dg)
     const treasury = Math.round(ca * 0.18);

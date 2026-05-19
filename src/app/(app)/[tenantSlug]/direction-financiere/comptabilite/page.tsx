@@ -7,6 +7,11 @@ import { AccountingDashboardKpis } from "@/components/daf/accounting/AccountingD
 import { EntriesToValidateTable } from "@/components/daf/accounting/EntriesToValidateTable";
 import { BankReconciliationsTable } from "@/components/daf/accounting/BankReconciliationsTable";
 import { MonthlyClosingChecklist } from "@/components/daf/accounting/MonthlyClosingChecklist";
+import { AnomaliesPanel } from "@/components/daf/accounting/AnomaliesPanel";
+import { PendingInvoicesPanel } from "@/components/daf/accounting/PendingInvoicesPanel";
+import { TaxCalendarPanel } from "@/components/daf/accounting/TaxCalendarPanel";
+import { VariationPanel } from "@/components/daf/accounting/VariationPanel";
+import { AuditTrailPanel } from "@/components/daf/accounting/AuditTrailPanel";
 
 function shiftPeriod(period: string, delta: number): string {
   const [y, m] = period.split("-").map(Number);
@@ -57,11 +62,18 @@ export default function DafComptabilitePage() {
       ) : (
         <div className="space-y-4">
           <AccountingDashboardKpis kpis={data.kpis} />
+          <AnomaliesPanel period={period} />
           <EntriesToValidateTable />
           <div className="grid gap-3 lg:grid-cols-2">
             <BankReconciliationsTable />
             <MonthlyClosingChecklist period={period} />
           </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <PendingInvoicesPanel />
+            <TaxCalendarPanel />
+          </div>
+          <VariationPanel period={period} />
+          <AuditTrailPanel />
         </div>
       )}
     </>

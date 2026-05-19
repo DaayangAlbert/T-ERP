@@ -5,6 +5,7 @@ export interface ApplicationSummary {
   id: string;
   jobTitle: string;
   region: string | null;
+  tenantName?: string;
   contractType: string;
   stage:
     | "RECEIVED"
@@ -118,7 +119,7 @@ export function ActiveApplicationsList({
                   {app.jobTitle}
                 </div>
                 <div className="text-xs text-ink-3">
-                  BatimCAM
+                  {app.tenantName ?? "—"}
                   {app.region ? ` · ${app.region}` : ""} · postulé il y a{" "}
                   {app.daysSinceApplied} j
                 </div>

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AssetCategory, MovementType, InventoryStatus, LossType } from "@prisma/client";
+import { warehouseFilterToQuery, type WarehouseFilterValue } from "@/components/magasin/WarehouseFilter";
 
 interface AssetItem {
   id: string;
@@ -93,12 +94,22 @@ export function useFixedAssets() {
   });
 }
 
-export function useMovements(filters: { type?: string; anomalous?: boolean } = {}) {
+export function useMovements(
+  filters: { type?: string; anomalous?: boolean } = {},
+  warehouseFilter?: WarehouseFilterValue,
+) {
   const sp = new URLSearchParams();
   if (filters.type) sp.set("type", filters.type);
   if (filters.anomalous) sp.set("anomalous", "true");
+  if (warehouseFilter) {
+    const extra = warehouseFilterToQuery(warehouseFilter);
+    if (extra) extra.split("&").forEach((p) => {
+      const [k, v] = p.split("=");
+      if (k && v) sp.set(k, decodeURIComponent(v));
+    });
+  }
   return useQuery({
-    queryKey: ["stocks", "movements", filters],
+    queryKey: ["stocks", "movements", filters, warehouseFilter ?? null],
     queryFn: () =>
       getJson<{ items: MovementItem[]; summary: { total: number; anomalousCount: number } }>(
         `/api/stocks/movements?${sp.toString()}`

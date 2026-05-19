@@ -69,9 +69,9 @@ const TEMPLATES: Record<WhatsappTemplateKey, WhatsappTemplate> = {
   CONTRACT_ANNIVERSARY: {
     key: "CONTRACT_ANNIVERSARY",
     metaName: "terp_emp_contract_anniversary_v1",
-    variables: ["nom", "annees"],
-    render: ({ nom, annees }) =>
-      `Bonjour ${nom}, vous fêtez aujourd'hui ${annees} ans chez BatimCAM. Merci pour votre engagement !`,
+    variables: ["nom", "annees", "entreprise"],
+    render: ({ nom, annees, entreprise }) =>
+      `Bonjour ${nom}, vous fêtez aujourd'hui ${annees} ans chez ${entreprise ?? "notre entreprise"}. Merci pour votre engagement !`,
   },
   SITE_CHANGE: {
     key: "SITE_CHANGE",

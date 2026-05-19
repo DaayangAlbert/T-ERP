@@ -172,7 +172,7 @@ export default function ItUsersPage() {
                       </td>
                       <td className="px-3 py-2 text-right">
                         <Link
-                          href={`/informatique/users/${u.id}`}
+                          href={`/informatique/users/${u.id}/edit`}
                           className="text-[11.5px] font-medium text-primary-700 hover:underline"
                         >
                           Éditer

@@ -13,6 +13,7 @@ import { ProfileContacts } from "@/components/ouv/profil/ProfileContacts";
 import { ProfileDocuments } from "@/components/ouv/profil/ProfileDocuments";
 import { ChangePinModal } from "@/components/ouv/profil/ChangePinModal";
 import { ProfileBottomActions } from "@/components/ouv/profil/LogoutButton";
+import { AvatarUploader } from "@/components/profile/AvatarUploader";
 
 // Page mirror screen-ouv-profil : identité gradient violet + infos pro
 // + coordonnées éditables + raccourcis docs + bouton PIN + déconnexion.
@@ -48,6 +49,12 @@ export default function OuvProfilPage() {
         ) : (
           <>
             <ProfileIdentityCard profile={profile.data.profile} />
+            {/* Carte upload photo de profil — composant générique
+                centralisé (src/components/profile/AvatarUploader.tsx),
+                compression côté client, écriture via PUT /api/users/me */}
+            <div className="my-3.5">
+              <AvatarUploader compact />
+            </div>
             <ProfileInfoPro profile={profile.data.profile} />
             <ProfileContacts profile={profile.data.profile} />
             <ProfileDocuments

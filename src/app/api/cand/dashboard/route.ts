@@ -75,6 +75,18 @@ export async function GET() {
     ? activeApps.find((a) => a.id === nextInterviewRow.applicationId)
     : null;
 
+  // Résout dynamiquement le nom du tenant à afficher : priorité à l'entreprise
+  // du prochain entretien, sinon de la candidature la plus active, sinon "—".
+  let tenantName: string | null = null;
+  const referenceAppId = nextInterviewApp?.id ?? activeApps[0]?.id;
+  if (referenceAppId) {
+    const offer = await prisma.application.findUnique({
+      where: { id: referenceAppId },
+      select: { jobOffer: { select: { tenant: { select: { name: true } } } } },
+    });
+    tenantName = offer?.jobOffer?.tenant?.name ?? null;
+  }
+
   // Récupérer le nom de l'interviewer si défini (premier de la liste)
   let interviewerName: string | null = null;
   if (nextInterviewRow?.interviewers?.length) {
@@ -106,6 +118,7 @@ export async function GET() {
           contractType: true,
           salaryMin: true,
           salaryMax: true,
+          tenant: { select: { name: true } },
         },
       },
     },
@@ -115,6 +128,7 @@ export async function GET() {
     id: m.jobOfferId,
     title: m.jobOffer.title,
     region: m.jobOffer.region,
+    tenantName: m.jobOffer.tenant.name,
     contractType: m.jobOffer.contractType,
     salaryMin: m.jobOffer.salaryMin,
     salaryMax: m.jobOffer.salaryMax,
@@ -127,7 +141,7 @@ export async function GET() {
     candidate: {
       firstName: user.firstName,
       lastName: user.lastName,
-      tenantName: nextInterviewApp ? "BatimCAM SA" : "BatimCAM SA",
+      tenantName,
       completionPct,
     },
     kpis: {

@@ -12,6 +12,7 @@ export interface JobMatchData {
   jobOfferId: string;
   title: string;
   region: string | null;
+  tenantName?: string;
   contractType: string;
   category: string | null;
   salaryMin: number | null;
@@ -76,7 +77,7 @@ export function JobMatchCard({ match }: { match: JobMatchData }) {
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-3">
                 <span className="inline-flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
-                  BatimCAM{match.region ? ` · ${match.region}` : ""}
+                  {match.tenantName ?? "—"}{match.region ? ` · ${match.region}` : ""}
                 </span>
                 <span>·</span>
                 <span className="inline-flex items-center gap-1">

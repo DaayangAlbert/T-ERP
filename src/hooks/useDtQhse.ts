@@ -28,13 +28,19 @@ export interface DtQhseResponse {
   }>;
   ncs: Array<{
     id: string;
+    siteId: string | null;
     site: string;
+    siteName: string;
     category: string;
     criticality: string;
     description: string;
     correctiveAction: string | null;
     dueDate: string | null;
     status: string;
+    owner: string | null;
+    ownerId: string | null;
+    createdAt: string;
+    closedAt: string | null;
   }>;
   certifications: Array<{
     id: string;
@@ -45,6 +51,8 @@ export interface DtQhseResponse {
     surveillanceAuditDate: string | null;
     openNcCount: number;
   }>;
+  sites: Array<{ id: string; code: string; name: string }>;
+  staff: Array<{ id: string; fullName: string; role: string }>;
 }
 
 export function useDtQhse() {

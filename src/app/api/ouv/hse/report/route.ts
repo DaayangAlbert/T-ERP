@@ -13,6 +13,7 @@ import {
   HseIncidentType,
   Role,
 } from "@prisma/client";
+import { notifySupervisors } from "@/lib/notify-supervisors";
 
 export const dynamic = "force-dynamic";
 
@@ -90,8 +91,40 @@ export async function POST(req: Request) {
       select: { id: true, type: true, severity: true, status: true, createdAt: true },
     });
 
+    // Notifie l'assigné avec un link adapté à son rôle :
+    //   - SITE_MANAGER (CC fallback) → /chef-chantier/validations
+    //   - WORKS_DIRECTOR (DTrav)     → /direction-technique/qhse
+    if (assignedTo?.id) {
+      const assignedUser = await prisma.user.findUnique({
+        where: { id: assignedTo.id },
+        select: { role: true },
+      });
+      const link = assignedUser?.role === Role.SITE_MANAGER
+        ? "/chef-chantier/validations"
+        : "/direction-technique/qhse";
+      await prisma.notification.create({
+        data: {
+          userId: assignedTo.id,
+          type: "hse_incident_reported",
+          title: `Signalement HSE — ${hseTypeLabel(input.type as any)}`,
+          body: input.title.slice(0, 140),
+          link,
+        },
+      });
+    }
+    const isCritical =
+      severity === HseIncidentSeverity.CRITICAL ||
+      severity === HseIncidentSeverity.HIGH;
+    await notifySupervisors({
+      tenantId: me.tenantId,
+      roles: isCritical ? [Role.DG, Role.DAF, Role.HR, Role.WORKS_DIRECTOR] : [Role.WORKS_DIRECTOR, Role.HR],
+      type: "hse_incident_reported",
+      title: `Signalement HSE${isCritical ? " · URGENT" : ""}`,
+      body: `${hseTypeLabel(input.type as any)} · ${input.title.slice(0, 80)}`,
+      link: "/direction-technique/qhse",
+    });
+
     // TODO Bloc 2 RH/DAF : déclaration CNPS auto sous 48 h pour CORPORAL_ACCIDENT.
-    // TODO fn intégration WhatsApp : notification au validateur DTrav + DG si critical.
 
     return NextResponse.json(
       {

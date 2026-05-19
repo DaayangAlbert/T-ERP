@@ -21,8 +21,11 @@ const ICONS = {
   RECRUITMENT: { Icon: Briefcase, color: "bg-primary-100 text-primary-700" },
 } as const;
 
+// TODO multi-tenant : ces contacts externes devraient être stockés dans
+// TenantSettings.modules pour être paramétrables par entreprise cliente.
+// Pour l'instant, libellés génériques sans nom d'entreprise hardcodé.
 const CONTACTS: ExternalContact[] = [
-  { category: "MEDICAL", name: "Dr. NGOUFO Pierre", org: "Médecin du travail BatimCAM", position: "Référent visites médicales", email: "ngoufo.medtravail@batimcam.cm", phone: "+237 6 77 12 88 90" },
+  { category: "MEDICAL", name: "Dr. NGOUFO Pierre", org: "Médecin du travail référent", position: "Référent visites médicales", email: "ngoufo.medtravail@example.cm", phone: "+237 6 77 12 88 90" },
   { category: "CNPS", name: "Mme BIYELE Solange", org: "Centre Prévoyance Sociale", position: "Référente entreprise", email: "biyele.cnps@gov.cm", phone: "+237 6 77 45 90 88" },
   { category: "LABOR", name: "M. NDONGO Achille", org: "Inspection du travail — Centre", position: "Inspecteur référent dossier", email: "andongo.inspection@mintss.gov.cm", phone: "+237 6 99 23 14 88" },
   { category: "MUTUAL", name: "Mme MBELI Christine", org: "Activa Mutuelle Santé", position: "Gestionnaire compte entreprise", email: "mbeli.c@activa.cm", phone: "+237 6 88 12 45 30" },

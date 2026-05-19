@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface PersonnelRow {
   id: string;
@@ -35,6 +35,21 @@ export interface PersonnelList {
 }
 
 export interface PersonnelFiche extends PersonnelRow {
+  avatarUrl: string | null;
+  professionalCategory: string | null;
+  echelon: string | null;
+  classCategory: string | null;
+  indiceSalarial: number | null;
+  coefficientSalarial: number | null;
+  baseSalary: number | null;
+  salaryGrade: string | null;
+  department: string | null;
+  familyStatus: string | null;
+  cnpsCardNumber: string | null;
+  niu: string | null;
+  bankName: string | null;
+  bankAgency: string | null;
+  rib: string | null;
   profile: {
     identityCard: string | null;
     familyStatus: string | null;
@@ -44,6 +59,28 @@ export interface PersonnelFiche extends PersonnelRow {
     bankAccount: { bank?: string; iban?: string; swift?: string } | null;
   } | null;
   documents: Array<{ id: string; type: string; title: string; fileUrl: string; uploadedAt: string }>;
+}
+
+export interface PersonnelClassificationPatch {
+  avatarUrl?: string | null;
+  professionalCategory?: string | null;
+  echelon?: string | null;
+  classCategory?: string | null;
+  indiceSalarial?: number | null;
+  coefficientSalarial?: number | null;
+  baseSalary?: number | null;
+  salaryGrade?: string | null;
+  // Si baseSalary modifié, ces 2 champs précisent la raison/note
+  salaryChangeReason?: "HIRING" | "ANNUAL_REVIEW" | "PROMOTION" | "NEGOTIATION" | "CCM_ADJUSTMENT" | "CORRECTION" | "OTHER";
+  salaryChangeNotes?: string;
+  department?: string | null;
+  familyStatus?: string | null;
+  cnpsNumber?: string | null;
+  cnpsCardNumber?: string | null;
+  niu?: string | null;
+  bankName?: string | null;
+  bankAgency?: string | null;
+  rib?: string | null;
 }
 
 export function usePersonnel(filters: {
@@ -84,5 +121,55 @@ export function usePersonnelFiche(id: string | null) {
       return res.json();
     },
     enabled: Boolean(id),
+  });
+}
+
+export interface SalaryHistoryItem {
+  id: string;
+  effectiveAt: string;
+  baseSalary: number;
+  previousBase: number | null;
+  variation: number | null;
+  reason: string;
+  reasonLabel: string;
+  notes: string | null;
+  decidedBy: string | null;
+  createdAt: string;
+}
+
+export function useSalaryHistory(id: string | null) {
+  return useQuery({
+    queryKey: ["rh", "personnel", "salary-history", id],
+    queryFn: async (): Promise<{ items: SalaryHistoryItem[] }> => {
+      const res = await fetch(`/api/rh/personnel/${id}/salary-history`, { credentials: "same-origin" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    enabled: Boolean(id) && !id?.startsWith("syn_"),
+  });
+}
+
+export function useUpdatePersonnelClassification(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: PersonnelClassificationPatch) => {
+      const res = await fetch(`/api/rh/personnel/${id}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rh", "personnel", "fiche", id] });
+      qc.invalidateQueries({ queryKey: ["rh", "personnel"] });
+      // Si une révision salariale a eu lieu, on recharge aussi l'historique
+      qc.invalidateQueries({ queryKey: ["rh", "personnel", "salary-history", id] });
+    },
   });
 }

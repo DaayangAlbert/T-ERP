@@ -98,7 +98,8 @@ const styles = StyleSheet.create({
 function fmtCFA(amount: number): string {
   if (Math.abs(amount) >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} Md FCFA`;
   if (Math.abs(amount) >= 1_000_000) return `${(amount / 1_000_000).toFixed(0)} M FCFA`;
-  return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
+  // Espaces fins (U+202F, U+00A0, U+2009) → espace classique, sinon fallback "/"
+  return new Intl.NumberFormat("fr-FR").format(amount).replace(/[   ]/g, " ") + " FCFA";
 }
 
 const TYPE_LABEL: Record<string, string> = {

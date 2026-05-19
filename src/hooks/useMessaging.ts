@@ -2,6 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Role } from "@prisma/client";
+import { fetchWithRefresh } from "@/lib/fetch-with-refresh";
+
+/**
+ * Erreur HTTP enrichie avec le statut, pour permettre aux composants
+ * d'afficher un message contextuel (ex: 401 → session expirée).
+ */
+class HttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = "HttpError";
+  }
+}
 
 export interface ConversationItem {
   id: string;
@@ -34,6 +46,8 @@ export interface MessageItem {
   attachmentUrl: string | null;
   attachmentName: string | null;
   attachmentSize: number | null;
+  attachmentType: string | null;
+  voiceNote: { durationSec: number; transcript: string | null } | null;
   isSystem: boolean;
   createdAt: string;
   senderId: string;
@@ -51,8 +65,8 @@ export function useConversations() {
   return useQuery({
     queryKey: ["conversations"],
     queryFn: async (): Promise<{ items: ConversationItem[] }> => {
-      const res = await fetch("/api/conversations");
-      if (!res.ok) throw new Error("Erreur de chargement");
+      const res = await fetchWithRefresh("/api/conversations");
+      if (!res.ok) throw new HttpError(res.status, "Erreur de chargement");
       return res.json();
     },
     staleTime: 5_000,
@@ -64,8 +78,8 @@ export function useMessages(conversationId: string | null) {
   return useQuery({
     queryKey: ["conversation-messages", conversationId],
     queryFn: async (): Promise<{ items: MessageItem[]; currentUserId: string }> => {
-      const res = await fetch(`/api/conversations/${conversationId}/messages`);
-      if (!res.ok) throw new Error("Conversation introuvable");
+      const res = await fetchWithRefresh(`/api/conversations/${conversationId}/messages`);
+      if (!res.ok) throw new HttpError(res.status, "Conversation introuvable");
       return res.json();
     },
     enabled: Boolean(conversationId),
@@ -79,19 +93,107 @@ export function useSendMessage(conversationId: string | null) {
   return useMutation({
     mutationFn: async (content: string): Promise<MessageItem> => {
       if (!conversationId) throw new Error("Aucune conversation");
-      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+      const res = await fetchWithRefresh(`/api/conversations/${conversationId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Envoi échoué");
+        throw new HttpError(res.status, err.error ?? "Envoi échoué");
       }
       return res.json();
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["conversation-messages", conversationId] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+/**
+ * Upload d'une pièce jointe ou note vocale dans une conversation.
+ * Crée un Message côté serveur, retourne le message créé.
+ */
+export function useSendAttachment(conversationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      file: File;
+      content?: string;
+      kind?: "voice";
+      duration?: number;
+    }): Promise<MessageItem> => {
+      if (!conversationId) throw new Error("Aucune conversation");
+      const fd = new FormData();
+      fd.append("file", input.file);
+      if (input.content) fd.append("content", input.content);
+      if (input.kind) fd.append("kind", input.kind);
+      if (input.duration) fd.append("duration", String(input.duration));
+      const res = await fetchWithRefresh(`/api/conversations/${conversationId}/attachments`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new HttpError(res.status, err.error ?? "Upload échoué");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["conversation-messages", conversationId] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+export interface MessagingContact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: Role;
+  avatarUrl: string | null;
+  position: string | null;
+  department: string | null;
+  teamLeader: boolean;
+}
+
+export function useMessagingContacts() {
+  return useQuery({
+    queryKey: ["messaging-contacts"],
+    queryFn: async (): Promise<{ items: MessagingContact[] }> => {
+      const res = await fetchWithRefresh("/api/messaging/contacts");
+      if (!res.ok) throw new HttpError(res.status, "Erreur de chargement des contacts");
+      return res.json();
+    },
+    // Court staleTime pour que la liste suive un éventuel changement de
+    // rôle / hiérarchie de l'utilisateur sans devoir recharger la page.
+    staleTime: 10_000,
+  });
+}
+
+export interface CreateConversationInput {
+  name?: string;
+  isGroup: boolean;
+  participantIds: string[];
+}
+
+export function useCreateConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateConversationInput): Promise<{ id: string; existing?: boolean }> => {
+      const res = await fetchWithRefresh("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new HttpError(res.status, err.error ?? "Création échouée");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

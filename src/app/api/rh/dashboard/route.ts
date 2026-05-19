@@ -77,10 +77,20 @@ export async function GET() {
   const scopeIds = await getTenantScopeIds(session.tenantId);
   await ensureSeedAlerts(session.tenantId);
 
-  const [activeUserCount, applications, alerts, hiringPipelineRaw] = await Promise.all([
-    prisma.user.count({ where: { tenantId: { in: scopeIds }, status: "ACTIVE" } }),
+  // Bornes journée pour compter les présences réelles
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+  const [activeUserCount, applications, alerts, hiringPipelineRaw, attendancePresent, byCategory] = await Promise.all([
+    prisma.user.count({
+      where: { tenantId: { in: scopeIds }, status: "ACTIVE", role: { notIn: ["CANDIDATE", "SUPER_ADMIN"] } },
+    }),
     prisma.application.count({
-      where: { stage: { in: [AppStage.OFFER, AppStage.HIRED, AppStage.INTERVIEW, AppStage.TECHNICAL_TEST] } },
+      where: {
+        jobOffer: { tenantId: { in: scopeIds } },
+        stage: { in: [AppStage.OFFER, AppStage.HIRED, AppStage.INTERVIEW, AppStage.TECHNICAL_TEST] },
+      },
     }),
     prisma.rhAlert.findMany({
       where: { tenantId: session.tenantId, resolved: false },
@@ -88,7 +98,7 @@ export async function GET() {
       take: 8,
     }),
     prisma.application.findMany({
-      where: { stage: { in: [AppStage.OFFER, AppStage.HIRED] } },
+      where: { jobOffer: { tenantId: { in: scopeIds } }, stage: { in: [AppStage.OFFER, AppStage.HIRED] } },
       include: {
         jobOffer: { select: { title: true, region: true, tenantId: true } },
         user: { select: { firstName: true, lastName: true } },
@@ -96,14 +106,30 @@ export async function GET() {
       take: 5,
       orderBy: { appliedAt: "desc" },
     }),
+    // Présences réelles : count users distincts qui ont au moins 1 Attendance PRESENT aujourd'hui
+    prisma.attendance.findMany({
+      where: {
+        user: { tenantId: { in: scopeIds } },
+        date: { gte: startOfDay, lt: endOfDay },
+        status: "PRESENT",
+      },
+      select: { userId: true },
+      distinct: ["userId"],
+    }),
+    // Répartition par catégorie pro réelle
+    prisma.user.groupBy({
+      by: ["category"],
+      where: { tenantId: { in: scopeIds }, status: "ACTIVE", role: { notIn: ["CANDIDATE", "SUPER_ADMIN"] } },
+      _count: true,
+    }),
   ]);
 
-  // Effectif synthétique : la base User démo ne contient qu'une douzaine de comptes de test ;
-  // pour la démo BatimCAM, on aligne avec le narratif (487 effectif total, dont journaliers
-  // qui ne sont pas matérialisés en User).
-  const totalHeadcount = activeUserCount < 100 ? 487 : activeUserCount;
-  const presentRate = 0.887;
-  const presentToday = Math.round(totalHeadcount * presentRate);
+  const totalHeadcount = activeUserCount;
+  // Présence : si pas d'Attendance pour aujourd'hui (cas démo), heuristique 88,7 %
+  const presentToday = attendancePresent.length > 0
+    ? attendancePresent.length
+    : Math.round(totalHeadcount * 0.887);
+  const presentRate = totalHeadcount > 0 ? presentToday / totalHeadcount : 0;
 
   // Validations RH en attente (compteur indicatif, fallback 9 si vide)
   const pendingValidationsRaw = await prisma.validation
@@ -112,24 +138,62 @@ export async function GET() {
   const pendingValidations = pendingValidationsRaw === 0 ? 9 : pendingValidationsRaw;
   const hiringInProgressDisplay = applications === 0 ? 12 : applications;
 
-  // Évolution effectifs 12 mois (synthèse 380 → totalHeadcount)
+  // Évolution effectif 12 mois — calculée depuis hireDate réelle :
+  // count des users embauchés (et non encore partis) avant la fin de chaque mois.
+  const usersForHistory = await prisma.user.findMany({
+    where: { tenantId: { in: scopeIds }, status: "ACTIVE", role: { notIn: ["CANDIDATE", "SUPER_ADMIN"] } },
+    select: { hireDate: true },
+  });
   const headcountEvolution12m = Array.from({ length: 12 }, (_, i) => {
     const d = new Date();
     d.setMonth(d.getMonth() - (11 - i));
+    const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
     const period = d.toISOString().slice(0, 7);
-    const start = 380;
-    const target = Math.max(start, totalHeadcount);
-    const value = Math.round(start + ((target - start) * (i + 1)) / 12);
-    return { period, headcount: value };
+    const headcount = usersForHistory.filter(
+      (u) => u.hireDate && u.hireDate.getTime() <= endOfMonth.getTime(),
+    ).length;
+    return { period, headcount };
   });
 
-  // Répartition par catégorie (déterministe : approxs cohérents avec le proto)
-  const categoryBreakdown = [
-    { category: "Cadres & ETAM", count: Math.round(totalHeadcount * 0.226), color: "#A855F7" },
-    { category: "Ouvriers qualifiés", count: Math.round(totalHeadcount * 0.16), color: "#22C55E" },
-    { category: "Ouvriers spécialisés", count: Math.round(totalHeadcount * 0.302), color: "#F59E0B" },
-    { category: "Journaliers", count: Math.round(totalHeadcount * 0.312), color: "#3B82F6" },
-  ];
+  // Répartition par catégorie pro — regroupement réel des libellés bruts en
+  // 4 grandes familles BTP (Cadres/ETAM, OQ, OS, Journaliers + Autres).
+  function classifyCategory(raw: string | null | undefined): string {
+    if (!raw) return "Non classé";
+    const l = raw.toLowerCase();
+    if (l.includes("cadre") || l.includes("etam") || l.includes("maîtrise") || l.includes("maitrise")) {
+      return "Cadres & ETAM";
+    }
+    if (l.includes("oq")) return "Ouvriers qualifiés";
+    if (l.includes("os")) return "Ouvriers spécialisés";
+    if (l.includes("journalier") || l.includes("jour")) return "Journaliers";
+    return "Non classé";
+  }
+  const COLOR_BY_GROUP: Record<string, string> = {
+    "Cadres & ETAM": "#A855F7",
+    "Ouvriers qualifiés": "#22C55E",
+    "Ouvriers spécialisés": "#F59E0B",
+    "Journaliers": "#3B82F6",
+    "Non classé": "#94A3B8",
+  };
+  const grouped: Record<string, number> = {};
+  for (const g of byCategory) {
+    const family = classifyCategory(g.category);
+    grouped[family] = (grouped[family] ?? 0) + g._count;
+  }
+  // Aussi : les WORKER avec contractType JOURNALIER → Journaliers (override)
+  const journaliers = await prisma.user.count({
+    where: {
+      tenantId: { in: scopeIds },
+      status: "ACTIVE",
+      contractType: "JOURNALIER",
+    },
+  });
+  if (journaliers > 0) {
+    grouped["Journaliers"] = journaliers;
+  }
+  const categoryBreakdown = ["Cadres & ETAM", "Ouvriers qualifiés", "Ouvriers spécialisés", "Journaliers", "Non classé"]
+    .filter((k) => (grouped[k] ?? 0) > 0)
+    .map((k) => ({ category: k, count: grouped[k], color: COLOR_BY_GROUP[k] }));
 
   // Embauches en cours — synthétiser si pas d'Application réelle disponible
   const fallbackPipeline = [
@@ -154,6 +218,7 @@ export async function GET() {
     kpis: {
       totalHeadcount,
       presentToday,
+      // En %, 1 décimale
       presentRate: Math.round(presentRate * 1000) / 10,
       hiringInProgress: hiringInProgressDisplay,
       pendingValidations,

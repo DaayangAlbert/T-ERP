@@ -22,6 +22,7 @@ export interface ApplicationCardData {
   jobOfferId: string;
   jobTitle: string;
   jobRegion: string | null;
+  tenantName?: string;
   jobContractType: string;
   salaryMin: number | null;
   salaryMax: number | null;
@@ -92,7 +93,10 @@ export function ApplicationCard({ app }: { app: ApplicationCardData }) {
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold text-ink">{app.jobTitle}</div>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-3">
-              {app.jobRegion ? <span>BatimCAM · {app.jobRegion}</span> : <span>BatimCAM</span>}
+              {(() => {
+                const company = app.tenantName ?? "—";
+                return app.jobRegion ? <span>{company} · {app.jobRegion}</span> : <span>{company}</span>;
+              })()}
               <span>·</span>
               <span>{app.jobContractType}</span>
               {formatSalary(app.salaryMin, app.salaryMax) ? (

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const guard = await guardMagWarehouse();
   if (guard instanceof NextResponse) return guard;
-  const { warehouse, session } = guard;
+  const { warehouse, tenantIds } = guard;
 
   const url = new URL(req.url);
   const search = url.searchParams.get("search")?.trim();
@@ -17,7 +17,9 @@ export async function GET(req: Request) {
   const inStockOnly = url.searchParams.get("inStockOnly") === "1";
   const limit = Math.min(500, Math.max(20, Number(url.searchParams.get("limit") ?? "50")));
 
-  const where: Record<string, unknown> = { tenantId: session.tenantId, active: true };
+  // Pour les rôles globaux sur un tenant holding, on lit aussi les filiales :
+  // les articles des chantiers sont logés sur les tenants filles.
+  const where: Record<string, unknown> = { tenantId: { in: tenantIds }, active: true };
   if (category) where.category = category;
   if (search) {
     where.OR = [
@@ -58,10 +60,10 @@ export async function GET(req: Request) {
   if (onlyRuptures) items = items.filter((i) => i.isRupture);
   if (inStockOnly) items = items.filter((i) => i.stockQuantity > 0);
 
-  // Comptage par catégorie (tenantId garanti non-null par le guard)
+  // Comptage par catégorie sur le périmètre étendu (tenant + filiales)
   const totals = await prisma.article.groupBy({
     by: ["category"],
-    where: { tenantId: session.tenantId!, active: true },
+    where: { tenantId: { in: tenantIds }, active: true },
     _count: true,
   });
 

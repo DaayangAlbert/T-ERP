@@ -17,12 +17,15 @@ export async function GET() {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
-  // En l'état du modèle Validation, il n'y a pas de siteId direct ; on retourne tout pour le MVP.
+  // Préparation comptable : on remonte les PURCHASE/EXPENSE qui sont actuellement
+  // à l'étape DAF (ou CPT si jamais l'étape est introduite). Le comptable prépare
+  // les écritures comptables avant que le DAF approuve.
   const items = await prisma.validation.findMany({
     where: {
       tenantId: session.tenantId,
       status: "PENDING",
       type: { in: N1_TYPES },
+      currentStep: { in: ["CPT", "DAF"] },
     },
     orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
     take: 100,
@@ -30,6 +33,13 @@ export async function GET() {
       initiator: { select: { firstName: true, lastName: true } },
     },
   });
+
+  const now = Date.now();
+  const totalAmount = items.reduce((s, v) => s + (v.amount ?? 0n), 0n);
+  const urgentCount = items.filter((v) => v.priority === "URGENT" || v.priority === "HIGH").length;
+  const oldestAgeDays = items.length
+    ? Math.max(...items.map((v) => Math.floor((now - v.createdAt.getTime()) / 86_400_000)))
+    : 0;
 
   return NextResponse.json({
     items: items.map((v) => ({
@@ -43,6 +53,13 @@ export async function GET() {
       priority: v.priority,
       dueDate: v.dueDate?.toISOString() ?? null,
       createdAt: v.createdAt.toISOString(),
+      ageDays: Math.floor((now - v.createdAt.getTime()) / 86_400_000),
     })),
+    summary: {
+      total: items.length,
+      urgentCount,
+      totalAmount: totalAmount.toString(),
+      oldestAgeDays,
+    },
   });
 }

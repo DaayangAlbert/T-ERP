@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, DisciplinarySeverity, DisciplinaryStage, DisciplinarySanction } from "@prisma/client";
-import { getSyntheticPersonnel } from "@/lib/rh-personnel";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +33,15 @@ const SANCTION_LABEL: Record<DisciplinarySanction, string> = {
 async function ensureSeed(tenantId: string, createdBy: string) {
   const existing = await prisma.disciplinaryCase.count({ where: { tenantId } });
   if (existing >= 11) return;
-  const pool = getSyntheticPersonnel(487).slice(50, 61);
+
+  // Auto-seed sur les vrais WORKERS du tenant — les cas disciplinaires
+  // concernent typiquement les ouvriers de terrain.
+  const pool = await prisma.user.findMany({
+    where: { tenantId, status: "ACTIVE", role: "WORKER" },
+    select: { id: true, firstName: true, lastName: true },
+    take: 11,
+  });
+  if (pool.length === 0) return;
   const seedData = [
     { severity: "MINOR" as const, stage: "PRELIMINARY_INTERVIEW" as const, sanction: null, daysAgo: 4, reason: "Retards répétés (3 fois en 1 mois)", facts: "M. ABEGA s'est présenté en retard à 3 reprises entre le 1er et le 30 avril, sans justificatif accepté." },
     { severity: "MAJOR" as const, stage: "SANCTION_DECIDED" as const, sanction: "SUSPENSION_3D" as const, daysAgo: 10, reason: "Absence non justifiée 2 jours consécutifs", facts: "Absence non signalée les 22 et 23 avril 2026 sur chantier Pont Mfoundi." },

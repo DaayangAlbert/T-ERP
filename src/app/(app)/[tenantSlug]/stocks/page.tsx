@@ -7,6 +7,12 @@ import { RenewalPlan } from "@/components/stocks/RenewalPlan";
 import { MovementsTable } from "@/components/stocks/MovementsTable";
 import { InventoriesTable } from "@/components/stocks/InventoriesTable";
 import { LossesTable } from "@/components/stocks/LossesTable";
+import { WarehouseStocksTable } from "@/components/stocks/WarehouseStocksTable";
+import {
+  WarehouseFilter,
+  DEFAULT_WAREHOUSE_FILTER,
+  type WarehouseFilterValue,
+} from "@/components/magasin/WarehouseFilter";
 import { clsx } from "clsx";
 
 type Tab = "stocks" | "equipment" | "patrimoine" | "movements" | "inventories" | "losses";
@@ -21,7 +27,16 @@ const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
 ];
 
 export default function StocksPage() {
-  const [tab, setTab] = useState<Tab>("patrimoine");
+  const [tab, setTab] = useState<Tab>("stocks");
+  // Filtre commun (chantier / direction / magasin précis) appliqué aux
+  // données affichées. Pour l'instant, branché sur l'onglet Mouvements
+  // (route /api/stocks/movements). Les autres onglets (Patrimoine,
+  // Inventaires, Sinistres) ignorent ce filtre tant que leurs routes
+  // API n'ont pas été étendues — la barre reste visible et utilisable
+  // pour le tab "Mouvements".
+  const [warehouseFilter, setWarehouseFilter] = useState<WarehouseFilterValue>(
+    DEFAULT_WAREHOUSE_FILTER,
+  );
 
   return (
     <>
@@ -31,6 +46,10 @@ export default function StocksPage() {
           Vue DG : valorisation patrimoniale, mouvements, inventaires et sinistres.
         </p>
       </header>
+
+      <div className="mb-4">
+        <WarehouseFilter value={warehouseFilter} onChange={setWarehouseFilter} />
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">
         {TABS.map((t) => (
@@ -50,10 +69,11 @@ export default function StocksPage() {
         ))}
       </div>
 
-      {(tab === "stocks" || tab === "equipment") && (
+      {tab === "stocks" && <WarehouseStocksTable warehouseFilter={warehouseFilter} />}
+      {tab === "equipment" && (
         <div className="rounded-xl border border-dashed border-line bg-surface-alt p-8 text-center">
           <Package className="mx-auto h-8 w-8 text-ink-3" />
-          <h3 className="mt-2 text-sm font-semibold text-ink">{tab === "stocks" ? "Liste des stocks" : "Liste du matériel"}</h3>
+          <h3 className="mt-2 text-sm font-semibold text-ink">Liste du matériel</h3>
           <p className="mt-1 text-[12.5px] text-ink-3">
             Module opérationnel à venir. Pour le DG, utilisez les onglets « Patrimoine », « Mouvements », « Inventaires » et « Sinistres ».
           </p>
@@ -65,7 +85,7 @@ export default function StocksPage() {
           <RenewalPlan />
         </div>
       )}
-      {tab === "movements" && <MovementsTable />}
+      {tab === "movements" && <MovementsTable warehouseFilter={warehouseFilter} />}
       {tab === "inventories" && <InventoriesTable />}
       {tab === "losses" && <LossesTable />}
     </>

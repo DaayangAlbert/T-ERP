@@ -15,6 +15,7 @@ export interface PayslipListItem {
   paymentReference: string | null;
   paymentBankAccount: string | null;
   status: string;
+  verifiedPublicUrl: string | null;
 }
 
 export interface PayslipsListResponse {
@@ -54,6 +55,7 @@ export interface PayslipDetail {
   validatedN1At: string | null;
   validatedN2At: string | null;
   paidAt: string | null;
+  verifiedPublicUrl: string | null;
   user: {
     firstName: string;
     lastName: string;

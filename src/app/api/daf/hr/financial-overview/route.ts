@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getTenantScopeIds } from "@/lib/tenant";
-import { Role } from "@prisma/client";
+import { Role, ProvisionType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -49,25 +49,69 @@ export async function GET() {
       };
     });
 
-  // Coût total chargé par catégorie (synthétique : 4 catégories)
+  // Coût total chargé par catégorie — vraie répartition depuis les payslips
+  // du dernier cycle, groupés par User.category.
   const lastCycle = cycles[0];
   const lastTotal = lastCycle ? Number(lastCycle.grossAmount) + Number(lastCycle.employerCharges) : 0;
-  const byCategory = [
-    { category: "Cadres", share: 0.32, headcount: 18 },
-    { category: "Maîtrise", share: 0.26, headcount: 34 },
-    { category: "Ouvriers qualifiés", share: 0.28, headcount: 96 },
-    { category: "Manœuvres / journaliers", share: 0.14, headcount: 142 },
-  ].map((c) => ({
-    ...c,
-    chargedCost: Math.round(lastTotal * c.share),
-    avgPerEmployee: c.headcount === 0 ? 0 : Math.round((lastTotal * c.share) / c.headcount),
-  }));
 
-  // Coût horaire par catégorie (167h moyennes/mois)
+  let byCategory: Array<{
+    category: string;
+    headcount: number;
+    chargedCost: number;
+    avgPerEmployee: number;
+    share: number;
+  }> = [];
+
+  if (lastCycle) {
+    const payslips = await prisma.payslip.findMany({
+      where: { payrollCycleId: lastCycle.id, tenantId: { in: scopeIds } },
+      select: {
+        grossAmount: true,
+        employerCharges: true,
+        user: { select: { category: true } },
+      },
+    });
+
+    const grouped = new Map<string, { headcount: number; cost: number }>();
+    for (const p of payslips) {
+      const cat = p.user.category ?? "Non catégorisé";
+      const cur = grouped.get(cat) ?? { headcount: 0, cost: 0 };
+      cur.headcount += 1;
+      cur.cost += Number(p.grossAmount) + Number(p.employerCharges);
+      grouped.set(cat, cur);
+    }
+
+    byCategory = Array.from(grouped.entries())
+      .map(([category, agg]) => ({
+        category,
+        headcount: agg.headcount,
+        chargedCost: agg.cost,
+        avgPerEmployee: agg.headcount === 0 ? 0 : Math.round(agg.cost / agg.headcount),
+        share: lastTotal === 0 ? 0 : agg.cost / lastTotal,
+      }))
+      .sort((a, b) => b.chargedCost - a.chargedCost);
+  }
+
+  // Coût horaire par catégorie (167 h moyennes/mois)
   const hourlyCost = byCategory.map((c) => ({
     category: c.category,
     hourly: c.headcount === 0 ? 0 : Math.round(c.chargedCost / c.headcount / 167),
   }));
+
+  // Engagements long terme — réels depuis SocialProvision (IFC + mutuelle)
+  const provisions = await prisma.socialProvision.findMany({
+    where: {
+      tenantId: session.tenantId,
+      type: { in: [ProvisionType.END_OF_CAREER, ProvisionType.MUTUAL] },
+    },
+    select: { type: true, amount: true },
+  });
+  const pensionFund = provisions
+    .filter((p) => p.type === ProvisionType.END_OF_CAREER)
+    .reduce((s, p) => s + Number(p.amount), 0);
+  const mutualFund = provisions
+    .filter((p) => p.type === ProvisionType.MUTUAL)
+    .reduce((s, p) => s + Number(p.amount), 0);
 
   return NextResponse.json({
     currentMonth: {
@@ -79,9 +123,9 @@ export async function GET() {
     byCategory,
     hourlyCost,
     longTermCommitments: {
-      pensionFund: 184_000_000,
-      mutualFund: 47_500_000,
-      total: 231_500_000,
+      pensionFund,
+      mutualFund,
+      total: pensionFund + mutualFund,
     },
   });
 }

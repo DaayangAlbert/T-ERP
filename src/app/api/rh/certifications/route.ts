@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role } from "@prisma/client";
-import { getSyntheticPersonnel } from "@/lib/rh-personnel";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +21,20 @@ const TYPES = [
 async function ensureSeedCerts(tenantId: string) {
   const existing = await prisma.employeeCertification.count({ where: { tenantId } });
   if (existing >= 30) return;
-  const pool = getSyntheticPersonnel(487).slice(0, 30);
+
+  // Auto-seed sur les VRAIS users du tenant — privilégie WORKER / SITE_MANAGER
+  // qui sont les profils typiquement certifiés (CACES, SST, hauteur, etc.).
+  const pool = await prisma.user.findMany({
+    where: {
+      tenantId,
+      status: "ACTIVE",
+      role: { in: ["WORKER", "SITE_MANAGER", "WORKS_MANAGER", "EMPLOYEE"] },
+    },
+    select: { id: true, firstName: true, lastName: true },
+    take: 30,
+  });
+  if (pool.length === 0) return;
+
   const today = Date.now();
   for (const [i, p] of pool.entries()) {
     const issuedAt = new Date(today - (200 + i * 60) * 86_400_000);

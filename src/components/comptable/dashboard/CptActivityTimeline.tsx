@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import type { Role } from "@prisma/client";
 
 interface Props {
   items: Array<{
@@ -9,6 +10,8 @@ interface Props {
     entryDate: string;
     siteCode: string | null;
     status: string;
+    createdBy: string;
+    createdByRole: Role;
   }>;
 }
 
@@ -33,6 +36,12 @@ export function CptActivityTimeline({ items }: Props) {
                   {e.siteCode && <span className="text-[11.5px] text-ink-3">{e.siteCode}</span>}
                 </div>
                 <p className="text-ink-2">{e.description}</p>
+                <p className="text-[11px] text-ink-3">
+                  par {e.createdBy}
+                  <span className="ml-1 rounded bg-ink-3/10 px-1 py-0.5 text-[9.5px] font-semibold uppercase text-ink-2">
+                    {e.createdByRole}
+                  </span>
+                </p>
               </div>
               <div className="flex flex-col items-end gap-1 text-right">
                 <span className="text-[11px] text-ink-3">

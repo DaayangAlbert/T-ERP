@@ -1,7 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ReconciliationStatus, ClosingStatus } from "@prisma/client";
+import type {
+  ReconciliationStatus,
+  ClosingStatus,
+  InvoiceStatus,
+  TaxType,
+  TaxAuthority,
+  DeclarationStatus,
+  PaymentStatus,
+  Role,
+} from "@prisma/client";
 
 interface DashboardKpis {
   todayEntries: number;
@@ -116,5 +125,145 @@ export function useCloseMonth(period: string) {
   return useMutation({
     mutationFn: () => getJson(`/api/daf/accounting/monthly-closing/${period}/close`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["daf", "accounting"] }),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Extensions Bloc 2 : anomalies, factures en attente, fiscalité, variation, audit
+// ════════════════════════════════════════════════════════════════════════
+
+export type AnomalySeverity = "danger" | "warning" | "info";
+
+export interface AnomalyItem {
+  id: string;
+  severity: AnomalySeverity;
+  category: "UNBALANCED" | "DUPLICATE" | "SUSPENSE_UNCLEARED" | "POST_CLOSING" | "ROUND_AMOUNT";
+  title: string;
+  detail: string;
+  reference?: string;
+  entryId?: string;
+  amount?: string;
+}
+
+export function useAccountingAnomalies(period: string) {
+  return useQuery({
+    queryKey: ["daf", "accounting", "anomalies", period],
+    queryFn: () =>
+      getJson<{
+        period: string;
+        total: number;
+        countsBySeverity: Record<AnomalySeverity, number>;
+        items: AnomalyItem[];
+      }>(`/api/daf/accounting/anomalies?period=${period}`),
+    enabled: Boolean(period),
+  });
+}
+
+export interface PendingInvoiceItem {
+  id: string;
+  invoiceNumber: string;
+  supplier: string;
+  invoiceDate: string;
+  dueDate: string;
+  amountTtc: string;
+  status: InvoiceStatus;
+  receivedAt: string;
+  daysWaiting: number;
+  disputeReason: string | null;
+}
+
+export interface PendingInvoicesResponse {
+  /** Factures à comptabiliser (RECEIVED + PENDING_3WAY_MATCH) — même convention que la page comptable. */
+  items: PendingInvoiceItem[];
+  /** Factures en litige (DISPUTED) — état séparé, n'est pas dans `items`. */
+  disputed: PendingInvoiceItem[];
+  summary: {
+    total: number;
+    totalAmount: string;
+    byStatus: { RECEIVED: number; PENDING_3WAY_MATCH: number };
+    overdueCount: number;
+    disputedCount: number;
+    disputedAmount: string;
+  };
+  scope: { isDirection: boolean };
+}
+
+export function usePendingSupplierInvoices() {
+  return useQuery({
+    queryKey: ["daf", "accounting", "pending-invoices"],
+    queryFn: () => getJson<PendingInvoicesResponse>(`/api/daf/accounting/pending-invoices`),
+    // Auto-sync : le comptable peut comptabiliser/payer une facture pendant
+    // que le DAF a la page ouverte — refresh toutes les 60 s + au retour focus.
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export interface TaxCalendarItem {
+  id: string;
+  type: TaxType;
+  typeLabel: string;
+  authority: TaxAuthority;
+  authorityLabel: string;
+  period: string;
+  dueDate: string;
+  daysUntil: number;
+  overdue: boolean;
+  amount: string | null;
+  declarationStatus: DeclarationStatus;
+  paymentStatus: PaymentStatus;
+}
+
+export function useTaxCalendar() {
+  return useQuery({
+    queryKey: ["daf", "accounting", "tax-calendar"],
+    queryFn: () =>
+      getJson<{
+        items: TaxCalendarItem[];
+        summary: { total: number; overdueCount: number; next7Days: number; pendingAmount: string };
+      }>(`/api/daf/accounting/tax-calendar`),
+  });
+}
+
+export interface VariationItem {
+  key: string;
+  label: string;
+  kind: "expense" | "revenue";
+  current: string;
+  previous: string;
+  delta: string;
+  pct: number | null;
+}
+
+export function useVariationN1(period: string) {
+  return useQuery({
+    queryKey: ["daf", "accounting", "variation-n1", period],
+    queryFn: () =>
+      getJson<{ period: string; previousPeriod: string; items: VariationItem[] }>(
+        `/api/daf/accounting/variation-n1?period=${period}`
+      ),
+    enabled: Boolean(period),
+  });
+}
+
+export interface AuditTrailItem {
+  id: string;
+  action: string;
+  actionLabel: string;
+  entityType: string | null;
+  entityId: string | null;
+  metadata: unknown;
+  user: string;
+  userRole: Role | null;
+  createdAt: string;
+}
+
+export function useAccountingAuditTrail(sinceDays = 30) {
+  return useQuery({
+    queryKey: ["daf", "accounting", "audit-trail", sinceDays],
+    queryFn: () =>
+      getJson<{ items: AuditTrailItem[]; sinceDays: number }>(
+        `/api/daf/accounting/audit-trail?sinceDays=${sinceDays}`
+      ),
   });
 }

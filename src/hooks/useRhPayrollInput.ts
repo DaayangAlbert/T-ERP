@@ -35,6 +35,7 @@ export interface PayrollInputRow {
   primaryBonus: number;
   advances: string;
   totalGross: number;
+  isSynthetic: boolean;
   savedAt: string | null;
 }
 

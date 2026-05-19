@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { paymentTrackLinkForUser } from "@/lib/notifications/payment-track-link";
 
 export const dynamic = "force-dynamic";
 
@@ -75,13 +76,14 @@ export async function POST(
   // qui a créé le track ; si validateur = DAF, on prévient l'assigné).
   const otherUserId = isAssignee ? track.createdById : track.assignedToId;
   if (otherUserId && otherUserId !== session.sub) {
+    const link = await paymentTrackLinkForUser(otherUserId);
     await prisma.notification.create({
       data: {
         userId: otherUserId,
         type: "payment_step_validated",
         title: `Étape franchie · ${step.label}`,
         body: `${track.receivable.clientName} · ${track.receivable.invoiceRef} · ${track.template.name}`,
-        link: "/direction-financiere/recouvrement",
+        link,
       },
     });
   }

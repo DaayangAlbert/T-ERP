@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ShieldCheck, AlertOctagon } from "lucide-react";
+import { ShieldCheck, AlertOctagon, Plus, Pencil } from "lucide-react";
 import { clsx } from "clsx";
 import { useDtQhse } from "@/hooks/useDtQhse";
+import { NcEditorModal, type NcDraft } from "@/components/qhse/NcEditorModal";
 
 type Tab = "dashboard" | "incidents" | "audits" | "ncs" | "certs";
 
@@ -30,9 +31,21 @@ const NC_CRIT_BADGE: Record<string, string> = {
   CRITICAL: "bg-rose-100 text-rose-700",
 };
 
+const DEFAULT_NC_DRAFT: NcDraft = {
+  siteId: "",
+  category: "QUALITY",
+  criticality: "MAJOR",
+  description: "",
+  correctiveAction: null,
+  ownerId: null,
+  dueDate: null,
+  status: "OPEN",
+};
+
 export default function DtQhsePage() {
   const { data, isLoading } = useDtQhse();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [ncDraft, setNcDraft] = useState<NcDraft | null>(null);
 
   if (isLoading || !data) {
     return <div className="h-64 animate-pulse rounded-xl bg-surface-alt" />;
@@ -284,43 +297,117 @@ export default function DtQhsePage() {
       )}
 
       {tab === "ncs" && (
-        <div className="rounded-xl border border-line bg-white">
-          <table className="w-full text-[12.5px]">
-            <thead className="bg-surface-alt text-[11px] uppercase text-ink-3">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium">Chantier</th>
-                <th className="px-3 py-2 text-left font-medium">Catégorie</th>
-                <th className="px-3 py-2 text-left font-medium">Criticité</th>
-                <th className="px-3 py-2 text-left font-medium">Description</th>
-                <th className="px-3 py-2 text-left font-medium">Échéance</th>
-                <th className="px-3 py-2 text-left font-medium">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.ncs.map((n) => (
-                <tr key={n.id} className="border-t border-line">
-                  <td className="px-3 py-2 font-mono">{n.site}</td>
-                  <td className="px-3 py-2 text-ink-2">{n.category}</td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={clsx(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-                        NC_CRIT_BADGE[n.criticality]
-                      )}
-                    >
-                      {n.criticality}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-ink-2">{n.description}</td>
-                  <td className="px-3 py-2 text-ink-2">
-                    {n.dueDate ? format(new Date(n.dueDate), "dd/MM/yy", { locale: fr }) : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-ink-2">{n.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-[11.5px] text-ink-3">
+              {data.ncs.length} non-conformité{data.ncs.length > 1 ? "s" : ""} ·{" "}
+              {data.ncs.filter((n) => n.status !== "CLOSED").length} en cours
+            </p>
+            <button
+              type="button"
+              onClick={() => setNcDraft({ ...DEFAULT_NC_DRAFT })}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+            >
+              <Plus className="h-3.5 w-3.5" /> Déclarer une NC
+            </button>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-line bg-white">
+            {data.ncs.length === 0 ? (
+              <p className="p-6 text-center text-[12.5px] text-ink-3">
+                Aucune non-conformité enregistrée pour l&apos;instant.
+              </p>
+            ) : (
+              <table className="w-full text-[12.5px]">
+                <thead className="bg-surface-alt text-[11px] uppercase text-ink-3">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">Chantier</th>
+                    <th className="px-3 py-2 text-left font-medium">Catégorie</th>
+                    <th className="px-3 py-2 text-left font-medium">Criticité</th>
+                    <th className="px-3 py-2 text-left font-medium">Description / solution</th>
+                    <th className="px-3 py-2 text-left font-medium">Resp.</th>
+                    <th className="px-3 py-2 text-left font-medium">Échéance</th>
+                    <th className="px-3 py-2 text-left font-medium">Statut</th>
+                    <th className="px-3 py-2 text-right font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.ncs.map((n) => (
+                    <tr key={n.id} className="border-t border-line align-top">
+                      <td className="px-3 py-2 font-mono text-[11.5px]">{n.site}</td>
+                      <td className="px-3 py-2 text-ink-2">{n.category}</td>
+                      <td className="px-3 py-2">
+                        <span
+                          className={clsx(
+                            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
+                            NC_CRIT_BADGE[n.criticality]
+                          )}
+                        >
+                          {n.criticality}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-ink-2">
+                        <div className="whitespace-pre-wrap">{n.description}</div>
+                        {n.correctiveAction ? (
+                          <div className="mt-1 whitespace-pre-wrap text-[11.5px] text-emerald-700">
+                            <strong>Solution :</strong> {n.correctiveAction}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-[11px] italic text-amber-700">
+                            Action corrective à définir
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-[11.5px] text-ink-3">{n.owner ?? "—"}</td>
+                      <td className="px-3 py-2 text-ink-2">
+                        {n.dueDate ? format(new Date(n.dueDate), "dd/MM/yy", { locale: fr }) : "—"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={clsx(
+                          "rounded px-1.5 py-0.5 text-[10.5px] font-medium",
+                          n.status === "CLOSED" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800",
+                        )}>
+                          {n.status}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNcDraft({
+                              id: n.id,
+                              siteId: n.siteId ?? "",
+                              category: n.category as NcDraft["category"],
+                              criticality: n.criticality as NcDraft["criticality"],
+                              description: n.description,
+                              correctiveAction: n.correctiveAction,
+                              ownerId: n.ownerId,
+                              dueDate: n.dueDate,
+                              status: n.status as NcDraft["status"],
+                            })
+                          }
+                          className="inline-flex items-center gap-1 rounded-md border border-line bg-white px-2 py-1 text-[11.5px] text-ink-2 hover:bg-surface-alt"
+                        >
+                          <Pencil className="h-3 w-3" /> Modifier
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
+      )}
+
+      {ncDraft && (
+        <NcEditorModal
+          initial={ncDraft}
+          sites={data.sites}
+          staff={data.staff}
+          invalidateKeys={[["dt", "qhse"], ["sg", "site-synthesis"]]}
+          onClose={() => setNcDraft(null)}
+        />
       )}
 
       {tab === "certs" && (

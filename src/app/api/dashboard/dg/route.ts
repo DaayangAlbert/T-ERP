@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getTenantScopeIds } from "@/lib/tenant";
-import { PayslipStatus, SiteStatus, SiteType, ContractType } from "@prisma/client";
+import { SiteStatus, SiteType, ContractType, ValidationStatus, ValidationType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +22,19 @@ const SITE_TYPE_COLORS: Record<SiteType, string> = {
   HYDRAULIC: "#0369A1",
 };
 
-const PAYSLIP_STATUS_LABELS: Record<PayslipStatus, string> = {
-  DRAFT: "Brouillon",
-  CALCULATED: "À valider RH",
-  VALIDATED_N1: "À valider DAF",
-  VALIDATED_N2: "À valider DG",
-  VALIDATED_N3: "À mettre en paiement",
-  PAID: "Payé",
-  CANCELLED: "Annulé",
+const VALIDATION_TYPE_LABELS: Record<ValidationType, string> = {
+  PAYROLL: "Paie",
+  EXPENSE: "Dépense",
+  PURCHASE: "Achat",
+  HIRING: "Embauche",
+  CONTRACT: "Marché",
+  LEAVE: "Congé",
+  OTHER: "Autre",
+  AMENDMENT: "Avenant marché",
+  SUBCONTRACTING: "Sous-traitance",
+  EQUIPMENT: "Acquisition matériel",
+  SPECIAL_METHOD: "Méthode spéciale",
+  TECHNICAL_HANDOVER: "Mise en service",
 };
 
 const FRENCH_MONTHS = ["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
@@ -71,7 +76,7 @@ export async function GET() {
   // Phase 2 / fn 1.2 — si BatimCAM SA est un groupe, agréger sites + payslips sur la mère + ses filiales.
   const scopeIds = await getTenantScopeIds(tenantId);
 
-  const [sites, headcount, cddCount, payslipsToValidate, unreadNotifications] = await Promise.all([
+  const [sites, headcount, cddCount, pendingDgValidationsRaw, unreadNotifications] = await Promise.all([
     prisma.site.findMany({
       where: { tenantId: { in: scopeIds } },
       select: {
@@ -91,15 +96,24 @@ export async function GET() {
     prisma.user.count({
       where: { tenantId: { in: scopeIds }, status: "ACTIVE", contractType: ContractType.CDD },
     }),
-    prisma.payslip.findMany({
+    // Validations en attente d'arbitrage DG (étape N3) — source unique partagée
+    // avec la sidebar et la page /direction-generale/validations.
+    prisma.validation.findMany({
       where: {
         tenantId: { in: scopeIds },
-        status: { not: PayslipStatus.PAID },
+        status: ValidationStatus.PENDING,
+        currentStep: "DG",
       },
-      orderBy: { period: "desc" },
+      orderBy: [{ priority: "desc" }, { createdAt: "asc" }],
       take: 6,
-      include: {
-        user: { select: { firstName: true, lastName: true } },
+      select: {
+        id: true,
+        reference: true,
+        type: true,
+        title: true,
+        amount: true,
+        dueDate: true,
+        createdAt: true,
       },
     }),
     prisma.notification.count({
@@ -223,13 +237,15 @@ export async function GET() {
     link: "/comptabilite",
   });
 
-  // ===== Pending validations =====
-  const pendingValidations = payslipsToValidate.map((p) => ({
-    id: p.id,
-    ref: `Bulletin ${p.user.firstName} ${p.user.lastName}`,
-    type: PAYSLIP_STATUS_LABELS[p.status],
-    amount: Number(p.netAmount),
-    deadline: p.paymentDate.toISOString(),
+  // ===== Validations N3 en attente (source unique = table Validation) =====
+  // Fallback échéance : si dueDate absent, on prend createdAt + 7j pour
+  // afficher une référence cohérente côté widget.
+  const pendingValidations = pendingDgValidationsRaw.map((v) => ({
+    id: v.id,
+    ref: v.title || v.reference,
+    type: VALIDATION_TYPE_LABELS[v.type],
+    amount: v.amount ? Number(v.amount) : 0,
+    deadline: (v.dueDate ?? new Date(v.createdAt.getTime() + 7 * 86_400_000)).toISOString(),
   }));
 
   // ===== Top sites (by budget) =====

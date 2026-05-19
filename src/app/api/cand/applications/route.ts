@@ -35,6 +35,10 @@ export async function GET(req: Request) {
           contractType: true,
           salaryMin: true,
           salaryMax: true,
+          // Multi-tenant SaaS : on remonte le nom de l'entreprise qui publie
+          // l'offre — un même candidat peut postuler à plusieurs entreprises
+          // clientes de T-ERP, chaque carte affiche son tenant respectif.
+          tenant: { select: { name: true } },
         },
       },
     },
@@ -79,6 +83,7 @@ export async function GET(req: Request) {
         jobOfferId: a.jobOffer.id,
         jobTitle: a.jobOffer.title,
         jobRegion: a.jobOffer.region,
+        tenantName: a.jobOffer.tenant.name,
         jobContractType: a.jobOffer.contractType,
         salaryMin: a.jobOffer.salaryMin ? Number(a.jobOffer.salaryMin) : null,
         salaryMax: a.jobOffer.salaryMax ? Number(a.jobOffer.salaryMax) : null,

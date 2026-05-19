@@ -5,7 +5,7 @@ import { getCurrentSession } from "@/lib/session";
 import { denyIfReadOnly } from "@/lib/rbac/guard";
 import { MODULES } from "@/lib/rbac/modules";
 import { getAccessibleSiteIds, isSiteAllowed } from "@/lib/rbac/site-filter";
-import { Role, BillingStatus } from "@prisma/client";
+import { Role, BillingStatus, CptEntryStatus } from "@prisma/client";
 
 const ALLOWED_ROLES: Role[] = [Role.ACCOUNTANT, Role.DAF, Role.DG, Role.SUPER_ADMIN];
 
@@ -41,11 +41,60 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (billing.status !== BillingStatus.DRAFT && billing.status !== BillingStatus.VALIDATED) {
       return NextResponse.json({ error: "Déjà émise" }, { status: 409 });
     }
-    // En production : générer PDF + envoyer email MOA. Ici stub.
-    await prisma.progressBilling.update({
-      where: { id: billing.id },
-      data: { status: BillingStatus.ISSUED, pdfUrl: `/stub/billing-${billing.id}.pdf` },
+    // Émission OHADA d'une situation de travaux :
+    //   D 411 Clients   = TTC
+    //   C 705 Travaux   = HT
+    //   C 443 TVA coll. = TVA
+    const now = new Date();
+    const ref = `VTE-${billing.billingNumber.replace(/[^A-Za-z0-9]/g, "")}-${Date.now().toString().slice(-4)}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const entry = await tx.entry.create({
+        data: {
+          tenantId: billing.tenantId,
+          siteId: billing.siteId,
+          journalCode: "VTE",
+          entryDate: now,
+          reference: ref,
+          description: `Situation ${billing.billingNumber} période ${billing.period}`,
+          status: CptEntryStatus.VALIDATED,
+          createdById: session.sub,
+          validatedById: session.sub,
+          validatedAt: now,
+          lines: {
+            create: [
+              {
+                accountCode: "411000",
+                description: "Client — créance TTC",
+                debit: billing.amountTtc,
+                credit: BigInt(0),
+                siteId: billing.siteId,
+              },
+              {
+                accountCode: "705000",
+                description: "Travaux BTP — HT",
+                debit: BigInt(0),
+                credit: billing.amountHt,
+                siteId: billing.siteId,
+              },
+              {
+                accountCode: "443000",
+                description: "TVA collectée 19,25 %",
+                debit: BigInt(0),
+                credit: billing.vatAmount,
+                siteId: billing.siteId,
+              },
+            ],
+          },
+        },
+      });
+      const updated = await tx.progressBilling.update({
+        where: { id: billing.id },
+        data: { status: BillingStatus.ISSUED, pdfUrl: `/stub/billing-${billing.id}.pdf` },
+      });
+      return { entry, updated };
     });
+
     await prisma.auditLog.create({
       data: {
         tenantId: billing.tenantId,
@@ -53,24 +102,69 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         action: "progress-billing.issue",
         entityType: "ProgressBilling",
         entityId: billing.id,
-        metadata: { billingNumber: billing.billingNumber },
+        metadata: { billingNumber: billing.billingNumber, entryId: result.entry.id, reference: ref },
       },
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, entryId: result.entry.id });
   }
 
   if (parsed.data.action === "payment") {
+    if (billing.status === BillingStatus.PAID) {
+      return NextResponse.json({ error: "Déjà payée" }, { status: 409 });
+    }
     const amount = parsed.data.paidAmount ?? Number(billing.netToReceive);
     const newStatus =
       amount >= Number(billing.netToReceive) ? BillingStatus.PAID : BillingStatus.PARTIALLY_PAID;
-    await prisma.progressBilling.update({
-      where: { id: billing.id },
-      data: {
-        status: newStatus,
-        paidAmount: BigInt(Math.round(amount)),
-        paidAt: newStatus === BillingStatus.PAID ? new Date() : null,
-      },
+    const paidAt = new Date();
+    // Encaissement OHADA :
+    //   D 521 Banques  = montant encaissé
+    //   C 411 Clients  = montant encaissé
+    const ref = `ENC-${billing.billingNumber.replace(/[^A-Za-z0-9]/g, "")}-${Date.now().toString().slice(-4)}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const entry = await tx.entry.create({
+        data: {
+          tenantId: billing.tenantId,
+          siteId: billing.siteId,
+          journalCode: "BQ",
+          entryDate: paidAt,
+          reference: ref,
+          description: `Encaissement situation ${billing.billingNumber}`,
+          status: CptEntryStatus.VALIDATED,
+          createdById: session.sub,
+          validatedById: session.sub,
+          validatedAt: paidAt,
+          lines: {
+            create: [
+              {
+                accountCode: "521000",
+                description: "Banque — encaissement",
+                debit: BigInt(Math.round(amount)),
+                credit: BigInt(0),
+                siteId: billing.siteId,
+              },
+              {
+                accountCode: "411000",
+                description: "Client — solde",
+                debit: BigInt(0),
+                credit: BigInt(Math.round(amount)),
+                siteId: billing.siteId,
+              },
+            ],
+          },
+        },
+      });
+      const updated = await tx.progressBilling.update({
+        where: { id: billing.id },
+        data: {
+          status: newStatus,
+          paidAmount: BigInt(Math.round(amount)),
+          paidAt: newStatus === BillingStatus.PAID ? paidAt : null,
+        },
+      });
+      return { entry, updated };
     });
+
     await prisma.auditLog.create({
       data: {
         tenantId: billing.tenantId,
@@ -78,10 +172,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         action: "progress-billing.payment",
         entityType: "ProgressBilling",
         entityId: billing.id,
-        metadata: { amount, billingNumber: billing.billingNumber },
+        metadata: { amount, billingNumber: billing.billingNumber, entryId: result.entry.id, reference: ref },
       },
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, entryId: result.entry.id });
   }
 
   return NextResponse.json({ error: "Action inconnue" }, { status: 400 });

@@ -53,12 +53,17 @@ export async function GET(req: NextRequest) {
     return !fc || fc.cnps !== "OK" || fc.dgi !== "OK";
   }).length;
 
+  // Évaluations à faire = sous-traitants avec contrat actif sans aucune évaluation
+  const pendingEvaluations = subs.filter(
+    (s) => s.contracts.length > 0 && s._count.subEvaluations === 0
+  ).length;
+
   return NextResponse.json({
     kpis: {
       qualifiedCount: subs.length,
       frameworkActiveCount: subs.filter((s) => s.contracts.length > 0).length,
       activeEngagements: totalEngagements,
-      pendingEvaluations: 6, // démo
+      pendingEvaluations,
       alertsCount: alerts,
     },
     items: filtered.map((s) => ({

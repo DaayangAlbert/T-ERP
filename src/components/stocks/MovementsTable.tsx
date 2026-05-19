@@ -6,6 +6,7 @@ import { useMovements } from "@/hooks/useStocks";
 import { MovementType } from "@prisma/client";
 import { formatDate, formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
+import type { WarehouseFilterValue } from "@/components/magasin/WarehouseFilter";
 
 const TYPE_ICON: Record<MovementType, React.ReactNode> = {
   INBOUND: <ArrowDownLeft className="h-3 w-3 text-success" />,
@@ -23,10 +24,13 @@ const TYPE_LABEL: Record<MovementType, string> = {
   WRITEOFF: "Mise au rebut",
 };
 
-export function MovementsTable() {
+export function MovementsTable({ warehouseFilter }: { warehouseFilter?: WarehouseFilterValue } = {}) {
   const [type, setType] = useState<string>("");
   const [anomalousOnly, setAnomalousOnly] = useState(false);
-  const { data, isLoading } = useMovements({ type: type || undefined, anomalous: anomalousOnly });
+  const { data, isLoading } = useMovements(
+    { type: type || undefined, anomalous: anomalousOnly },
+    warehouseFilter,
+  );
 
   if (isLoading || !data) return <div className="h-64 animate-pulse rounded-xl bg-surface-alt" />;
 

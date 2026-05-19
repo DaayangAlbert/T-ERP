@@ -8,7 +8,8 @@ import {
   pickValidatorRole,
   AUTO_APPROVE_THRESHOLD_XAF,
 } from "@/lib/ouv/advance";
-import { SalaryAdvanceStatus } from "@prisma/client";
+import { Role, SalaryAdvanceStatus } from "@prisma/client";
+import { notifySupervisors } from "@/lib/notify-supervisors";
 
 export const dynamic = "force-dynamic";
 
@@ -162,8 +163,54 @@ export async function POST(req: Request) {
       select: { id: true, amountXAF: true, status: true, createdAt: true },
     });
 
-    // TODO fn 1.6 / RH-DAF Blocs : notification WhatsApp au validateur RH/DAF/DG
-    // selon `validatorRole`. Trace audit aussi (cf src/lib/audit).
+    // Notifie les superviseurs concernés selon le montant.
+    // < AUTO_APPROVE_THRESHOLD → pas de notif (auto-approuvé).
+    // Sinon :
+    //   - DRH + DAF + DG (validateurs) → /ressources-humaines/avances
+    //   - Chef Chantier du chantier principal (INFO seulement) → /chef-chantier/validations
+    if (!autoApprove) {
+      const worker = await prisma.user.findUnique({
+        where: { id: session.sub },
+        select: { firstName: true, lastName: true, assignedSiteIds: true },
+      });
+      const fullName = worker ? `${worker.firstName} ${worker.lastName}` : "Un ouvrier";
+      const amountFmt = input.amountXAF.toLocaleString("fr-FR");
+
+      await notifySupervisors({
+        tenantId: latest.tenantId,
+        roles: [Role.HR, Role.DAF, Role.DG],
+        type: "advance_request_pending",
+        title: `Demande d'avance — ${fullName}`,
+        body: `${amountFmt} FCFA · à valider`,
+        link: "/ressources-humaines/avances",
+      });
+
+      // Notification information au Chef de Chantier du chantier
+      // principal de l'ouvrier (il ne valide pas mais doit être au
+      // courant des avances de son équipe pour son DRJ).
+      const primarySiteId = worker?.assignedSiteIds?.[0];
+      if (primarySiteId) {
+        const cc = await prisma.user.findFirst({
+          where: {
+            role: Role.SITE_MANAGER,
+            assignedSiteIds: { has: primarySiteId },
+            status: "ACTIVE",
+          },
+          select: { id: true },
+        });
+        if (cc) {
+          await prisma.notification.create({
+            data: {
+              userId: cc.id,
+              type: "advance_request_info",
+              title: `Avance demandée — ${fullName}`,
+              body: `${amountFmt} FCFA · pour info, validation par RH/DAF`,
+              link: "/chef-chantier/validations",
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json(
       {

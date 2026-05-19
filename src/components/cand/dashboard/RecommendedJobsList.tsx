@@ -5,6 +5,7 @@ export interface JobMatchSummary {
   jobOfferId: string;
   title: string;
   region: string | null;
+  tenantName?: string;
   contractType: string;
   salaryMin: number | null;
   salaryMax: number | null;
@@ -76,7 +77,7 @@ export function RecommendedJobsList({
                   {m.title}
                 </div>
                 <div className="text-xs text-ink-3">
-                  BatimCAM
+                  {m.tenantName ?? "—"}
                   {m.region ? ` · ${m.region}` : ""} · {m.contractType}
                   {salary ? ` · ${salary}` : ""}
                 </div>

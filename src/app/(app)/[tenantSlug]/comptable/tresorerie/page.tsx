@@ -33,7 +33,11 @@ export default function TresoreriePage() {
     queryFn: async () => {
       const res = await fetch("/api/comptable/treasury/cashboxes", { credentials: "same-origin" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json() as Promise<{ items: Cashbox[]; scope: { isDirection: boolean } }>;
+      return res.json() as Promise<{
+        items: Cashbox[];
+        today: { inflow: string; outflow: string; net: string };
+        scope: { isDirection: boolean };
+      }>;
     },
   });
 
@@ -50,6 +54,9 @@ export default function TresoreriePage() {
   const isDirection = cashQuery.data?.scope.isDirection ?? false;
   const totalCashboxBalance = cashQuery.data?.items.reduce((s, c) => s + c.balance, 0) ?? 0;
   const totalBankBalance = banksQuery.data?.items.reduce((s, b) => s + b.balance, 0) ?? 0;
+  const inflowToday = cashQuery.data?.today ? Number(cashQuery.data.today.inflow) : null;
+  const outflowToday = cashQuery.data?.today ? Number(cashQuery.data.today.outflow) : null;
+  const fmtM = (n: number | null) => (n === null ? "—" : `${(n / 1_000_000).toFixed(1)} M`);
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-tresorerie">
@@ -67,8 +74,8 @@ export default function TresoreriePage() {
         {isDirection && (
           <>
             <Kpi label="Solde banques" value={`${(totalBankBalance / 1_000_000).toFixed(1)} M`} icon={Building2} />
-            <Kpi label="Encaissements jour" value="—" icon={ArrowDownToLine} />
-            <Kpi label="Décaissements jour" value="—" icon={ArrowUpFromLine} />
+            <Kpi label="Encaissements jour" value={fmtM(inflowToday)} icon={ArrowDownToLine} />
+            <Kpi label="Décaissements jour" value={fmtM(outflowToday)} icon={ArrowUpFromLine} />
           </>
         )}
       </section>
@@ -185,9 +192,14 @@ export default function TresoreriePage() {
 
       {tab === "reconciliation" && isDirection && (
         <section className="rounded-xl border border-line bg-white p-6 shadow-card text-center text-[12.5px] text-ink-3">
-          Outil de rapprochement bancaire — import OFX/CSV, glisser-déposer pour matcher.
-          <br />
-          <em>Stub : à compléter avec drag-and-drop côté UI.</em>
+          <p>
+            Le module de rapprochement bancaire complet (import OFX/CSV, matching) est sur la page{" "}
+            <strong className="text-primary-700">Comptabilité — supervision DAF</strong>.
+          </p>
+          <p className="mt-2 text-[12px]">
+            Ici tu peux consulter les soldes et créer des écritures via « Saisie d&apos;écritures ». Pour
+            les rapprochements détaillés, va dans l&apos;espace DAF si tu y as accès.
+          </p>
         </section>
       )}
 

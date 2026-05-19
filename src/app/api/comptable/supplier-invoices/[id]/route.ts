@@ -103,10 +103,58 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   if (parsed.data.action === "pay") {
-    await prisma.supplierInvoice.update({
-      where: { id: invoice.id },
-      data: { status: InvoiceStatus.PAID, paidAt: new Date() },
+    // Source de vérité = Entry comptable (OHADA). On crée l'écriture de
+    // règlement fournisseur :
+    //   D 401 Fournisseurs   = invoice.amountTtc
+    //   C 521 Banques        = invoice.amountTtc
+    // Journal "BQ", statut VALIDATED — apparaît immédiatement dans l'historique
+    // trésorerie et dans le grand livre. Plus aucun BankMovement direct.
+    const paidAt = new Date();
+    const ref = `REG-${invoice.invoiceNumber.replace(/[^A-Za-z0-9]/g, "")}-${Date.now().toString().slice(-4)}`;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const entry = await tx.entry.create({
+        data: {
+          tenantId: invoice.tenantId,
+          siteId: invoice.siteId,
+          journalCode: "BQ",
+          entryDate: paidAt,
+          reference: ref,
+          description: `Règlement facture ${invoice.supplier.name} n°${invoice.invoiceNumber}`,
+          status: CptEntryStatus.VALIDATED,
+          createdById: session.sub,
+          validatedById: session.sub,
+          validatedAt: paidAt,
+          lines: {
+            create: [
+              {
+                accountCode: "401000",
+                thirdPartyId: invoice.supplierId,
+                description: `Solde ${invoice.supplier.name}`,
+                debit: invoice.amountTtc,
+                credit: BigInt(0),
+                siteId: invoice.siteId,
+              },
+              {
+                accountCode: "521000",
+                description: "Décaissement règlement",
+                debit: BigInt(0),
+                credit: invoice.amountTtc,
+                siteId: invoice.siteId,
+              },
+            ],
+          },
+        },
+      });
+
+      const updated = await tx.supplierInvoice.update({
+        where: { id: invoice.id },
+        data: { status: InvoiceStatus.PAID, paidAt, entryId: entry.id },
+      });
+
+      return { entry, updated };
     });
+
     await prisma.auditLog.create({
       data: {
         tenantId: invoice.tenantId,
@@ -114,10 +162,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         action: "supplier-invoice.pay",
         entityType: "SupplierInvoice",
         entityId: invoice.id,
-        metadata: { amount: Number(invoice.amountTtc) },
+        metadata: {
+          amount: Number(invoice.amountTtc),
+          entryId: result.entry.id,
+          reference: ref,
+        },
       },
     });
-    return NextResponse.json({ ok: true });
+
+    return NextResponse.json({ ok: true, entryId: result.entry.id, reference: ref });
   }
 
   return NextResponse.json({ error: "Action inconnue" }, { status: 400 });

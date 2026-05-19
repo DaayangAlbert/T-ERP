@@ -1,7 +1,10 @@
+/**
+ * Change le stage d'une candidature dans le kanban — persisté en BDD.
+ */
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, AppStage } from "@prisma/client";
-import { getSyntheticApplications, setOverrideStage } from "@/lib/rh-recruitment";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +23,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Stage invalide" }, { status: 400 });
   }
 
-  const exists = getSyntheticApplications().some((a) => a.id === params.id);
-  if (!exists) return NextResponse.json({ error: "Candidat introuvable" }, { status: 404 });
+  const existing = await prisma.application.findFirst({
+    where: { id: params.id, jobOffer: { tenantId: session.tenantId } },
+    select: { id: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Candidature introuvable" }, { status: 404 });
 
-  setOverrideStage(params.id, body.stage);
+  await prisma.application.update({
+    where: { id: existing.id },
+    data: {
+      stage: body.stage,
+      lastStageChangeAt: new Date(),
+    },
+  });
+
   return NextResponse.json({ ok: true, stage: body.stage });
 }

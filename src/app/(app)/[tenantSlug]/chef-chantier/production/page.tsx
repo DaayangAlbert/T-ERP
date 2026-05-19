@@ -57,11 +57,9 @@ export default function ProductionPage() {
 
   return (
     <div id="screen-cc-production" className="space-y-3 pb-24">
-      <header className="-mx-3 sm:-mx-4 md:-mx-6 sticky top-14 z-20 bg-gradient-to-r from-primary-600 via-violet-700 to-primary-700 px-3 py-2 text-white shadow-md">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="truncate text-[14px] font-semibold">Production journalière</h1>
-          <SyncStatusBadge />
-        </div>
+      <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
+        <h1 className="truncate text-[16px] font-semibold text-ink">Production journalière</h1>
+        <SyncStatusBadge />
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

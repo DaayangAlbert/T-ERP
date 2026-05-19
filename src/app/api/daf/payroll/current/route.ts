@@ -23,17 +23,23 @@ export async function GET() {
     return NextResponse.json({ error: "Aucun cycle de paie trouvé" }, { status: 404 });
   }
 
-  // Évolution masse salariale 12 mois (synthèse depuis bulletins payés)
+  // Évolution masse salariale 12 mois — vraie agrégation des PayrollCycle
+  // de chaque mois (grossAmount par période). On fallback à 0 pour les mois
+  // sans cycle (au lieu d'inventer une saisonnalité fictive).
   const today = new Date();
-  const massHistory = Array.from({ length: 12 }, (_, i) => {
+  const past12 = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(today.getFullYear(), today.getMonth() - 11 + i, 1);
-    const seasonal = 1 + Math.sin((i / 12) * Math.PI * 2) * 0.06;
-    const trend = 1 + (i / 12) * 0.03;
-    return {
-      period: d.toISOString().slice(0, 7),
-      gross: Math.round(Number(cycle.grossAmount || 142_000_000n) * seasonal * trend),
-    };
+    return d.toISOString().slice(0, 7);
   });
+  const cycles = await prisma.payrollCycle.findMany({
+    where: { tenantId: session.tenantId, period: { in: past12 } },
+    select: { period: true, grossAmount: true },
+  });
+  const grossByPeriod = new Map(cycles.map((c) => [c.period, Number(c.grossAmount)]));
+  const massHistory = past12.map((period) => ({
+    period,
+    gross: grossByPeriod.get(period) ?? 0,
+  }));
 
   return NextResponse.json({
     id: cycle.id,

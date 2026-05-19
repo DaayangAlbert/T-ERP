@@ -7,7 +7,8 @@ interface Props {
 }
 
 function money(value: number): string {
-  return `${new Intl.NumberFormat("fr-FR").format(Math.round(value))} FCFA`;
+  // Espaces fins (U+202F, U+00A0, U+2009) → espace classique, sinon fallback "/"
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(value)).replace(/[   ]/g, " ")} FCFA`;
 }
 
 const styles = StyleSheet.create({

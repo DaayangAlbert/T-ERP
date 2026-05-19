@@ -6,7 +6,7 @@ import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.TENANT_ADMIN];
+const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.WORKS_DIRECTOR, Role.DG, Role.TENANT_ADMIN];
 
 export async function GET() {
   const session = getCurrentSession();
@@ -19,7 +19,7 @@ export async function GET() {
   const yearStart = new Date(new Date().getFullYear(), 0, 1);
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-  const [incidents, audits, ncs, certs] = await Promise.all([
+  const [incidents, audits, ncs, certs, sites, staff] = await Promise.all([
     prisma.hseIncident.findMany({
       where: { site: { tenantId: { in: scopeIds } } },
       include: { site: { select: { code: true, name: true } } },
@@ -32,12 +32,36 @@ export async function GET() {
     }),
     prisma.nonConformity.findMany({
       where: { site: { tenantId: { in: scopeIds } } },
-      include: { site: { select: { code: true, name: true } } },
+      include: {
+        site: { select: { code: true, name: true } },
+        owner: { select: { id: true, firstName: true, lastName: true } },
+      },
       orderBy: { createdAt: "desc" },
     }),
     prisma.certification.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { standard: "asc" },
+    }),
+    prisma.site.findMany({
+      where: { tenantId: { in: scopeIds } },
+      select: { id: true, code: true, name: true },
+      orderBy: { code: "asc" },
+    }),
+    prisma.user.findMany({
+      where: {
+        tenantId: { in: scopeIds },
+        status: "ACTIVE",
+        role: {
+          in: [
+            Role.TECH_DIRECTOR,
+            Role.WORKS_DIRECTOR,
+            Role.WORKS_MANAGER,
+            Role.SITE_MANAGER,
+          ],
+        },
+      },
+      select: { id: true, firstName: true, lastName: true, role: true },
+      orderBy: [{ role: "asc" }, { lastName: "asc" }],
     }),
   ]);
 
@@ -88,13 +112,25 @@ export async function GET() {
     })),
     ncs: ncs.map((n) => ({
       id: n.id,
+      siteId: n.siteId,
       site: n.site?.code ?? "—",
+      siteName: n.site?.name ?? "—",
       category: n.category,
       criticality: n.criticality,
       description: n.description,
       correctiveAction: n.correctiveAction,
       dueDate: n.dueDate?.toISOString() ?? null,
       status: n.status,
+      owner: n.owner ? `${n.owner.firstName} ${n.owner.lastName}` : null,
+      ownerId: n.ownerId,
+      createdAt: n.createdAt.toISOString(),
+      closedAt: n.closedAt?.toISOString() ?? null,
+    })),
+    sites,
+    staff: staff.map((u) => ({
+      id: u.id,
+      fullName: `${u.firstName} ${u.lastName}`,
+      role: u.role,
     })),
     certifications: certs.map((c) => ({
       id: c.id,

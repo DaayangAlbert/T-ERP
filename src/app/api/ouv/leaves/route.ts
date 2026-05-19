@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { guardOuv } from "@/lib/rbac/ouv-guard";
 import { Role, LeaveStatus, LeaveType } from "@prisma/client";
+import { notifySupervisors } from "@/lib/notify-supervisors";
 import { countWorkingDays, getCameroonHolidays } from "@/lib/holidays-cameroon";
 import {
   annualLeaveRequestSchema,
@@ -164,7 +165,36 @@ export async function POST(req: Request) {
       select: { id: true, daysCount: true, startDate: true, endDate: true, type: true },
     });
 
-    // TODO fn 1.6 : notification WhatsApp au validateur
+    // Notifie le validateur direct avec un link adapté à son rôle :
+    //   - SITE_MANAGER (CC) → /chef-chantier/validations
+    //   - HR             → /ressources-humaines/conges
+    if (validator?.id) {
+      const validatorUser = await prisma.user.findUnique({
+        where: { id: validator.id },
+        select: { role: true },
+      });
+      const link = validatorUser?.role === Role.SITE_MANAGER
+        ? "/chef-chantier/validations"
+        : "/ressources-humaines/conges";
+      await prisma.notification.create({
+        data: {
+          userId: validator.id,
+          type: "leave_request_pending",
+          title: `Demande de congé — ${me.firstName} ${me.lastName}`,
+          body: `${created.daysCount} j · ${leaveTypeLabel(created.type)}`,
+          link,
+        },
+      });
+    }
+    // Notif DRH (visibilité globale) toujours via la page RH
+    await notifySupervisors({
+      tenantId: me.tenantId,
+      roles: [Role.HR],
+      type: "leave_request_pending",
+      title: `Demande de congé — ${me.firstName} ${me.lastName}`,
+      body: `${created.daysCount} j · ${leaveTypeLabel(created.type)}`,
+      link: "/ressources-humaines/conges",
+    });
 
     return NextResponse.json(
       {

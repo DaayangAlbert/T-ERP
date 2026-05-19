@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, Palette, Globe, Shield, Calendar, Bell, Save } from "lucide-react";
+import { Building2, Palette, Globe, Shield, Calendar, Bell, Save, FileBadge, Upload, Trash2, Loader2 } from "lucide-react";
 
 interface Settings {
   identity: Record<string, string>;
@@ -204,7 +205,271 @@ export default function ItSettingsPage() {
           <Toggle label="SMS" checked={!!merged.notifications.smsEnabled} onChange={(v) => patch("notifications", { smsEnabled: v })} />
           <Toggle label="Digest hebdo DG" checked={!!merged.notifications.digestWeeklyEnabled} onChange={(v) => patch("notifications", { digestWeeklyEnabled: v })} />
         </Card>
+
+        <div className="lg:col-span-2">
+          <BrandingCard />
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Documents officiels — Coordonnées entreprise + assets (logo, signature, cachet)
+// affichés sur les bulletins de paie, factures, attestations.
+// Édition autonome via /api/it/tenant/branding.
+// ════════════════════════════════════════════════════════════════════════
+
+interface Branding {
+  name: string;
+  contactAddress: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  websiteUrl: string | null;
+  logoUrl: string | null;
+  signatureImageUrl: string | null;
+  stampImageUrl: string | null;
+  drhSignatoryName: string | null;
+}
+
+function BrandingCard() {
+  const qc = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["it", "tenant", "branding"],
+    queryFn: async (): Promise<Branding> => {
+      const res = await fetch("/api/it/tenant/branding");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    },
+  });
+
+  const [dirty, setDirty] = useState<Partial<Branding>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [success]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      setError(null);
+      const res = await fetch("/api/it/tenant/branding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dirty),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? "Erreur");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setDirty({});
+      setSuccess(true);
+      qc.invalidateQueries({ queryKey: ["it", "tenant", "branding"] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  if (!data) return <Card title="Documents officiels & coordonnées" icon={FileBadge}><div className="h-32 animate-pulse rounded bg-surface-alt" /></Card>;
+
+  const merged: Branding = { ...data, ...dirty };
+  const set = (patch: Partial<Branding>) => setDirty((c) => ({ ...c, ...patch }));
+
+  return (
+    <section className="rounded-xl border border-line bg-white p-4 shadow-card">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">
+          <FileBadge className="h-3.5 w-3.5" /> Documents officiels &amp; coordonnées
+          <span className="ml-2 text-[10px] font-normal text-ink-3 normal-case">
+            (affichés sur bulletins, factures, attestations)
+          </span>
+        </h2>
+        <div className="flex items-center gap-2">
+          {success && <span className="text-[12px] font-medium text-success">✓ Sauvegardé</span>}
+          {error && <span className="text-[12px] font-medium text-danger">{error}</span>}
+          <button
+            type="button"
+            onClick={() => setDirty({})}
+            disabled={Object.keys(dirty).length === 0}
+            className="h-8 rounded-md border border-line-2 bg-white px-2.5 text-[12px] font-medium text-ink-2 disabled:opacity-50"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={() => save.mutate()}
+            disabled={save.isPending || Object.keys(dirty).length === 0}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary-600 px-2.5 text-[12px] font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            <Save className="h-3.5 w-3.5" /> {save.isPending ? "…" : "Enregistrer"}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Coordonnées</h3>
+          <Field label="Adresse postale" value={merged.contactAddress ?? ""} onChange={(v) => set({ contactAddress: v || null })} />
+          <Field label="Téléphone" value={merged.contactPhone ?? ""} onChange={(v) => set({ contactPhone: v || null })} />
+          <Field label="Email contact" type="email" value={merged.contactEmail ?? ""} onChange={(v) => set({ contactEmail: v || null })} />
+          <Field label="Site web" value={merged.websiteUrl ?? ""} onChange={(v) => set({ websiteUrl: v || null })} />
+          <Field label="Signataire DRH (libellé bulletin)" value={merged.drhSignatoryName ?? ""} onChange={(v) => set({ drhSignatoryName: v || null })} />
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Assets (téléversement)</h3>
+          <AssetUpload
+            label="Logo entreprise"
+            kind="logo"
+            url={merged.logoUrl}
+            hint="PNG / JPG / SVG / WebP — 256×256 carré recommandé, max 2 Mo."
+          />
+          <AssetUpload
+            label="Signature DRH scannée"
+            kind="signature"
+            url={merged.signatureImageUrl}
+            hint="PNG transparent — 200×80 horizontal recommandé, max 2 Mo."
+          />
+          <AssetUpload
+            label="Cachet entreprise"
+            kind="stamp"
+            url={merged.stampImageUrl}
+            hint="PNG transparent — 140×140 circulaire recommandé, max 2 Mo."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// AssetUpload — téléversement réel d'un asset (logo / signature / cachet).
+// POST multipart vers /api/it/tenant/branding/upload ; rafraîchit la query
+// branding au succès. Bouton 'Supprimer' = PATCH avec null sur le champ.
+// ════════════════════════════════════════════════════════════════════════
+
+function AssetUpload({
+  label, kind, url, hint,
+}: {
+  label: string;
+  kind: "logo" | "signature" | "stamp";
+  url: string | null;
+  hint?: string;
+}) {
+  const qc = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const upload = useMutation({
+    mutationFn: async (file: File): Promise<{ url: string }> => {
+      setError(null);
+      const fd = new FormData();
+      fd.append("kind", kind);
+      fd.append("file", file);
+      const res = await fetch("/api/it/tenant/branding/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["it", "tenant", "branding"] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const clear = useMutation({
+    mutationFn: async () => {
+      setError(null);
+      const dbField = { logo: "logoUrl", signature: "signatureImageUrl", stamp: "stampImageUrl" }[kind];
+      const res = await fetch("/api/it/tenant/branding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [dbField]: null }),
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["it", "tenant", "branding"] });
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const busy = upload.isPending || clear.isPending;
+
+  return (
+    <div className="rounded-md border border-line bg-surface-alt/30 p-2.5">
+      <div className="flex items-start gap-3">
+        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-line bg-white">
+          {url ? (
+            <Image src={url} alt={label} fill className="object-contain" unoptimized />
+          ) : (
+            <div className="grid h-full w-full place-items-center text-[9.5px] text-ink-3">vide</div>
+          )}
+          {busy && (
+            <div className="absolute inset-0 grid place-items-center bg-white/70">
+              <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-[12.5px] font-semibold text-ink-2">{label}</label>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={busy}
+                className="inline-flex h-7 items-center gap-1 rounded border border-primary-300 bg-white px-2 text-[11.5px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50"
+              >
+                <Upload className="h-3 w-3" /> {url ? "Remplacer" : "Téléverser"}
+              </button>
+              {url && (
+                <button
+                  type="button"
+                  onClick={() => clear.mutate()}
+                  disabled={busy}
+                  className="inline-flex h-7 items-center gap-1 rounded border border-danger/40 bg-white px-2 text-[11.5px] font-medium text-danger hover:bg-danger/5 disabled:opacity-50"
+                >
+                  <Trash2 className="h-3 w-3" /> Supprimer
+                </button>
+              )}
+            </div>
+          </div>
+          {hint && <p className="mt-0.5 text-[10.5px] text-ink-3">{hint}</p>}
+          {url && (
+            <p className="mt-0.5 truncate font-mono text-[10px] text-ink-3" title={url}>
+              {url}
+            </p>
+          )}
+          {error && <p className="mt-1 text-[11px] text-danger">{error}</p>}
+        </div>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) upload.mutate(f);
+          // Reset l'input pour pouvoir re-sélectionner le même fichier après suppression
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
