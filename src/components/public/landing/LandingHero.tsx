@@ -86,7 +86,7 @@ function MockupCard() {
             <div className="h-2 w-2 rounded-full bg-amber-400" />
             <div className="h-2 w-2 rounded-full bg-emerald-400" />
           </div>
-          <span className="ml-2 text-[11px] text-ink-3">batimcam.terp.cm/dt</span>
+          <span className="ml-2 text-[11px] text-ink-3">batimcam.terpgroup.com/dt</span>
         </div>
         <div className="mt-3 space-y-2">
           <div className="rounded bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700">

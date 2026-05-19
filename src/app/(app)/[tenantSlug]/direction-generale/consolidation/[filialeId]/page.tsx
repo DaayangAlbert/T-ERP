@@ -86,7 +86,7 @@ export default function FilialeDetailPage({ params }: Props) {
             <div className="mt-1 text-[12.5px] text-white/80">
               Secteur : <span className="font-medium">{filiale.sector ?? "—"}</span>
               {" · "}
-              <span className="font-mono">{filiale.slug}.terp.cm</span>
+              <span className="font-mono">{filiale.slug}.terpgroup.com</span>
             </div>
           </div>
         </div>

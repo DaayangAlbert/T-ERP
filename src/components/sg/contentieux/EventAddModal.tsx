@@ -97,7 +97,7 @@ export function EventAddModal({ caseId, onClose }: Props) {
               type="url"
               value={documentUrl}
               onChange={(e) => setDocumentUrl(e.target.value)}
-              placeholder="https://ged.terp.cm/…"
+              placeholder="https://ged.terpgroup.com/…"
               className="mt-1 h-8 w-full rounded-md border border-line bg-white px-2 text-[12px] outline-none focus:border-violet-400"
             />
           </div>

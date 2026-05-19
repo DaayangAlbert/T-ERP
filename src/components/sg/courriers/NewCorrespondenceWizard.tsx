@@ -15,7 +15,7 @@ type Step = 1 | 2 | 3;
 
 const DIRECTIONS: { id: CorrespondenceDirection; label: string; hint: string }[] = [
   { id: "INCOMING", label: "Entrant (CE)", hint: "Courrier reçu d'une partie externe" },
-  { id: "OUTGOING", label: "Sortant (CS)", hint: "Courrier émis par BatimCAM" },
+  { id: "OUTGOING", label: "Sortant (CS)", hint: "Courrier émis par votre entreprise" },
 ];
 
 const CONFIDENTIALITY_LEVELS: { id: CorrespondenceConfidentiality; label: string; tone: string }[] = [
@@ -217,7 +217,7 @@ export function NewCorrespondenceWizard({ onClose, onSuccess }: Props) {
                   type="url"
                   value={documentUrl}
                   onChange={(e) => setDocumentUrl(e.target.value)}
-                  placeholder="https://ged.terp.cm/courriers/2026/CE-2026-0142.pdf"
+                  placeholder="https://ged.terpgroup.com/courriers/2026/CE-2026-0142.pdf"
                   className="h-8 w-full rounded-md border border-line bg-white px-2 text-[12px] outline-none focus:border-violet-400"
                 />
               </Field>

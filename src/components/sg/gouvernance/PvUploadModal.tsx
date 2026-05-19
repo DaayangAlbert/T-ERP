@@ -70,7 +70,7 @@ export function PvUploadModal({ meeting, onClose, onSuccess }: Props) {
                 type="url"
                 value={documentUrl}
                 onChange={(e) => setDocumentUrl(e.target.value)}
-                placeholder="https://ged.terp.cm/documents/pv-ca-2025-04-25.pdf"
+                placeholder="https://ged.terpgroup.com/documents/pv-ca-2025-04-25.pdf"
                 className="h-8 w-full rounded-md border border-line bg-white px-2 text-[12px] outline-none focus:border-violet-400"
               />
             </div>

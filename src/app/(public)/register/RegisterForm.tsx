@@ -123,7 +123,7 @@ export function RegisterForm() {
 
         <Field
           label="Sous-domaine"
-          hint={form.slug ? `Accès : ${form.slug}.terp.cm` : "Sera votre URL T-ERP"}
+          hint={form.slug ? `Accès : ${form.slug}.terpgroup.com` : "Sera votre URL T-ERP"}
           required
         >
           <div className="flex items-stretch overflow-hidden rounded-md border border-line focus-within:ring-2 focus-within:ring-primary/40">
@@ -137,7 +137,7 @@ export function RegisterForm() {
               pattern="^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
             />
             <span className="grid place-items-center bg-surface-alt px-3 text-[12px] text-ink-3">
-              .terp.cm
+              .terpgroup.com
             </span>
           </div>
           {slugSuggested && (

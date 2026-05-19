@@ -47,7 +47,7 @@ export function TopTenantsCard({ items }: { items: Item[] }) {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium text-white">{it.name}</div>
                 <div className="text-[11px] text-white/55">
-                  {it.slug}.terp.cm · {it.planName}
+                  {it.slug}.terpgroup.com · {it.planName}
                 </div>
               </div>
               <div className="text-right">

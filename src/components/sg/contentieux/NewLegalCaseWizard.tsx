@@ -318,7 +318,7 @@ export function NewLegalCaseWizard({ onClose, onSuccess }: Props) {
                 />
               </Field>
               <p className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-[11.5px] text-violet-900">
-                BatimCAM travaille avec 3 cabinets partenaires. Ce dossier peut renforcer ou élargir le partenariat selon le résultat.
+                Votre entreprise travaille avec plusieurs cabinets partenaires. Ce dossier peut renforcer ou élargir le partenariat selon le résultat.
               </p>
             </>
           )}

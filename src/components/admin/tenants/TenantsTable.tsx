@@ -132,7 +132,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-white">{t.name}</div>
                           <div className="text-[10px] text-white/50">
-                            {t.subdomain ?? `${t.slug}.terp.cm`}
+                            {t.subdomain ?? `${t.slug}.terpgroup.com`}
                           </div>
                         </div>
                       </div>
@@ -167,7 +167,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
                         <a
-                          href={`https://${t.subdomain ?? `${t.slug}.terp.cm`}`}
+                          href={`https://${t.subdomain ?? `${t.slug}.terpgroup.com`}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded p-1.5 text-white/60 hover:bg-white/5 hover:text-white"

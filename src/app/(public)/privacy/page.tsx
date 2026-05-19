@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Politique de confidentialité — T-ERP",
   description:
     "Politique de confidentialité et de protection des données personnelles du service T-ERP.",
-  alternates: { canonical: "https://terp.cm/privacy" },
+  alternates: { canonical: "https://terpgroup.com/privacy" },
 };
 
 const UPDATED_AT = "2026-05-19";
@@ -32,8 +32,8 @@ export default function PrivacyPage() {
             T-ERP est édité par Taiga, dont le siège est à Douala (Cameroun).
             Le responsable du traitement des données personnelles peut être
             contacté à l'adresse{" "}
-            <a href="mailto:dpo@terp.cm" className="text-primary hover:underline">
-              dpo@terp.cm
+            <a href="mailto:dpo@terpgroup.com" className="text-primary hover:underline">
+              dpo@terpgroup.com
             </a>
             .
           </p>
@@ -114,8 +114,8 @@ export default function PrivacyPage() {
             la matière, toute personne dispose d'un droit d'accès, de
             rectification, d'effacement, de limitation, d'opposition et de
             portabilité de ses données. Ces droits s'exercent en écrivant à{" "}
-            <a href="mailto:dpo@terp.cm" className="text-primary hover:underline">
-              dpo@terp.cm
+            <a href="mailto:dpo@terpgroup.com" className="text-primary hover:underline">
+              dpo@terpgroup.com
             </a>
             .
           </p>
@@ -126,7 +126,7 @@ export default function PrivacyPage() {
           <p className="mt-1 text-ink-2">
             L'Éditeur fait appel à des sous-traitants pour l'hébergement,
             l'envoi d'emails transactionnels et le paiement. La liste détaillée
-            est communiquée sur simple demande à dpo@terp.cm.
+            est communiquée sur simple demande à dpo@terpgroup.com.
           </p>
         </div>
 

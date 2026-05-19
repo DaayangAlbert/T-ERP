@@ -115,7 +115,7 @@ export function RegisterCompanyForm({ onSuccess }: Props) {
               className="h-10 flex-1 border-0 bg-transparent px-3 text-sm focus:outline-none"
             />
             <span className="bg-surface-alt border-l border-line-2 px-3 text-[12px] text-ink-3">
-              .terp.cm
+              .terpgroup.com
             </span>
           </div>
         </Field>

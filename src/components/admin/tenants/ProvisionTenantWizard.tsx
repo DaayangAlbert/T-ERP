@@ -120,7 +120,7 @@ export function ProvisionTenantWizard({ plans }: { plans: Plan[] }) {
                     placeholder="batimcam"
                   />
                   <span className="border-l px-2 py-2 text-xs text-white/50" style={{ borderColor: "#334155" }}>
-                    .terp.cm
+                    .terpgroup.com
                   </span>
                 </div>
               </Field>

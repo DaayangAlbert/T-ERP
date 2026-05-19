@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "T-ERP — ERP BTP Cameroun",
     description:
       "L'ERP qui parle SYSCOHADA, CNPS et chantier. Démo gratuite 45 min.",
-    url: "https://terp.cm",
+    url: "https://terpgroup.com",
     siteName: "T-ERP",
     locale: "fr_CM",
     type: "website",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     description: "L'ERP qui parle SYSCOHADA, CNPS et chantier.",
   },
   alternates: {
-    canonical: "https://terp.cm",
+    canonical: "https://terpgroup.com",
   },
 };
 

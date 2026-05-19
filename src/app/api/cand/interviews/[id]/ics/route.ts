@@ -49,14 +49,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const summary = `Entretien — ${app.jobOffer.title}`;
   const description =
     `Entretien ${interview.mode}${interview.location ? ` · ${interview.location}` : ""}.\n` +
-    `Confirmer votre présence sur https://terp.cm/cand/entretiens`;
+    `Confirmer votre présence sur https://terpgroup.com/cand/entretiens`;
 
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//T-ERP//Candidat//FR",
     "BEGIN:VEVENT",
-    `UID:${interview.id}@terp.cm`,
+    `UID:${interview.id}@terpgroup.com`,
     `DTSTAMP:${icsDate(new Date())}`,
     `DTSTART:${icsDate(start)}`,
     `DTEND:${icsDate(end)}`,

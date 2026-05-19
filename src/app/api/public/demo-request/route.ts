@@ -39,6 +39,6 @@ export async function POST(req: Request) {
     select: { id: true },
   });
 
-  // TODO prod: envoyer email Resend "Nouvelle demande démo" à sales@terp.cm
+  // TODO prod: envoyer email Resend "Nouvelle demande démo" à sales@terpgroup.com
   return NextResponse.json({ ok: true, id: dr.id }, { status: 201 });
 }

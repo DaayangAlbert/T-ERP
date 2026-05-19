@@ -175,7 +175,7 @@ export function ApprovalRenewalWizard({ approval, onClose, onSuccess }: Props) {
                   type="url"
                   value={docUrl}
                   onChange={(e) => setDocUrl(e.target.value)}
-                  placeholder="https://ged.terp.cm/agrements/renouvellement-2026-04.zip"
+                  placeholder="https://ged.terpgroup.com/agrements/renouvellement-2026-04.zip"
                   className="mt-1 h-8 w-full rounded-md border border-line bg-white px-2 text-[12px] outline-none focus:border-violet-400"
                 />
               </div>

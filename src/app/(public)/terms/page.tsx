@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation — T-ERP",
   description:
     "Conditions générales d'utilisation du service T-ERP, ERP SaaS pour PME camerounaises.",
-  alternates: { canonical: "https://terp.cm/terms" },
+  alternates: { canonical: "https://terpgroup.com/terms" },
 };
 
 const UPDATED_AT = "2026-05-19";
@@ -138,8 +138,8 @@ export default function TermsPage() {
 
       <footer className="mt-12 border-t border-line pt-4 text-[12px] text-ink-3">
         Pour toute question relative aux présentes CGU, contactez{" "}
-        <a href="mailto:contact@terp.cm" className="text-primary hover:underline">
-          contact@terp.cm
+        <a href="mailto:contact@terpgroup.com" className="text-primary hover:underline">
+          contact@terpgroup.com
         </a>
         .
       </footer>

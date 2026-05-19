@@ -608,7 +608,7 @@ function SidePanel({ profile }: { profile: NonNullable<ReturnType<typeof useProf
           {profile.tenant?.slug && (
             <>
               <br />
-              <span className="font-mono text-[11.5px]">{profile.tenant.slug}.terp.cm</span>
+              <span className="font-mono text-[11.5px]">{profile.tenant.slug}.terpgroup.com</span>
             </>
           )}
         </p>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Créer mon entreprise — T-ERP",
   description:
     "Créez votre espace T-ERP en moins de 2 minutes. 30 jours d'essai gratuit, sans engagement.",
-  alternates: { canonical: "https://terp.cm/register" },
+  alternates: { canonical: "https://terpgroup.com/register" },
 };
 
 export default function RegisterPage() {

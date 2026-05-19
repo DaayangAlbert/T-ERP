@@ -11,7 +11,7 @@ export function PortalFooter() {
         <nav className="mt-3 flex flex-wrap gap-4 sm:mt-0">
           <Link href="/about" className="hover:text-primary-700">À propos</Link>
           <Link href="/jobs" className="hover:text-primary-700">Offres d'emploi</Link>
-          <a href="mailto:contact@terp.cm" className="hover:text-primary-700">Contact</a>
+          <a href="mailto:contact@terpgroup.com" className="hover:text-primary-700">Contact</a>
           <span className="text-ink-4">© {year}</span>
         </nav>
       </div>

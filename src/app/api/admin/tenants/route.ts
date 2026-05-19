@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   const tenant = await prisma.tenant.create({
     data: {
       slug: data.slug,
-      subdomain: `${data.slug}.terp.cm`,
+      subdomain: `${data.slug}.terpgroup.com`,
       name: data.name,
       country: data.country,
       legalForm: data.legalForm,

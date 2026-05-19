@@ -48,7 +48,7 @@ export function LandingFooter() {
               Yaoundé · Douala · Cameroun
             </p>
             <p className="mt-3 text-[11px] text-white/40">
-              contact@terp.cm · +237 6 90 00 00 00
+              contact@terpgroup.com · +237 6 90 00 00 00
             </p>
           </div>
           {COLUMNS.map((col) => (

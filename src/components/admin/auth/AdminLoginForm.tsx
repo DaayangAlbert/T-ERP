@@ -101,7 +101,7 @@ export function AdminLoginForm() {
         {loading ? "Connexion…" : "Se connecter"}
       </button>
       <p className="text-center text-[10px] text-white/40">
-        Démo : superadmin@terp.cm / Admin2026!
+        Démo : superadmin@terpgroup.com / Admin2026!
       </p>
     </form>
   );
