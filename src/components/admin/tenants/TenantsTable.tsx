@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Pause, Play, ExternalLink } from "lucide-react";
+import { Pause, Play, ExternalLink, UserPlus } from "lucide-react";
+import { FirstAdminModal } from "./FirstAdminModal";
 
 export interface TenantRow {
   id: string;
@@ -39,6 +40,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [firstAdminFor, setFirstAdminFor] = useState<TenantRow | null>(null);
 
   async function suspend(t: TenantRow) {
     const reason = prompt(`Raison de la suspension de ${t.name} ?`)?.trim();
@@ -176,6 +178,16 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
+                        {t.usersCount === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setFirstAdminFor(t)}
+                            className="rounded px-2 py-1 text-[11px] font-semibold bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25"
+                            title="Créer le premier administrateur"
+                          >
+                            <UserPlus className="inline h-3 w-3" /> 1<sup>er</sup> admin
+                          </button>
+                        )}
                         {isSuspended ? (
                           <button
                             type="button"
@@ -212,6 +224,13 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
           </tbody>
         </table>
       </div>
+      {firstAdminFor && (
+        <FirstAdminModal
+          tenantId={firstAdminFor.id}
+          tenantName={firstAdminFor.name}
+          onClose={() => setFirstAdminFor(null)}
+        />
+      )}
     </div>
   );
 }
