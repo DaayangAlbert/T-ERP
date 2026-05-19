@@ -85,8 +85,35 @@ function readTenantSlugFromCookie(req: NextRequest): string | null {
   return payload?.tenantSlug ?? null;
 }
 
+// Sous-domaines réservés qui ne sont jamais des slugs de tenant.
+const RESERVED_SUBDOMAINS = new Set(["www", "admin", "api", "app", "cand"]);
+
+// Extrait le slug du tenant depuis le Host header.
+// "batimcam.terpgroup.com" → "batimcam"
+// "terpgroup.com" / "www.terpgroup.com" / "localhost:3000" → null
+function extractTenantSlugFromHost(host: string): string | null {
+  const hostNoPort = host.split(":")[0];
+  const parts = hostNoPort.split(".");
+  if (parts.length < 3) return null;
+  const sub = parts[0];
+  if (RESERVED_SUBDOMAINS.has(sub)) return null;
+  return sub;
+}
+
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // Cas spécial : /recrutement/* — portail recrutement public d'un tenant.
+  // Le tenant est déduit du sous-domaine (batimcam.terpgroup.com → "batimcam").
+  if (pathname === "/recrutement" || pathname.startsWith("/recrutement/")) {
+    const slug = extractTenantSlugFromHost(request.headers.get("host") ?? "");
+    if (slug) {
+      const response = NextResponse.next();
+      response.headers.set("x-tenant-slug", slug);
+      return response;
+    }
+    return NextResponse.next();
+  }
 
   // Bypass assets statiques + API + sous-systèmes hors-tenant.
   if (
