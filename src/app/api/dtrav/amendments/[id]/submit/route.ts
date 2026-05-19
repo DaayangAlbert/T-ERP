@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/session";
 import { guardDtravSiteMutation } from "@/lib/rbac/dtrav-guard";
 import { AmendmentStatus } from "@prisma/client";
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
-  const a = await prisma.contractAmendment.findUnique({ where: { id: params.id } });
+  const session = getCurrentSession();
+  if (!session?.tenantId) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  const a = await prisma.contractAmendment.findFirst({
+    where: { id: params.id, site: { tenantId: session.tenantId } },
+  });
   if (!a) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
   const guard = await guardDtravSiteMutation(a.siteId);
   if (guard instanceof NextResponse) return guard;
-  const { session } = guard;
 
   if (a.status !== AmendmentStatus.DRAFT) {
     return NextResponse.json({ error: "Avenant déjà soumis" }, { status: 409 });

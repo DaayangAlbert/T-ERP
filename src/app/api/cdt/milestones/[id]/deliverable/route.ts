@@ -27,7 +27,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const body = (await req.json().catch(() => ({}))) as { key?: string; done?: boolean };
   if (!body.key) return NextResponse.json({ error: "key requis" }, { status: 400 });
 
-  const m = await prisma.cdtMilestone.findUnique({ where: { id: params.id } });
+  const m = await prisma.cdtMilestone.findFirst({
+    where: { id: params.id, site: { tenantId: session.tenantId } },
+  });
   if (!m) return NextResponse.json({ error: "Jalon introuvable" }, { status: 404 });
 
   const deliverables = (m.deliverables as unknown as Deliverable[]).map((d) =>

@@ -24,6 +24,7 @@ export default async function CandidateLayout({
       address: true,
       role: true,
       status: true,
+      tenant: { select: { name: true } },
     },
   });
 
@@ -41,7 +42,7 @@ export default async function CandidateLayout({
       email={user.email}
       initials={initials}
       completionPct={completionPct}
-      tenantName="BatimCAM SA"
+      tenantName={user.tenant?.name ?? ""}
     >
       {children}
     </CandidateShell>

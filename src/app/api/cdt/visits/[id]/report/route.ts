@@ -19,7 +19,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     reservations?: number;
   };
 
-  const v = await prisma.externalVisit.findUnique({ where: { id: params.id } });
+  const v = await prisma.externalVisit.findFirst({
+    where: { id: params.id, site: { tenantId: session.tenantId } },
+  });
   if (!v) return NextResponse.json({ error: "Visite introuvable" }, { status: 404 });
 
   await prisma.externalVisit.update({

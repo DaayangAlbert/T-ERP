@@ -22,7 +22,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string; te
     extraNotes: string;
   }>;
 
-  const plan = await prisma.dailyPlan.findUnique({ where: { id: params.id } });
+  const plan = await prisma.dailyPlan.findFirst({
+    where: { id: params.id, site: { tenantId: session.tenantId } },
+  });
   if (!plan) return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
 
   const updated = await prisma.dailyPlanTeam.upsert({

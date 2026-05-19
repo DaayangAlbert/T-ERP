@@ -102,7 +102,7 @@ export function buildSyntheticPersonnel(target = 487): SyntheticPersonnel[] {
       matricule,
       firstName,
       lastName,
-      email: `${firstName.toLowerCase().replace(/[^a-z]/g, "")}.${lastName.toLowerCase().replace(/[^a-z]/g, "")}@batimcam.cm`,
+      email: `${firstName.toLowerCase().replace(/[^a-z]/g, "")}.${lastName.toLowerCase().replace(/[^a-z]/g, "")}@synthetic.local`,
       phone: `+237 6 ${78 + Math.floor(rand() * 22)} ${10 + Math.floor(rand() * 89)} ${10 + Math.floor(rand() * 89)} ${10 + Math.floor(rand() * 89)}`,
       position: pos.title,
       category: pos.category,

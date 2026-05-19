@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { createUserSchema } from "@/schemas/security";
 import { hashPassword } from "@/lib/auth";
+import { assertUserQuota, TenantQuotaError } from "@/lib/tenant-quota";
 import { Role, UserStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -88,6 +89,15 @@ export async function POST(req: Request) {
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
       return NextResponse.json({ error: "Email déjà utilisé" }, { status: 409 });
+    }
+
+    try {
+      await assertUserQuota(session.tenantId);
+    } catch (e) {
+      if (e instanceof TenantQuotaError) {
+        return NextResponse.json({ error: e.message }, { status: 402 });
+      }
+      throw e;
     }
 
     const initialPassword = data.password ?? Math.random().toString(36).slice(2, 12) + "A1!";

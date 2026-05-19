@@ -16,7 +16,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const body = await req.json().catch(() => ({}));
 
-  const validation = await prisma.validation.findUnique({ where: { id: params.id } });
+  const validation = await prisma.validation.findFirst({
+    where: { id: params.id, tenantId: session.tenantId },
+  });
   if (!validation) {
     return NextResponse.json({ error: "Validation introuvable" }, { status: 404 });
   }

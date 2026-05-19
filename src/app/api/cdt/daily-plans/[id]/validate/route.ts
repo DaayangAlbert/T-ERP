@@ -14,7 +14,9 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Validation plan réservée CDT/CC" }, { status: 403 });
   }
 
-  const plan = await prisma.dailyPlan.findUnique({ where: { id: params.id } });
+  const plan = await prisma.dailyPlan.findFirst({
+    where: { id: params.id, site: { tenantId: session.tenantId } },
+  });
   if (!plan) return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
 
   await prisma.dailyPlan.update({

@@ -13,8 +13,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (guard instanceof NextResponse) return guard;
   const { session, siteId } = guard;
 
-  const talk = await prisma.hseSafetyTalk.findUnique({ where: { id: params.id } });
-  if (!talk || talk.siteId !== siteId) {
+  const talk = await prisma.hseSafetyTalk.findFirst({
+    where: {
+      id: params.id,
+      siteId,
+      site: { tenantId: session.tenantId! },
+    },
+  });
+  if (!talk) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 

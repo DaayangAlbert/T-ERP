@@ -25,8 +25,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (guard instanceof NextResponse) return guard;
   const { session, siteId } = guard;
 
-  const delivery = await prisma.delivery.findUnique({ where: { id: params.id } });
-  if (!delivery || delivery.siteId !== siteId) {
+  const delivery = await prisma.delivery.findFirst({
+    where: {
+      id: params.id,
+      siteId,
+      site: { tenantId: session.tenantId! },
+    },
+  });
+  if (!delivery) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 

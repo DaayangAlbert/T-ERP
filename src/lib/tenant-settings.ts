@@ -79,28 +79,19 @@ export const MODULE_LABELS: Record<string, { label: string; essential: boolean; 
 export function defaultIdentity(tenantName: string): IdentitySettings {
   return {
     legalName: tenantName,
-    rccm: "RC/DLA/2018/B/01258",
-    niu: "M102316152502L",
-    capital: "100000000",
+    rccm: "",
+    niu: "",
+    capital: "",
     headquarters: {
-      address: "Quartier Bonapriso, Rue Joffre",
-      city: "Douala",
-      phone: "+237 233 42 18 90",
-      email: "contact@batimcam.cm",
+      address: "",
+      city: "",
+      phone: "",
+      email: "",
     },
-    establishments: [
-      { name: "Agence Yaoundé", address: "Quartier Bastos", city: "Yaoundé" },
-      { name: "Base logistique", address: "Zone Industrielle Bonabéri", city: "Douala" },
-    ],
-    representatives: [
-      { role: "Directeur Général", name: "Albert DAAYANG" },
-      { role: "Directeur Administratif et Financier", name: "Marie NGONO" },
-    ],
-    bankAccounts: [
-      { bank: "UBA Cameroun", accountNumber: "10005-00012-12345678901-42", iban: "CM21..." },
-      { bank: "BICEC", accountNumber: "10006-00543-98765432109-87" },
-    ],
-    plan: "BUSINESS",
+    establishments: [],
+    representatives: [],
+    bankAccounts: [],
+    plan: "STARTER",
   };
 }
 

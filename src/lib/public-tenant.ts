@@ -7,11 +7,12 @@ import { prisma } from "@/lib/prisma";
  * Source de vérité : header `x-tenant-slug` posé par le middleware
  * (qui le déduit du sous-domaine en prod, du cookie/queryparam en dev).
  *
- * Fallback dev : si pas de slug, on prend "batimcam" pour faire tourner la démo.
+ * Retourne null si aucun slug n'est résolu — l'appelant doit gérer le 404.
  */
 export async function resolvePublicTenant() {
   const h = headers();
-  const slug = h.get("x-tenant-slug") || "batimcam";
+  const slug = h.get("x-tenant-slug");
+  if (!slug) return null;
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
     select: {
