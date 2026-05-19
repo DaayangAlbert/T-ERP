@@ -11,12 +11,12 @@ const ROWS = [
   { feat: "Audit trail conforme", terp: true, sage: true, odoo: false, excel: false },
 ];
 
-const PRICE_ROW = {
-  feat: "Coût mensuel PME 50 employés",
-  terp: "285 K FCFA",
-  sage: "~ 1,2 M FCFA",
-  odoo: "~ 450 K FCFA",
-  excel: "0 (mais coût caché)",
+const SETUP_ROW = {
+  feat: "Mise en route",
+  terp: "5-10 jours",
+  sage: "3-6 mois",
+  odoo: "2-4 semaines",
+  excel: "Immédiat (mais sans contrôle)",
 };
 
 function Cell({ value }: { value: boolean | string }) {
@@ -74,18 +74,18 @@ export function ComparisonTable() {
                 </tr>
               ))}
               <tr className="bg-surface-alt">
-                <td className="px-4 py-3 font-semibold text-ink">{PRICE_ROW.feat}</td>
+                <td className="px-4 py-3 font-semibold text-ink">{SETUP_ROW.feat}</td>
                 <td className="px-4 py-3 text-center">
-                  <Cell value={PRICE_ROW.terp} />
+                  <Cell value={SETUP_ROW.terp} />
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <Cell value={PRICE_ROW.sage} />
+                  <Cell value={SETUP_ROW.sage} />
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <Cell value={PRICE_ROW.odoo} />
+                  <Cell value={SETUP_ROW.odoo} />
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <Cell value={PRICE_ROW.excel} />
+                  <Cell value={SETUP_ROW.excel} />
                 </td>
               </tr>
             </tbody>

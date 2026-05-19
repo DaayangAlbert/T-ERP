@@ -10,7 +10,7 @@ import { ProblemsSolved } from "@/components/public/landing/ProblemsSolved";
 import { ProfilesGrid } from "@/components/public/landing/ProfilesGrid";
 import { KeyModules } from "@/components/public/landing/KeyModules";
 import { Testimonials } from "@/components/public/landing/Testimonials";
-import { PricingPlans } from "@/components/public/landing/PricingPlans";
+import { TechAndSecurity } from "@/components/public/landing/TechAndSecurity";
 import { ComparisonTable } from "@/components/public/landing/ComparisonTable";
 import { FaqSection } from "@/components/public/landing/FaqSection";
 import { DemoRequestForm } from "@/components/public/landing/DemoRequestForm";
@@ -54,11 +54,11 @@ export default function LandingPage() {
       <LandingHero />
       <ClientLogos />
       <ProblemsSolved />
-      <ProfilesGrid />
       <KeyModules />
-      <Testimonials />
-      <PricingPlans />
+      <ProfilesGrid />
+      <TechAndSecurity />
       <ComparisonTable />
+      <Testimonials />
       <FaqSection />
       <DemoRequestForm />
       <LandingFooter />

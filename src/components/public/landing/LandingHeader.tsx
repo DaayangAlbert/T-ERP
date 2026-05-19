@@ -26,7 +26,8 @@ export function LandingHeader() {
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
             <a href="#modules" className="text-sm text-ink-2 hover:text-primary">Modules</a>
-            <a href="#tarifs" className="text-sm text-ink-2 hover:text-primary">Tarifs</a>
+            <a href="#profils" className="text-sm text-ink-2 hover:text-primary">Profils</a>
+            <a href="#stack" className="text-sm text-ink-2 hover:text-primary">Stack</a>
             <a href="#comparaison" className="text-sm text-ink-2 hover:text-primary">Comparaison</a>
             <a href="#faq" className="text-sm text-ink-2 hover:text-primary">FAQ</a>
           </nav>
