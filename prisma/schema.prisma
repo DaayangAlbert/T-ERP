@@ -3230,6 +3230,7 @@ model Supplier {
   phone         String?
   email         String?
   address       String?
+  city          String? // ville/agglomération principale (Douala, Yaoundé, Bafoussam...)
   paymentTerms  Int     @default(45) // jours
   ratingQuality Float? // 1-5
   ratingDelay   Float?
@@ -3734,6 +3735,13 @@ model Entry {
   description String
 
   status CptEntryStatus @default(DRAFT)
+
+  // Pièce jointe justificative (1 par écriture) — facture, reçu, photo, etc.
+  // Stockée sous public/uploads/comptable/<tenantId>/<YYYY>/<MM>/<uuid><ext>
+  attachmentUrl       String?
+  attachmentName      String?
+  attachmentMimeType  String?
+  attachmentSizeBytes BigInt?
 
   createdById   String
   createdBy     User      @relation("EntryCreator", fields: [createdById], references: [id])
