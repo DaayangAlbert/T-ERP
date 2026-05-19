@@ -1,0 +1,348 @@
+
+> t-erp@0.1.0 dev C:\Users\daaya\Downloads\PROJETS TAIGA\T-ERP
+> next dev -p 5000
+
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:5000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 5.2s
+ ○ Compiling /src/middleware ...
+ ✓ Compiled /src/middleware in 551ms (72 modules)
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 896ms (158 modules)
+ POST /api/auth/login 200 in 1828ms
+ ○ Compiling /[tenantSlug]/informatique/change-requests ...
+ ✓ Compiled /[tenantSlug]/informatique/change-requests in 13.5s (971 modules)
+ ✓ Compiled in 842ms (417 modules)
+ ○ Compiling /api/it/change-requests ...
+ ✓ Compiled /api/it/change-requests in 5.7s (541 modules)
+ GET /api/it/change-requests?status=PENDING 200 in 6121ms
+ GET /batimcam/informatique/change-requests 200 in 21744ms
+ POST /api/auth/login 200 in 3227ms
+ ✓ Compiled /api/auth/me in 257ms (543 modules)
+ GET /api/auth/me 200 in 420ms
+ ○ Compiling /[tenantSlug]/dashboard ...
+ ✓ Compiled /[tenantSlug]/dashboard in 709ms (950 modules)
+ ✓ Compiled /[tenantSlug]/informatique in 288ms (548 modules)
+ ✓ Compiled in 404ms (411 modules)
+ GET /api/sg/sidebar-badges 403 in 1330ms
+ GET /api/notifications?limit=20 200 in 1367ms
+ GET /api/dg/validations?status=pending 200 in 1386ms
+ GET /api/reports/sidebar-badges 200 in 1576ms
+ ✓ Compiled /api/profiles in 294ms (566 modules)
+ GET /api/profiles 200 in 491ms
+ ✓ Compiled /api/it/dashboard in 309ms (568 modules)
+ GET /api/it/dashboard 200 in 665ms
+ ○ Compiling /[tenantSlug]/informatique/users ...
+ ✓ Compiled /[tenantSlug]/informatique/users in 599ms (993 modules)
+ ○ Compiling /api/it/users ...
+ ✓ Compiled /api/it/users in 582ms (579 modules)
+ GET /api/it/users?page=1 200 in 838ms
+ ○ Compiling /[tenantSlug]/informatique/users/new ...
+ ✓ Compiled /[tenantSlug]/informatique/users/new in 1295ms (1026 modules)
+ ✓ Compiled /api/it/sites in 395ms (590 modules)
+ GET /api/it/sites?page=1 200 in 606ms
+ GET /api/it/sites?page=1 200 in 104ms
+ GET /api/sg/sidebar-badges 403 in 86ms
+ GET /api/notifications?limit=20 200 in 134ms
+ GET /api/dg/validations?status=pending 200 in 127ms
+ GET /api/reports/sidebar-badges 200 in 89ms
+ GET /batimcam/informatique/users 200 in 285ms
+ GET /api/notifications?limit=20 200 in 221ms
+ GET /api/it/users?page=1 200 in 334ms
+ GET /api/sg/sidebar-badges 403 in 248ms
+ GET /api/dg/validations?status=pending 200 in 262ms
+ GET /api/reports/sidebar-badges 200 in 260ms
+ GET /api/it/sites?page=1 200 in 139ms
+ GET /api/it/sites?page=1 200 in 90ms
+ GET /api/notifications?limit=20 200 in 98ms
+ GET /api/sg/sidebar-badges 403 in 140ms
+ GET /api/dg/validations?status=pending 200 in 126ms
+ GET /api/reports/sidebar-badges 200 in 135ms
+ GET /api/it/change-requests?status=PENDING 200 in 138ms
+ GET /batimcam/informatique/change-requests?_rsc=c4fkn 200 in 295ms
+ GET /api/notifications?limit=20 200 in 84ms
+ GET /api/sg/sidebar-badges 403 in 87ms
+ GET /api/dg/validations?status=pending 200 in 141ms
+ GET /api/reports/sidebar-badges 200 in 155ms
+ ✓ Compiled /api/it/change-requests/[id] in 362ms (566 modules)
+ POST /api/it/change-requests/cmpc4yghn000135q3hcq45p3q 200 in 1292ms
+ GET /api/it/change-requests?status=PENDING 200 in 120ms
+ GET /batimcam/informatique/change-requests?_rsc=g61kd 200 in 293ms
+ GET /api/it/change-requests?status=all 200 in 97ms
+ GET /batimcam/informatique/change-requests?status=all&_rsc=1u8da 200 in 209ms
+ GET /api/it/change-requests?status=APPROVED 200 in 93ms
+ GET /batimcam/informatique/change-requests?status=APPROVED&_rsc=1b389 200 in 196ms
+ GET /api/it/change-requests?status=REJECTED 200 in 122ms
+ GET /batimcam/informatique/change-requests?status=REJECTED&_rsc=1p2ux 200 in 256ms
+ ✓ Compiled /api/it/users in 243ms (569 modules)
+ GET /api/it/users?page=1 200 in 531ms
+ ○ Compiling /[tenantSlug]/informatique/users/[id] ...
+ ✓ Compiled /[tenantSlug]/informatique/users/[id] in 1119ms (1029 modules)
+ ✓ Compiled /api/it/users/[id] in 325ms (592 modules)
+ GET /api/it/users/cmp330ixz0014mhx4wegt9aop 200 in 1306ms
+ GET /api/notifications?limit=20 200 in 111ms
+ GET /api/sg/sidebar-badges 403 in 92ms
+ GET /api/dg/validations?status=pending 200 in 117ms
+ GET /api/reports/sidebar-badges 200 in 106ms
+ GET /api/notifications?limit=20 200 in 164ms
+ GET /api/sg/sidebar-badges 403 in 85ms
+ GET /api/dg/validations?status=pending 200 in 132ms
+ GET /api/reports/sidebar-badges 200 in 243ms
+ GET /api/notifications?limit=20 200 in 129ms
+ GET /api/sg/sidebar-badges 403 in 98ms
+ GET /api/dg/validations?status=pending 200 in 98ms
+ GET /api/reports/sidebar-badges 200 in 84ms
+ GET /api/notifications?limit=20 200 in 114ms
+ GET /api/sg/sidebar-badges 403 in 124ms
+ GET /api/dg/validations?status=pending 200 in 117ms
+ GET /api/reports/sidebar-badges 200 in 84ms
+ GET /api/it/users?page=1 200 in 192ms
+ ✓ Compiled in 963ms (439 modules)
+ ✓ Compiled in 620ms (439 modules)
+ GET /api/notifications?limit=20 200 in 165ms
+ GET /api/sg/sidebar-badges 403 in 123ms
+ GET /api/dg/validations?status=pending 200 in 78ms
+ GET /api/reports/sidebar-badges 200 in 126ms
+ ✓ Compiled in 482ms (439 modules)
+ ✓ Compiled in 468ms (439 modules)
+ GET /api/notifications?limit=20 200 in 109ms
+ GET /api/sg/sidebar-badges 403 in 89ms
+ GET /api/dg/validations?status=pending 200 in 95ms
+ GET /api/reports/sidebar-badges 200 in 90ms
+ ✓ Compiled in 538ms (439 modules)
+ GET /api/sg/sidebar-badges 403 in 84ms
+ GET /api/notifications?limit=20 200 in 164ms
+ GET /api/dg/validations?status=pending 200 in 88ms
+ GET /api/reports/sidebar-badges 200 in 384ms
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 613ms (587 modules)
+ POST /api/auth/login 200 in 1522ms
+ GET /api/sg/sidebar-badges 403 in 198ms
+ GET /api/notifications?limit=20 200 in 282ms
+ GET /api/dg/validations?status=pending 200 in 161ms
+ GET /api/reports/sidebar-badges 200 in 93ms
+ GET /api/sg/sidebar-badges 403 in 75ms
+ GET /api/notifications?limit=20 200 in 106ms
+ GET /api/dg/validations?status=pending 200 in 107ms
+ GET /api/reports/sidebar-badges 200 in 102ms
+ POST /api/auth/login 200 in 373ms
+ POST /api/auth/login 401 in 86ms
+ POST /api/auth/login 401 in 73ms
+ POST /api/auth/login 401 in 88ms
+ POST /api/auth/login 401 in 71ms
+ POST /api/auth/login 401 in 79ms
+ GET /api/sg/sidebar-badges 403 in 78ms
+ GET /api/notifications?limit=20 200 in 81ms
+ GET /api/dg/validations?status=pending 200 in 87ms
+ GET /api/reports/sidebar-badges 200 in 82ms
+ ✓ Compiled in 354ms (587 modules)
+ ✓ Compiled in 227ms (572 modules)
+ GET /api/sg/sidebar-badges 403 in 119ms
+ GET /api/notifications?limit=20 200 in 121ms
+ GET /api/dg/validations?status=pending 200 in 165ms
+ GET /api/reports/sidebar-badges 200 in 93ms
+ ✓ Compiled /api/auth/login in 306ms (587 modules)
+ POST /api/auth/login 200 in 808ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.4s (1123 modules)
+ POST /api/auth/login 200 in 3653ms
+ POST /api/auth/login 200 in 400ms
+ POST /api/auth/login 200 in 419ms
+ ✓ Compiled /api/cand/auth/login in 342ms (647 modules)
+ POST /api/cand/auth/login 200 in 1296ms
+ POST /api/cand/auth/login 200 in 457ms
+ POST /api/auth/login 401 in 411ms
+ POST /api/auth/login 401 in 148ms
+ GET / 200 in 327ms
+ POST /api/auth/login 200 in 489ms
+ ✓ Compiled /api/auth/me in 397ms (647 modules)
+ GET /api/auth/me 200 in 525ms
+ ✓ Compiled /[tenantSlug]/dashboard in 467ms (649 modules)
+ ✓ Compiled /[tenantSlug]/dashboard/dg in 395ms (651 modules)
+ ○ Compiling /api/profiles ...
+ ✓ Compiled /api/profiles in 10.1s (3368 modules)
+ GET /api/profiles 200 in 6170ms
+ GET /api/notifications?limit=20 200 in 10968ms
+ GET /api/dg/validations?status=pending 200 in 11023ms
+ GET /api/reports/sidebar-badges 200 in 11024ms
+ ○ Compiling /api/dashboard/dg ...
+ ✓ Compiled /api/dashboard/dg in 826ms (1783 modules)
+ GET /api/dashboard/dg 200 in 1274ms
+ GET /api/notifications?limit=20 200 in 178ms
+ GET /api/reports/sidebar-badges 200 in 198ms
+ GET /api/dg/validations?status=pending 200 in 200ms
+ GET /api/reports/sidebar-badges 200 in 172ms
+ GET /api/notifications?limit=20 200 in 183ms
+ GET /api/dg/validations?status=pending 200 in 185ms
+ GET /api/reports/sidebar-badges 200 in 299ms
+ GET /api/notifications?limit=20 200 in 318ms
+ GET /api/dg/validations?status=pending 200 in 319ms
+ GET /api/profiles 200 in 157ms
+ ○ Compiling /api/auth/logout ...
+ ✓ Compiled /api/auth/logout in 587ms (1750 modules)
+ POST /api/auth/logout 200 in 770ms
+ ✓ Compiled /api/auth/login in 403ms (1765 modules)
+ POST /api/auth/login 200 in 915ms
+ ✓ Compiled /api/auth/me in 336ms (1767 modules)
+ GET /api/auth/me 200 in 477ms
+ ○ Compiling /[tenantSlug]/informatique ...
+ ✓ Compiled /[tenantSlug]/informatique in 598ms (1772 modules)
+ ✓ Compiled (1781 modules)
+ GET /api/sg/sidebar-badges 403 in 1481ms
+ ✓ Compiled /api/it/dashboard in 493ms (1784 modules)
+ GET /api/it/dashboard 200 in 781ms
+ ○ Compiling /[tenantSlug]/informatique/users ...
+ ✓ Compiled /[tenantSlug]/informatique/users in 515ms (1790 modules)
+ ○ Compiling /api/it/users ...
+ ✓ Compiled /api/it/users in 652ms (1793 modules)
+ GET /api/it/users?page=1 200 in 913ms
+ ✓ Compiled /api/it/users/[id] in 491ms (1789 modules)
+ GET /api/it/users/cmp330ixz0014mhx4wegt9aop 200 in 834ms
+ ✓ Compiled in 1781ms (3377 modules)
+ GET /api/notifications?limit=20 200 in 222ms
+ GET /api/dg/validations?status=pending 200 in 229ms
+ GET /api/reports/sidebar-badges 200 in 234ms
+ GET /api/sg/sidebar-badges 403 in 90ms
+ ✓ Compiled in 557ms (1588 modules)
+ ✓ Compiled in 1101ms (3279 modules)
+ ✓ Compiled in 488ms (1588 modules)
+ GET /api/notifications?limit=20 200 in 213ms
+ GET /api/reports/sidebar-badges 200 in 338ms
+ GET /api/dg/validations?status=pending 200 in 348ms
+ GET /api/sg/sidebar-badges 403 in 70ms
+ ✓ Compiled in 719ms (1588 modules)
+ ✓ Compiled in 798ms (1588 modules)
+ ✓ Compiled in 678ms (1588 modules)
+ ✓ Compiled in 573ms (1588 modules)
+ GET /api/notifications?limit=20 200 in 171ms
+ GET /api/reports/sidebar-badges 200 in 219ms
+ GET /api/dg/validations?status=pending 200 in 230ms
+ GET /api/sg/sidebar-badges 403 in 85ms
+ ✓ Compiled in 499ms (1588 modules)
+ GET /api/notifications?limit=20 200 in 89ms
+ GET /api/reports/sidebar-badges 200 in 155ms
+ GET /api/dg/validations?status=pending 200 in 120ms
+ GET /api/sg/sidebar-badges 403 in 71ms
+ ✓ Compiled in 780ms (1588 modules)
+ GET /api/notifications?limit=20 200 in 79ms
+ GET /api/reports/sidebar-badges 200 in 123ms
+ GET /api/dg/validations?status=pending 200 in 98ms
+ GET /api/sg/sidebar-badges 403 in 79ms
+ GET /api/notifications?limit=20 200 in 89ms
+ GET /api/dg/validations?status=pending 200 in 94ms
+ GET /api/reports/sidebar-badges 200 in 193ms
+ GET /api/sg/sidebar-badges 403 in 74ms
+ ✓ Compiled in 1569ms (1588 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1277ms (1767 modules)
+ GET / 200 in 1614ms
+ ✓ Compiled in 609ms (1588 modules)
+ ○ Compiling /api/profiles ...
+ ✓ Compiled /api/profiles in 680ms (1769 modules)
+ GET /api/profiles 200 in 982ms
+ ○ Compiling /api/auth/logout ...
+ ✓ Compiled /api/auth/logout in 574ms (1771 modules)
+ POST /api/auth/logout 200 in 775ms
+ ✓ Compiled in 695ms (1588 modules)
+ ✓ Compiled in 657ms (1588 modules)
+ ✓ Compiled in 961ms (1588 modules)
+ ✓ Compiled in 2.9s (3340 modules)
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 673ms (1769 modules)
+ POST /api/auth/login 200 in 1297ms
+ ○ Compiling /api/auth/me ...
+ ✓ Compiled /api/auth/me in 562ms (1771 modules)
+ GET /api/auth/me 200 in 711ms
+ ✓ Compiled /[tenantSlug]/dashboard in 313ms (1773 modules)
+ ✓ Compiled /api/reports/sidebar-badges in 490ms (1775 modules)
+ ✓ Compiled (1784 modules)
+ GET /api/sg/sidebar-badges 403 in 1121ms
+ GET /api/notifications?limit=20 200 in 1270ms
+ GET /api/dg/validations?status=pending 200 in 1291ms
+ GET /api/reports/sidebar-badges 200 in 1244ms
+ ○ Compiling /api/it/dashboard ...
+ ✓ Compiled /api/it/dashboard in 508ms (1787 modules)
+ GET /api/it/dashboard 200 in 954ms
+ ✓ Compiled /api/it/users in 469ms (1790 modules)
+ GET /api/it/users?page=1 200 in 624ms
+ ○ Compiling /[tenantSlug]/informatique/users/[id]/edit ...
+ ✓ Compiled /[tenantSlug]/informatique/users/[id]/edit in 1698ms (3390 modules)
+ ○ Compiling /api/it/sites ...
+ ✓ Compiled /api/it/sites in 510ms (1800 modules)
+ ✓ Compiled in 1ms (1802 modules)
+ ✓ Compiled in 0ms (1802 modules)
+ ✓ Compiled in 0ms (1802 modules)
+ GET /api/it/users/cmpa0g20d00033hnszii2bj9z 200 in 2123ms
+ ✓ Compiled in 1ms (1802 modules)
+ GET /api/it/sites?page=1 200 in 2600ms
+ ✓ Compiled in 1ms (1802 modules)
+ ✓ Compiled in 1ms (1802 modules)
+ ✓ Compiled in 0ms (1802 modules)
+ GET /api/it/users/cmpa0g20d00033hnszii2bj9z 200 in 2411ms
+ GET /api/it/sites?page=1 200 in 2540ms
+ GET /api/sg/sidebar-badges 403 in 141ms
+ GET /api/notifications?limit=20 200 in 211ms
+ GET /api/dg/validations?status=pending 200 in 213ms
+ GET /api/reports/sidebar-badges 200 in 222ms
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:5000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 10s
+ ○ Compiling /src/middleware ...
+ ✓ Compiled /src/middleware in 575ms (72 modules)
+ ○ Compiling /api/dg/validations ...
+ ✓ Compiled /api/dg/validations in 901ms (151 modules)
+ ✓ Compiled (157 modules)
+ GET /api/sg/sidebar-badges 403 in 1760ms
+ GET /api/notifications?limit=20 200 in 1851ms
+ GET /api/reports/sidebar-badges 200 in 2034ms
+ GET /api/dg/validations?status=pending 200 in 2053ms
+ GET /api/sg/sidebar-badges 403 in 227ms
+ GET /api/notifications?limit=20 200 in 298ms
+ GET /api/reports/sidebar-badges 200 in 255ms
+ GET /api/dg/validations?status=pending 200 in 262ms
+ GET /api/sg/sidebar-badges 403 in 1096ms
+ GET /api/reports/sidebar-badges 200 in 232ms
+ GET /api/dg/validations?status=pending 200 in 234ms
+ GET /api/notifications?limit=20 200 in 303ms
+ GET /api/sg/sidebar-badges 403 in 81ms
+ GET /api/reports/sidebar-badges 200 in 163ms
+ GET /api/dg/validations?status=pending 200 in 198ms
+ GET /api/notifications?limit=20 200 in 84ms
+ GET /api/sg/sidebar-badges 403 in 76ms
+ GET /api/reports/sidebar-badges 200 in 170ms
+ GET /api/dg/validations?status=pending 200 in 230ms
+ GET /api/notifications?limit=20 200 in 151ms
+ GET /api/sg/sidebar-badges 403 in 76ms
+ GET /api/reports/sidebar-badges 200 in 215ms
+ GET /api/dg/validations?status=pending 200 in 136ms
+ GET /api/notifications?limit=20 200 in 104ms
+ GET /api/sg/sidebar-badges 403 in 97ms
+ GET /api/reports/sidebar-badges 200 in 95ms
+ GET /api/dg/validations?status=pending 200 in 148ms
+ GET /api/notifications?limit=20 200 in 100ms
+ GET /api/sg/sidebar-badges 403 in 80ms
+ GET /api/reports/sidebar-badges 200 in 177ms
+ GET /api/dg/validations?status=pending 200 in 131ms
+ GET /api/notifications?limit=20 200 in 117ms
+ ✓ Compiled /api/profiles in 223ms (159 modules)
+ GET /api/profiles 200 in 405ms
+ ✓ Compiled /api/auth/logout in 152ms (161 modules)
+ POST /api/auth/logout 200 in 301ms
+ ○ Compiling / ...
+ ✓ Compiled / in 10s (908 modules)
+ ✓ Compiled in 701ms (358 modules)
+ ✓ Compiled in 115ms (344 modules)
+ ✓ Compiled in 1665ms (879 modules)
+ ○ Compiling /recrutement ...
+ ✓ Compiled /recrutement in 764ms (903 modules)
+ ✓ Compiled /api/public/tenant-jobs in 209ms (550 modules)
+ GET /api/public/tenant-jobs 404 in 327ms
+ GET /recrutement?_rsc=uehkn 200 in 502ms
+ GET / 200 in 375ms
+ GET / 200 in 142ms

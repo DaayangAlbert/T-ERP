@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T-ERP Paie - Prototypes Codex</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar no-print">
+    <div class="brand">
+      <img src="logo.png" onerror="this.style.display='none'">
+      <h1>T-ERP Paie</h1>
+      <p>Référence visuelle pour Codex</p>
+    </div>
+    <button class="nav active" data-screen="batch">1. RH - Génération paie</button>
+    <button class="nav" data-screen="state">2. État des salaires</button>
+    <button class="nav" data-screen="payslip">3. Bulletin de paie PDF</button>
+    <div class="panel">
+      <h2>Couleurs</h2>
+      <label>Principal <input id="primary" type="color" value="#A855F7"></label>
+      <label>Secondaire <input id="accent" type="color" value="#F59E0B"></label>
+      <label>Sidebar <input id="side" type="color" value="#2A1B3D"></label>
+    </div>
+    <div class="panel">
+      <h2>Actions</h2>
+      <button onclick="alert('Simulation brut/net effectuée')">Simuler la paie</button>
+      <button onclick="alert('Bulletins + QR codes générés')">Générer bulletins</button>
+      <button onclick="window.print()">Imprimer / PDF</button>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <section id="batch" class="screen active">
+      <header class="hero">
+        <div><h1>Traitement de paie RH</h1><p>Cycle Avril 2026 — saisie, calcul, validation N1 et génération bulletins.</p></div>
+        <span class="pill">CALCULATED</span>
+      </header>
+      <div class="kpis">
+        <article><span>Effectif</span><strong>487</strong></article>
+        <article><span>Brut total</span><strong>186 420 000</strong><small>FCFA</small></article>
+        <article><span>Retenues</span><strong>41 785 300</strong><small>FCFA</small></article>
+        <article class="gold"><span>Net à payer</span><strong>144 634 700</strong><small>FCFA</small></article>
+        <article><span>Charges patronales</span><strong>32 190 500</strong><small>FCFA</small></article>
+      </div>
+      <div class="workflow">
+        <div class="step done"><b>1</b><span>Saisie variables</span></div>
+        <div class="step done"><b>2</b><span>Calcul brut → net</span></div>
+        <div class="step active"><b>3</b><span>Validation RH N1</span></div>
+        <div class="step"><b>4</b><span>Validation DAF N2</span></div>
+        <div class="step"><b>5</b><span>Validation DG N3</span></div>
+        <div class="step"><b>6</b><span>Paiement / DIPE</span></div>
+      </div>
+      <section class="card">
+        <div class="card-title">
+          <div><h2>Variables mensuelles & simulation</h2><p>Les montants alimentent l’état des salaires et les bulletins.</p></div>
+          <div class="actions"><button>Importer CSV</button><button data-target="state">Voir état</button><button>Valider N1 → DAF</button></div>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Photo</th><th>Matricule</th><th>Salarié</th><th>Poste</th><th>Chantier</th><th>Jours</th><th>Base</th><th>H. sup.</th><th>Primes</th><th>Avances</th><th>Brut</th><th>Net</th><th>Anomalies</th><th>Bulletin</th>
+        </tr></thead><tbody id="batchRows"></tbody></table></div>
+      </section>
+      <div class="two">
+        <section class="card pad"><h2>Journal de traitement</h2><div class="logs"><p>10:30 — 487 lignes chargées.</p><p>10:31 — Simulation terminée.</p><p>10:32 — 12 anomalies détectées.</p><p>10:33 — État des salaires disponible.</p></div></section>
+        <section class="card pad"><h2>Anomalies à corriger</h2><div class="alert warn">Photo de profil manquante : 8 salariés</div><div class="alert danger">Compte bancaire manquant : 2 salariés</div><div class="alert warn">N° CNPS absent : 2 salariés</div></section>
+      </div>
+    </section>
+
+    <section id="state" class="screen">
+      <header class="hero">
+        <div><h1>ÉTAT DES SALAIRES</h1><p>FOULLAH EDIFICE SA — Avril 2026 — Statut : Calculé / attente validation RH N1</p></div>
+        <div class="actions no-print"><button>Excel</button><button>PDF</button><button>Virement</button><button>IRPP</button><button>DIPE CNPS</button></div>
+      </header>
+      <div class="kpis">
+        <article><span>Masse brute</span><strong>186 420 000</strong><small>FCFA</small></article>
+        <article><span>Total retenues</span><strong>41 785 300</strong><small>FCFA</small></article>
+        <article><span>Charges patronales</span><strong>32 190 500</strong><small>FCFA</small></article>
+        <article class="gold"><span>Net à payer</span><strong>144 634 700</strong><small>FCFA</small></article>
+        <article><span>Coût employeur</span><strong>218 610 500</strong><small>FCFA</small></article>
+      </div>
+      <div class="state-grid">
+        <section class="box"><h2>Récapitulatif général</h2><table class="mini">
+          <tr><td>Total salaires de base</td><td>151 300 000 FCFA</td></tr><tr><td>Primes & indemnités</td><td>26 800 000 FCFA</td></tr><tr><td>Heures supplémentaires</td><td>8 320 000 FCFA</td></tr><tr><td>Brut imposable</td><td>172 940 000 FCFA</td></tr><tr><td>Total retenues</td><td>41 785 300 FCFA</td></tr><tr><td>Net à payer</td><td><b>144 634 700 FCFA</b></td></tr>
+        </table></section>
+        <section class="box"><h2>Retenues salariales</h2><table class="mini">
+          <tr><td>CNPS salarié</td><td>6 412 200 FCFA</td></tr><tr><td>IRPP</td><td>19 820 500 FCFA</td></tr><tr><td>CAC</td><td>1 982 050 FCFA</td></tr><tr><td>CFC salarié</td><td>1 729 400 FCFA</td></tr><tr><td>Avances</td><td>8 550 000 FCFA</td></tr><tr><td>Prêts / autres</td><td>3 291 150 FCFA</td></tr>
+        </table></section>
+        <section class="box"><h2>Charges patronales</h2><table class="mini">
+          <tr><td>CNPS employeur</td><td>6 412 200 FCFA</td></tr><tr><td>Allocations familiales</td><td>12 105 800 FCFA</td></tr><tr><td>Accident travail</td><td>4 323 500 FCFA</td></tr><tr><td>CFC employeur</td><td>2 594 100 FCFA</td></tr><tr><td>FNE</td><td>1 729 400 FCFA</td></tr><tr><td>Autres charges</td><td>5 025 500 FCFA</td></tr>
+        </table></section>
+      </div>
+      <section class="card">
+        <div class="card-title">
+          <div><h2>Tableau détaillé de l’état des salaires</h2><p>Vue officielle RH/DAF avec bases, retenues, cotisations et charges patronales.</p></div>
+          <div class="filters no-print"><input placeholder="Recherche"><select><option>Chantier</option></select><select><option>Banque</option></select></div>
+        </div>
+        <div class="table-wrap"><table class="state-table"><thead><tr>
+          <th>Mat.</th><th>Photo</th><th>Nom & prénoms</th><th>Poste</th><th>Chantier</th><th>Cat.</th><th>Jours</th><th>Base</th><th>HS</th><th>Primes</th><th>Brut</th><th>Brut imp.</th><th>Base CNPS</th><th>CNPS sal.</th><th>IRPP</th><th>CAC</th><th>Avances</th><th>Prêts</th><th>Total ret.</th><th>Net</th><th>CNPS emp.</th><th>AF</th><th>AT</th><th>CFC emp.</th><th>FNE</th><th>Charges</th><th>Coût total</th><th>Banque</th><th>Compte</th><th>Statut</th>
+        </tr></thead><tbody id="stateRows"></tbody><tfoot><tr><td colspan="10">TOTAUX GÉNÉRAUX</td><td>186 420 000</td><td>172 940 000</td><td>151 300 000</td><td>6 412 200</td><td>19 820 500</td><td>1 982 050</td><td>8 550 000</td><td>3 291 150</td><td>41 785 300</td><td>144 634 700</td><td>6 412 200</td><td>12 105 800</td><td>4 323 500</td><td>2 594 100</td><td>1 729 400</td><td>32 190 500</td><td>218 610 500</td><td colspan="3"></td></tr></tfoot></table></div>
+      </section>
+      <div class="state-grid bottom">
+        <section class="box"><h2>Détail par catégorie</h2><table class="mini"><tr><th>Catégorie</th><th>Eff.</th><th>Brut</th><th>Net</th></tr><tr><td>Direction</td><td>4</td><td>8 800 000</td><td>6 550 000</td></tr><tr><td>Cadres</td><td>32</td><td>32 100 000</td><td>25 460 000</td></tr><tr><td>Maîtrise</td><td>128</td><td>65 200 000</td><td>50 940 000</td></tr><tr><td>Ouvriers</td><td>323</td><td>80 320 000</td><td>61 684 700</td></tr></table></section>
+        <section class="box"><h2>Synthèse fiscale & sociale</h2><table class="mini"><tr><td>Total IRPP</td><td>19 820 500 FCFA</td></tr><tr><td>Total CAC</td><td>1 982 050 FCFA</td></tr><tr><td>CNPS salarié</td><td>6 412 200 FCFA</td></tr><tr><td>CNPS employeur</td><td>6 412 200 FCFA</td></tr><tr><td>Organismes sociaux</td><td>29 576 700 FCFA</td></tr></table></section>
+      </div>
+    </section>
+
+    <section id="payslip" class="screen">
+      <div class="official-label no-print"><h1>Bulletin de paie officiel — modèle PDF validé</h1><p>Logo, photo, couleurs, données et QR code dynamiques.</p></div>
+      <article class="payslip">
+        <header class="slip-head">
+          <div class="company"><img src="logo.png" onerror="this.style.display='none'"><div><h2>FOULLAH EDIFICE SA</h2><p>BTP - Génie Civil - Travaux Publics</p><p>Maroua, Cameroun — B.P. 8612</p><p>Tél : +237 693 824 252 / +237 653 037 921</p><p>Email : contact@foullahedificesa.com</p><p>N° contribuable : M020100001234C</p><p>N° CNPS société : 0012345C</p></div></div>
+          <div class="slip-title"><h1>BULLETIN DE PAIE</h1><div>AVRIL 2026</div><p>Du 01/04/2026 au 30/04/2026</p><p>Date paiement : <b>30/04/2026</b></p></div>
+          <div class="qrbox"><a href="#"><img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://erp.example.com/payslip/verify/PAY-DEMO-2026"></a><p>Code : <b>PAY-DEMO-2026</b></p><span class="valid">Bulletin vérifiable</span></div>
+        </header>
+        <section class="emp-band"><div class="photo">IK</div><div><small>Salarié</small><h2>IBRAHIMA KAMTOU</h2><p>Matricule : EMP-0001 — N° CNPS : 125012345678</p></div><div><small>Poste</small><b>Conducteur d’Engins</b><p>Catégorie : Maîtrise — Échelon : 2</p></div><div><small>Paiement</small><b>Virement bancaire</b><p>BGFI Bank — 10001 00012 3456789001</p></div></section>
+        <section class="slip-kpis"><div><small>Brut</small><b>436 086 FCFA</b></div><div><small>Retenues</small><b>94 897 FCFA</b></div><div class="net"><small>NET À PAYER</small><b>341 189 FCFA</b></div><div><small>Coût employeur</small><b>511 340 FCFA</b></div></section>
+        <section class="slip-tables">
+          <div class="pay-box"><h3>1. Gains</h3><table><thead><tr><th>Code</th><th>Libellé</th><th>Base</th><th>Taux</th><th>Montant</th></tr></thead><tbody><tr><td>A001</td><td>Salaire de base</td><td>250 000</td><td>-</td><td>250 000</td></tr><tr><td>A002</td><td>Indemnité transport</td><td>-</td><td>-</td><td>52 000</td></tr><tr><td>A003</td><td>Indemnité logement</td><td>-</td><td>-</td><td>40 000</td></tr><tr><td>A004</td><td>Prime chantier</td><td>-</td><td>-</td><td>40 000</td></tr><tr><td>A005</td><td>Heures supplémentaires</td><td>54 h</td><td>125%</td><td>54 086</td></tr></tbody><tfoot><tr><td colspan="4">Total gains</td><td>436 086</td></tr></tfoot></table></div>
+          <div class="pay-box"><h3>2. Retenues salariales</h3><table><thead><tr><th>Code</th><th>Libellé</th><th>Base</th><th>Taux</th><th>Montant</th></tr></thead><tbody><tr><td>B001</td><td>CNPS salarié</td><td>436 086</td><td>4,20%</td><td>18 316</td></tr><tr><td>B002</td><td>CFC salarié</td><td>436 086</td><td>1,00%</td><td>4 361</td></tr><tr><td>B003</td><td>IRPP</td><td>343 200</td><td>Barème</td><td>34 850</td></tr><tr><td>B004</td><td>CAC</td><td>34 850</td><td>10%</td><td>3 485</td></tr><tr><td>B005</td><td>Avance sur salaire</td><td>-</td><td>-</td><td>20 000</td></tr><tr><td>B006</td><td>Prêt social</td><td>-</td><td>-</td><td>13 885</td></tr></tbody><tfoot><tr><td colspan="4">Total retenues</td><td>94 897</td></tr></tfoot></table></div>
+          <div class="pay-box"><h3>3. Charges patronales</h3><table><thead><tr><th>Code</th><th>Libellé</th><th>Base</th><th>Taux</th><th>Montant</th></tr></thead><tbody><tr><td>C001</td><td>CNPS employeur</td><td>436 086</td><td>4,20%</td><td>18 316</td></tr><tr><td>C002</td><td>Allocations familiales</td><td>436 086</td><td>7,00%</td><td>30 526</td></tr><tr><td>C003</td><td>Accident travail</td><td>436 086</td><td>2,50%</td><td>10 902</td></tr><tr><td>C004</td><td>CFC employeur</td><td>436 086</td><td>1,50%</td><td>6 541</td></tr><tr><td>C005</td><td>FNE</td><td>436 086</td><td>1,00%</td><td>4 361</td></tr></tbody><tfoot><tr><td colspan="4">Total charges</td><td>70 646</td></tr></tfoot></table></div>
+        </section>
+        <section class="slip-bottom"><div class="info"><h3>Cumuls annuels</h3><p><span>Brut cumulé</span><b>1 744 344 FCFA</b></p><p><span>Net cumulé</span><b>1 364 756 FCFA</b></p><p><span>IRPP cumulé</span><b>139 400 FCFA</b></p><p><span>CNPS cumulée</span><b>73 264 FCFA</b></p></div><div class="info"><h3>Congés & présence</h3><p><span>Jours travaillés</span><b>26</b></p><p><span>Heures travaillées</span><b>173,33</b></p><p><span>CP acquis</span><b>31,50</b></p><p><span>CP solde</span><b>26,50</b></p></div><div class="info auth-info"><h3>Authentification</h3><p>Le lien d’ouverture employé est identique au QR code.</p><p><b>https://erp.example.com/payslip/verify/PAY-DEMO-2026</b></p><p>Statut : <span class="valid">Valide</span></p></div><div class="sign"><p>Pour FOULLAH EDIFICE SA</p><div>Signature</div><p>Responsable Administratif</p></div></section>
+        <footer>Document sécurisé généré par T-ERP. Toute falsification peut être détectée via le QR code.</footer>
+      </article>
+    </section>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+content-type: application/json
+set-cookie: terp_access=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXAzMzBpeGcwMDB5bWh4NGNybXFoMnp4IiwidGVuYW50SWQiOiJjbXAzMzBpb3EwMDAwbWh4NG82b2J3dHpoIiwidGVuYW50U2x1ZyI6ImJhdGltY2FtIiwicm9sZSI6IkFSQ0hJVklTVCIsImVtYWlsIjoiY2hyaXN0ZWxsZUBiYXRpbWNhbS5jbSIsInR5cGUiOiJlbXBsb3llZSIsImlhdCI6MTc3OTA5ODcxNiwiZXhwIjoxNzc5MDk5NjE2fQ.Kv1K9dOqiVfVC4HNxiarDCGH63LQoPp_1bPKw5VYnTM; Path=/; Expires=Mon, 18 May 2026 10:20:17 GMT; Max-Age=900; HttpOnly; SameSite=strict
+set-cookie: terp_refresh=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXAzMzBpeGcwMDB5bWh4NGNybXFoMnp4IiwidGVuYW50SWQiOiJjbXAzMzBpb3EwMDAwbWh4NG82b2J3dHpoIiwidGVuYW50U2x1ZyI6ImJhdGltY2FtIiwicm9sZSI6IkFSQ0hJVklTVCIsImVtYWlsIjoiY2hyaXN0ZWxsZUBiYXRpbWNhbS5jbSIsInR5cGUiOiJlbXBsb3llZSIsImlhdCI6MTc3OTA5ODcxNiwiZXhwIjoxNzc5NzAzNTE2fQ.fMfiffJMAJ3emlAjUEMCueP6eP8zS2rFkI7MZTj8lTo; Path=/; Expires=Mon, 25 May 2026 10:05:17 GMT; Max-Age=604800; HttpOnly; SameSite=strict
+Date: Mon, 18 May 2026 10:05:17 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

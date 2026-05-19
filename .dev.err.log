@@ -1,0 +1,13 @@
+ ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+ ⨯ src\app\(public)\recrutement\page.tsx (46:22) @ fetchTenantJobs
+ ⨯ Error: Tenant jobs API 404
+    at fetchTenantJobs (recrutement/page.tsx:42:24)
+    at async RecrutementPage (recrutement/page.tsx:46:18)
+digest: "266591530"
+[0m [90m 44 |[39m     }[33m,[39m[0m
+[0m [90m 45 |[39m   })[33m;[39m[0m
+[0m[31m[1m>[22m[39m[90m 46 |[39m   [36mif[39m ([33m![39mres[33m.[39mok) [36mthrow[39m [36mnew[39m [33mError[39m([32m`Tenant jobs API ${res.status}`[39m)[33m;[39m[0m
+[0m [90m    |[39m                      [31m[1m^[22m[39m[0m
+[0m [90m 47 |[39m   [36mreturn[39m res[33m.[39mjson()[33m;[39m[0m
+[0m [90m 48 |[39m }[0m
+[0m [90m 49 |[39m[0m

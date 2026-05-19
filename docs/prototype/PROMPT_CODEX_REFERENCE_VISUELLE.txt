@@ -1,0 +1,699 @@
+Tu es un développeur senior Next.js 14 / TypeScript / Prisma / PostgreSQL spécialisé en ERP RH & Paie.
+
+Projet : T-ERP
+Stack existante :
+- Next.js 14 App Router + TypeScript
+- Prisma 5 + PostgreSQL
+- Tailwind CSS
+- React-PDF pour les PDF
+- Multi-tenant
+- Auth avec rôles/profils
+- Module RH déjà présent sur /rh/paie
+
+OBJECTIF
+========
+Implémenter le vrai module de paie complet dans T-ERP en respectant strictement :
+
+1. Le prototype visuel validé de l’ÉTAT DES SALAIRES.
+2. Le dernier modèle validé du BULLETIN DE PAIE PDF.
+3. Le workflow RH → DAF → DG.
+4. La génération automatique des bulletins à partir de la saisie RH.
+5. Le QR code d’authentification.
+6. L’ouverture publique sécurisée du bulletin via le même lien que le QR code.
+7. L’ajout obligatoire d’une photo de profil pour tous les profils/employés afin que le bulletin respecte le modèle visuel validé.
+
+CONTEXTE EXISTANT
+=================
+Le module RH paie existe déjà :
+- page : src/app/(app)/rh/paie/page.tsx
+- hook : src/hooks/useRhPayrollInput.ts
+- composants : src/components/rh/payroll-input/
+- API cycle courant : GET /api/rh/payroll/current-cycle
+- API inputs : GET/PATCH /api/rh/payroll/cycles/:id/inputs
+- API calculate actuelle : POST /api/rh/payroll/cycles/:id/calculate
+
+Mais actuellement, /calculate ne fait que passer le cycle en CALCULATED.
+Il doit maintenant créer les vrais bulletins Payslip + PayslipLine, calculer tous les montants, créer l’état des salaires et mettre à jour les totaux du PayrollCycle.
+
+Le projet possède déjà :
+- modèle Payslip
+- modèle PayslipLine
+- composant PayslipPDF
+- route PDF d’un bulletin
+- espace DAF de validation paie
+- espace employé “Ma paie”
+
+Tu dois t’appuyer sur l’existant, ne pas tout recréer.
+
+ARCHITECTURE À CRÉER
+====================
+Créer le dossier :
+
+src/lib/payroll/
+
+Avec les fichiers suivants :
+
+- payroll-rates.ts
+- irpp.ts
+- cnps.ts
+- calculate-payslip.ts
+- calculate-cycle.ts
+- build-payslip-lines.ts
+- build-payroll-state.ts
+- payroll-verification.ts
+- payroll-access.ts
+- payroll-audit.ts
+- payroll-pdf.ts
+- payroll-exports.ts
+
+Aucune logique métier lourde ne doit être écrite directement dans les routes API.
+Les routes API doivent appeler les services de src/lib/payroll.
+
+MODÈLES PRISMA À AJOUTER / MODIFIER
+====================================
+1. Ajouter un lien entre PayrollCycle et Payslip.
+
+Modifier Payslip :
+
+model Payslip {
+  payrollCycleId String?
+  payrollCycle   PayrollCycle? @relation(fields: [payrollCycleId], references: [id])
+}
+
+Modifier PayrollCycle :
+
+model PayrollCycle {
+  payslips Payslip[]
+}
+
+2. Ajouter PayrollEmployeeSnapshot.
+
+Créer :
+
+model PayrollEmployeeSnapshot {
+  id              String   @id @default(cuid())
+  tenantId        String
+  payrollCycleId  String
+  employeeKey     String
+  userId          String?
+  matricule       String
+  firstName       String
+  lastName        String
+  fullName        String
+  position        String?
+  category        String?
+  echelon         String?
+  department      String?
+  site            String?
+  contractType    String?
+  hireDate        DateTime?
+  cnpsNumber      String?
+  taxNumber       String?
+  bankName        String?
+  bankAccount     String?
+  profilePhotoUrl String?
+  baseSalary      Decimal  @default(0)
+  createdAt       DateTime @default(now())
+
+  payrollCycle    PayrollCycle @relation(fields: [payrollCycleId], references: [id])
+
+  @@unique([payrollCycleId, employeeKey])
+}
+
+Rôle :
+Cette table doit figer les informations du salarié au moment du cycle de paie.
+Même si le salarié change de poste, de banque, de photo ou quitte l’entreprise, le bulletin historique doit garder les anciennes informations.
+
+3. Ajouter des champs de vérification au Payslip si absents :
+
+verificationUuid String? @unique
+verificationCode String?
+verificationHash String?
+verifiedPublicUrl String?
+issuedAt DateTime?
+cancelledAt DateTime?
+replacedById String?
+
+4. Ajouter ou vérifier photo de profil côté User/Employee.
+
+Chaque profil/employé doit pouvoir avoir :
+profilePhotoUrl
+
+Si le modèle User contient déjà une image/avatar, utiliser ce champ.
+Sinon ajouter profilePhotoUrl au modèle User ou Employee selon l’architecture existante.
+
+OBLIGATION PHOTO DE PROFIL
+==========================
+Tous les profils présents dans le système doivent pouvoir ajouter une photo de profil.
+
+À faire :
+1. Ajouter upload photo dans /profil.
+2. Ajouter affichage photo dans :
+   - profil utilisateur
+   - état des salaires
+   - bulletin de paie
+3. Si aucune photo n’est fournie :
+   - afficher un avatar par défaut propre avec initiales.
+4. Le modèle PDF du bulletin doit afficher la photo du salarié comme dans le dernier prototype validé.
+
+ENDPOINTS À AJOUTER / MODIFIER
+==============================
+1. Enrichir :
+
+POST /api/rh/payroll/cycles/:id/calculate
+
+Nouveau comportement :
+- vérifier que le cycle est DRAFT ou CALCULATED non validé
+- charger PayrollInput
+- charger les employés réels du tenant
+- créer les PayrollEmployeeSnapshot
+- calculer chaque bulletin
+- créer ou mettre à jour Payslip
+- supprimer/recréer les PayslipLine liées
+- générer verificationUuid, verificationCode, verificationHash
+- mettre à jour PayrollCycle :
+  - totalBulletins
+  - grossAmount
+  - employerCharges
+  - netToPay
+  - calculatedAt
+  - status = CALCULATED
+- écrire audit log
+- retourner résumé complet
+
+2. Corriger :
+
+POST /api/rh/payroll/cycles/:id/validate-n1
+
+Après validation RH :
+- PayrollCycle.status doit passer à N2_PENDING
+- tous les bulletins du cycle doivent passer à VALIDATED_N1
+- renseigner validatedN1At
+- écrire audit log
+
+3. Ajouter :
+
+GET /api/rh/payroll/cycles/:id/state
+
+Retourne l’état des salaires détaillé en JSON.
+
+4. Ajouter :
+
+GET /api/rh/payroll/cycles/:id/state-pdf
+
+Génère le PDF officiel de l’état des salaires selon le prototype validé.
+
+5. Ajouter :
+
+GET /api/rh/payroll/cycles/:id/payslips
+
+Liste tous les bulletins générés du cycle.
+
+6. Ajouter :
+
+GET /api/rh/payroll/cycles/:id/payslips/:payslipId/pdf
+
+Téléchargement PDF du bulletin pour RH/DAF/DG selon droits.
+
+7. Ajouter :
+
+GET /payslip/verify/:uuid
+
+Page publique sécurisée accessible par QR code.
+
+IMPORTANT :
+Quand un employé ouvre son bulletin depuis son espace, il doit ouvrir exactement le même lien que le QR code :
+/payslip/verify/:uuid
+
+Le document doit s’ouvrir automatiquement dans un nouvel onglet.
+
+8. Ajouter API si nécessaire :
+
+GET /api/users/me/payslips/:id/open
+
+Retourne l’URL publique sécurisée du bulletin :
+/payslip/verify/:uuid
+
+DROITS D’ACCÈS
+==============
+1. RH
+- saisie variables
+- calcul
+- aperçu état de salaire
+- validation N1
+- aperçu bulletins
+- téléchargement état PDF
+
+2. DAF / RAF
+- consultation état complet
+- validation N2
+- exports :
+  - état complet
+  - ordre de virement
+  - état IRPP
+  - DIPE CNPS
+
+3. DG
+- synthèse masse salariale
+- validation N3
+- accès état complet si permission autorisée
+
+4. Employé
+- voit uniquement ses propres bulletins
+- voit uniquement son propre état / détail de salaire
+- peut ouvrir son bulletin via le lien public sécurisé
+- ne voit jamais les bulletins des autres
+
+5. Super-admin SaaS
+- ne doit pas accéder par défaut aux données salariales détaillées des tenants
+- accès uniquement monitoring/configuration sauf permission explicite
+
+ÉTAT DES SALAIRES — PROTOTYPE À RESPECTER
+=========================================
+Créer un composant :
+
+src/components/payroll/PayrollStateView.tsx
+src/components/payroll/PayrollStatePDF.tsx
+
+Le visuel doit respecter le prototype validé :
+- thème T-ERP violet / blanc
+- sidebar hors PDF
+- en-tête “État des salaires”
+- période
+- statut : Brouillon / Calculé / Validé
+- boutons :
+  - Exporter
+  - Imprimer / PDF
+- KPIs en haut :
+  1. Masse salariale brute
+  2. Total des retenues
+  3. Charges patronales
+  4. Net à payer
+  5. Effectif payé
+
+Sections obligatoires de l’état :
+
+1. RÉCAPITULATIF GÉNÉRAL
+- Total des salaires bruts
+- Total primes & indemnités
+- Total avantages en nature
+- Brut imposable
+- Total retenues salariales
+- CNPS salarié
+- IRPP
+- CAC
+- Avances
+- Autres retenues
+- Net à payer aux employés
+- Total charges patronales
+- Coût total employeur
+
+2. DÉTAIL DES RETENUES SALARIALES
+Groupes :
+A. Organismes sociaux
+- CNPS salarié
+- CAC si applicable
+- autres cotisations salariales
+
+B. Prélèvements fiscaux
+- IRPP
+- CAC
+- taxe communale si prévue
+
+C. Autres retenues
+- avances sur salaire
+- prêts sociaux
+- absences / retards
+- autres retenues diverses
+
+3. DÉTAIL DES CHARGES PATRONALES
+Groupes :
+A. Organismes sociaux
+- CNPS employeur
+- allocations familiales
+- FNE
+- CFC employeur
+
+B. Autres charges
+- accident travail
+- médecine du travail
+- formation professionnelle
+- autres charges patronales
+
+4. DÉTAIL PAR CATÉGORIES PROFESSIONNELLES
+Colonnes :
+- catégorie
+- effectif
+- brut imposable
+- retenues salariales
+- charges patronales
+- net à payer
+- coût total
+
+5. SYNTHÈSE FISCALE & DÉCLARATIONS
+- total base imposable IRPP
+- total IRPP prélevé
+- total CNPS salarié à déclarer
+- total CNPS employeur à déclarer
+- total CAC à déclarer
+- total à payer aux organismes sociaux
+
+Ajouter un graphique donut ou résumé visuel si possible.
+
+TABLEAU DÉTAILLÉ ÉTAT DES SALAIRES
+==================================
+Créer aussi une vue détaillée ligne par ligne.
+
+Colonnes exactes recommandées :
+- matricule
+- photo
+- nom et prénoms
+- poste
+- chantier / affectation
+- catégorie
+- type contrat
+- jours travaillés
+- heures travaillées
+- salaire de base
+- heures supplémentaires
+- primes
+- avantages
+- brut
+- brut imposable
+- base CNPS
+- CNPS salarié
+- IRPP
+- CAC
+- avances
+- prêts
+- autres retenues
+- total retenues
+- net à payer
+- CNPS employeur
+- allocations familiales
+- accident travail
+- CFC employeur
+- FNE
+- total charges patronales
+- coût total employeur
+- banque
+- compte bancaire
+- statut bulletin
+
+Filtres :
+- recherche
+- chantier
+- catégorie
+- banque
+- statut
+- anomalies
+
+BULLETIN DE PAIE — DERNIER MODÈLE VALIDÉ
+========================================
+Créer ou remplacer le composant :
+
+src/components/payroll/PayslipPDF.tsx
+
+Le modèle PDF doit respecter le dernier visuel validé :
+
+Format :
+- A4 paysage recommandé
+- thème violet / or T-ERP
+- logo dynamique de l’entreprise
+- photo du salarié
+- QR code en haut à droite
+- en-tête complet société
+- titre BULLETIN DE PAIE
+- mois / période
+- numéro bulletin
+- date édition
+- mode paiement
+- banque
+- compte bancaire
+- identité salarié
+- récapitulatif
+- 4 grandes sections :
+  1. Gains
+  2. Retenues salariales
+  3. Charges patronales
+  4. Synthèse
+- cumuls annuels
+- congés payés
+- absences
+- informations complémentaires
+- authentification
+- cachet / signature
+- pied de page document sécurisé
+
+Le logo doit être dynamique :
+company.logoUrl
+tenant.company.logoUrl
+jamais un logo fixe.
+
+La photo doit être dynamique :
+employee.profilePhotoUrl ou snapshot.profilePhotoUrl
+
+Si pas de photo :
+afficher avatar initiales.
+
+QR CODE
+=======
+Chaque bulletin doit avoir :
+- verificationUuid
+- verificationCode
+- verificationHash
+- verifiedPublicUrl
+
+URL :
+/payslip/verify/:uuid
+
+Le QR code doit pointer vers cette URL.
+
+Quand l’employé clique sur “ouvrir bulletin”, ouvrir cette même URL dans un nouvel onglet :
+target="_blank"
+
+La page /payslip/verify/:uuid doit :
+- vérifier le hash
+- afficher le PDF ou la prévisualisation officielle du bulletin
+- afficher statut :
+  - Valide
+  - Annulé
+  - Remplacé
+- ne pas exposer les données d’autres employés
+- afficher un bouton télécharger PDF
+- afficher automatiquement le document au chargement
+
+Important :
+L’URL QR et l’URL d’ouverture employé doivent être identiques.
+
+CALCULS DE PAIE
+===============
+Implémenter calculatePayslip(employeeSnapshot, payrollInput, settings).
+
+Calculs obligatoires :
+- salaireBrut
+- brutImposable
+- baseCNPS
+- cnpsSalarie
+- cnpsEmployeur
+- cfcSalarie
+- cfcEmployeur
+- fneEmployeur
+- allocationsFamiliales
+- accidentTravail
+- baseIRPPAnnuelle
+- irppAnnuel
+- irppMensuel
+- cac
+- avances
+- prêts
+- autresRetenues
+- totalRetenues
+- netAPayer
+- totalChargesPatronales
+- coutTotalEmployeur
+
+Les taux doivent venir de payroll_settings ou configuration tenant.
+Ne jamais coder les taux directement dans le composant PDF.
+
+Barème IRPP annuel progressif :
+- 0 à 2 000 000 FCFA : 10%
+- 2 000 001 à 3 000 000 FCFA : 15%
+- 3 000 001 à 5 000 000 FCFA : 25%
+- plus de 5 000 000 FCFA : 35%
+
+LIGNES PAYSLIPLINE
+==================
+Créer buildPayslipLines().
+
+Codes recommandés :
+Gains :
+- A001 Salaire de base
+- A002 Indemnité transport
+- A003 Indemnité logement
+- A004 Prime rendement
+- A005 Heures supplémentaires
+- A006 Prime chantier
+- A099 Autres primes et indemnités
+
+Retenues :
+- B001 CNPS salarié
+- B002 CFC salarié
+- B003 IRPP
+- B004 CAC
+- B005 Avance sur salaire
+- B006 Prêt social
+- B007 Absences et retards
+- B099 Autres retenues
+
+Charges patronales :
+- C001 CNPS employeur
+- C002 Allocations familiales
+- C003 Accident travail
+- C004 CFC employeur
+- C005 FNE
+- C099 Autres charges patronales
+
+Chaque ligne PayslipLine doit remplir :
+- code
+- label
+- quantity
+- base
+- rate
+- amountPlus
+- amountMinus
+- employerAmount
+- order
+
+WORKFLOW
+========
+Statuts attendus :
+
+DRAFT
+→ CALCULATING
+→ CALCULATED
+→ N2_PENDING après validation RH N1
+→ N3_PENDING après validation DAF N2
+→ PAID ou APPROVED selon logique existante
+→ DIPE_SUBMITTED
+→ CLOSED
+
+Corriger validate-n1 :
+après validation RH, le cycle ne doit pas rester N1_PENDING.
+Il doit passer à N2_PENDING.
+
+BLOQUER MODIFICATIONS
+=====================
+Bloquer PATCH PayrollInput si le cycle n’est plus DRAFT ou CALCULATED non validé.
+
+Si cycle validé :
+- interdiction modification directe
+- proposer “regenerate” uniquement si rôle autorisé
+- journaliser toute modification
+
+ANOMALIES
+=========
+Créer un système warnings/anomalies.
+
+Anomalies à détecter :
+- photo profil manquante
+- CNPS manquant
+- compte bancaire manquant
+- salaire base nul
+- net négatif
+- banque manquante
+- employeeKey sans userId réel
+- bulletin déjà validé
+- incohérence total état vs total bulletins
+
+Afficher les anomalies :
+- dans /rh/paie
+- dans état des salaires
+- dans journal de traitement
+
+EMPLOYÉS SYNTHÉTIQUES
+=====================
+Le rapport signale que PayrollInput utilise parfois employeeKey synthétique.
+Ne jamais générer de bulletin officiel pour un employeeKey synthétique sans userId réel, sauf si un PayrollEmployeeSnapshot complet est créé.
+
+Stratégie recommandée :
+- pour les vrais bulletins : utiliser User/Employee réel
+- pour démo volume : afficher les synthétiques dans état démo avec badge “Données démo”
+- prévoir PayrollEmployeeSnapshot pour figer les données
+
+ESPACE EMPLOYÉ
+==============
+Dans /paie ou /emp/payslips :
+Chaque employé doit voir :
+- historique de ses bulletins
+- période
+- net
+- statut
+- bouton “Ouvrir le bulletin”
+
+Le bouton doit ouvrir :
+/payslip/verify/:uuid
+
+dans un nouvel onglet.
+
+Ne pas ouvrir une route interne différente.
+Le lien doit être exactement celui du QR code.
+
+PROFIL UTILISATEUR
+==================
+Dans /profil :
+Ajouter ou vérifier :
+- upload photo
+- aperçu photo
+- suppression/remplacement photo
+- sauvegarde URL
+- affichage dans header/profil/bulletin
+
+Si l’utilisateur n’a pas de photo, afficher avatar initiales.
+Mais afficher une alerte dans RH/paie : “Photo manquante”.
+
+QUALITÉ ATTENDUE
+================
+- TypeScript strict
+- pas de any
+- validation Zod sur toutes les entrées API
+- try/catch avec erreurs JSON propres
+- composants propres et séparés
+- pas de logique métier dans JSX
+- pas de taux codés en dur
+- respect strict du prototype visuel
+- responsive
+- PDF propre
+- données multi-tenant isolées
+- audit log sur calcul, validation, génération, annulation
+- totaux état des salaires = somme exacte des bulletins
+
+LIVRABLES ATTENDUS
+==================
+1. Migration Prisma
+2. Services payroll dans src/lib/payroll
+3. Routes API enrichies
+4. Page état des salaires web
+5. PDF état des salaires
+6. Composant bulletin PDF selon modèle validé
+7. QR code + page publique verify
+8. Upload photo profil
+9. Espace employé avec ouverture du bulletin via URL QR
+10. Tests manuels :
+   - saisie RH
+   - calcul
+   - état salaires
+   - génération bulletins
+   - validation N1
+   - ouverture bulletin employé
+   - scan QR
+   - PDF téléchargeable
+   - contrôle droits entre profils
+
+IMPORTANT FINAL
+===============
+Ne change pas le design du bulletin validé.
+Ne change pas le design de l’état des salaires validé.
+Adapte-les seulement aux couleurs, logo et données dynamiques du tenant.
+Le logo du bulletin doit toujours être celui de l’entreprise qui génère la paie.
+Le lien du QR code et le lien d’ouverture du bulletin par l’employé doivent être identiques.

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="av-albert" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="60" fill="url(#av-albert)"/>
+  <circle cx="60" cy="50" r="20" fill="#fde68a"/>
+  <path d="M22 110 Q60 70 98 110 Z" fill="#fde68a"/>
+  <path d="M42 36 Q60 22 78 36 L78 42 Q60 32 42 42 Z" fill="#1f2937"/>
+  <rect x="50" y="92" width="20" height="6" fill="#5b21b6"/>
+</svg>

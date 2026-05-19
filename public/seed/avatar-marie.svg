@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="av-marie" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbcfe8"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="60" fill="url(#av-marie)"/>
+  <circle cx="60" cy="48" r="20" fill="#fef3c7"/>
+  <path d="M22 110 Q60 70 98 110 Z" fill="#fef3c7"/>
+  <path d="M40 32 Q60 12 80 32 Q82 44 74 50 L74 38 Q60 28 46 38 L46 50 Q38 44 40 32 Z" fill="#374151"/>
+  <text x="60" y="64" text-anchor="middle" font-family="Arial" font-size="3" fill="transparent">Marie NGONO</text>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "name": "T-ERP — ERP BTP Cameroun",
+  "short_name": "T-ERP",
+  "description": "Plateforme ERP multi-tenant pour les entreprises du BTP au Cameroun.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#2A1B3D",
+  "theme_color": "#A855F7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo-terp.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-terp.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "fr-FR"
+}
