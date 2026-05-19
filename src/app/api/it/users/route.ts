@@ -46,6 +46,9 @@ const createSchema = z.object({
   bankName: z.string().max(80).optional(),
   bankAgency: z.string().max(80).optional(),
   rib: z.string().max(60).optional(),
+  // Mot de passe initial optionnel (min 8 caractères). Si absent, on en
+  // génère un aléatoire que l'IT communique au user.
+  initialPassword: z.string().min(8, "Minimum 8 caractères").max(120).optional(),
 });
 
 export async function GET(req: Request) {
@@ -165,7 +168,10 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  const initialPassword = Math.random().toString(36).slice(2, 12) + "A1!";
+  // Si l'IT a fourni un mot de passe, on l'utilise tel quel ; sinon on en
+  // génère un aléatoire (10 chars + suffixe pour respecter la complexité).
+  const initialPassword =
+    parsed.data.initialPassword ?? Math.random().toString(36).slice(2, 12) + "A1!";
   const passwordHash = await hashPassword(initialPassword);
 
   // Si on crée un DG, on lui donne tous les pouvoirs métier + IT pour

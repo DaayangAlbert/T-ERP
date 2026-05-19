@@ -61,6 +61,8 @@ export default function NewUserPage() {
   const [contractType, setContractType] = useState<string>("");
   const [hireDate, setHireDate] = useState("");
   const [requireMfa, setRequireMfa] = useState(false);
+  // Mot de passe initial : vide = auto-généré ; rempli = utilisé tel quel.
+  const [initialPasswordInput, setInitialPasswordInput] = useState("");
   const [assignedSiteIds, setAssignedSiteIds] = useState<string[]>([]);
   const [siteFilter, setSiteFilter] = useState("");
   // Identité personnelle (alignée sur la page profil employé)
@@ -153,6 +155,8 @@ export default function NewUserPage() {
       bankName: bankName || undefined,
       bankAgency: bankAgency || undefined,
       rib: rib || undefined,
+      // Si rempli, on l'envoie ; sinon l'API génère un mdp aléatoire.
+      initialPassword: initialPasswordInput.trim() || undefined,
     };
     const res = await fetch("/api/it/users", {
       method: "POST",
@@ -361,6 +365,19 @@ export default function NewUserPage() {
                 />
                 Imposer MFA à la première connexion
               </label>
+            </Field>
+            <Field
+              label="Mot de passe initial (optionnel)"
+              hint="Laisse vide pour génération auto. Min 8 caractères si rempli."
+            >
+              <input
+                type="text"
+                value={initialPasswordInput}
+                onChange={(e) => setInitialPasswordInput(e.target.value)}
+                placeholder="Auto-généré si vide"
+                autoComplete="off"
+                className={INPUT}
+              />
             </Field>
             <Field label="Matricule employeur">
               <input
@@ -622,16 +639,19 @@ const INPUT =
 function Field({
   label,
   className,
+  hint,
   children,
 }: {
   label: string;
   className?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className={`block ${className ?? ""}`}>
       <span className="text-xs font-medium text-ink-2">{label}</span>
       {children}
+      {hint && <span className="mt-0.5 block text-[11px] text-ink-3">{hint}</span>}
     </label>
   );
 }
