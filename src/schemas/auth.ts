@@ -1,7 +1,18 @@
 import { z } from "zod";
 
+/**
+ * Login universel : l'utilisateur saisit son **email professionnel** ou
+ * son **numéro de téléphone** (au choix), avec son mot de passe. La
+ * résolution email/phone est faite côté serveur via la normalisation
+ * dans `lib/phone-normalize.ts`. Utile au Cameroun où beaucoup
+ * d'utilisateurs terrain n'ont pas d'email pro.
+ */
 export const loginSchema = z.object({
-  email: z.string().email({ message: "Email invalide" }),
+  identifier: z
+    .string()
+    .min(3, "Email ou téléphone requis")
+    .max(120, "Trop long")
+    .transform((s) => s.trim()),
   password: z.string().min(1, "Mot de passe requis"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;

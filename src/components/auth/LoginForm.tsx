@@ -58,13 +58,18 @@ export function LoginForm({ onSuccess }: Props) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
-      <Field label="Email" required error={errors.email?.message}>
+      <Field
+        label="Email ou téléphone"
+        required
+        error={errors.identifier?.message}
+      >
         <input
-          type="email"
-          autoComplete="email"
-          placeholder="prenom.nom@entreprise.cm"
-          {...register("email")}
-          className={inputClass(Boolean(errors.email))}
+          type="text"
+          autoComplete="username"
+          inputMode="email"
+          placeholder="prenom.nom@entreprise.cm ou +237 6 90 ..."
+          {...register("identifier")}
+          className={inputClass(Boolean(errors.identifier))}
         />
       </Field>
 

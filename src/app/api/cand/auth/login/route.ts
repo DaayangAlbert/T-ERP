@@ -4,13 +4,23 @@ import { prisma } from "@/lib/prisma";
 import { comparePassword } from "@/lib/auth";
 import { setAuthCookies } from "@/lib/cookies";
 import { loginSchema } from "@/schemas/auth";
+import { lookupUserByIdentifier } from "@/lib/login-lookup";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = loginSchema.parse(body);
+    const { identifier, password } = loginSchema.parse(body);
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const lookup = await lookupUserByIdentifier(identifier, "candidate");
+    if (!lookup.ok) {
+      const msg =
+        lookup.reason === "ambiguous"
+          ? "Ce numéro est partagé entre plusieurs comptes — connectez-vous avec votre email."
+          : "Identifiants invalides";
+      return NextResponse.json({ error: msg }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: lookup.userId } });
     if (!user || user.status !== "ACTIVE" || user.role !== "CANDIDATE") {
       return NextResponse.json(
         { error: "Identifiants invalides" },
