@@ -1166,6 +1166,10 @@ model Message {
 
   voiceNote VoiceNote?
 
+  // Suppression "pour tout le monde" (style WhatsApp) : on garde la ligne en
+  // tombstone, on vide le contenu/pièce jointe et on affiche "message supprimé".
+  deletedAt DateTime?
+
   createdAt DateTime @default(now())
 
   @@index([conversationId, createdAt])

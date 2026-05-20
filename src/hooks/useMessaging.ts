@@ -49,6 +49,7 @@ export interface MessageItem {
   attachmentType: string | null;
   voiceNote: { durationSec: number; transcript: string | null } | null;
   isSystem: boolean;
+  deleted: boolean;
   createdAt: string;
   senderId: string;
   sender: {
@@ -142,6 +143,50 @@ export function useSendAttachment(conversationId: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["conversation-messages", conversationId] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+/** Supprime un message "pour tout le monde" (réservé à l'expéditeur). */
+export function useDeleteMessage(conversationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: string): Promise<void> => {
+      if (!conversationId) throw new Error("Aucune conversation");
+      const res = await fetchWithRefresh(
+        `/api/conversations/${conversationId}/messages/${messageId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new HttpError(res.status, err.error ?? "Suppression échouée");
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["conversation-messages", conversationId] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+/** Met à jour les réglages de la conversation pour l'utilisateur (mute / pin). */
+export function useUpdateConversationSettings(conversationId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { isMuted?: boolean; isPinned?: boolean }): Promise<void> => {
+      if (!conversationId) throw new Error("Aucune conversation");
+      const res = await fetchWithRefresh(`/api/conversations/${conversationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new HttpError(res.status, err.error ?? "Mise à jour échouée");
+      }
+    },
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

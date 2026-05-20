@@ -125,6 +125,7 @@ export default function MessageriePage() {
                 onBack={() => setActiveId(null)}
                 autoStartCall={pendingCallStartFor === active.id}
                 onCallStartConsumed={() => setPendingCallStartFor(null)}
+                meLabel={currentUserLabel}
               />
             ) : (
               <div className="mx-auto max-w-sm rounded-lg bg-white/80 p-6 text-center shadow-sm ring-1 ring-line backdrop-blur">

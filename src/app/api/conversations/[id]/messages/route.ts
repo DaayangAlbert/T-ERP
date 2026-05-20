@@ -38,6 +38,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     attachmentSize: number | null;
     attachmentType: string | null;
     isSystem: boolean;
+    deletedAt: Date | null;
     createdAt: Date;
     senderId: string;
     sender: { id: string; firstName: string; lastName: string; avatarUrl: string | null; role: string };
@@ -59,6 +60,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         attachmentSize: true,
         attachmentType: true,
         isSystem: true,
+        deletedAt: true,
         createdAt: true,
         senderId: true,
         sender: {
@@ -98,6 +100,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     messages = fallback.map((m) => ({
       ...m,
       attachmentType: null,
+      deletedAt: null,
       voiceNote: null,
     }));
   }
@@ -111,20 +114,25 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   return NextResponse.json({
     items: messages
       .reverse()
-      .map((m) => ({
-        id: m.id,
-        content: m.content,
-        attachmentUrl: m.attachmentUrl,
-        attachmentName: m.attachmentName,
-        attachmentSize: m.attachmentSize,
-        attachmentType: m.attachmentType,
-        voiceNote: m.voiceNote,
-        isSystem: m.isSystem,
-        createdAt: m.createdAt.toISOString(),
-        senderId: m.senderId,
-        sender: m.sender,
-        isMe: m.senderId === session.sub,
-      })),
+      .map((m) => {
+        const deleted = Boolean(m.deletedAt);
+        return {
+          id: m.id,
+          // Message supprimé : on ne renvoie plus le contenu ni la pièce jointe.
+          content: deleted ? "" : m.content,
+          attachmentUrl: deleted ? null : m.attachmentUrl,
+          attachmentName: deleted ? null : m.attachmentName,
+          attachmentSize: deleted ? null : m.attachmentSize,
+          attachmentType: deleted ? null : m.attachmentType,
+          voiceNote: deleted ? null : m.voiceNote,
+          deleted,
+          isSystem: m.isSystem,
+          createdAt: m.createdAt.toISOString(),
+          senderId: m.senderId,
+          sender: m.sender,
+          isMe: m.senderId === session.sub,
+        };
+      }),
     currentUserId: session.sub,
   });
 }
@@ -180,6 +188,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         sender: created.sender,
         isMe: true,
         isSystem: false,
+        deleted: false,
         attachmentUrl: null,
         attachmentName: null,
         attachmentSize: null,

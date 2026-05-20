@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import { formatDistanceToNowStrict } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { ConversationItem } from "@/hooks/useMessaging";
+import { MsgAvatar } from "./MsgAvatar";
 
 interface Props {
   items: ConversationItem[];
@@ -177,15 +178,12 @@ export function ConversationList({
                     isActive ? "bg-primary-50" : "hover:bg-surface-alt"
                   )}
                 >
-                  <div
-                    className={clsx(
-                      "grid h-10 w-10 flex-shrink-0 place-items-center rounded-full text-[12px] font-semibold text-white",
-                      conv.isGroup && "rounded-md"
-                    )}
-                    style={{ background: tone }}
-                  >
-                    {initials}
-                  </div>
+                  <MsgAvatar
+                    url={conv.isGroup ? conv.avatarUrl : conv.otherUsers[0]?.avatarUrl}
+                    initials={initials}
+                    color={tone}
+                    square={conv.isGroup}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className={clsx("truncate text-[13px]", isUnread ? "font-semibold text-ink" : "font-medium text-ink")}>

@@ -20,6 +20,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { uploadDiskPath, uploadPublicUrl } from "@/lib/upload-paths";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,13 +84,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     );
   }
 
-  // Écriture du fichier
+  // Écriture du fichier dans UPLOAD_ROOT (stable, servi par nginx via /uploads/).
+  // ⚠️ NE PAS écrire sous process.cwd()/public en prod standalone : ce dossier
+  // est dans .next/standalone (perdu au rebuild) et n'est pas servi par nginx.
   const filename = `${Date.now()}-${safeName(file.name || "file")}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "messages", params.id);
+  const dir = uploadDiskPath("messages", params.id);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, filename), Buffer.from(await file.arrayBuffer()));
 
-  const publicUrl = `/uploads/messages/${params.id}/${filename}`;
+  const publicUrl = uploadPublicUrl("messages", params.id, filename);
 
   // Création du message (et VoiceNote si kind=voice)
   const created = await prisma.$transaction(async (tx) => {
@@ -149,6 +152,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       sender: created.sender,
       isMe: true,
       isSystem: false,
+      deleted: false,
     },
     { status: 201 }
   );

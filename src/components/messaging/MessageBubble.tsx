@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { clsx } from "clsx";
 import Image from "next/image";
-import { CheckCheck, FileText, Download } from "lucide-react";
+import { CheckCheck, FileText, Download, X, Ban, Trash2, ChevronDown } from "lucide-react";
 import type { MessageItem } from "@/hooks/useMessaging";
+import { MsgAvatar } from "./MsgAvatar";
 
 interface Props {
   message: MessageItem;
@@ -12,6 +14,8 @@ interface Props {
   isGroup: boolean;
   /** Hex color used for the avatar disc. */
   avatarColor: string;
+  /** Supprime le message "pour tout le monde" (uniquement sur ses propres messages). */
+  onDelete?: (id: string) => void;
 }
 
 function fmtSize(bytes: number | null): string {
@@ -48,7 +52,9 @@ export function MessageBubble({
   showSenderName,
   isGroup,
   avatarColor,
+  onDelete,
 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false);
   if (message.isSystem) {
     return (
       <div className="my-2 flex justify-center">
@@ -59,6 +65,7 @@ export function MessageBubble({
     );
   }
 
+  const [lightbox, setLightbox] = useState(false);
   const initials = `${message.sender.firstName.charAt(0)}${message.sender.lastName.charAt(0)}`.toUpperCase();
   const time = new Date(message.createdAt).toLocaleTimeString("fr-FR", {
     hour: "2-digit",
@@ -66,6 +73,7 @@ export function MessageBubble({
   });
 
   const isMe = message.isMe;
+  const canDelete = isMe && !message.deleted;
   const withTail = showSenderName;
 
   const hasImage = isImageType(message.attachmentType) && message.attachmentUrl;
@@ -82,15 +90,16 @@ export function MessageBubble({
       )}
     >
       {!isMe && showAvatar && (
-        <div
-          className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full text-[10px] font-semibold text-white"
-          style={{ background: avatarColor }}
-        >
-          {initials}
-        </div>
+        <MsgAvatar
+          url={message.sender.avatarUrl}
+          initials={initials}
+          color={avatarColor}
+          sizeClass="h-7 w-7"
+          textClass="text-[10px]"
+        />
       )}
 
-      <div className="relative max-w-[78%]">
+      <div className="group relative max-w-[78%]">
         <div
           className={clsx(
             "text-[13px] leading-snug shadow-sm overflow-hidden",
@@ -110,18 +119,30 @@ export function MessageBubble({
             </div>
           )}
 
-          {/* Image attachée */}
+          {/* Image attachée — clic = lightbox, bouton = téléchargement */}
           {hasImage && (
-            <a href={message.attachmentUrl!} target="_blank" rel="noopener" className="block">
-              <Image
-                src={message.attachmentUrl!}
-                alt={message.attachmentName ?? ""}
-                width={320}
-                height={240}
-                className="rounded-xl object-cover"
-                unoptimized
-              />
-            </a>
+            <div className="group relative">
+              <button type="button" onClick={() => setLightbox(true)} className="block w-full" title="Agrandir">
+                <Image
+                  src={message.attachmentUrl!}
+                  alt={message.attachmentName ?? ""}
+                  width={320}
+                  height={240}
+                  className="rounded-xl object-cover"
+                  unoptimized
+                />
+              </button>
+              <a
+                href={message.attachmentUrl!}
+                download={message.attachmentName ?? undefined}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/45 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/65"
+                title="Télécharger"
+                aria-label="Télécharger l'image"
+              >
+                <Download className="h-4 w-4" />
+              </a>
+            </div>
           )}
 
           {/* Note vocale */}
@@ -158,8 +179,15 @@ export function MessageBubble({
             </a>
           )}
 
+          {/* Message supprimé : tombstone */}
+          {message.deleted && (
+            <p className={clsx("flex items-center gap-1.5 italic", isMe ? "text-white/75" : "text-ink-3")}>
+              <Ban className="h-3.5 w-3.5" /> Message supprimé
+            </p>
+          )}
+
           {/* Texte (sauf si c'est juste le nom du fichier ou "🎤 Note vocale") */}
-          {!hasOnlyAttachment && message.content && (
+          {!message.deleted && !hasOnlyAttachment && message.content && (
             <p className={clsx("whitespace-pre-line break-words", hasImage && "px-2 pt-1")}>
               {message.content}
             </p>
@@ -189,7 +217,78 @@ export function MessageBubble({
             <path d="M0 0 C 0 8 4 12 8 12 L 0 12 Z" fill="currentColor" />
           </svg>
         )}
+
+        {/* Menu (suppression) — uniquement sur ses propres messages */}
+        {canDelete && onDelete && (
+          <div className="absolute right-1 top-1 z-10">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="grid h-5 w-5 place-items-center rounded-full bg-black/15 text-white opacity-0 transition group-hover:opacity-100 hover:bg-black/35"
+              aria-label="Options du message"
+              title="Options"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-6 z-20 w-56 overflow-hidden rounded-lg border border-line bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (window.confirm("Supprimer ce message pour tout le monde ?")) {
+                        onDelete(message.id);
+                      }
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-rose-600 hover:bg-rose-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Supprimer pour tout le monde
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Lightbox plein écran pour les images */}
+      {lightbox && hasImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
+          role="dialog"
+          aria-label="Aperçu de l'image"
+          onClick={() => setLightbox(false)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={message.attachmentUrl!}
+            alt={message.attachmentName ?? ""}
+            className="max-h-[90vh] max-w-[92vw] rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <a
+            href={message.attachmentUrl!}
+            download={message.attachmentName ?? undefined}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white hover:bg-white/30"
+            title="Télécharger"
+            aria-label="Télécharger l'image"
+          >
+            <Download className="h-5 w-5" />
+          </a>
+          <button
+            type="button"
+            onClick={() => setLightbox(false)}
+            className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white hover:bg-white/30"
+            title="Fermer"
+            aria-label="Fermer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
