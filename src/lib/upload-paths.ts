@@ -56,11 +56,18 @@ export async function uploadUrlToDataUri(
     return url;
   }
 
+  // react-pdf rend les SVG via <Image> de façon non fiable : si le SVG
+  // contient du texte avec une police non enregistrée (ex: "Arial,
+  // Helvetica, sans-serif"), le rendu plante ("Font family not registered").
+  // On ignore donc les SVG pour les PDF — le composant affiche son fallback.
+  // Les vraies signatures sont PNG/JPG/WEBP (l'uploader l'impose), pas de SVG.
+  if (url.toLowerCase().endsWith(".svg")) return null;
+
   let diskPath: string;
   if (url.startsWith("/uploads/")) {
     diskPath = uploadDiskPath(...url.slice("/uploads/".length).split("/"));
   } else if (url.startsWith("/")) {
-    // Asset public buildé (ex: /seed/logo.svg) — dans public/, copié au deploy.
+    // Asset public buildé (ex: /seed/logo.png) — dans public/, copié au deploy.
     diskPath = path.join(process.cwd(), "public", ...url.slice(1).split("/"));
   } else {
     return null;
@@ -69,6 +76,7 @@ export async function uploadUrlToDataUri(
   try {
     const buf = await readFile(diskPath);
     const ext = (diskPath.split(".").pop() ?? "").toLowerCase();
+    if (ext === "svg") return null; // double garde-fou
     const mime = EXT_TO_MIME[ext] ?? "image/png";
     return `data:${mime};base64,${buf.toString("base64")}`;
   } catch {
