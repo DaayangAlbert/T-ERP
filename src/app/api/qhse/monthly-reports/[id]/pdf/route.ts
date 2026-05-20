@@ -4,6 +4,7 @@ import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { uploadUrlToDataUri } from "@/lib/upload-paths";
 import { QhseMonthlyReportPDF, type QhseReportPdfData } from "@/components/qhse/reports/QhseMonthlyReportPDF";
 
 export const runtime = "nodejs";
@@ -23,7 +24,14 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     where: { id },
     include: {
       author: { select: { firstName: true, lastName: true, position: true } },
-      validatedBy: { select: { firstName: true, lastName: true } },
+      validatedBy: {
+        select: {
+          firstName: true,
+          lastName: true,
+          position: true,
+          signature: { select: { signatureUrl: true } },
+        },
+      },
     },
   });
   if (!report) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
@@ -34,8 +42,17 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: report.tenantId },
-    select: { name: true, contactAddress: true, contactPhone: true, contactEmail: true, taxId: true, logoUrl: true },
+    select: {
+      name: true, contactAddress: true, contactPhone: true, contactEmail: true,
+      taxId: true, logoUrl: true, stampImageUrl: true,
+    },
   });
+
+  const [logoDataUri, stampDataUri, signatureDataUri] = await Promise.all([
+    uploadUrlToDataUri(tenant?.logoUrl),
+    uploadUrlToDataUri(tenant?.stampImageUrl),
+    uploadUrlToDataUri(report.validatedBy?.signature?.signatureUrl),
+  ]);
 
   const previousCount = await prisma.qhseMonthlyReport.count({
     where: {
@@ -91,6 +108,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     chsctRecommendations: report.chsctRecommendations,
     author: { name: `${report.author.firstName} ${report.author.lastName}`, position: report.author.position },
     validatedBy: report.validatedBy ? `${report.validatedBy.firstName} ${report.validatedBy.lastName}` : null,
+    validatedByPosition: report.validatedBy?.position ?? null,
+    validatedBySignatureUrl: signatureDataUri,
     submittedAt: report.submittedAt?.toISOString() ?? null,
     validatedAt: report.validatedAt?.toISOString() ?? null,
     rejectionReason: report.rejectionReason,
@@ -100,7 +119,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       contactPhone: tenant?.contactPhone ?? null,
       contactEmail: tenant?.contactEmail ?? null,
       taxId: tenant?.taxId ?? null,
-      logoUrl: tenant?.logoUrl ?? null,
+      logoUrl: logoDataUri,
+      stampImageUrl: stampDataUri,
     },
   };
 

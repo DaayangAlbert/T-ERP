@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Download, AlertOctagon, X, ShieldAlert } from "lucide-react";
 import { clsx } from "clsx";
+import { SignatureConfirmModal } from "@/components/common/SignatureConfirmModal";
 
 interface ListItem {
   id: string;
@@ -202,14 +204,17 @@ function Kv({ label, value, alert }: { label: string; value: string; alert?: boo
 
 function ReviewModal({ reportId, readOnly = false, onClose, rejecting, setRejecting }: { reportId: string; readOnly?: boolean; onClose: () => void; rejecting: boolean; setRejecting: (v: boolean) => void }) {
   const qc = useQueryClient();
+  const params = useParams<{ tenantSlug: string }>();
+  const tenantSlug = params?.tenantSlug ?? "";
   const [reason, setReason] = useState("");
+  const [showSignConfirm, setShowSignConfirm] = useState(false);
   const { data: report, isLoading } = useQuery({
     queryKey: ["dg", "qhse-report", reportId],
     queryFn: () => getJson<ReportDetail>(`/api/qhse/monthly-reports/${reportId}`),
   });
   const validate = useMutation({
     mutationFn: () => getJson(`/api/qhse/monthly-reports/${reportId}/validate`, { method: "POST" }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["dg"] }); onClose(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["dg"] }); setShowSignConfirm(false); onClose(); },
   });
   const reject = useMutation({
     mutationFn: () => getJson(`/api/qhse/monthly-reports/${reportId}/reject`, {
@@ -302,8 +307,8 @@ function ReviewModal({ reportId, readOnly = false, onClose, rejecting, setReject
               <button onClick={() => setRejecting(true)} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-3 text-[12.5px] font-semibold text-rose-700 hover:bg-rose-100">
                 <XCircle className="h-4 w-4" /> Refuser
               </button>
-              <button onClick={() => validate.mutate()} disabled={validate.isPending} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[12.5px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
-                <CheckCircle2 className="h-4 w-4" /> {validate.isPending ? "Validation..." : "Valider"}
+              <button onClick={() => setShowSignConfirm(true)} disabled={validate.isPending} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[12.5px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                <CheckCircle2 className="h-4 w-4" /> {validate.isPending ? "Validation..." : "Valider et signer"}
               </button>
             </div>
           ) : (
@@ -323,6 +328,16 @@ function ReviewModal({ reportId, readOnly = false, onClose, rejecting, setReject
           )}
         </div>
       </div>
+
+      <SignatureConfirmModal
+        open={showSignConfirm}
+        title="Valider et signer le rapport"
+        description="En validant, vous apposez votre visa sur le rapport mensuel QHSE. Votre signature et le cachet de la société seront ajoutés au PDF officiel."
+        tenantSlug={tenantSlug}
+        busy={validate.isPending}
+        onConfirm={() => validate.mutate()}
+        onClose={() => setShowSignConfirm(false)}
+      />
     </div>
   );
 }
