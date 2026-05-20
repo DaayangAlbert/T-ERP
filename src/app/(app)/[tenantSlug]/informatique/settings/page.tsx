@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Palette, Globe, Shield, Calendar, Bell, Save, FileBadge, Upload, Trash2, Loader2 } from "lucide-react";
@@ -407,56 +406,85 @@ function AssetUpload({
   });
 
   const busy = upload.isPending || clear.isPending;
+  const [imgError, setImgError] = useState(false);
+
+  // Reset l'erreur d'image quand l'URL change (nouveau fichier uploadé)
+  useEffect(() => {
+    setImgError(false);
+  }, [url]);
 
   return (
-    <div className="rounded-md border border-line bg-surface-alt/30 p-2.5">
-      <div className="flex items-start gap-3">
-        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-line bg-white">
-          {url ? (
-            <Image src={url} alt={label} fill className="object-contain" unoptimized />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-[9.5px] text-ink-3">vide</div>
-          )}
-          {busy && (
-            <div className="absolute inset-0 grid place-items-center bg-white/70">
-              <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <label className="text-[12.5px] font-semibold text-ink-2">{label}</label>
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                disabled={busy}
-                className="inline-flex h-7 items-center gap-1 rounded border border-primary-300 bg-white px-2 text-[11.5px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50"
-              >
-                <Upload className="h-3 w-3" /> {url ? "Remplacer" : "Téléverser"}
-              </button>
-              {url && (
-                <button
-                  type="button"
-                  onClick={() => clear.mutate()}
-                  disabled={busy}
-                  className="inline-flex h-7 items-center gap-1 rounded border border-danger/40 bg-white px-2 text-[11.5px] font-medium text-danger hover:bg-danger/5 disabled:opacity-50"
-                >
-                  <Trash2 className="h-3 w-3" /> Supprimer
-                </button>
-              )}
-            </div>
-          </div>
-          {hint && <p className="mt-0.5 text-[10.5px] text-ink-3">{hint}</p>}
+    <div className="rounded-lg border border-line bg-white p-3 transition hover:border-primary-200">
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-[13px] font-semibold text-ink">{label}</label>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-primary-300 bg-white px-2.5 text-[11.5px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50"
+          >
+            <Upload className="h-3 w-3" /> {url ? "Remplacer" : "Téléverser"}
+          </button>
           {url && (
-            <p className="mt-0.5 truncate font-mono text-[10px] text-ink-3" title={url}>
-              {url}
-            </p>
+            <button
+              type="button"
+              onClick={() => clear.mutate()}
+              disabled={busy}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-danger/40 bg-white px-2 text-[11.5px] font-medium text-danger hover:bg-danger/5 disabled:opacity-50"
+              title="Supprimer"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
           )}
-          {error && <p className="mt-1 text-[11px] text-danger">{error}</p>}
         </div>
       </div>
+
+      {/* Preview large avec fond damier (visualise la transparence PNG) */}
+      <div
+        className="relative mt-2 grid h-28 w-full place-items-center overflow-hidden rounded-md border border-line"
+        style={{
+          backgroundColor: "#fff",
+          backgroundImage:
+            "linear-gradient(45deg,#eef0f2 25%,transparent 25%),linear-gradient(-45deg,#eef0f2 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eef0f2 75%),linear-gradient(-45deg,transparent 75%,#eef0f2 75%)",
+          backgroundSize: "14px 14px",
+          backgroundPosition: "0 0,0 7px,7px -7px,-7px 0",
+        }}
+      >
+        {url && !imgError ? (
+          // <img> natif (et non next/Image) : sert directement /uploads/ via
+          // nginx, pas de pipeline d'optimisation, gère onError proprement.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt={label}
+            className="max-h-24 max-w-full object-contain"
+            onError={() => setImgError(true)}
+          />
+        ) : imgError ? (
+          <div className="px-3 text-center text-[11px] text-danger">
+            ⚠ Image introuvable
+            <span className="mt-0.5 block text-[10px] text-ink-3">
+              (uploadée mais non servie — vérifier la config nginx /uploads/)
+            </span>
+          </div>
+        ) : (
+          <span className="text-[11px] text-ink-3">Aucun fichier</span>
+        )}
+        {busy && (
+          <div className="absolute inset-0 grid place-items-center bg-white/70">
+            <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+          </div>
+        )}
+      </div>
+
+      {hint && <p className="mt-1.5 text-[10.5px] text-ink-3">{hint}</p>}
+      {url && (
+        <p className="mt-0.5 truncate font-mono text-[10px] text-ink-4" title={url}>
+          {url}
+        </p>
+      )}
+      {error && <p className="mt-1 text-[11px] text-danger">{error}</p>}
 
       <input
         ref={inputRef}
@@ -466,7 +494,6 @@ function AssetUpload({
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) upload.mutate(f);
-          // Reset l'input pour pouvoir re-sélectionner le même fichier après suppression
           e.target.value = "";
         }}
       />
