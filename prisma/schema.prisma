@@ -711,6 +711,13 @@ model Site {
   moaTypeKind       MoaType?
   contractTypeKind  ContractTypeSite?
 
+  // Financement du marché (saisie du montant à la création)
+  financingType  FinancingType @default(SINGLE)
+  financings     Json          @default("[]") // [{ label, amountHT }] — montant HT par source de financement
+  vatRate        Float         @default(19.25) // TVA %
+  irRate         Float         @default(0) // IR / acompte %
+  durationMonths Int? // délai d'exécution en mois (plannedEndDate = startDate + durationMonths)
+
   contract                 SiteContract?
   photos                   SitePhoto[]
   alerts                   SiteAlert[]
@@ -786,6 +793,12 @@ enum ContractTypeSite {
   UNIT_PRICE
   COST_PLUS
   DESIGN_BUILD
+}
+
+// Nature du financement du marché : unique ou conjoint (cofinancement).
+enum FinancingType {
+  SINGLE // financement simple
+  JOINT // financement conjoint (plusieurs bailleurs/sources)
 }
 
 enum SiteType {

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Check } from "lucide-react";
+import { ArrowLeft, Save, Check, Plus, Trash2 } from "lucide-react";
 
 const SITE_TYPES = [
   { value: "ROAD", label: "Routier (BTP)" },
@@ -42,6 +42,32 @@ interface ManagerOption {
   role: string;
 }
 
+interface FinancingRow {
+  label: string;
+  amountHT: string;
+}
+
+/** Ajoute n mois à une date en gérant la fin de mois (31 jan + 1 mois = 28/29 fév). */
+function addMonths(iso: string, months: number): Date | null {
+  if (!iso || !Number.isFinite(months)) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + months);
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, lastDay));
+  return d;
+}
+
+const fmtFcfa = (n: number) =>
+  `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
+
+const fmtDate = (d: Date | null) =>
+  d
+    ? d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })
+    : "—";
+
 export default function NewSitePage() {
   const router = useRouter();
   const params = useParams<{ tenantSlug: string }>();
@@ -52,15 +78,22 @@ export default function NewSitePage() {
   const [client, setClient] = useState("");
   const [type, setType] = useState<string>("BUILDING");
   const [region, setRegion] = useState("");
-  const [budget, setBudget] = useState<number>(0);
-  const [startDate, setStartDate] = useState("");
-  const [plannedEndDate, setPlannedEndDate] = useState("");
   const [status, setStatus] = useState<string>("PLANNED");
   const [managerId, setManagerId] = useState("");
   const [marginTarget, setMarginTarget] = useState(20);
   const [moaName, setMoaName] = useState("");
   const [moaTypeKind, setMoaTypeKind] = useState("");
   const [contractTypeKind, setContractTypeKind] = useState("");
+
+  // ── Montant du marché ──
+  const [financingType, setFinancingType] = useState<"SINGLE" | "JOINT">("SINGLE");
+  const [financings, setFinancings] = useState<FinancingRow[]>([{ label: "", amountHT: "" }]);
+  const [vatRate, setVatRate] = useState(19.25);
+  const [irRate, setIrRate] = useState(2.2);
+
+  // ── Délai d'exécution ──
+  const [startDate, setStartDate] = useState("");
+  const [durationMonths, setDurationMonths] = useState<number>(12);
 
   const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [saving, setSaving] = useState(false);
@@ -81,9 +114,64 @@ export default function NewSitePage() {
     })();
   }, []);
 
+  // ── Calculs en direct ──
+  const totalHT = useMemo(
+    () =>
+      financings.reduce((sum, f) => {
+        const v = Number(f.amountHT);
+        return sum + (Number.isFinite(v) && v > 0 ? v : 0);
+      }, 0),
+    [financings],
+  );
+  const montantTTC = totalHT * (1 + vatRate / 100);
+  const montantNet = totalHT * (1 - irRate / 100);
+  const endDate = useMemo(() => addMonths(startDate, durationMonths), [startDate, durationMonths]);
+
+  function setFinancingTypeSafe(next: "SINGLE" | "JOINT") {
+    setFinancingType(next);
+    if (next === "SINGLE") {
+      // On garde la 1re ligne (son montant), label vidé.
+      setFinancings((rows) => [{ label: "", amountHT: rows[0]?.amountHT ?? "" }]);
+    } else if (financings.length < 2) {
+      setFinancings((rows) => [...rows, { label: "", amountHT: "" }]);
+    }
+  }
+
+  function updateRow(i: number, patch: Partial<FinancingRow>) {
+    setFinancings((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  }
+  function addRow() {
+    setFinancings((rows) => [...rows, { label: "", amountHT: "" }]);
+  }
+  function removeRow(i: number) {
+    setFinancings((rows) => (rows.length > 1 ? rows.filter((_, idx) => idx !== i) : rows));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    const cleanFinancings = financings
+      .map((f) => ({ label: f.label.trim(), amountHT: Math.round(Number(f.amountHT)) }))
+      .filter((f) => Number.isFinite(f.amountHT) && f.amountHT > 0);
+
+    if (cleanFinancings.length === 0) {
+      setError("Renseigne au moins un montant HT de financement.");
+      return;
+    }
+    if (financingType === "JOINT" && cleanFinancings.some((f) => !f.label)) {
+      setError("En financement conjoint, chaque source doit avoir un libellé.");
+      return;
+    }
+    if (!startDate) {
+      setError("La date de démarrage est requise.");
+      return;
+    }
+    if (!durationMonths || durationMonths < 1) {
+      setError("Le délai d'exécution (en mois) doit être au moins 1.");
+      return;
+    }
+
     setSaving(true);
     const body = {
       code: code.trim(),
@@ -91,15 +179,18 @@ export default function NewSitePage() {
       client: client.trim(),
       type,
       region: region.trim() || undefined,
-      budget: Math.round(budget),
-      startDate: startDate ? new Date(startDate).toISOString() : "",
-      plannedEndDate: plannedEndDate ? new Date(plannedEndDate).toISOString() : "",
       status,
       managerId: managerId || undefined,
       marginTarget,
       moaName: moaName.trim() || undefined,
       moaTypeKind: moaTypeKind || undefined,
       contractTypeKind: contractTypeKind || undefined,
+      financingType,
+      financings: cleanFinancings,
+      vatRate,
+      irRate,
+      startDate: new Date(startDate).toISOString(),
+      durationMonths,
     };
     const res = await fetch("/api/it/sites", {
       method: "POST",
@@ -249,26 +340,7 @@ export default function NewSitePage() {
               ))}
             </select>
           </Field>
-          <Field
-            label="Budget (FCFA)"
-            required
-            hint="Montant total alloué au chantier"
-          >
-            <input
-              type="number"
-              required
-              min={0}
-              step={1000}
-              value={budget}
-              onChange={(e) => setBudget(Number(e.target.value))}
-              placeholder="150000000"
-              className={INPUT}
-            />
-          </Field>
-          <Field
-            label="Marge cible (%)"
-            hint="Marge bénéficiaire visée"
-          >
+          <Field label="Marge cible (%)" hint="Marge bénéficiaire visée">
             <input
               type="number"
               min={0}
@@ -279,6 +351,132 @@ export default function NewSitePage() {
               className={INPUT}
             />
           </Field>
+        </fieldset>
+
+        {/* ───────── Montant du marché ───────── */}
+        <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+          <Legend>Montant du marché</Legend>
+
+          <Field label="Type de financement" required className="sm:col-span-2">
+            <div className="mt-1 inline-flex rounded-md border border-line bg-surface-alt p-0.5 text-sm">
+              <button
+                type="button"
+                onClick={() => setFinancingTypeSafe("SINGLE")}
+                className={`rounded px-3 py-1.5 font-medium transition ${
+                  financingType === "SINGLE"
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                Financement simple
+              </button>
+              <button
+                type="button"
+                onClick={() => setFinancingTypeSafe("JOINT")}
+                className={`rounded px-3 py-1.5 font-medium transition ${
+                  financingType === "JOINT"
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : "text-ink-2 hover:text-ink"
+                }`}
+              >
+                Financement conjoint
+              </button>
+            </div>
+          </Field>
+
+          {financingType === "SINGLE" ? (
+            <Field label="Montant HT du marché (FCFA)" required className="sm:col-span-2">
+              <input
+                type="number"
+                required
+                min={0}
+                step={1000}
+                value={financings[0]?.amountHT ?? ""}
+                onChange={(e) => updateRow(0, { amountHT: e.target.value })}
+                placeholder="150000000"
+                className={`${INPUT} font-mono`}
+              />
+            </Field>
+          ) : (
+            <div className="sm:col-span-2 space-y-2">
+              <span className="text-xs font-medium text-ink-2">
+                Sources de financement (montant HT par source)
+                <span className="ml-0.5 text-rose-500">*</span>
+              </span>
+              {financings.map((row, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <input
+                    value={row.label}
+                    onChange={(e) => updateRow(i, { label: e.target.value })}
+                    placeholder="Source (ex: BIP, FEICOM, Fonds propres)"
+                    className={`${INPUT} flex-1`}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={row.amountHT}
+                    onChange={(e) => updateRow(i, { amountHT: e.target.value })}
+                    placeholder="Montant HT"
+                    className={`${INPUT} w-44 font-mono`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeRow(i)}
+                    disabled={financings.length <= 1}
+                    title="Supprimer cette source"
+                    className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-md border border-line-2 bg-white text-ink-3 hover:border-rose-300 hover:text-rose-600 disabled:opacity-40"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addRow}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-line-2 bg-white px-3 text-[13px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+              >
+                <Plus className="h-3.5 w-3.5" /> Ajouter une source
+              </button>
+            </div>
+          )}
+
+          <Field label="TVA (%)" required>
+            <input
+              type="number"
+              required
+              min={0}
+              max={100}
+              step={0.05}
+              value={vatRate}
+              onChange={(e) => setVatRate(Number(e.target.value))}
+              className={INPUT}
+            />
+          </Field>
+          <Field label="IR / acompte (%)" required hint="Retenue à la source — net à mandater = HT × (1 − IR)">
+            <input
+              type="number"
+              required
+              min={0}
+              max={100}
+              step={0.05}
+              value={irRate}
+              onChange={(e) => setIrRate(Number(e.target.value))}
+              className={INPUT}
+            />
+          </Field>
+
+          {/* Aperçu calculé en direct */}
+          <div className="sm:col-span-2 grid gap-2 rounded-lg border border-primary-200 bg-primary-50/50 p-3 sm:grid-cols-3">
+            <Preview label="Montant HT" value={fmtFcfa(totalHT)} />
+            <Preview label={`Montant TTC (TVA ${vatRate}%)`} value={fmtFcfa(montantTTC)} />
+            <Preview label={`Net à mandater (IR ${irRate}%)`} value={fmtFcfa(montantNet)} highlight />
+          </div>
+        </fieldset>
+
+        {/* ───────── Délai d'exécution ───────── */}
+        <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+          <Legend>Délai d&apos;exécution</Legend>
           <Field label="Date de démarrage" required>
             <input
               type="date"
@@ -288,15 +486,25 @@ export default function NewSitePage() {
               className={INPUT}
             />
           </Field>
-          <Field label="Date de fin prévue" required>
+          <Field label="Délai d'exécution (mois)" required>
             <input
-              type="date"
+              type="number"
               required
-              value={plannedEndDate}
-              onChange={(e) => setPlannedEndDate(e.target.value)}
+              min={1}
+              step={1}
+              value={durationMonths}
+              onChange={(e) => setDurationMonths(Number(e.target.value))}
               className={INPUT}
             />
           </Field>
+          <div className="sm:col-span-2 rounded-lg border border-line bg-surface-alt p-3">
+            <div className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
+              Date de fin prévue (calculée)
+            </div>
+            <div className="mt-0.5 font-mono text-[15px] font-bold text-ink">
+              {fmtDate(endDate)}
+            </div>
+          </div>
         </fieldset>
 
         <fieldset className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
@@ -423,5 +631,20 @@ function Legend({ children }: { children: React.ReactNode }) {
     <p className="sm:col-span-2 -mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
       {children}
     </p>
+  );
+}
+
+function Preview({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div>
+      <div className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
+      <div
+        className={`mt-0.5 font-mono text-[15px] font-bold ${
+          highlight ? "text-primary-800" : "text-ink"
+        }`}
+      >
+        {value}
+      </div>
+    </div>
   );
 }

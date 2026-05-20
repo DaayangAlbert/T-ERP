@@ -72,6 +72,11 @@ export function useSites(filters: SitesFilters = {}) {
   });
 }
 
+export interface SiteFinancing {
+  label: string;
+  amountHT: string;
+}
+
 export function useSite(id: string | null) {
   return useQuery({
     queryKey: ["site", id],
@@ -80,6 +85,11 @@ export function useSite(id: string | null) {
       counts: { alerts: number; photos: number; decisions: number };
       lat: number | null;
       lng: number | null;
+      financingType: "SINGLE" | "JOINT";
+      financings: SiteFinancing[];
+      vatRate: number;
+      irRate: number;
+      durationMonths: number | null;
     }> => {
       const res = await fetch(`/api/sites/${id}`);
       if (!res.ok) throw new Error("Chantier introuvable");

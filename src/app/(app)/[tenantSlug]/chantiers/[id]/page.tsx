@@ -92,7 +92,7 @@ export default function ChantierDetailPage({ params }: { params: { id: string } 
           </span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <HeroStat icon={<Wallet className="h-3.5 w-3.5" />} label="Budget">{formatFCFA(BigInt(site.budget))}</HeroStat>
+          <HeroStat icon={<Wallet className="h-3.5 w-3.5" />} label="Montant HT">{formatFCFA(BigInt(site.budget))}</HeroStat>
           <HeroStat icon={<Calendar className="h-3.5 w-3.5" />} label="Livraison">{formatDate(site.plannedEndDate)}</HeroStat>
           <HeroStat icon={<MapPin className="h-3.5 w-3.5" />} label="Avancement">{site.progress} %</HeroStat>
           <HeroStat icon={<Users className="h-3.5 w-3.5" />} label="Dir. travaux">
@@ -100,6 +100,9 @@ export default function ChantierDetailPage({ params }: { params: { id: string } 
           </HeroStat>
         </div>
       </section>
+
+      {/* Synthèse marché — premier regard */}
+      <MarcheSynthese site={site} />
 
       {/* Avancement & marge */}
       <section className="mb-4 grid gap-3.5 lg:grid-cols-2">
@@ -173,6 +176,120 @@ export default function ChantierDetailPage({ params }: { params: { id: string } 
         <PlaceholderTab label={TABS.find((t) => t.key === tab)?.label ?? ""} />
       )}
     </>
+  );
+}
+
+function MarcheSynthese({ site }: { site: NonNullable<ReturnType<typeof useSite>["data"]> }) {
+  const ht = Number(site.budget);
+  const vat = site.vatRate ?? 19.25;
+  const ir = site.irRate ?? 0;
+  const ttc = ht * (1 + vat / 100);
+  const net = ht * (1 - ir / 100);
+
+  const startMs = new Date(site.startDate).getTime();
+  const endMs = new Date(site.plannedEndDate).getTime();
+  const nowMs = Date.now();
+  const elapsedPct =
+    endMs > startMs
+      ? Math.min(100, Math.max(0, ((nowMs - startMs) / (endMs - startMs)) * 100))
+      : 0;
+  const durationMonths =
+    site.durationMonths ??
+    (endMs > startMs ? Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24 * 30.44))) : null);
+
+  const financings = Array.isArray(site.financings) ? site.financings : [];
+  const fmt = (n: number) => formatFCFA(BigInt(Math.round(n)));
+
+  return (
+    <section className="mb-4 rounded-xl border border-line bg-white p-4 shadow-card">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-ink">Synthèse du marché</h2>
+        <span className="rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary-700">
+          {site.financingType === "JOINT" ? "Financement conjoint" : "Financement simple"}
+        </span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <SyntheseTile label="Délai d'exécution" value={durationMonths ? `${durationMonths} mois` : "—"} />
+        <SyntheseTile
+          label="Temps écoulé"
+          value={`${Math.round(elapsedPct)} %`}
+          accent={elapsedPct >= 90 ? "danger" : elapsedPct >= 70 ? "warning" : "ok"}
+        >
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className={clsx(
+                "h-full rounded-full",
+                elapsedPct >= 90 ? "bg-danger" : elapsedPct >= 70 ? "bg-warning" : "bg-success",
+              )}
+              style={{ width: `${elapsedPct}%` }}
+            />
+          </div>
+        </SyntheseTile>
+        <SyntheseTile label="Montant HT" value={fmt(ht)} />
+        <SyntheseTile label={`Montant TTC · TVA ${vat}%`} value={fmt(ttc)} />
+        <SyntheseTile label={`Net à mandater · IR ${ir}%`} value={fmt(net)} highlight />
+      </div>
+
+      {site.financingType === "JOINT" && financings.length > 0 && (
+        <div className="mt-3 border-t border-line pt-3">
+          <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
+            Sources de financement
+          </div>
+          <ul className="grid gap-1.5 sm:grid-cols-2">
+            {financings.map((f, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-md border border-line bg-surface-alt px-3 py-1.5 text-[12.5px]"
+              >
+                <span className="text-ink-2">{f.label || `Source ${i + 1}`}</span>
+                <span className="font-mono font-semibold text-ink">{fmt(Number(f.amountHT))}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SyntheseTile({
+  label,
+  value,
+  highlight,
+  accent,
+  children,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  accent?: "ok" | "warning" | "danger";
+  children?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={clsx(
+        "rounded-lg border p-3",
+        highlight ? "border-primary-300 bg-primary-50" : "border-line bg-surface-alt",
+      )}
+    >
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-ink-3">{label}</div>
+      <div
+        className={clsx(
+          "mt-0.5 font-mono text-[15px] font-bold",
+          highlight
+            ? "text-primary-800"
+            : accent === "danger"
+              ? "text-danger"
+              : accent === "warning"
+                ? "text-warning"
+                : "text-ink",
+        )}
+      >
+        {value}
+      </div>
+      {children}
+    </div>
   );
 }
 

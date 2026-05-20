@@ -2,11 +2,27 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { guardIt, guardItMutation } from "@/lib/rbac/it-guard";
-import { SiteStatus, SiteType, MoaType, ContractTypeSite } from "@prisma/client";
+import { SiteStatus, SiteType, MoaType, ContractTypeSite, FinancingType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
+
+/** Ajoute n mois à une date en gérant la fin de mois (31 jan + 1 mois → 28/29 fév). */
+function addMonths(d: Date, months: number): Date {
+  const r = new Date(d);
+  const day = r.getDate();
+  r.setDate(1);
+  r.setMonth(r.getMonth() + months);
+  const lastDay = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate();
+  r.setDate(Math.min(day, lastDay));
+  return r;
+}
+
+const financingRowSchema = z.object({
+  label: z.string().max(120).default(""),
+  amountHT: z.number().int().nonnegative(),
+});
 
 const createSchema = z.object({
   code: z.string().min(2).max(40),
@@ -14,9 +30,6 @@ const createSchema = z.object({
   client: z.string().min(2).max(160),
   type: z.nativeEnum(SiteType),
   region: z.string().max(80).optional(),
-  budget: z.number().int().nonnegative(),
-  startDate: z.string().min(8), // ISO
-  plannedEndDate: z.string().min(8), // ISO
   status: z.nativeEnum(SiteStatus).default(SiteStatus.PLANNED),
   managerId: z.string().optional().nullable(),
   marginTarget: z.number().min(0).max(100).default(20),
@@ -24,6 +37,14 @@ const createSchema = z.object({
   moaName: z.string().max(160).optional(),
   moaTypeKind: z.nativeEnum(MoaType).optional(),
   contractTypeKind: z.nativeEnum(ContractTypeSite).optional(),
+  // Montant du marché (financement simple ou conjoint)
+  financingType: z.nativeEnum(FinancingType).default(FinancingType.SINGLE),
+  financings: z.array(financingRowSchema).min(1),
+  vatRate: z.number().min(0).max(100).default(19.25),
+  irRate: z.number().min(0).max(100).default(0),
+  // Délai d'exécution : on saisit start + durée → on calcule la date de fin
+  startDate: z.string().min(8), // ISO
+  durationMonths: z.number().int().min(1).max(600),
   // Géoloc optionnelle
   lat: z.number().optional(),
   lng: z.number().optional(),
@@ -118,7 +139,7 @@ export async function POST(req: Request) {
 
   // Unicité du code sur le tenant
   const existing = await prisma.site.findFirst({
-    where: { tenantId: session.tenantId, code: data.code },
+    where: { tenantId: session.tenantId!, code: data.code },
     select: { id: true },
   });
   if (existing) {
@@ -139,6 +160,15 @@ export async function POST(req: Request) {
     }
   }
 
+  // Montant HT total = somme des financements ; date de fin = start + durée.
+  const totalHT = data.financings.reduce((sum, f) => sum + f.amountHT, 0);
+  const startDate = new Date(data.startDate);
+  const plannedEndDate = addMonths(startDate, data.durationMonths);
+  const financings = data.financings.map((f) => ({
+    label: f.label.trim(),
+    amountHT: String(f.amountHT),
+  }));
+
   const created = await prisma.site.create({
     data: {
       tenantId: session.tenantId!,
@@ -147,15 +177,20 @@ export async function POST(req: Request) {
       client: data.client,
       type: data.type,
       region: data.region ?? null,
-      budget: BigInt(data.budget),
-      startDate: new Date(data.startDate),
-      plannedEndDate: new Date(data.plannedEndDate),
+      budget: BigInt(totalHT),
+      startDate,
+      plannedEndDate,
       status: data.status,
       managerId: data.managerId ?? null,
       marginTarget: data.marginTarget,
       moaName: data.moaName ?? null,
       moaTypeKind: data.moaTypeKind ?? null,
       contractTypeKind: data.contractTypeKind ?? null,
+      financingType: data.financingType,
+      financings,
+      vatRate: data.vatRate,
+      irRate: data.irRate,
+      durationMonths: data.durationMonths,
       lat: data.lat ?? null,
       lng: data.lng ?? null,
     },
