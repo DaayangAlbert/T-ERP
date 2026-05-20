@@ -31,6 +31,9 @@ module.exports = {
         NODE_ENV: "production",
         PORT: 3000,
         HOSTNAME: "127.0.0.1",
+        // Dossier stable des uploads, HORS .next (sinon perdus à chaque build).
+        // Servi par nginx via `location /uploads/ { alias /var/www/terp/uploads/ }`.
+        UPLOAD_ROOT: "/var/www/terp/uploads",
       },
       // Logs (PM2 les gère + rotation)
       out_file: "/var/log/terp/out.log",
