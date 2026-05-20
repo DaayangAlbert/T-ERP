@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { uploadDiskPath, uploadPublicUrl } from "@/lib/upload-paths";
 
 export const dynamic = "force-dynamic";
 
@@ -62,9 +63,9 @@ export async function POST(req: Request) {
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const fileName = `${session.sub}-${kind}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "signatures");
+  const uploadDir = uploadDiskPath("signatures");
   const filePath = path.join(uploadDir, fileName);
-  const publicUrl = `/uploads/signatures/${fileName}`;
+  const publicUrl = uploadPublicUrl("signatures", fileName);
 
   // Crée le dossier si absent
   if (!existsSync(uploadDir)) {
@@ -127,7 +128,7 @@ export async function DELETE(req: Request) {
   }
 
   // Supprime le fichier disque (toutes extensions possibles)
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "signatures");
+  const uploadDir = uploadDiskPath("signatures");
   for (const ext of ["png", "jpg", "webp"]) {
     const filePath = path.join(uploadDir, `${session.sub}-${kind}.${ext}`);
     if (existsSync(filePath)) {

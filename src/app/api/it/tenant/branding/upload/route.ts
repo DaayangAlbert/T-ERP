@@ -20,6 +20,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { guardIt } from "@/lib/rbac/it-guard";
+import { uploadDiskPath, uploadPublicUrl } from "@/lib/upload-paths";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,14 +79,14 @@ export async function POST(req: Request) {
   const previousUrl = (tenant?.[dbField] ?? null) as string | null;
 
   const filename = `${kind}-${Date.now()}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "tenant", tenantId);
+  const dir = uploadDiskPath("tenant", tenantId);
   await fs.mkdir(dir, { recursive: true });
   const absPath = path.join(dir, filename);
 
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(absPath, buffer);
 
-  const publicUrl = `/uploads/tenant/${tenantId}/${filename}`;
+  const publicUrl = uploadPublicUrl("tenant", tenantId, filename);
 
   await prisma.tenant.update({
     where: { id: tenantId },
