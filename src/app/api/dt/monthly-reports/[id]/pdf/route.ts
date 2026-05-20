@@ -4,6 +4,7 @@ import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
+import { uploadUrlToDataUri } from "@/lib/upload-paths";
 import { DtMonthlyReportPDF, type DtReportPdfData } from "@/components/dt/reports/DtMonthlyReportPDF";
 
 export const runtime = "nodejs";
@@ -29,7 +30,14 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     where: { id },
     include: {
       author: { select: { firstName: true, lastName: true, position: true } },
-      validatedBy: { select: { firstName: true, lastName: true } },
+      validatedBy: {
+        select: {
+          firstName: true,
+          lastName: true,
+          position: true,
+          signature: { select: { signatureUrl: true } },
+        },
+      },
       sites: {
         include: { site: { select: { code: true, name: true, client: true, region: true } } },
         orderBy: { site: { code: "asc" } },
@@ -46,8 +54,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: report.tenantId },
-    select: { name: true, contactAddress: true, contactPhone: true, contactEmail: true, taxId: true, logoUrl: true },
+    select: {
+      name: true, contactAddress: true, contactPhone: true, contactEmail: true,
+      taxId: true, logoUrl: true, stampImageUrl: true,
+    },
   });
+
+  // Inline les images en data URI pour react-pdf (cf gotcha standalone).
+  const [logoDataUri, stampDataUri, signatureDataUri] = await Promise.all([
+    uploadUrlToDataUri(tenant?.logoUrl),
+    uploadUrlToDataUri(tenant?.stampImageUrl),
+    uploadUrlToDataUri(report.validatedBy?.signature?.signatureUrl),
+  ]);
 
   const previousCount = await prisma.dtMonthlyTechReport.count({
     where: {
@@ -104,6 +122,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     })),
     author: { name: `${report.author.firstName} ${report.author.lastName}`, position: report.author.position },
     validatedBy: report.validatedBy ? `${report.validatedBy.firstName} ${report.validatedBy.lastName}` : null,
+    validatedByPosition: report.validatedBy?.position ?? null,
+    validatedBySignatureUrl: signatureDataUri,
     submittedAt: report.submittedAt?.toISOString() ?? null,
     validatedAt: report.validatedAt?.toISOString() ?? null,
     rejectionReason: report.rejectionReason,
@@ -113,7 +133,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       contactPhone: tenant?.contactPhone ?? null,
       contactEmail: tenant?.contactEmail ?? null,
       taxId: tenant?.taxId ?? null,
-      logoUrl: tenant?.logoUrl ?? null,
+      logoUrl: logoDataUri,
+      stampImageUrl: stampDataUri,
     },
   };
 

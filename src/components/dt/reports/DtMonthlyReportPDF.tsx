@@ -109,6 +109,8 @@ export interface DtReportPdfData {
 
   author: { name: string; position: string | null };
   validatedBy: string | null;
+  validatedByPosition?: string | null;
+  validatedBySignatureUrl?: string | null;
   submittedAt: string | null;
   validatedAt: string | null;
   rejectionReason: string | null;
@@ -120,6 +122,7 @@ export interface DtReportPdfData {
     contactEmail: string | null;
     taxId: string | null;
     logoUrl: string | null;
+    stampImageUrl?: string | null;
   };
 }
 
@@ -367,6 +370,8 @@ function BodyPage({ report }: { report: DtReportPdfData }) {
             mark={report.status === "VALIDATED" ? "VISA APPOSÉ" : "À viser"}
             markTone={report.status === "VALIDATED" ? "ok" : "mute"}
             dateLabel="Date du visa"
+            signatureUrl={report.status === "VALIDATED" ? report.validatedBySignatureUrl : null}
+            stampUrl={report.status === "VALIDATED" ? report.tenant.stampImageUrl : null}
           />
         </View>
       </View>
@@ -434,6 +439,8 @@ function SigBox({
   mark,
   markTone,
   dateLabel,
+  signatureUrl,
+  stampUrl,
 }: {
   role: string;
   name: string;
@@ -441,13 +448,33 @@ function SigBox({
   mark: string;
   markTone?: "ok" | "mute";
   dateLabel: string;
+  signatureUrl?: string | null;
+  stampUrl?: string | null;
 }) {
   const markColor = markTone === "ok" ? C.ok : C.mute;
+  const hasVisual = Boolean(signatureUrl || stampUrl);
   return (
     <View style={styles.sigBox}>
       <Text style={styles.sigRole}>{role}</Text>
       <Text style={styles.sigName}>{name}</Text>
-      <View style={styles.sigArea} />
+      <View style={styles.sigArea}>
+        {hasVisual ? (
+          <View style={{ position: "relative", width: "100%", height: "100%" }}>
+            {signatureUrl ? (
+              <Image
+                src={signatureUrl}
+                style={{ position: "absolute", left: 6, top: 6, width: 110, height: 40, objectFit: "contain" }}
+              />
+            ) : null}
+            {stampUrl ? (
+              <Image
+                src={stampUrl}
+                style={{ position: "absolute", right: 6, top: 2, width: 46, height: 46, objectFit: "contain", opacity: 0.85 }}
+              />
+            ) : null}
+          </View>
+        ) : null}
+      </View>
       <View style={styles.sigMetaRow}>
         <Text style={styles.sigMeta}>{dateLabel} : {date}</Text>
         <Text style={{ ...styles.sigMark, color: markColor }}>{mark}</Text>
