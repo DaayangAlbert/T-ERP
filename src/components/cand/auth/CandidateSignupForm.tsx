@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  ProfessionDatalist,
+  PROFESSION_DATALIST_ID,
+} from "@/components/common/ProfessionDatalist";
 
 export function CandidateSignupForm() {
   const router = useRouter();
@@ -99,14 +103,19 @@ export function CandidateSignupForm() {
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-ink">Poste recherché</span>
+        <span className="text-sm font-medium text-ink">Métier / poste recherché</span>
         <input
           type="text"
+          list={PROFESSION_DATALIST_ID}
           value={desiredJob}
           onChange={(e) => setDesiredJob(e.target.value)}
-          placeholder="Ex: Conducteur de travaux"
+          placeholder="Ex : Maçon, Agent de sécurité, Ménagère, Comptable…"
           className={inputCls}
         />
+        <ProfessionDatalist />
+        <span className="mt-1 block text-[11px] text-ink-3">
+          Tous secteurs — choisissez ou saisissez votre métier.
+        </span>
       </label>
 
       <label className="block">

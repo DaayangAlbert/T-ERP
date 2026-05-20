@@ -9,22 +9,14 @@ import { registerCandidateSchema, type RegisterCandidateInput } from "@/schemas/
 import { useAuthStore } from "@/stores/auth-store";
 import { Eye, EyeOff } from "lucide-react";
 import { clsx } from "clsx";
+import {
+  ProfessionDatalist,
+  PROFESSION_DATALIST_ID,
+} from "@/components/common/ProfessionDatalist";
 
 interface Props {
   onSuccess?: () => void;
 }
-
-const DESIRED_JOBS = [
-  "",
-  "Ingénieur BTP / Travaux",
-  "Conducteur de travaux",
-  "Chef de chantier",
-  "Comptable / Contrôleur",
-  "Magasinier / Logisticien",
-  "Maçon / OQ-OP",
-  "Conducteur d'engin",
-  "Manœuvre / Journalier",
-];
 
 export function RegisterCandidateForm({ onSuccess }: Props) {
   const router = useRouter();
@@ -89,17 +81,18 @@ export function RegisterCandidateForm({ onSuccess }: Props) {
         />
       </Field>
 
-      <Field label="Métier recherché" error={errors.desiredJob?.message}>
-        <select
+      <Field
+        label="Métier / poste recherché"
+        error={errors.desiredJob?.message}
+        hint="Tous secteurs — choisissez ou saisissez votre métier"
+      >
+        <input
           {...register("desiredJob")}
-          className={clsx(inputClass(Boolean(errors.desiredJob)), "appearance-none")}
-        >
-          {DESIRED_JOBS.map((j) => (
-            <option key={j} value={j}>
-              {j || "— Sélectionner —"}
-            </option>
-          ))}
-        </select>
+          list={PROFESSION_DATALIST_ID}
+          placeholder="Ex : Maçon, Agent de sécurité, Ménagère, Comptable…"
+          className={inputClass(Boolean(errors.desiredJob))}
+        />
+        <ProfessionDatalist />
       </Field>
 
       <Field label="Mot de passe" required error={errors.password?.message} hint="8 caractères minimum">

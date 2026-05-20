@@ -2,6 +2,10 @@
 
 import { useRef, useState } from "react";
 import { Send, Upload, Check } from "lucide-react";
+import {
+  ProfessionDatalist,
+  PROFESSION_DATALIST_ID,
+} from "@/components/common/ProfessionDatalist";
 
 export function SpontaneousApplicationForm({
   primaryColor,
@@ -115,13 +119,15 @@ export function SpontaneousApplicationForm({
               className={INPUT_CLS}
             />
           </Field>
-          <Field label="Poste recherché">
+          <Field label="Métier / poste recherché">
             <input
               value={desiredJob}
+              list={PROFESSION_DATALIST_ID}
               onChange={(e) => setDesiredJob(e.target.value)}
-              placeholder="Ex: Conducteur de travaux"
+              placeholder="Ex : Maçon, Agent de sécurité, Ménagère…"
               className={INPUT_CLS}
             />
+            <ProfessionDatalist />
           </Field>
           <Field label="Message de motivation" className="md:col-span-2">
             <textarea

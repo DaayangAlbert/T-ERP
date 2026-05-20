@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Target, Save } from "lucide-react";
 import { SectionCard } from "./SectionCard";
+import {
+  ProfessionDatalist,
+  PROFESSION_DATALIST_ID,
+} from "@/components/common/ProfessionDatalist";
 
 const CONTRACT_OPTIONS = [
   { value: "", label: "Indifférent" },
@@ -98,11 +102,13 @@ export function SearchPreferencesSection({
         <Field label="Poste recherché">
           <input
             type="text"
+            list={PROFESSION_DATALIST_ID}
             value={state.desiredJob ?? ""}
-            placeholder="Ex: Conducteur de Travaux"
+            placeholder="Ex : Maçon, Agent de sécurité, Ménagère…"
             onChange={(e) => update("desiredJob", e.target.value)}
             className="mt-1 w-full rounded-md border border-line-2 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
+          <ProfessionDatalist />
         </Field>
         <Field label="Type de contrat">
           <select
