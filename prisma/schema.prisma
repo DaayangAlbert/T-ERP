@@ -3076,6 +3076,11 @@ model BankAccount {
   syncStatus   BankSyncStatus @default(MANUAL)
   primaryColor String? // pour code couleur visuel UBA rouge, BICEC sarcelle...
 
+  // Cycle de vie : un compte clôturé reste en base (historique des mouvements)
+  // mais sort des positions consolidées et n'est plus approvisionnable.
+  isActive Boolean   @default(true)
+  closedAt DateTime?
+
   movements BankMovement[]
 
   createdAt DateTime @default(now())
@@ -3936,6 +3941,11 @@ model SiteCashbox {
   site        Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
   balance     BigInt @default(0)
   custodianId String
+
+  // Cycle de vie : une caisse clôturée conserve son historique mais n'accepte
+  // plus de mouvement ni d'approvisionnement.
+  isActive Boolean   @default(true)
+  closedAt DateTime?
 
   movements CashboxMovement[]
 

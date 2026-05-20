@@ -29,7 +29,7 @@ export async function GET() {
 
   const [items, entryLines7d, dueSoonInvoices, recentEntryLines, recentBankMovements] = await Promise.all([
     prisma.bankAccount.findMany({
-      where: { tenantId: session.tenantId },
+      where: { tenantId: session.tenantId, isActive: true },
       orderBy: { bank: "asc" },
     }),
     // Lignes classe 5 sur 7 derniers jours — pour KPIs jour + évolution

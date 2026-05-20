@@ -48,9 +48,23 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     });
     if (!b) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
+    // Unicité du numéro de compte si on le modifie.
+    if (data.accountNumber !== undefined && data.accountNumber !== b.accountNumber) {
+      const dup = await prisma.bankAccount.findFirst({
+        where: { tenantId: session.tenantId, accountNumber: data.accountNumber, id: { not: b.id } },
+      });
+      if (dup) return NextResponse.json({ error: "Un compte avec ce numéro existe déjà" }, { status: 409 });
+    }
+
+    const closing = data.isActive === false && b.isActive;
+
     await prisma.bankAccount.update({
       where: { id: b.id },
       data: {
+        ...(data.bank !== undefined && { bank: data.bank }),
+        ...(data.accountNumber !== undefined && { accountNumber: data.accountNumber }),
+        ...(data.accountType !== undefined && { accountType: data.accountType }),
+        ...(data.currency !== undefined && { currency: data.currency }),
         ...(data.balance !== undefined && { balance: BigInt(data.balance) }),
         ...(data.creditLineGranted !== undefined && { creditLineGranted: BigInt(data.creditLineGranted) }),
         ...(data.creditLineUsed !== undefined && { creditLineUsed: BigInt(data.creditLineUsed) }),
@@ -58,6 +72,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           renewalDate: data.renewalDate ? new Date(data.renewalDate) : null,
         }),
         ...(data.contact !== undefined && { contact: data.contact as object }),
+        ...(data.isActive !== undefined && {
+          isActive: data.isActive,
+          closedAt: data.isActive ? null : new Date(),
+        }),
       },
     });
 
@@ -65,7 +83,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       data: {
         tenantId: session.tenantId,
         userId: session.sub,
-        action: "bank.update",
+        action: closing ? "bank.close" : "bank.update",
         entityType: "BankAccount",
         entityId: b.id,
         metadata: { changes: data },

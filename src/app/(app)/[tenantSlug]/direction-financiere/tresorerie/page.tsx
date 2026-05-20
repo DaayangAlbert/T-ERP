@@ -3,7 +3,8 @@
 import { useDafTreasury } from "@/hooks/useDafTreasury";
 import { TreasuryHeader } from "@/components/daf/treasury/TreasuryHeader";
 import { TreasuryKpis } from "@/components/daf/treasury/TreasuryKpis";
-import { BanksTable } from "@/components/daf/treasury/BanksTable";
+import { BanksSection } from "@/components/daf/treasury/BanksSection";
+import { CashboxesPanel } from "@/components/daf/treasury/CashboxesPanel";
 import { TreasuryEvolutionChart } from "@/components/daf/treasury/TreasuryEvolutionChart";
 import { LatestMovementsList } from "@/components/daf/treasury/LatestMovementsList";
 
@@ -40,7 +41,9 @@ export default function TreasoreriePage() {
 
         <TreasuryKpis kpis={data.dailyKpis} />
 
-        <BanksTable items={data.items} />
+        <BanksSection items={data.items} />
+
+        <CashboxesPanel banks={data.items} />
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <TreasuryEvolutionChart data={data.evolution7d} />

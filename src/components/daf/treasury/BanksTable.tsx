@@ -1,8 +1,7 @@
 "use client";
 
-import { Wifi, WifiOff, Clock, AlertCircle } from "lucide-react";
+import { Wifi, WifiOff, Clock, AlertCircle, Pencil, Ban } from "lucide-react";
 import { BankSyncStatus } from "@prisma/client";
-import { formatRelativeDate } from "@/lib/format";
 import { clsx } from "clsx";
 
 interface BankItem {
@@ -19,6 +18,12 @@ interface BankItem {
   primaryColor: string;
 }
 
+interface BanksTableProps {
+  items: BankItem[];
+  onEdit?: (id: string) => void;
+  onClose?: (id: string) => void;
+}
+
 const SYNC_BADGE: Record<BankSyncStatus, { icon: React.ReactNode; cls: string; label: string }> = {
   LIVE: { icon: <Wifi className="h-3 w-3" />, cls: "bg-success/10 text-success", label: "Live" },
   DELAYED: { icon: <Clock className="h-3 w-3" />, cls: "bg-warning/10 text-warning", label: "3 min" },
@@ -30,7 +35,8 @@ function fmtFCFA(n: bigint): string {
   return new Intl.NumberFormat("fr-FR").format(Number(n));
 }
 
-export function BanksTable({ items }: { items: BankItem[] }) {
+export function BanksTable({ items, onEdit, onClose }: BanksTableProps) {
+  const showActions = Boolean(onEdit || onClose);
   const totalBalance = items.reduce((s, b) => s + BigInt(b.balance), 0n);
   const totalGranted = items.reduce((s, b) => s + BigInt(b.creditLineGranted), 0n);
   const totalUsed = items.reduce((s, b) => s + BigInt(b.creditLineUsed), 0n);
@@ -49,7 +55,8 @@ export function BanksTable({ items }: { items: BankItem[] }) {
               <th className="py-2 text-right xl:table-cell hidden">Lignes accordées</th>
               <th className="py-2 text-right">Utilisé</th>
               <th className="py-2 text-right">Disponible</th>
-              <th className="py-2 pr-3 text-center">Sync</th>
+              <th className="py-2 text-center">Sync</th>
+              {showActions && <th className="py-2 pr-3 text-right">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -72,11 +79,37 @@ export function BanksTable({ items }: { items: BankItem[] }) {
                   <td className="py-2 text-right font-mono tabular-nums text-success">
                     {fmtFCFA(BigInt(b.creditLineAvailable))}
                   </td>
-                  <td className="py-2 pr-3 text-center">
+                  <td className="py-2 text-center">
                     <span className={clsx("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold", badge.cls)}>
                       {badge.icon} {badge.label}
                     </span>
                   </td>
+                  {showActions && (
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center justify-end gap-1">
+                        {onEdit && (
+                          <button
+                            type="button"
+                            onClick={() => onEdit(b.id)}
+                            title="Modifier"
+                            className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt hover:text-primary-700"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {onClose && (
+                          <button
+                            type="button"
+                            onClick={() => onClose(b.id)}
+                            title="Clôturer"
+                            className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-rose-50 hover:text-rose-600"
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -88,7 +121,8 @@ export function BanksTable({ items }: { items: BankItem[] }) {
               <td className="py-2 text-right font-mono tabular-nums xl:table-cell hidden">{fmtFCFA(totalGranted)}</td>
               <td className="py-2 text-right font-mono tabular-nums">{fmtFCFA(totalUsed)}</td>
               <td className="py-2 text-right font-mono tabular-nums text-success">{fmtFCFA(totalAvailable)}</td>
-              <td className="py-2 pr-3" />
+              <td className="py-2" />
+              {showActions && <td className="py-2 pr-3" />}
             </tr>
           </tfoot>
         </table>
@@ -120,6 +154,28 @@ export function BanksTable({ items }: { items: BankItem[] }) {
                   <div className="font-mono font-semibold text-success">{fmtFCFA(BigInt(b.creditLineAvailable))}</div>
                 </div>
               </div>
+              {showActions && (
+                <div className="mt-3 flex gap-2 border-t border-line pt-2">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(b.id)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-line py-1.5 text-[12px] font-medium text-ink-2 hover:bg-surface-alt"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Modifier
+                    </button>
+                  )}
+                  {onClose && (
+                    <button
+                      type="button"
+                      onClick={() => onClose(b.id)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-line py-1.5 text-[12px] font-medium text-rose-600 hover:bg-rose-50"
+                    >
+                      <Ban className="h-3.5 w-3.5" /> Clôturer
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

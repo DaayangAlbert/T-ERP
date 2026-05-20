@@ -13,22 +13,77 @@ export const createCommitmentSchema = z.object({
   notes: z.string().max(500).optional(),
 });
 
+// Montant en FCFA (XAF) stocké en BigInt → transporté en string de chiffres.
+const amountString = z.string().regex(/^\d+$/, "Montant invalide (entier positif attendu)");
+
+export const ACCOUNT_TYPES = [
+  "CURRENT",
+  "ESCROW",
+  "SAVING",
+  "GUARANTEE",
+  "FOREIGN_CURRENCY",
+] as const;
+
+const bankContact = z
+  .object({
+    name: z.string().max(80).optional(),
+    phone: z.string().max(40).optional(),
+    email: z.string().email().optional().or(z.literal("")),
+  })
+  .optional();
+
+export const createBankAccountSchema = z.object({
+  bank: z.string().min(2).max(60),
+  accountNumber: z.string().min(2).max(40),
+  accountType: z.enum(ACCOUNT_TYPES).default("CURRENT"),
+  currency: z.string().min(3).max(3).default("XAF"),
+  balance: amountString.default("0"),
+  creditLineGranted: amountString.default("0"),
+  renewalDate: z.string().optional().nullable(),
+  contact: bankContact,
+});
+
 export const updateBankAccountSchema = z.object({
+  bank: z.string().min(2).max(60).optional(),
+  accountNumber: z.string().min(2).max(40).optional(),
+  accountType: z.enum(ACCOUNT_TYPES).optional(),
+  currency: z.string().min(3).max(3).optional(),
   balance: z.string().optional(),
   creditLineGranted: z.string().optional(),
   creditLineUsed: z.string().optional(),
   renewalDate: z.string().optional().nullable(),
-  contact: z
-    .object({
-      name: z.string().max(80).optional(),
-      phone: z.string().max(40).optional(),
-      email: z.string().email().optional(),
-    })
-    .optional(),
+  contact: bankContact,
+  // Clôture / réouverture
+  isActive: z.boolean().optional(),
+});
+
+export const createCashboxSchema = z.object({
+  siteId: z.string().min(1),
+  custodianId: z.string().optional(), // défaut : manager du chantier
+  initialBalance: amountString.default("0"),
+});
+
+export const updateCashboxSchema = z.object({
+  custodianId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+// Approvisionnement d'une caisse chantier depuis un compte bancaire :
+// débite la banque (sortie) et crédite la caisse (entrée) de façon atomique.
+export const fundCashboxSchema = z.object({
+  bankAccountId: z.string().min(1),
+  amount: amountString.refine((v) => BigInt(v) > 0n, "Le montant doit être positif"),
+  reason: z.string().min(2).max(200).default("Approvisionnement caisse chantier"),
+  reference: z.string().max(60).optional(),
+  occurredAt: z.string().optional(),
 });
 
 export type CreateCommitmentInput = z.infer<typeof createCommitmentSchema>;
+export type CreateBankAccountInput = z.infer<typeof createBankAccountSchema>;
 export type UpdateBankAccountInput = z.infer<typeof updateBankAccountSchema>;
+export type CreateCashboxInput = z.infer<typeof createCashboxSchema>;
+export type UpdateCashboxInput = z.infer<typeof updateCashboxSchema>;
+export type FundCashboxInput = z.infer<typeof fundCashboxSchema>;
 
 // Helper pour générer un snapshot P&L+Bilan+BFR à partir des sites/payslips.
 // Reste une synthèse (faute d'écritures comptables réelles dans le MVP).
