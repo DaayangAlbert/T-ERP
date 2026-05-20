@@ -404,7 +404,7 @@ export default function NewSitePage() {
                   type="number"
                   required
                   min={0}
-                  step={1000}
+                  step="any"
                   value={financings[0]?.amountHT ?? ""}
                   onChange={(e) => updateRow(0, { amountHT: e.target.value })}
                   placeholder="150000000"
@@ -453,7 +453,7 @@ export default function NewSitePage() {
                       <input
                         type="number"
                         min={0}
-                        step={1000}
+                        step="any"
                         value={row.amountHT}
                         onChange={(e) => updateRow(i, { amountHT: e.target.value })}
                         placeholder="150000000"
