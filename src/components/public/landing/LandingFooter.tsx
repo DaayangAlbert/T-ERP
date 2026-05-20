@@ -15,19 +15,16 @@ const COLUMNS = [
   {
     title: "Entreprise",
     links: [
-      { label: "À propos", href: "/about" },
-      { label: "Recrutement", href: "/recrutement" },
-      { label: "Blog", href: "/blog" },
-      { label: "Partenaires", href: "/partners" },
+      { label: "À propos", href: "/a-propos" },
+      { label: "Contact", href: "/#demo" },
     ],
   },
   {
     title: "Légal",
     links: [
-      { label: "CGU", href: "/legal/cgu" },
-      { label: "CGV", href: "/legal/cgv" },
-      { label: "Confidentialité", href: "/legal/privacy" },
-      { label: "Mentions légales", href: "/legal/mentions" },
+      { label: "CGU", href: "/terms" },
+      { label: "Confidentialité", href: "/privacy" },
+      { label: "Mentions légales", href: "/mentions-legales" },
     ],
   },
 ];
@@ -48,7 +45,10 @@ export function LandingFooter() {
               Yaoundé · Douala · Cameroun
             </p>
             <p className="mt-3 text-[11px] text-white/40">
-              contact@terpgroup.com · +237 6 90 00 00 00
+              <a href="mailto:contact@terpgroup.com" className="hover:text-white/70">
+                contact@terpgroup.com
+              </a>{" "}
+              · +237 6 90 00 00 00
             </p>
           </div>
           {COLUMNS.map((col) => (
