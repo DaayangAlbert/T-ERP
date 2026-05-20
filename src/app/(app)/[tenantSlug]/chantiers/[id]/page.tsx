@@ -231,10 +231,10 @@ function MarcheSynthese({ site }: { site: NonNullable<ReturnType<typeof useSite>
         <SyntheseTile label={`Net à mandater · IR ${ir}%`} value={fmt(net)} highlight />
       </div>
 
-      {site.financingType === "JOINT" && financings.length > 0 && (
+      {financings.length > 0 && (
         <div className="mt-3 border-t border-line pt-3">
           <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
-            Sources de financement
+            {site.financingType === "JOINT" ? "Sources de financement" : "Source du financement"}
           </div>
           <ul className="grid gap-1.5 sm:grid-cols-2">
             {financings.map((f, i) => (

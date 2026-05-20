@@ -130,8 +130,8 @@ export default function NewSitePage() {
   function setFinancingTypeSafe(next: "SINGLE" | "JOINT") {
     setFinancingType(next);
     if (next === "SINGLE") {
-      // On garde la 1re ligne (son montant), label vidé.
-      setFinancings((rows) => [{ label: "", amountHT: rows[0]?.amountHT ?? "" }]);
+      // On garde la 1re ligne (source + montant).
+      setFinancings((rows) => [{ label: rows[0]?.label ?? "", amountHT: rows[0]?.amountHT ?? "" }]);
     } else if (financings.length < 2) {
       setFinancings((rows) => [...rows, { label: "", amountHT: "" }]);
     }
@@ -159,8 +159,8 @@ export default function NewSitePage() {
       setError("Renseigne au moins un montant HT de financement.");
       return;
     }
-    if (financingType === "JOINT" && cleanFinancings.some((f) => !f.label)) {
-      setError("En financement conjoint, chaque source doit avoir un libellé.");
+    if (cleanFinancings.some((f) => !f.label)) {
+      setError("Renseigne la source de chaque financement.");
       return;
     }
     if (!startDate) {
@@ -385,18 +385,33 @@ export default function NewSitePage() {
           </Field>
 
           {financingType === "SINGLE" ? (
-            <Field label="Montant HT du marché (FCFA)" required className="sm:col-span-2">
-              <input
-                type="number"
+            <>
+              <Field
+                label="Source du financement"
                 required
-                min={0}
-                step={1000}
-                value={financings[0]?.amountHT ?? ""}
-                onChange={(e) => updateRow(0, { amountHT: e.target.value })}
-                placeholder="150000000"
-                className={`${INPUT} font-mono`}
-              />
-            </Field>
+                hint="Ex: BIP, Budget communal, FEICOM, Fonds propres…"
+              >
+                <input
+                  required
+                  value={financings[0]?.label ?? ""}
+                  onChange={(e) => updateRow(0, { label: e.target.value })}
+                  placeholder="Ex: BIP, Fonds propres…"
+                  className={INPUT}
+                />
+              </Field>
+              <Field label="Montant HT du marché (FCFA)" required>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  step={1000}
+                  value={financings[0]?.amountHT ?? ""}
+                  onChange={(e) => updateRow(0, { amountHT: e.target.value })}
+                  placeholder="150000000"
+                  className={`${INPUT} font-mono`}
+                />
+              </Field>
+            </>
           ) : (
             <div className="sm:col-span-2 space-y-2">
               <span className="text-xs font-medium text-ink-2">
