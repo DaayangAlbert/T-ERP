@@ -415,44 +415,68 @@ export default function NewSitePage() {
           ) : (
             <div className="sm:col-span-2 space-y-2">
               <span className="text-xs font-medium text-ink-2">
-                Sources de financement (montant HT par source)
+                Financements du marché — une source et son montant par ligne
                 <span className="ml-0.5 text-rose-500">*</span>
               </span>
               {financings.map((row, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <input
-                    value={row.label}
-                    onChange={(e) => updateRow(i, { label: e.target.value })}
-                    placeholder="Source (ex: BIP, FEICOM, Fonds propres)"
-                    className={`${INPUT} flex-1`}
-                  />
-                  <input
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={row.amountHT}
-                    onChange={(e) => updateRow(i, { amountHT: e.target.value })}
-                    placeholder="Montant HT"
-                    className={`${INPUT} w-44 font-mono`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeRow(i)}
-                    disabled={financings.length <= 1}
-                    title="Supprimer cette source"
-                    className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-md border border-line-2 bg-white text-ink-3 hover:border-rose-300 hover:text-rose-600 disabled:opacity-40"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div key={i} className="rounded-lg border border-line bg-surface-alt/60 p-2.5">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                      Financement {i + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeRow(i)}
+                      disabled={financings.length <= 1}
+                      title="Supprimer ce financement"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line-2 bg-white text-ink-3 hover:border-rose-300 hover:text-rose-600 disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-[11px] font-medium text-ink-2">
+                        Source<span className="ml-0.5 text-rose-500">*</span>
+                      </span>
+                      <input
+                        value={row.label}
+                        onChange={(e) => updateRow(i, { label: e.target.value })}
+                        placeholder="Ex: BIP, FEICOM, Fonds propres…"
+                        className={INPUT}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-[11px] font-medium text-ink-2">
+                        Montant HT (FCFA)<span className="ml-0.5 text-rose-500">*</span>
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={1000}
+                        value={row.amountHT}
+                        onChange={(e) => updateRow(i, { amountHT: e.target.value })}
+                        placeholder="150000000"
+                        className={`${INPUT} font-mono`}
+                      />
+                    </label>
+                  </div>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={addRow}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-line-2 bg-white px-3 text-[13px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
-              >
-                <Plus className="h-3.5 w-3.5" /> Ajouter une source
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-line-2 bg-white px-3 text-[13px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Ajouter une source
+                </button>
+                <span className="text-[11.5px] text-ink-3">
+                  Montant HT global ={" "}
+                  <strong className="font-mono text-ink">{fmtFcfa(totalHT)}</strong>{" "}
+                  (somme des {financings.length} financement{financings.length > 1 ? "s" : ""})
+                </span>
+              </div>
             </div>
           )}
 
