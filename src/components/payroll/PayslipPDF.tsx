@@ -728,9 +728,30 @@ export function PayslipPDF({ payslip, qrDataUrl, publicUrl }: Props) {
               {payslip.generatedIp && <>IP : {payslip.generatedIp}{"\n"}</>}
               Hash : {payslip.verificationUuid.slice(0, 12)}
             </Text>
-            {payslip.tenant.signatureImageUrl ? (
-              <Image src={payslip.tenant.signatureImageUrl} style={{ width: 80, height: 30, objectFit: "contain" }} />
-            ) : null}
+            {/* Zone signature + cachet : le cachet se superpose à droite de
+                la signature (rendu officiel). Container relatif de hauteur fixe. */}
+            <View style={{ position: "relative", marginTop: 4, height: 64, width: "100%" }}>
+              {payslip.tenant.signatureImageUrl ? (
+                <Image
+                  src={payslip.tenant.signatureImageUrl}
+                  style={{ width: 130, height: 50, objectFit: "contain" }}
+                />
+              ) : null}
+              {payslip.tenant.stampImageUrl ? (
+                <Image
+                  src={payslip.tenant.stampImageUrl}
+                  style={{
+                    position: "absolute",
+                    right: 4,
+                    top: 0,
+                    width: 62,
+                    height: 62,
+                    objectFit: "contain",
+                    opacity: 0.85,
+                  }}
+                />
+              ) : null}
+            </View>
             <Text style={styles.signature}>{payslip.tenant.drhSignatoryName ?? "Responsable Paie"}</Text>
           </View>
         </View>
