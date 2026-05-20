@@ -1,9 +1,10 @@
 "use client";
 
-import { X, Mail, Phone, MapPin, Calendar, Star, ArrowRight } from "lucide-react";
+import { X, Mail, Phone, MapPin, Calendar, Star, ArrowRight, RefreshCw } from "lucide-react";
 import { clsx } from "clsx";
 import type { AppStage } from "@prisma/client";
-import { useApplicationDetail, useUpdateStage } from "@/hooks/useRhRecruitment";
+import { useApplicationDetail, useUpdateStage, useRescoreApplication } from "@/hooks/useRhRecruitment";
+import { InterviewsSection } from "./InterviewsSection";
 
 interface Props {
   id: string;
@@ -38,9 +39,18 @@ function fmtDate(s: string): string {
   return new Date(s).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
+const SCORE_DIMS = [
+  { key: "skills", label: "Compétences", max: 40 },
+  { key: "experience", label: "Expérience", max: 25 },
+  { key: "location", label: "Localisation", max: 15 },
+  { key: "contract", label: "Contrat", max: 10 },
+  { key: "salary", label: "Salaire", max: 10 },
+] as const;
+
 export function ApplicationDrawer({ id, onClose }: Props) {
   const { data, isLoading } = useApplicationDetail(id);
   const update = useUpdateStage();
+  const rescore = useRescoreApplication();
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -83,31 +93,41 @@ export function ApplicationDrawer({ id, onClose }: Props) {
             </section>
 
             <section>
-              <h4 className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">Scoring</h4>
+              <div className="mb-1 flex items-center justify-between">
+                <h4 className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">Scoring (matching auto)</h4>
+                <button
+                  type="button"
+                  onClick={() => rescore.mutate(id)}
+                  disabled={rescore.isPending}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50"
+                  title="Recalculer le score depuis le profil actuel du candidat"
+                >
+                  <RefreshCw className={clsx("h-3 w-3", rescore.isPending && "animate-spin")} /> Recalculer
+                </button>
+              </div>
               <div className="space-y-1.5 rounded-md border border-line bg-white p-2.5">
-                {(
-                  [
-                    { label: "Technique", value: data.scoring.technical },
-                    { label: "Soft skills", value: data.scoring.soft },
-                    { label: "Motivation", value: data.scoring.motivation },
-                  ] as const
-                ).map((s) => (
-                  <div key={s.label}>
-                    <div className="flex items-center justify-between text-[11.5px]">
-                      <span className="text-ink">{s.label}</span>
-                      <span className="font-mono font-semibold text-ink">{s.value} / 100</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line">
-                      <div
-                        className={clsx(
-                          "h-full",
-                          s.value >= 80 ? "bg-emerald-500" : s.value >= 65 ? "bg-amber-500" : "bg-rose-500"
-                        )}
-                        style={{ width: `${s.value}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                {data.scoring.breakdown ? (
+                  SCORE_DIMS.map((d) => {
+                    const value = data.scoring.breakdown![d.key];
+                    const pct = Math.round((value / d.max) * 100);
+                    return (
+                      <div key={d.key}>
+                        <div className="flex items-center justify-between text-[11.5px]">
+                          <span className="text-ink">{d.label}</span>
+                          <span className="font-mono font-semibold text-ink">{value} / {d.max}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line">
+                          <div
+                            className={clsx("h-full", pct >= 80 ? "bg-emerald-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500")}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-[11.5px] text-ink-3">Détail indisponible (profil candidat incomplet).</p>
+                )}
                 <div className="mt-1 flex items-center justify-between border-t border-line pt-1.5 text-[12px] font-semibold">
                   <span className="text-ink">Score global</span>
                   <span className="inline-flex items-center gap-1 font-mono">
@@ -115,7 +135,27 @@ export function ApplicationDrawer({ id, onClose }: Props) {
                   </span>
                 </div>
               </div>
+              {(data.scoring.matchedSkills.length > 0 || data.scoring.missingRequirements.length > 0) && (
+                <div className="mt-1.5 space-y-1.5">
+                  {data.scoring.matchedSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {data.scoring.matchedSkills.map((s) => (
+                        <span key={s} className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-medium text-emerald-700">✓ {s}</span>
+                      ))}
+                    </div>
+                  )}
+                  {data.scoring.missingRequirements.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {data.scoring.missingRequirements.map((s) => (
+                        <span key={s} className="rounded-full bg-rose-50 px-2 py-0.5 text-[10.5px] font-medium text-rose-700">manque : {s}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
+
+            <InterviewsSection applicationId={id} interviews={data.interviews} />
 
             <section>
               <h4 className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">Lettre de motivation</h4>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Briefcase, ClipboardList, Calendar, UserCheck } from "lucide-react";
 import { useRecruitmentDashboard } from "@/hooks/useRhRecruitment";
 import { KanbanBoard } from "@/components/rh/recruitment/KanbanBoard";
-import { OffersTable } from "@/components/rh/recruitment/OffersTable";
+import { OffersSection } from "@/components/rh/recruitment/OffersSection";
 import { ApplicationDrawer } from "@/components/rh/recruitment/ApplicationDrawer";
 
 function fmt(n: number): string {
@@ -27,7 +27,7 @@ export default function RecrutementPage() {
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
-        <Kpi icon={<Briefcase className="h-4 w-4 text-primary-600" />} label="Offres actives" value={fmt(data?.kpis.offersActive ?? 5)} hint="Publiées" />
+        <Kpi icon={<Briefcase className="h-4 w-4 text-primary-600" />} label="Offres actives" value={fmt(data?.kpis.offersActive ?? 0)} hint="Publiées" />
         <Kpi icon={<ClipboardList className="h-4 w-4 text-emerald-600" />} label="Candidatures" value={fmt(data?.kpis.applicationsTotal ?? 0)} hint="Total pipeline" />
         <Kpi icon={<Calendar className="h-4 w-4 text-amber-600" />} label="Entretiens en cours" value={fmt(data?.kpis.interviewsThisWeek ?? 0)} hint="Cette semaine" />
         <Kpi icon={<UserCheck className="h-4 w-4 text-rose-600" />} label="Embauches du mois" value={fmt(data?.kpis.hiredThisMonth ?? 0)} hint="Acceptées" />
@@ -42,10 +42,7 @@ export default function RecrutementPage() {
         )}
       </section>
 
-      <section>
-        <h2 className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-ink-3">Offres publiées</h2>
-        <OffersTable />
-      </section>
+      <OffersSection />
 
       {selected && <ApplicationDrawer id={selected} onClose={() => setSelected(null)} />}
     </div>

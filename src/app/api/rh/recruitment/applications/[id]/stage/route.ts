@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role, AppStage } from "@prisma/client";
+import { mailStageChanged } from "@/lib/recruitment-mail";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const existing = await prisma.application.findFirst({
     where: { id: params.id, jobOffer: { tenantId: session.tenantId } },
-    select: { id: true },
+    select: {
+      id: true,
+      rhMessage: true,
+      jobOffer: { select: { title: true } },
+      user: { select: { email: true, firstName: true, lastName: true } },
+    },
   });
   if (!existing) return NextResponse.json({ error: "Candidature introuvable" }, { status: 404 });
 
@@ -35,6 +41,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       stage: body.stage,
       lastStageChangeAt: new Date(),
     },
+  });
+
+  // Notifie le candidat par email pour les étapes significatives (best-effort).
+  await mailStageChanged({
+    to: existing.user.email,
+    candidateName: `${existing.user.firstName} ${existing.user.lastName}`,
+    jobTitle: existing.jobOffer.title,
+    stage: body.stage,
+    rhMessage: existing.rhMessage,
   });
 
   return NextResponse.json({ ok: true, stage: body.stage });

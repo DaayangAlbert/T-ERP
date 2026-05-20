@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { Role } from "@prisma/client";
+import { computeApplicationMatch } from "@/lib/application-score";
 
 export const dynamic = "force-dynamic";
 
@@ -39,19 +40,27 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
   if (!app) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
-  // Décomposition du score global en sous-scores (déterministe selon l'id)
-  const overall = app.score ?? 50;
-  const seed = app.id.charCodeAt(app.id.length - 1) + app.id.charCodeAt(0);
-  const technical = Math.min(100, Math.max(0, overall + (seed % 11) - 5));
-  const soft = Math.min(100, Math.max(0, overall + ((seed * 3) % 13) - 6));
-  const motivation = Math.min(100, Math.max(0, overall + ((seed * 7) % 15) - 7));
+  // Scoring RÉEL : matching live profil candidat ↔ offre (breakdown par
+  // critère). Le score global persisté (app.score) sert au tri du pipeline ;
+  // le breakdown est recalculé à l'affichage. Le RH peut re-snapshotter via
+  // /rescore.
+  const match = await computeApplicationMatch(app.userId, app.jobOfferId);
+  const overall = app.score ?? match?.score ?? 0;
 
-  // Charge les entretiens éventuels
+  // Charge les entretiens éventuels + résout les noms des interviewers
   const interviews = await prisma.interview.findMany({
     where: { applicationId: app.id },
     orderBy: { scheduledAt: "desc" },
-    take: 5,
+    take: 10,
   });
+  const interviewerIds = Array.from(new Set(interviews.flatMap((i) => i.interviewers)));
+  const interviewers = interviewerIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: interviewerIds } },
+        select: { id: true, firstName: true, lastName: true },
+      })
+    : [];
+  const nameById = new Map(interviewers.map((u) => [u.id, `${u.firstName} ${u.lastName}`]));
 
   return NextResponse.json({
     id: app.id,
@@ -62,13 +71,24 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     region: app.user.desiredLocation ?? app.jobOffer.region ?? "—",
     stage: app.stage,
     appliedAt: app.appliedAt.toISOString(),
-    scoring: { overall, technical, soft, motivation },
+    scoring: {
+      overall,
+      breakdown: match?.breakdown ?? null,
+      matchedSkills: match?.matchedSkills ?? [],
+      missingRequirements: match?.missingRequirements ?? [],
+    },
     interviews: interviews.map((i) => ({
       id: i.id,
       scheduledAt: i.scheduledAt.toISOString(),
+      duration: i.duration,
       mode: i.mode,
       location: i.location,
       completed: i.completed,
+      feedback: i.feedback,
+      score: i.score,
+      decision: i.decision,
+      candidateConfirmed: i.candidateConfirmed,
+      interviewers: i.interviewers.map((uid) => nameById.get(uid)).filter((s): s is string => !!s),
     })),
     cvUrl: app.cvUrl,
     coverLetter: app.coverLetter ?? "Pas de lettre de motivation fournie.",

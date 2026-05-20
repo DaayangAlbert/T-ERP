@@ -6,6 +6,8 @@ import { Role, UserStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { resolvePublicTenant } from "@/lib/public-tenant";
+import { computeApplicationMatch } from "@/lib/application-score";
+import { mailApplicationReceived } from "@/lib/recruitment-mail";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
   }
 
   // Récupérer l'offre si candidature ciblée
-  let jobOffer: { id: string } | null = null;
+  let jobOffer: { id: string; title: string } | null = null;
   if (!isSpontaneous) {
     jobOffer = await prisma.jobOffer.findFirst({
       where: {
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
         OR: [{ slug: jobOfferSlug }, { id: jobOfferSlug }, { reference: jobOfferSlug }],
         status: "PUBLISHED",
       },
-      select: { id: true },
+      select: { id: true, title: true },
     });
     if (!jobOffer) {
       return NextResponse.json({ error: "Offre introuvable" }, { status: 404 });
@@ -113,6 +115,8 @@ export async function POST(req: Request) {
 
   // Trouver ou créer le User candidat
   const { first, last } = splitName(fullName);
+  const existedBefore = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  const isNewCandidate = !existedBefore;
   const tempPassword = genPassword();
   const passwordHash = await hashPassword(tempPassword);
 
@@ -194,6 +198,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // Scoring auto à la candidature (recalculable ensuite par le RH quand le
+  // candidat complète son profil). Best-effort : n'empêche pas la candidature.
+  const match = await computeApplicationMatch(candidate.id, jobOffer.id).catch(() => null);
+
   const application = await prisma.application.create({
     data: {
       jobOfferId: jobOffer.id,
@@ -201,6 +209,7 @@ export async function POST(req: Request) {
       coverLetter: coverLetter || null,
       cvUrl: cvUrl ?? null,
       stage: "RECEIVED",
+      score: match?.score ?? null,
     },
     select: { id: true },
   });
@@ -223,6 +232,15 @@ export async function POST(req: Request) {
       })
       .catch(() => {});
   }
+
+  // Accusé de réception au candidat (+ accès si nouveau compte). Best-effort.
+  await mailApplicationReceived({
+    to: candidate.email,
+    candidateName: fullName,
+    jobTitle: jobOffer.title,
+    tenantName: tenant.name,
+    tempPassword: isNewCandidate ? tempPassword : null,
+  });
 
   return NextResponse.json(
     {
