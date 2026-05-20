@@ -17,8 +17,8 @@ const TABS: Array<{ key: Tab; label: string }> = [
 ];
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  if (n >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
   return n.toLocaleString("fr-FR");
 }
 
@@ -91,9 +91,9 @@ export default function LogSuppliersPage() {
                   <tr key={f.id} className="border-t border-line">
                     <td className="px-3 py-2 font-medium text-ink">{f.supplierName}</td>
                     <td className="px-3 py-2 text-ink-2">{f.subject}</td>
-                    <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(f.maxAmount)} M</td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(f.maxAmount)}</td>
                     <td className="px-3 py-2 text-right font-mono tabular-nums">
-                      {fmt(f.usedAmount)} M
+                      {fmt(f.usedAmount)}
                       <div className="mt-0.5 h-1 w-16 rounded-full bg-line">
                         <div
                           className="h-1 rounded-full bg-primary-500"
@@ -138,7 +138,7 @@ export default function LogSuppliersPage() {
                 </div>
                 <div className="mt-1.5 flex justify-between text-[11.5px]">
                   <span className="text-ink-3">Plafond / Utilisé</span>
-                  <span className="font-mono">{fmt(f.maxAmount)} M / {fmt(f.usedAmount)} M</span>
+                  <span className="font-mono">{fmt(f.maxAmount)} / {fmt(f.usedAmount)}</span>
                 </div>
               </div>
             ))}

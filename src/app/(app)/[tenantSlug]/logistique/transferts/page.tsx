@@ -8,8 +8,8 @@ import { clsx } from "clsx";
 import { useLogTransfers, useArbitrateTransfer } from "@/hooks/useLogTransfers";
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  if (n >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
   return n.toLocaleString("fr-FR");
 }
 

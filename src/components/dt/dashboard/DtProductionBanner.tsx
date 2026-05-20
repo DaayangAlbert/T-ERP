@@ -4,8 +4,8 @@ import { TrendingUp } from "lucide-react";
 import type { DtDashboardResponse } from "@/hooks/useDtDashboard";
 
 function formatBillions(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} Md FCFA`;
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(0)} M FCFA`;
+  if (amount >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+  if (amount >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
   return `${amount.toLocaleString("fr-FR")} FCFA`;
 }
 

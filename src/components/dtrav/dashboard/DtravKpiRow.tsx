@@ -1,4 +1,5 @@
 import { Users, TrendingUp, CheckCircle2, Wallet } from "lucide-react";
+import { formatFCFA } from "@/lib/format";
 
 interface Props {
   kpis: {
@@ -25,7 +26,7 @@ export function DtravKpiRow({ kpis }: Props) {
     },
     {
       label: "Production jour",
-      value: `${(kpis.productionValue / 1_000_000).toFixed(1)} M`,
+      value: formatFCFA(kpis.productionValue, { noSuffix: true }),
       hint: "FCFA",
       icon: TrendingUp,
     },
@@ -37,8 +38,8 @@ export function DtravKpiRow({ kpis }: Props) {
     },
     {
       label: "Encaissé mois",
-      value: `${(kpis.monthPaid / 1_000_000).toFixed(0)} M`,
-      hint: `/ ${(kpis.monthInvoiced / 1_000_000).toFixed(0)} M facturés`,
+      value: formatFCFA(kpis.monthPaid, { noSuffix: true }),
+      hint: `/ ${formatFCFA(kpis.monthInvoiced, { noSuffix: true })} FCFA facturés`,
       icon: Wallet,
     },
   ];

@@ -25,10 +25,7 @@ export interface JobMatchData {
 
 function formatSalary(min: number | null, max: number | null): string | null {
   if (min === null && max === null) return null;
-  const fmt = (n: number) =>
-    n >= 1_000_000
-      ? `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)} M`
-      : `${Math.round(n / 1000)} K`;
+  const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
   if (min === null) return `≤ ${fmt(max!)} FCFA`;
   if (max === null) return `≥ ${fmt(min)} FCFA`;
   return `${fmt(min)} - ${fmt(max)} FCFA`;

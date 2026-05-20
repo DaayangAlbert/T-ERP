@@ -89,20 +89,20 @@ export default function MarchePage() {
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          <BannerCell label="Initial" value={c ? `${(c.initialAmount / 1_000_000).toFixed(0)} M` : "—"} />
+          <BannerCell label="Initial" value={c ? `${new Intl.NumberFormat("fr-FR").format(Math.round(c.initialAmount))}` : "—"} />
           <BannerCell
             label="Avenants signés"
-            value={c ? `+${(c.signedAmendmentsTotal / 1_000_000).toFixed(1)} M` : "—"}
+            value={c ? `+${new Intl.NumberFormat("fr-FR").format(Math.round(c.signedAmendmentsTotal))}` : "—"}
             accent="success"
           />
           <BannerCell
             label="Avenants en cours"
-            value={c ? `+${(c.pendingAmendmentsTotal / 1_000_000).toFixed(1)} M` : "—"}
+            value={c ? `+${new Intl.NumberFormat("fr-FR").format(Math.round(c.pendingAmendmentsTotal))}` : "—"}
             accent="warning"
           />
           <BannerCell
             label="Projeté"
-            value={c ? `${(c.projected / 1_000_000).toFixed(0)} M` : "—"}
+            value={c ? `${new Intl.NumberFormat("fr-FR").format(Math.round(c.projected))}` : "—"}
             accent="info"
           />
         </div>
@@ -112,11 +112,11 @@ export default function MarchePage() {
         <Kpi label="Situations émises" value={(data?.kpis.issuedCount ?? 0).toString()} />
         <Kpi
           label="Encaissé"
-          value={`${((data?.kpis.totalCollected ?? 0) / 1_000_000).toFixed(0)} M`}
+          value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.totalCollected ?? 0)))}`}
           hint={`${data?.kpis.collectionRate ?? 0}%`}
           accent="success"
         />
-        <Kpi label="Retenue garantie" value={`${((data?.kpis.totalGuarantee ?? 0) / 1_000_000).toFixed(1)} M`} />
+        <Kpi label="Retenue garantie" value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.totalGuarantee ?? 0)))}`} />
         <Kpi
           label="Pénalités"
           value={(data?.kpis.penaltiesCount ?? 0).toString()}
@@ -161,13 +161,13 @@ export default function MarchePage() {
                       <td className="px-3 py-2 font-medium text-ink">{b.billingNumber}</td>
                       <td className="px-3 py-2 text-ink-3">{b.period}</td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {(b.amountTtc / 1_000_000).toFixed(1)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(b.amountTtc))}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {(b.netToReceive / 1_000_000).toFixed(1)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(b.netToReceive))}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {b.paidAmount ? `${(b.paidAmount / 1_000_000).toFixed(1)} M` : "—"}
+                        {b.paidAmount ? `${new Intl.NumberFormat("fr-FR").format(Math.round(b.paidAmount))}` : "—"}
                       </td>
                       <td className="px-3 py-2 text-ink-3">{new Date(b.dueDate).toLocaleDateString("fr-FR")}</td>
                       <td className="px-3 py-2">
@@ -222,7 +222,7 @@ export default function MarchePage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="font-medium text-ink">
-                      {a.reference} · +{(a.amount / 1_000_000).toFixed(1)} M FCFA
+                      {a.reference} · +{new Intl.NumberFormat("fr-FR").format(Math.round(a.amount))} FCFA
                       {a.extraDays > 0 && <span className="text-ink-3"> · +{a.extraDays} jours</span>}
                     </div>
                     <p className="mt-1 text-[12.5px] text-ink-2">{a.reason}</p>
@@ -261,7 +261,7 @@ export default function MarchePage() {
         <section className="rounded-xl border border-line bg-white p-4 shadow-card text-[13px]">
           <p className="text-ink-2">
             Retenue de garantie cumulée :{" "}
-            <strong>{((data?.kpis.totalGuarantee ?? 0) / 1_000_000).toFixed(2)} M FCFA</strong>
+            <strong>{new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.totalGuarantee ?? 0)))} FCFA</strong>
           </p>
           <p className="mt-2 text-[12.5px] text-ink-3">
             La libération de la retenue intervient à la fin de la période de garantie (12 mois par défaut)

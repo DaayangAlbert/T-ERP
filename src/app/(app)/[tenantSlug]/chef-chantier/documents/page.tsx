@@ -210,7 +210,7 @@ export default function CcDocumentsPage() {
           <Kpi
             icon={<Wallet className="h-4 w-4" />}
             label="Valeur cautions"
-            value={`${(data.summary.totalGuaranteesValue / 1_000_000).toFixed(1)} M`}
+            value={`${new Intl.NumberFormat("fr-FR").format(Math.round(data.summary.totalGuaranteesValue))}`}
             unit="FCFA"
             tone="primary"
           />

@@ -65,7 +65,7 @@ export default function ProductionPage() {
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">
         <div className="text-[11px] uppercase tracking-wider text-ink-3">Production du jour</div>
         <div className="mt-1 font-mono text-3xl font-bold text-primary-700">
-          {((data?.report.productionValue ?? 0) / 1_000_000).toFixed(2)} M
+          {new Intl.NumberFormat("fr-FR").format(Math.round((data?.report.productionValue ?? 0)))}
         </div>
         <div className="text-[11px] text-ink-3">FCFA cumulés</div>
       </section>
@@ -85,7 +85,7 @@ export default function ProductionPage() {
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-[14px] font-bold text-primary-700">
-                    {(r.totalValue / 1_000_000).toFixed(2)} M
+                    {new Intl.NumberFormat("fr-FR").format(Math.round(r.totalValue))}
                   </div>
                   <div className="text-[11px] text-ink-3">
                     {r.quantity} {r.unit}

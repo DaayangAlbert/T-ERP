@@ -6,8 +6,8 @@ import { useLogStats } from "@/hooks/useLogStats";
 import { useTenant } from "@/hooks/useTenant";
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  if (n >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
   return n.toLocaleString("fr-FR");
 }
 
@@ -57,12 +57,12 @@ export default function LogStatsPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <div className="rounded-xl border border-line bg-white px-3 py-2.5">
-          <div className="text-[20px] font-bold leading-none text-ink">{fmt(data.kpis.totalYtd)} M</div>
+          <div className="text-[20px] font-bold leading-none text-ink">{fmt(data.kpis.totalYtd)}</div>
           <div className="mt-1 text-[11.5px] text-ink-2">Total achats YTD</div>
         </div>
         <div className="rounded-xl border border-line bg-white px-3 py-2.5">
           <div className="text-[20px] font-bold leading-none text-emerald-700">
-            {fmt(data.kpis.savings)} M
+            {fmt(data.kpis.savings)}
           </div>
           <div className="mt-1 text-[11.5px] text-ink-2">Économies</div>
           <div className="text-[10.5px] text-emerald-700">{data.kpis.savingsPercent} % vs budget</div>
@@ -107,7 +107,7 @@ export default function LogStatsPage() {
                     fontSize="9"
                     fill="#6F6280"
                   >
-                    {Math.round((maxValue * t) / 1_000_000)} M
+                    {new Intl.NumberFormat("fr-FR").format(Math.round((maxValue * t)))}
                   </text>
                 </g>
               );
@@ -128,7 +128,7 @@ export default function LogStatsPage() {
                     rx={3}
                   >
                     <title>
-                      {m.month}: {Math.round(m.value / 1_000_000)} M FCFA{m.projected ? " (projection)" : ""}
+                      {m.month}: {new Intl.NumberFormat("fr-FR").format(Math.round(m.value))} FCFA{m.projected ? " (projection)" : ""}
                     </title>
                   </rect>
                   <text
@@ -156,7 +156,7 @@ export default function LogStatsPage() {
             <li key={c.category}>
               <div className="flex items-center justify-between">
                 <span className="font-medium text-ink">{c.category}</span>
-                <span className="text-ink-3">{c.pct.toFixed(0)} % · {fmt(c.value)} M</span>
+                <span className="text-ink-3">{c.pct.toFixed(0)} % · {fmt(c.value)}</span>
               </div>
               <div className="mt-1 h-2 overflow-hidden rounded-full bg-line">
                 <div
@@ -190,15 +190,15 @@ export default function LogStatsPage() {
                 <tr key={s.code} className="border-t border-line">
                   <td className="px-3 py-2 font-mono text-[11.5px]">{s.code}</td>
                   <td className="px-3 py-2 font-medium text-ink">{s.name}</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(s.purchases)} M</td>
-                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(s.budget)} M</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(s.purchases)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmt(s.budget)}</td>
                   <td
                     className={clsx(
                       "px-3 py-2 text-right tabular-nums font-semibold",
                       s.gap < 0 ? "text-emerald-700" : "text-rose-700"
                     )}
                   >
-                    {s.gap > 0 ? "+" : ""}{fmt(s.gap)} M ({s.gapPercent > 0 ? "+" : ""}{s.gapPercent.toFixed(1)} %)
+                    {s.gap > 0 ? "+" : ""}{fmt(s.gap)} ({s.gapPercent > 0 ? "+" : ""}{s.gapPercent.toFixed(1)} %)
                   </td>
                 </tr>
               ))}
@@ -212,7 +212,7 @@ export default function LogStatsPage() {
               <div className="text-[13px] font-semibold text-ink">{s.name}</div>
               <div className="mt-1.5 flex justify-between text-[11.5px]">
                 <span className="text-ink-3">Achats / Budget</span>
-                <span className="font-mono">{fmt(s.purchases)} / {fmt(s.budget)} M</span>
+                <span className="font-mono">{fmt(s.purchases)} / {fmt(s.budget)}</span>
               </div>
               <div
                 className={clsx(
@@ -220,7 +220,7 @@ export default function LogStatsPage() {
                   s.gap < 0 ? "text-emerald-700" : "text-rose-700"
                 )}
               >
-                Écart {s.gap > 0 ? "+" : ""}{fmt(s.gap)} M ({s.gapPercent > 0 ? "+" : ""}{s.gapPercent.toFixed(1)} %)
+                Écart {s.gap > 0 ? "+" : ""}{fmt(s.gap)} ({s.gapPercent > 0 ? "+" : ""}{s.gapPercent.toFixed(1)} %)
               </div>
             </div>
           ))}

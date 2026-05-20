@@ -69,7 +69,7 @@ export default function ComptableEntriesPage() {
         <Kpi label="Écritures du mois" value={monthCount.toString()} />
         <Kpi label="En brouillard" value={draftCount.toString()} accent="warning" />
         <Kpi label="Validées" value={validatedCount.toString()} accent="success" />
-        <Kpi label="Montant cumulé" value={`${(totalAmount / 1_000_000).toFixed(0)} M FCFA`} />
+        <Kpi label="Montant cumulé" value={`${new Intl.NumberFormat("fr-FR").format(Math.round(totalAmount))} FCFA`} />
       </section>
 
       <section className="rounded-xl border border-line bg-white shadow-card">

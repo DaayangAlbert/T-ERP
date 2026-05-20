@@ -46,7 +46,7 @@ export default function RhValidationsPage() {
   const { data: pending } = useRhPendingValidations();
 
   const totalAmount = pending?.summary.totalAmount ?? "0";
-  const fmtTotal = Number(totalAmount) > 0 ? `${(Number(totalAmount) / 1_000_000).toFixed(1).replace(".", ",")} M FCFA` : "—";
+  const fmtTotal = Number(totalAmount) > 0 ? `${new Intl.NumberFormat("fr-FR").format(Math.round(Number(totalAmount)))} FCFA` : "—";
 
   return (
     <div className="space-y-3">

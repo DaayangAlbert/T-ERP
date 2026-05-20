@@ -30,7 +30,7 @@ export function CptScopeBanner({ isDirection, label, sites, cumulatedBudget }: P
         </div>
       )}
       <span className="ml-auto text-ink-3">
-        {(cumulatedBudget / 1_000_000).toFixed(0)} M FCFA cumulés
+        {new Intl.NumberFormat("fr-FR").format(Math.round(cumulatedBudget))} FCFA cumulés
       </span>
     </section>
   );

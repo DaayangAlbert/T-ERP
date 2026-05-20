@@ -40,8 +40,8 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  if (n >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
   return n.toLocaleString("fr-FR");
 }
 
@@ -105,7 +105,7 @@ export default function LogFleetPage() {
             {(data.kpis.fuelLitersWeek / 1000).toFixed(1)}k L
           </div>
           <div className="mt-1 text-[11.5px] text-ink-2">Conso gasoil semaine</div>
-          <div className="text-[10.5px] text-ink-3">≈ {fmt(data.kpis.fuelCostWeek)} M FCFA</div>
+          <div className="text-[10.5px] text-ink-3">≈ {fmt(data.kpis.fuelCostWeek)} FCFA</div>
         </div>
       </div>
 

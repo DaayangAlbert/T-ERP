@@ -10,8 +10,7 @@ import { DtValidationWorkflowVisual } from "./DtValidationWorkflowVisual";
 
 function fmt(n: number | null): string {
   if (n === null) return "—";
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md FCFA`;
-  return `${Math.round(n / 1_000_000).toLocaleString("fr-FR")} M FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
 }
 
 const PRIORITY_BADGE: Record<string, string> = {

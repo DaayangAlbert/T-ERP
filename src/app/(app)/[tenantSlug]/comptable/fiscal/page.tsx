@@ -150,7 +150,7 @@ export default function FiscalPage() {
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Kpi label="Total à payer (30 j)" value={`${(totalDue / 1_000_000).toFixed(1)} M`} icon={<Wallet className="h-4 w-4 text-primary-600" />} />
+        <Kpi label="Total à payer (30 j)" value={`${new Intl.NumberFormat("fr-FR").format(Math.round(totalDue))}`} icon={<Wallet className="h-4 w-4 text-primary-600" />} />
         <Kpi
           label="En retard"
           value={String(overdueCount)}

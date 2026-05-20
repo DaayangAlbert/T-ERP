@@ -2,17 +2,12 @@ import { format, formatDistanceToNowStrict } from "date-fns";
 import { fr } from "date-fns/locale";
 
 const FCFA_FORMAT = new Intl.NumberFormat("fr-FR", { useGrouping: true });
-const ONE_DECIMAL_FORMAT = new Intl.NumberFormat("fr-FR", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-const TWO_DECIMAL_FORMAT = new Intl.NumberFormat("fr-FR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export interface FormatFCFAOptions {
-  /** "auto" picks unit based on magnitude (Md, M, K). "raw" prints the full number. Defaults to "auto". */
+  /**
+   * Conservé pour compatibilité d'API. L'abréviation M/Md a été retirée :
+   * les montants s'affichent TOUJOURS en chiffres complets (choix produit).
+   */
   scale?: "auto" | "raw";
   /** Hide the trailing " FCFA" suffix. Useful for unit-decoupled display. */
   noSuffix?: boolean;
@@ -46,19 +41,15 @@ export function formatFCFA(
   const n = typeof amount === "bigint" ? Number(amount) : amount;
   const abs = Math.abs(n);
 
-  let value: string;
-  let unit: string;
+  // Plus d'abréviation M/Md : on affiche toujours le nombre complet groupé.
+  const value = FCFA_FORMAT.format(typeof amount === "bigint" ? amount : Math.round(n));
 
-  if (scale === "auto" && abs >= 1_000_000_000) {
-    value = TWO_DECIMAL_FORMAT.format(n / 1_000_000_000);
-    unit = noSuffix ? "Md" : "Md FCFA";
-  } else if (scale === "auto" && abs >= 1_000_000) {
-    value = ONE_DECIMAL_FORMAT.format(n / 1_000_000);
-    unit = noSuffix ? "M" : "M FCFA";
-  } else {
-    value = FCFA_FORMAT.format(typeof amount === "bigint" ? amount : Math.round(n));
-    unit = noSuffix || scale === "auto" ? "" : "FCFA";
-  }
+  // Suffixe « FCFA » : en mode auto on le garde pour les montants ≥ 1 M (qui
+  // l'affichaient déjà via "M/Md FCFA") ; en mode raw on le met toujours.
+  let unit: string;
+  if (noSuffix) unit = "";
+  else if (scale === "auto") unit = abs >= 1_000_000 ? "FCFA" : "";
+  else unit = "FCFA";
 
   if (splitUnit) return { value, unit };
   return unit ? `${value} ${unit}` : value;

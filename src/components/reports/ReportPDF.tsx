@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
 });
 
 function fmtFCFA(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2).replace(".", ",")} Md FCFA`;
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1).replace(".", ",")} M FCFA`;
+  if (amount >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+  if (amount >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
   return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`;
 }
 

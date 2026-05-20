@@ -138,7 +138,7 @@ export default function ItSitesPage() {
                         {s.manager ? `${s.manager.firstName} ${s.manager.lastName.charAt(0)}.` : "—"}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {(s.budget / 1_000_000).toFixed(0)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(s.budget))}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">{s.progress}%</td>
                       <td className="px-3 py-2">

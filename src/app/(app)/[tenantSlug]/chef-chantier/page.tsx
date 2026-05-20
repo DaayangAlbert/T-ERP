@@ -81,7 +81,7 @@ export default function CcDashboardPage() {
       )}
 
       <section className="grid grid-cols-2 gap-2">
-        <Kpi label="Production hier" value={`${((data?.yesterdayProduction ?? 0) / 1_000_000).toFixed(1)} M`} hint="FCFA validés" />
+        <Kpi label="Production hier" value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.yesterdayProduction ?? 0)))}`} hint="FCFA validés" />
         <Kpi
           label="Présents hier"
           value={

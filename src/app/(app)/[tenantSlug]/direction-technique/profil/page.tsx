@@ -32,8 +32,8 @@ interface AgendaEvent {
 }
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} Md FCFA`;
-  return `${(n / 1_000_000).toLocaleString("fr-FR")} M FCFA`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
 }
 
 const TECH_GROUPS = [

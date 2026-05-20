@@ -88,7 +88,7 @@ export default function MagSortiesPage() {
                   </div>
                 </div>
                 <div className="text-right text-[13px] font-semibold tabular-nums text-danger">
-                  -{(m.totalValue / 1_000_000).toFixed(2)} M
+                  -{new Intl.NumberFormat("fr-FR").format(Math.round(m.totalValue))}
                 </div>
               </li>
             ))}

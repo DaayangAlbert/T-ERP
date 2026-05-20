@@ -97,7 +97,7 @@ export default function MagDashboardPage() {
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             {data && (
               <span className="ml-2 font-semibold text-primary-700">
-                · {(data.kpis.totalValue / 1_000_000).toFixed(1)} M FCFA en stock
+                · {new Intl.NumberFormat("fr-FR").format(Math.round(data.kpis.totalValue))} FCFA en stock
               </span>
             )}
           </p>
@@ -113,7 +113,7 @@ export default function MagDashboardPage() {
       )}
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Kpi label="Valeur stock" value={data ? `${(data.kpis.totalValue / 1_000_000).toFixed(1)} M` : "—"} icon={Package} />
+        <Kpi label="Valeur stock" value={data ? `${new Intl.NumberFormat("fr-FR").format(Math.round(data.kpis.totalValue))}` : "—"} icon={Package} />
         <Kpi
           label="Mouvements jour"
           value={data ? `${data.kpis.movementsToday}` : "—"}
@@ -200,7 +200,7 @@ export default function MagDashboardPage() {
                   <div className="mt-2 flex items-end justify-between gap-2">
                     <div>
                       <div className="font-mono text-[16px] font-bold tabular-nums text-ink">
-                        {(w.totalValue / 1_000_000).toFixed(1)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(w.totalValue))}
                       </div>
                       <div className="text-[10.5px] text-ink-3">
                         {w.articleCount} article{w.articleCount > 1 ? "s" : ""}
@@ -294,7 +294,7 @@ export default function MagDashboardPage() {
                     </div>
                   </div>
                   <div className={clsx("text-right text-[12px] font-semibold tabular-nums", isIn ? "text-success" : "text-danger")}>
-                    {isIn ? "+" : "-"}{(m.totalValue / 1_000_000).toFixed(2)} M
+                    {isIn ? "+" : "-"}{new Intl.NumberFormat("fr-FR").format(Math.round(m.totalValue))}
                   </div>
                 </li>
               );

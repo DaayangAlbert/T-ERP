@@ -8,8 +8,8 @@ interface Props {
 }
 
 function formatM(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} Md`;
-  return `${Math.round(amount / 1_000_000)} M`;
+  if (amount >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))}`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))}`;
 }
 
 export function DirectorOfWorksDonut({ data }: Props) {

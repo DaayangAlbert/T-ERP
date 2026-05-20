@@ -66,7 +66,7 @@ export default function MagCataloguePage() {
       <section>
         <p className="text-[12.5px] text-ink-3">
           <strong className="text-ink">{data?.totals.all ?? 0}</strong> articles en catalogue ·
-          <strong className="ml-1 text-primary-700">{(totalValue / 1_000_000).toFixed(1)} M FCFA</strong>
+          <strong className="ml-1 text-primary-700">{new Intl.NumberFormat("fr-FR").format(Math.round(totalValue))} FCFA</strong>
           {" "}valorisés au PMP
         </p>
       </section>

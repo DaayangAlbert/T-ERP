@@ -170,7 +170,7 @@ export function ProvisionTenantWizard({ plans }: { plans: Plan[] }) {
                 >
                   {plans.map((p) => (
                     <option key={p.code} value={p.code}>
-                      {p.name} · {Math.round(p.monthlyPriceXAF / 1_000)} K XAF/mois
+                      {p.name} · {new Intl.NumberFormat("fr-FR").format(Math.round(p.monthlyPriceXAF))} XAF/mois
                     </option>
                   ))}
                 </select>

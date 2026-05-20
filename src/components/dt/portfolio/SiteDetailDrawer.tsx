@@ -18,8 +18,8 @@ const TABS: Array<{ key: Tab; label: string }> = [
 ];
 
 function fmt(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} Md FCFA`;
-  return `${Math.round(amount / 1_000_000)} M FCFA`;
+  if (amount >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
 }
 
 interface Props {

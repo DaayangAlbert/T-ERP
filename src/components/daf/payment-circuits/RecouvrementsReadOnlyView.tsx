@@ -79,9 +79,8 @@ const STATUS_BADGE = {
 } as const;
 
 function fmtFCFA(amount: string): string {
-  const n = BigInt(amount);
-  if (n >= 1_000_000_000n) return `${(Number(n) / 1_000_000_000).toFixed(2)} Md FCFA`;
-  return `${new Intl.NumberFormat("fr-FR").format(Math.round(Number(n) / 1_000_000))} M FCFA`;
+  const n = Number(BigInt(amount));
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
 }
 
 function fmtDate(iso: string): string {

@@ -28,8 +28,8 @@ const PHASE_CHIP: Record<string, string> = {
 };
 
 function fmtAmount(v: number): string {
-  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)} Md`;
-  if (v >= 1_000_000) return `${Math.round(v / 1_000_000)} M`;
+  if (v >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))}`;
+  if (v >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))}`;
   return v.toLocaleString("fr-FR");
 }
 

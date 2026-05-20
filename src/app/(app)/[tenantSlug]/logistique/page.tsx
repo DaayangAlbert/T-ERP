@@ -6,8 +6,8 @@ import { clsx } from "clsx";
 import { useLogDashboard } from "@/hooks/useLogDashboard";
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  if (n >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
   return n.toLocaleString("fr-FR");
 }
 
@@ -96,7 +96,7 @@ export default function LogDashboardPage() {
           },
           {
             label: "Économies achats YTD",
-            value: `${fmt(data.kpis.savingsYtd)} M`,
+            value: `${fmt(data.kpis.savingsYtd)}`,
             sub: "vs budget",
             tone: "emerald",
             Icon: Store,
@@ -164,7 +164,7 @@ export default function LogDashboardPage() {
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-xl border border-line bg-white p-3 sm:p-4">
           <h3 className="text-[13px] font-semibold text-ink">
-            Achats YTD par catégorie — {fmt(data.purchasesByCategory.total)} M FCFA
+            Achats YTD par catégorie — {fmt(data.purchasesByCategory.total)} FCFA
           </h3>
           <ul className="mt-3 space-y-2 text-[12px]">
             {data.purchasesByCategory.items.map((c) => {
@@ -173,7 +173,7 @@ export default function LogDashboardPage() {
                 <li key={c.category}>
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-ink">{c.category}</span>
-                    <span className="text-ink-3">{pct.toFixed(0)} % · {fmt(c.value)} M</span>
+                    <span className="text-ink-3">{pct.toFixed(0)} % · {fmt(c.value)}</span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-line">
                     <div
@@ -197,7 +197,7 @@ export default function LogDashboardPage() {
                 <li key={s.name}>
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-ink">{s.name}</span>
-                    <span className="font-mono text-ink-3">{fmt(s.volume)} M</span>
+                    <span className="font-mono text-ink-3">{fmt(s.volume)}</span>
                   </div>
                   <div className="mt-1 h-2 overflow-hidden rounded-full bg-line">
                     <div
@@ -236,7 +236,7 @@ export default function LogDashboardPage() {
                 <tr key={s.code} className="border-t border-line hover:bg-surface-alt/60">
                   <td className="px-3 py-2 font-mono text-[11.5px]">{s.code}</td>
                   <td className="px-3 py-2 font-medium text-ink">{s.name}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{fmt(s.stockValue)} M</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{fmt(s.stockValue)}</td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     <span className={clsx(s.rupturesCount >= 3 ? "text-rose-700 font-semibold" : "text-ink-2")}>
                       {s.rupturesCount}
@@ -255,7 +255,7 @@ export default function LogDashboardPage() {
               <div className="text-[13px] font-semibold text-ink">{s.name}</div>
               <div className="mt-1.5 flex justify-between text-[11.5px]">
                 <span className="text-ink-3">Valeur stock</span>
-                <span className="font-mono">{fmt(s.stockValue)} M FCFA</span>
+                <span className="font-mono">{fmt(s.stockValue)} FCFA</span>
               </div>
               <div className="flex justify-between text-[11.5px]">
                 <span className="text-ink-3">Ruptures</span>

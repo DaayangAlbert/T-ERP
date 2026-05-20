@@ -12,10 +12,7 @@ interface Props {
 }
 
 function formatMoney(xaf: number): string {
-  if (xaf >= 1_000_000_000) return `${(xaf / 1_000_000_000).toFixed(2)} Md`;
-  if (xaf >= 1_000_000) return `${(xaf / 1_000_000).toFixed(1)} M`;
-  if (xaf >= 1_000) return `${Math.round(xaf / 1_000)} K`;
-  return String(xaf);
+  return new Intl.NumberFormat("fr-FR").format(Math.round(xaf));
 }
 
 export function AdminKpiRow(props: Props) {

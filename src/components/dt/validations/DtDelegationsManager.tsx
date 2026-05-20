@@ -13,8 +13,8 @@ interface ManagerProps {
 
 function fmt(n: number | null): string {
   if (n === null) return "Tout montant";
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md FCFA`;
-  return `${Math.round(n / 1_000_000)} M FCFA`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
 }
 
 export function DtDelegationsManager({ worksDirectors }: ManagerProps) {

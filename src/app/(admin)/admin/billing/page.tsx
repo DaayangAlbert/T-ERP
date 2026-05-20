@@ -59,8 +59,8 @@ async function fetchBilling(): Promise<Payload> {
 }
 
 function fmtMoney(xaf: number): string {
-  if (xaf >= 1_000_000) return `${(xaf / 1_000_000).toFixed(2)} M`;
-  if (xaf >= 1_000) return `${Math.round(xaf / 1_000)} K`;
+  if (xaf >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(xaf))}`;
+  if (xaf >= 1_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(xaf))}`;
   return String(xaf);
 }
 

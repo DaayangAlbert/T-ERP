@@ -7,8 +7,8 @@ import { useMyAssignedTracks } from "@/hooks/usePaymentCircuits";
 
 function fmtFCFA(amount: string): string {
   const n = BigInt(amount);
-  if (n >= 1_000_000_000n) return `${(Number(n) / 1_000_000_000).toFixed(1)} Md FCFA`;
-  return `${Math.round(Number(n) / 1_000_000)} M FCFA`;
+  if (n >= 1_000_000_000n) return `${new Intl.NumberFormat("fr-FR").format(Math.round(Number(n)))} FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(Number(n)))} FCFA`;
 }
 
 interface Props {

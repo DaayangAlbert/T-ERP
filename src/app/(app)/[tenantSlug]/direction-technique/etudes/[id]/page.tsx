@@ -8,8 +8,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md FCFA`;
-  return `${Math.round(n / 1_000_000).toLocaleString("fr-FR")} M FCFA`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))} FCFA`;
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -166,7 +166,7 @@ export default function TenderDetailPage() {
                       {it.unitPrice.toLocaleString("fr-FR")}
                     </td>
                     <td className="px-3 py-2 text-right font-mono tabular-nums font-semibold">
-                      {(it.totalPrice / 1_000_000).toFixed(2)} M
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(it.totalPrice))}
                     </td>
                   </tr>
                 ))}

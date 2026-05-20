@@ -165,7 +165,7 @@ export function TenantsTable({ rows }: { rows: TenantRow[] }) {
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-cyan-300">
                       {t.monthlyPriceXAF
-                        ? `${Math.round(t.monthlyPriceXAF / 1_000).toLocaleString("fr-FR")} K`
+                        ? `${new Intl.NumberFormat("fr-FR").format(Math.round(t.monthlyPriceXAF))}`
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">

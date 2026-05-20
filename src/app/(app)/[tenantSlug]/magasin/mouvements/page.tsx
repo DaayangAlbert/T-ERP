@@ -130,7 +130,7 @@ function MovementRow({ movement }: { movement: Movement }) {
         tone === "warning" && "text-warning"
       )}>
         {isIn ? "+" : isOut ? "-" : ""}
-        {(movement.totalValue / 1_000_000).toFixed(2)} M
+        {new Intl.NumberFormat("fr-FR").format(Math.round(movement.totalValue))}
       </div>
     </article>
   );

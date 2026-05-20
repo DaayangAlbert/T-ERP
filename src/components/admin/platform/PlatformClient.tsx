@@ -46,8 +46,7 @@ const INT_CFG: Record<
 };
 
 function fmtMoney(xaf: number): string {
-  if (xaf >= 1_000_000) return `${(xaf / 1_000_000).toFixed(2)} M`;
-  return `${Math.round(xaf / 1_000).toLocaleString("fr-FR")} K`;
+  return new Intl.NumberFormat("fr-FR").format(Math.round(xaf));
 }
 
 export function PricingPlansCards({ plans }: { plans: PlanCard[] }) {

@@ -3,9 +3,7 @@
 import type { DtValidationsResponse } from "@/hooks/useDtValidations";
 
 function fmt(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  if (n >= 1_000_000) return `${Math.round(n / 1_000_000)} M`;
-  return n.toLocaleString("fr-FR");
+  return new Intl.NumberFormat("fr-FR").format(Math.round(n));
 }
 
 export function DtValidationsKpis({ kpis }: { kpis: DtValidationsResponse["kpis"] }) {

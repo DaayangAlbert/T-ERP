@@ -152,7 +152,7 @@ export default function DrhAdvancesPage() {
           <KpiCard
             icon={<Wallet className="h-4 w-4" />}
             label="Montant total"
-            value={`${(data.summary.totalAmountXAF / 1_000_000).toFixed(2)} M`}
+            value={`${new Intl.NumberFormat("fr-FR").format(Math.round(data.summary.totalAmountXAF))}`}
             unit="FCFA"
           />
           <KpiCard

@@ -132,21 +132,21 @@ export function PersonnelCoutsPanel() {
           <KpiCard
             icon={<Wallet className="h-4 w-4" />}
             label="Masse salariale mensuelle"
-            value={`${(data.summary.totalSalary / 1_000_000).toFixed(1)} M`}
+            value={formatFCFA(data.summary.totalSalary, { noSuffix: true })}
             unit="FCFA"
             tone="primary"
           />
           <KpiCard
             icon={<Building2 className="h-4 w-4" />}
             label="Coût direction (structure)"
-            value={`${(data.summary.salaryByAttachment.DIRECTION / 1_000_000).toFixed(1)} M`}
+            value={formatFCFA(data.summary.salaryByAttachment.DIRECTION, { noSuffix: true })}
             unit="FCFA"
             tone="violet"
           />
           <KpiCard
             icon={<Factory className="h-4 w-4" />}
             label="Coût projets (imputable)"
-            value={`${(data.summary.salaryByAttachment.PROJECT / 1_000_000).toFixed(1)} M`}
+            value={formatFCFA(data.summary.salaryByAttachment.PROJECT, { noSuffix: true })}
             unit="FCFA"
             tone="emerald"
           />

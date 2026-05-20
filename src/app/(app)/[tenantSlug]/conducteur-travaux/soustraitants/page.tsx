@@ -32,7 +32,7 @@ export default function CdtSoustraitantsPage() {
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Sous-traitants</h1>
         <p className="mt-1 text-[12.5px] text-ink-3">
           {data.active.length} actif · {data.upcoming.length} en démarrage prochain ·{" "}
-          <span className="font-mono font-semibold text-ink">{fmt(data.totalEngagedAmount / 1_000_000)} M FCFA</span> engagés
+          <span className="font-mono font-semibold text-ink">{fmt(data.totalEngagedAmount)} FCFA</span> engagés
         </p>
       </header>
 
@@ -116,7 +116,7 @@ export default function CdtSoustraitantsPage() {
             <div className="min-w-0 flex-1">
               <h3 className="text-[14px] font-bold text-ink truncate">{u.name}</h3>
               <p className="text-[11.5px] text-ink-3">{u.contractLabel}</p>
-              <p className="mt-0.5 text-[11px] text-ink-3">Démarrage prévu {fmtDate(u.startsAt)} · {u.durationDays} jours · {fmt(u.totalAmount / 1_000_000)} M FCFA</p>
+              <p className="mt-0.5 text-[11px] text-ink-3">Démarrage prévu {fmtDate(u.startsAt)} · {u.durationDays} jours · {fmt(u.totalAmount)} FCFA</p>
             </div>
             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10.5px] font-bold text-blue-800">À venir</span>
           </header>

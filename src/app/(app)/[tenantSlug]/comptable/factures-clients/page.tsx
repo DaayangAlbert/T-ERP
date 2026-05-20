@@ -143,13 +143,13 @@ export default function FacturesClientsPage() {
                     </td>
                     <td className="px-3 py-2 text-ink-3">{b.period}</td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {(b.amountHt / 1_000_000).toFixed(1)} M
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(b.amountHt))}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {(b.amountTtc / 1_000_000).toFixed(1)} M
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(b.amountTtc))}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums font-medium text-success">
-                      {(b.netToReceive / 1_000_000).toFixed(1)} M
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(b.netToReceive))}
                     </td>
                     <td className="px-3 py-2 text-ink-3">
                       {new Date(b.dueDate).toLocaleDateString("fr-FR")}

@@ -102,7 +102,7 @@ export default function DtravValidationsPage() {
                     </div>
                     <div className="text-[11.5px] text-ink-3">
                       {r.submittedBy.firstName} {r.submittedBy.lastName} · {r.workforcePresent} présents ·{" "}
-                      {(r.productionValue / 1_000_000).toFixed(1)} M FCFA
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(r.productionValue))} FCFA
                     </div>
                   </div>
                 </div>
@@ -139,7 +139,7 @@ export default function DtravValidationsPage() {
                     </div>
                     <div className="text-[11.5px] text-ink-3">
                       {v.initiator.firstName} {v.initiator.lastName}
-                      {v.amount && <> · {(v.amount / 1_000_000).toFixed(1)} M FCFA</>}
+                      {v.amount && <> · {new Intl.NumberFormat("fr-FR").format(Math.round(v.amount))} FCFA</>}
                     </div>
                   </div>
                 </div>

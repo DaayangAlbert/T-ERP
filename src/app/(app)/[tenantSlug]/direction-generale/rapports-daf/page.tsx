@@ -101,8 +101,8 @@ function fmtMonth(iso: string) {
 function fmtFCFA(n: string | number): string {
   const v = typeof n === "string" ? Number(n) : n;
   if (!Number.isFinite(v)) return "—";
-  if (Math.abs(v) >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)} Md FCFA`;
-  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M FCFA`;
+  if (Math.abs(v) >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))} FCFA`;
+  if (Math.abs(v) >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))} FCFA`;
   if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)} k FCFA`;
   return new Intl.NumberFormat("fr-FR").format(Math.round(v)) + " FCFA";
 }

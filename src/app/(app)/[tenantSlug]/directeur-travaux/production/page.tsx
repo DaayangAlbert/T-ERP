@@ -79,8 +79,8 @@ export default function ProductionPage() {
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Kpi label="Production jour" value={`${((data?.kpis.todayProduction ?? 0) / 1_000_000).toFixed(1)} M`} hint="FCFA" />
-        <Kpi label="Cumul mois" value={`${((data?.kpis.monthProduction ?? 0) / 1_000_000).toFixed(0)} M`} hint="FCFA" />
+        <Kpi label="Production jour" value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.todayProduction ?? 0)))}`} hint="FCFA" />
+        <Kpi label="Cumul mois" value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.monthProduction ?? 0)))}`} hint="FCFA" />
         <Kpi label="À valider" value={(data?.kpis.toValidate ?? 0).toString()} accent="warning" />
         <Kpi label="Taux prod./planifié" value={`${data?.kpis.planningRate ?? 0}%`} accent="success" />
       </section>
@@ -117,7 +117,7 @@ export default function ProductionPage() {
 
             <section className="rounded-md border border-line bg-white p-2">
               <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                Production · {(toValidate.productionValue / 1_000_000).toFixed(2)} M FCFA
+                Production · {new Intl.NumberFormat("fr-FR").format(Math.round(toValidate.productionValue))} FCFA
               </h3>
               {toValidate.tasksCompleted.length === 0 ? (
                 <p className="text-[12px] text-ink-3">Aucune tâche déclarée.</p>
@@ -127,7 +127,7 @@ export default function ProductionPage() {
                     <li key={i} className="flex justify-between">
                       <span className="text-ink-2">{t.task}</span>
                       <span className="tabular-nums text-ink-3">
-                        {t.quantity} {t.unit} · {(t.value / 1_000_000).toFixed(1)} M
+                        {t.quantity} {t.unit} · {new Intl.NumberFormat("fr-FR").format(Math.round(t.value))}
                       </span>
                     </li>
                   ))}
@@ -220,7 +220,7 @@ export default function ProductionPage() {
                     {new Date(r.reportDate).toLocaleDateString("fr-FR")}
                   </div>
                   <div className="text-[11.5px] text-ink-3">
-                    {r.workforcePresent}/{r.workforcePlanned} présents · {(r.productionValue / 1_000_000).toFixed(1)} M FCFA
+                    {r.workforcePresent}/{r.workforcePlanned} présents · {new Intl.NumberFormat("fr-FR").format(Math.round(r.productionValue))} FCFA
                   </div>
                 </div>
                 <span

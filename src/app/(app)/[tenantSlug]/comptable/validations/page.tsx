@@ -75,7 +75,7 @@ export default function ComptableValidationsPage() {
         />
         <Kpi
           label="Montant cumulé"
-          value={data ? `${(Number(data.summary.totalAmount) / 1_000_000).toFixed(1)} M` : "—"}
+          value={data ? `${new Intl.NumberFormat("fr-FR").format(Math.round(Number(data.summary.totalAmount)))}` : "—"}
           icon={<Wallet className="h-4 w-4 text-primary-600" />}
         />
         <Kpi

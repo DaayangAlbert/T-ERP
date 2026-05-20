@@ -160,7 +160,7 @@ export function WarehouseStocksTable({
           <SummaryCard
             icon={<Package className="h-4 w-4" />}
             label="Valeur totale"
-            value={`${(data.summary.totalValue / 1_000_000).toFixed(1)} M`}
+            value={`${new Intl.NumberFormat("fr-FR").format(Math.round(data.summary.totalValue))}`}
             unit="FCFA"
           />
           <SummaryCard

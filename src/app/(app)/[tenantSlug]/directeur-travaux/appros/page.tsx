@@ -61,7 +61,7 @@ export default function ApprosPage() {
         <Kpi label="BC actifs" value={(data?.kpis.activePoCount ?? 0).toString()} icon={ShoppingCart} />
         <Kpi
           label="Cumul"
-          value={`${((data?.kpis.cumulativeAmount ?? 0) / 1_000_000).toFixed(0)} M`}
+          value={`${new Intl.NumberFormat("fr-FR").format(Math.round((data?.kpis.cumulativeAmount ?? 0)))}`}
           hint="FCFA"
           icon={ShoppingCart}
         />
@@ -138,7 +138,7 @@ export default function ApprosPage() {
                       <td className="px-3 py-2 font-medium text-ink">{p.reference}</td>
                       <td className="px-3 py-2 text-ink-2">{p.supplier}</td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {(p.amount / 1_000_000).toFixed(2)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(p.amount))}
                       </td>
                       <td className="px-3 py-2 text-ink-3">
                         {new Date(p.createdAt).toLocaleDateString("fr-FR")}
@@ -169,7 +169,7 @@ export default function ApprosPage() {
                       <div className="text-[11.5px] text-ink-3">{p.supplier}</div>
                     </div>
                     <span className="text-[13px] font-semibold tabular-nums">
-                      {(p.amount / 1_000_000).toFixed(1)} M
+                      {new Intl.NumberFormat("fr-FR").format(Math.round(p.amount))}
                     </span>
                   </div>
                 </div>

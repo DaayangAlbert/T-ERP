@@ -56,7 +56,7 @@ export default function TresoreriePage() {
   const totalBankBalance = banksQuery.data?.items.reduce((s, b) => s + b.balance, 0) ?? 0;
   const inflowToday = cashQuery.data?.today ? Number(cashQuery.data.today.inflow) : null;
   const outflowToday = cashQuery.data?.today ? Number(cashQuery.data.today.outflow) : null;
-  const fmtM = (n: number | null) => (n === null ? "—" : `${(n / 1_000_000).toFixed(1)} M`);
+  const fmtM = (n: number | null) => (n === null ? "—" : `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`);
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-tresorerie">
@@ -70,10 +70,10 @@ export default function TresoreriePage() {
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Kpi label="Solde caisses" value={`${(totalCashboxBalance / 1_000_000).toFixed(1)} M`} icon={Wallet} />
+        <Kpi label="Solde caisses" value={`${new Intl.NumberFormat("fr-FR").format(Math.round(totalCashboxBalance))}`} icon={Wallet} />
         {isDirection && (
           <>
-            <Kpi label="Solde banques" value={`${(totalBankBalance / 1_000_000).toFixed(1)} M`} icon={Building2} />
+            <Kpi label="Solde banques" value={`${new Intl.NumberFormat("fr-FR").format(Math.round(totalBankBalance))}`} icon={Building2} />
             <Kpi label="Encaissements jour" value={fmtM(inflowToday)} icon={ArrowDownToLine} />
             <Kpi label="Décaissements jour" value={fmtM(outflowToday)} icon={ArrowUpFromLine} />
           </>

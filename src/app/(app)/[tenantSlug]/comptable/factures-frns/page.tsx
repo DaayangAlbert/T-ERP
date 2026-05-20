@@ -182,7 +182,7 @@ export default function FacturesFrnsPage() {
                         <div className="text-[11.5px] text-ink-3">{i.supplier}</div>
                       </div>
                       <span className="text-[12.5px] font-semibold tabular-nums text-ink">
-                        {(i.amountTtc / 1_000_000).toFixed(1)} M
+                        {new Intl.NumberFormat("fr-FR").format(Math.round(i.amountTtc))}
                       </span>
                     </div>
                     <div className="mt-2 flex justify-between text-[11.5px]">

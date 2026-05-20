@@ -127,7 +127,7 @@ function SystemMetricsCard({
         />
         <Metric
           label="Impayés cumulés"
-          value={`${Math.round(overdueAmountXAF / 1_000).toLocaleString("fr-FR")} K XAF`}
+          value={`${new Intl.NumberFormat("fr-FR").format(Math.round(overdueAmountXAF))} XAF`}
           accent={overdueAmountXAF > 0 ? "#F59E0B" : "#22C55E"}
         />
         <Metric label="p95 latency" value="128 ms" accent="#22D3EE" />

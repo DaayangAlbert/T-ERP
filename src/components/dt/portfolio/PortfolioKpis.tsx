@@ -3,8 +3,8 @@
 import type { DtPortfolioResponse } from "@/hooks/useDtPortfolio";
 
 function fmt(amount: number): string {
-  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(2)} Md`;
-  if (amount >= 1_000_000) return `${Math.round(amount / 1_000_000)} M`;
+  if (amount >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))}`;
+  if (amount >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))}`;
   return amount.toLocaleString("fr-FR");
 }
 

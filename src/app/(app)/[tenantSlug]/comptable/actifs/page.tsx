@@ -97,10 +97,10 @@ export default function ActifsPage() {
       )}
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Kpi label="Valeur stock" value={stocks.data ? `${(stocks.data.totalValue / 1_000_000).toFixed(0)} M` : "—"} icon={Package} />
-        <Kpi label="Immo brutes" value={assets.data ? `${(assets.data.totals.gross / 1_000_000_000).toFixed(2)} Md` : "—"} icon={Building} />
-        <Kpi label="Amort. cumulés" value={assets.data ? `-${(assets.data.totals.depreciation / 1_000_000).toFixed(0)} M` : "—"} accent="warning" />
-        <Kpi label="VNC" value={assets.data ? `${(assets.data.totals.net / 1_000_000_000).toFixed(2)} Md` : "—"} accent="success" />
+        <Kpi label="Valeur stock" value={stocks.data ? `${new Intl.NumberFormat("fr-FR").format(Math.round(stocks.data.totalValue))}` : "—"} icon={Package} />
+        <Kpi label="Immo brutes" value={assets.data ? `${new Intl.NumberFormat("fr-FR").format(Math.round(assets.data.totals.gross))}` : "—"} icon={Building} />
+        <Kpi label="Amort. cumulés" value={assets.data ? `-${new Intl.NumberFormat("fr-FR").format(Math.round(assets.data.totals.depreciation))}` : "—"} accent="warning" />
+        <Kpi label="VNC" value={assets.data ? `${new Intl.NumberFormat("fr-FR").format(Math.round(assets.data.totals.net))}` : "—"} accent="success" />
       </section>
 
       <div className="flex flex-wrap gap-1 border-b border-line">

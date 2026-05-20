@@ -34,8 +34,8 @@ function fmtMonth(iso: string) {
 function fmtFCFA(n: string): string {
   const v = Number(n);
   if (!Number.isFinite(v)) return "—";
-  if (Math.abs(v) >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)} Md`;
-  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)} M`;
+  if (Math.abs(v) >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))}`;
+  if (Math.abs(v) >= 1_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(v))}`;
   if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)} k`;
   return new Intl.NumberFormat("fr-FR").format(v);
 }

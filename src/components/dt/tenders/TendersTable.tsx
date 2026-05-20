@@ -32,8 +32,8 @@ const STAGE_BADGE: Record<string, string> = {
 };
 
 function fmtAmount(n: number): string {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} Md`;
-  return `${Math.round(n / 1_000_000)} M`;
+  if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
+  return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
 }
 
 export function TendersTable({ tenders }: { tenders: TenderItem[] }) {
@@ -72,7 +72,7 @@ export function TendersTable({ tenders }: { tenders: TenderItem[] }) {
                 </td>
                 <td className="px-3 py-2 text-ink-2">{t.moaName}</td>
                 <td className="px-3 py-2 text-ink-2">{t.workType}</td>
-                <td className="px-3 py-2 text-right tabular-nums">{fmtAmount(t.estimatedBudget)} M</td>
+                <td className="px-3 py-2 text-right tabular-nums">{fmtAmount(t.estimatedBudget)}</td>
                 <td className="px-3 py-2">
                   <span
                     className={clsx(
