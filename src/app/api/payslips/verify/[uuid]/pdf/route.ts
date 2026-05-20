@@ -46,7 +46,7 @@ export async function GET(req: Request, { params }: { params: { uuid: string } }
     req.headers.get("x-real-ip") ??
     null;
 
-  const detail = await loadEnrichedPayslip({ payslipId: found.id, clientIp });
+  const detail = await loadEnrichedPayslip({ payslipId: found.id, clientIp, inlineImages: true });
   if (!detail) return NextResponse.json({ error: "Bulletin introuvable" }, { status: 404 });
 
   const publicUrl = getPublicPayslipUrl(detail.verifiedPublicUrl, req.url);

@@ -23,6 +23,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       payslipId: params.id,
       ownerUserId: session.sub,
       clientIp,
+      inlineImages: true,
     });
 
     if (!detail) return NextResponse.json({ error: "Bulletin introuvable" }, { status: 404 });

@@ -10,6 +10,7 @@
  */
 import type { PayslipLineCategory, PayslipStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { uploadUrlToDataUri } from "@/lib/upload-paths";
 import { createPayslipVerification } from "./payroll-verification";
 import {
   amountToWordsFr,
@@ -140,6 +141,13 @@ export async function loadEnrichedPayslip(args: {
   payslipId: string;
   ownerUserId?: string;
   clientIp?: string | null;
+  /**
+   * Si true, convertit logo/signature/cachet/avatar en data URI base64
+   * (lecture disque). Indispensable pour le rendu PDF react-pdf côté serveur
+   * qui ne résout pas les URLs relatives. À ne PAS activer pour l'écran
+   * (le navigateur résout les URLs relatives nativement, plus léger).
+   */
+  inlineImages?: boolean;
 }): Promise<EnrichedPayslipDetail | null> {
   const where = args.ownerUserId
     ? { id: args.payslipId, userId: args.ownerUserId }
@@ -244,6 +252,25 @@ export async function loadEnrichedPayslip(args: {
     getLeaveAndAbsenceStats(prisma, payslip.userId, payslip.period),
   ]);
 
+  // Pour le PDF (react-pdf côté serveur) : convertit les images en data URI
+  // base64 car les URLs relatives /uploads/... ne sont pas résolvables.
+  let tenantImages = {
+    logoUrl: payslip.tenant.logoUrl,
+    signatureImageUrl: payslip.tenant.signatureImageUrl,
+    stampImageUrl: payslip.tenant.stampImageUrl,
+  };
+  let avatarUrl = payslip.user.avatarUrl;
+  if (args.inlineImages) {
+    const [logo, sig, stamp, avatar] = await Promise.all([
+      uploadUrlToDataUri(payslip.tenant.logoUrl),
+      uploadUrlToDataUri(payslip.tenant.signatureImageUrl),
+      uploadUrlToDataUri(payslip.tenant.stampImageUrl),
+      uploadUrlToDataUri(payslip.user.avatarUrl),
+    ]);
+    tenantImages = { logoUrl: logo, signatureImageUrl: sig, stampImageUrl: stamp };
+    avatarUrl = avatar;
+  }
+
   return {
     id: payslip.id,
     bulletinNumber,
@@ -288,6 +315,7 @@ export async function loadEnrichedPayslip(args: {
     })),
     user: {
       ...payslip.user,
+      avatarUrl,
       hireDate: payslip.user.hireDate?.toISOString() ?? null,
     },
     snapshot: payslip.snapshot
@@ -304,7 +332,7 @@ export async function loadEnrichedPayslip(args: {
           profilePhotoUrl: payslip.snapshot.profilePhotoUrl,
         }
       : null,
-    tenant: payslip.tenant,
+    tenant: { ...payslip.tenant, ...tenantImages },
     cumul: {
       salary: cumul.cumulSalary.toString(),
       bonuses: cumul.cumulBonuses.toString(),
