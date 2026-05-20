@@ -44,6 +44,10 @@ interface Props {
   onClose: () => void;
 }
 
+// `next.config.js` ne définit pas NODE_ENV côté client, mais Next.js fait un
+// build-time replace de process.env.NODE_ENV ("production" en build prod).
+const IS_PROD = process.env.NODE_ENV === "production";
+
 export function ProfileSwitcher({ open, onClose }: Props) {
   const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
@@ -67,6 +71,8 @@ export function ProfileSwitcher({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open) return;
+    // En prod : pas de switch démo, donc pas besoin de lister les autres users.
+    if (IS_PROD) return;
     setLoading(true);
     setError(null);
     fetch("/api/profiles")
@@ -132,10 +138,12 @@ export function ProfileSwitcher({ open, onClose }: Props) {
         >
           <div>
             <h3 id="profile-switcher-title" className="text-base font-semibold">
-              Changer de profil démo
+              {IS_PROD ? "Mon compte" : "Changer de profil démo"}
             </h3>
             <p className="text-[11.5px] text-white/75">
-              Mode démo · bascule entre les utilisateurs sans ressaisir le mot de passe
+              {IS_PROD
+                ? "Gérez votre session"
+                : "Mode démo · bascule entre les utilisateurs sans ressaisir le mot de passe"}
             </p>
           </div>
           <button
@@ -148,28 +156,34 @@ export function ProfileSwitcher({ open, onClose }: Props) {
         </div>
 
         <div className="px-5 py-5">
-          {loading ? (
-            <ProfileSkeleton />
-          ) : error ? (
-            <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
-              {error}
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {users.map((u, i) => (
-                <ProfileCard
-                  key={u.id}
-                  user={u}
-                  active={u.id === currentId}
-                  switching={u.id === switchingId}
-                  tone={AVATAR_TONES[i % AVATAR_TONES.length]}
-                  onClick={() => switchTo(u.id)}
-                />
-              ))}
-            </div>
+          {/* Bloc switch démo : masqué en prod (sécurité — pas de bascule sans
+              mot de passe sur des comptes clients réels) */}
+          {!IS_PROD && (
+            <>
+              {loading ? (
+                <ProfileSkeleton />
+              ) : error ? (
+                <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700 ring-1 ring-rose-200">
+                  {error}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {users.map((u, i) => (
+                    <ProfileCard
+                      key={u.id}
+                      user={u}
+                      active={u.id === currentId}
+                      switching={u.id === switchingId}
+                      tone={AVATAR_TONES[i % AVATAR_TONES.length]}
+                      onClick={() => switchTo(u.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
-          <div className="mt-5 flex justify-end">
+          <div className={clsx("flex justify-end", !IS_PROD && "mt-5")}>
             <button
               onClick={onLogout}
               disabled={loggingOut}
@@ -180,40 +194,44 @@ export function ProfileSwitcher({ open, onClose }: Props) {
             </button>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <a
-              href="http://admin.terp.local:5000"
-              className="flex items-center gap-2 rounded-lg border border-line bg-[#0F172A] px-3 py-2.5 text-white transition hover:bg-[#1E293B]"
-            >
-              <span className="grid h-8 w-8 place-items-center rounded bg-cyan-400 text-[11px] font-bold text-[#0F172A]">
-                SA
-              </span>
-              <span className="flex-1">
-                <span className="block text-sm font-semibold">Super-admin SaaS</span>
-                <span className="block text-[11px] text-white/65">
-                  Console plateforme T-ERP
+          {/* Liens vers admin SaaS / portail public : dev only (URLs en
+              terp.local:5000, sans valeur en prod). */}
+          {!IS_PROD && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <a
+                href="http://admin.terp.local:5000"
+                className="flex items-center gap-2 rounded-lg border border-line bg-[#0F172A] px-3 py-2.5 text-white transition hover:bg-[#1E293B]"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded bg-cyan-400 text-[11px] font-bold text-[#0F172A]">
+                  SA
                 </span>
-              </span>
-              <ExternalLink className="h-4 w-4 text-white/65" />
-            </a>
-            <a
-              href="http://app.terp.local:5000"
-              className="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2.5 transition hover:border-primary-300"
-            >
-              <span className="grid h-8 w-8 place-items-center rounded bg-primary-100 text-primary-700">
-                <Globe className="h-4 w-4" />
-              </span>
-              <span className="flex-1">
-                <span className="block text-sm font-semibold text-ink">
-                  Retour au portail public
+                <span className="flex-1">
+                  <span className="block text-sm font-semibold">Super-admin SaaS</span>
+                  <span className="block text-[11px] text-white/65">
+                    Console plateforme T-ERP
+                  </span>
                 </span>
-                <span className="block text-[11px] text-ink-3">
-                  Voir les offres d'emploi sans session
+                <ExternalLink className="h-4 w-4 text-white/65" />
+              </a>
+              <a
+                href="http://app.terp.local:5000"
+                className="flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-2.5 transition hover:border-primary-300"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded bg-primary-100 text-primary-700">
+                  <Globe className="h-4 w-4" />
                 </span>
-              </span>
-              <ExternalLink className="h-4 w-4 text-ink-4" />
-            </a>
-          </div>
+                <span className="flex-1">
+                  <span className="block text-sm font-semibold text-ink">
+                    Retour au portail public
+                  </span>
+                  <span className="block text-[11px] text-ink-3">
+                    Voir les offres d'emploi sans session
+                  </span>
+                </span>
+                <ExternalLink className="h-4 w-4 text-ink-4" />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>
