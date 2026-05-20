@@ -42,7 +42,7 @@ export default function TreasoreriePage() {
 
         <BanksTable items={data.items} />
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <TreasuryEvolutionChart data={data.evolution7d} />
           <LatestMovementsList items={data.latestMovements} />
         </div>

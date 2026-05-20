@@ -50,9 +50,10 @@ const EDGE_PATH = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // Login direct via l'API (le formulaire login est dans une modale, plus simple ainsi)
+  // Login direct via l'API (le formulaire login est dans une modale, plus simple ainsi).
+  // Le schéma loginSchema attend `identifier` (email OU téléphone), pas `email`.
   const loginResp = await page.request.post(`${baseUrl}/api/auth/login`, {
-    data: { email, password },
+    data: { identifier: email, password },
     headers: { "Content-Type": "application/json" },
   });
   if (!loginResp.ok()) {

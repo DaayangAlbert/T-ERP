@@ -159,7 +159,7 @@ export function PersonnelCoutsPanel() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as Role | "all")}
-            className="h-8 min-w-[200px] rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none"
+            className="h-8 w-full max-w-full rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none sm:w-[220px]"
           >
             <option value="all">Toutes les directions</option>
             {DIRECTION_ROLES.map((r) => (
@@ -174,7 +174,7 @@ export function PersonnelCoutsPanel() {
           <select
             value={siteId}
             onChange={(e) => setSiteId(e.target.value)}
-            className="h-8 min-w-[200px] rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none"
+            className="h-8 w-full max-w-full rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none sm:w-[220px]"
           >
             <option value="all">Tous les chantiers ({sites.length})</option>
             {sites.map((s) => (
@@ -189,7 +189,7 @@ export function PersonnelCoutsPanel() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as Category | "all")}
-            className="h-8 rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none"
+            className="h-8 w-full max-w-full rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none sm:w-auto"
           >
             <option value="all">Toutes</option>
             <option value="CADRE">Cadre</option>
@@ -203,7 +203,7 @@ export function PersonnelCoutsPanel() {
           <select
             value={attachment}
             onChange={(e) => setAttachment(e.target.value as Attachment | "all")}
-            className="h-8 rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none"
+            className="h-8 w-full max-w-full rounded-md border border-line bg-white px-2 text-[12.5px] text-ink focus:border-primary-300 focus:outline-none sm:w-auto"
           >
             <option value="all">Tous</option>
             <option value="DIRECTION">Direction uniquement</option>
@@ -392,7 +392,7 @@ function FilterField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
       <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
         {icon}
         {label}

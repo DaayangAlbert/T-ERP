@@ -87,7 +87,7 @@ export default function DgDashboard() {
         </div>
       </header>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Chiffre d'affaires (YTD)"
           value={revenueFmt.value}
@@ -121,12 +121,12 @@ export default function DgDashboard() {
         />
       </div>
 
-      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <RevenueChart data={revenueChart} />
         <DonutChart slices={siteTypeBreakdown} totalLabel={totalCaFmt.value} totalUnit={`${totalCaFmt.unit} · YTD`} />
       </div>
 
-      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <AlertsList alerts={alerts} />
         <ValidationsList validations={pendingValidations} />
       </div>
@@ -194,7 +194,7 @@ function DashboardSkeleton({ period, tenantName }: { period: string; tenantName?
           </p>
         </div>
       </header>
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-[112px] rounded-xl border border-line bg-white p-4 shadow-card">
             <div className="h-3 w-1/2 animate-pulse rounded bg-surface-alt" />
@@ -206,11 +206,11 @@ function DashboardSkeleton({ period, tenantName }: { period: string; tenantName?
           </div>
         ))}
       </div>
-      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <div className="h-[300px] animate-pulse rounded-xl border border-line bg-white p-4" />
         <div className="h-[300px] animate-pulse rounded-xl border border-line bg-white p-4" />
       </div>
-      <div className="mt-4 grid gap-3.5 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <div className="h-[200px] animate-pulse rounded-xl border border-line bg-white p-4" />
         <div className="h-[200px] animate-pulse rounded-xl border border-line bg-white p-4" />
       </div>
