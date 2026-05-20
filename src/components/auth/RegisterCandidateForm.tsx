@@ -47,7 +47,9 @@ export function RegisterCandidateForm({ onSuccess }: Props) {
     }
     setUser(json.user, "");
     onSuccess?.();
-    router.push("/dashboard");
+    // Un candidat n'a pas de tenant : son espace est /cand/*, pas /dashboard
+    // (route tenant qui 404 sans slug).
+    router.push("/cand/dashboard");
     router.refresh();
   };
 

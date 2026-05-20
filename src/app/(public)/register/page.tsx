@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentSession } from "@/lib/session";
+import { isCandidateSession } from "@/lib/auth";
 import { getAdminSession } from "@/lib/admin-session";
 import { RegisterForm } from "./RegisterForm";
 
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   if (getAdminSession()) redirect("/admin");
   const session = getCurrentSession();
-  if (session) redirect("/dashboard");
+  if (session) {
+    if (isCandidateSession(session)) redirect("/cand/dashboard");
+    redirect("/dashboard");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
