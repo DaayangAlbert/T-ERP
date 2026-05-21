@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Search, Plus, Download, Building2 } from "lucide-react";
+import { Search, Plus, Download, Building2, Pencil } from "lucide-react";
 import { clsx } from "clsx";
 
 interface ItSite {
@@ -126,6 +126,7 @@ export default function ItSitesPage() {
                     <th className="px-3 py-2 text-right">Budget HT</th>
                     <th className="px-3 py-2 text-right">Avancement</th>
                     <th className="px-3 py-2">Statut</th>
+                    <th className="px-3 py-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -155,6 +156,14 @@ export default function ItSitesPage() {
                         >
                           {s.status}
                         </span>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Link
+                          href={`/informatique/sites/${s.id}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[11.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Modifier
+                        </Link>
                       </td>
                     </tr>
                   ))}
