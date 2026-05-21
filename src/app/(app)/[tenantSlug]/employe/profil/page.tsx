@@ -37,7 +37,7 @@ export default function EmpProfilPage() {
   const { tenant } = useTenant();
   const [showModify, setShowModify] = useState(false);
 
-  if (profile.isLoading || !profile.data) {
+  if (profile.isLoading) {
     return (
       <div className="space-y-3 p-3">
         <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />
@@ -46,7 +46,29 @@ export default function EmpProfilPage() {
     );
   }
 
-  const emp = profile.data.employee;
+  // Garde-fou : si l'API ne renvoie pas (encore) l'employé, on affiche un
+  // message au lieu de planter (emp.avatarUrl sur undefined → white-screen).
+  const emp = profile.data?.employee;
+  if (!emp) {
+    return (
+      <div className="p-3">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">Profil momentanément indisponible.</p>
+          <p className="mt-1">
+            Réessayez dans un instant. Si le problème persiste, déconnectez-vous puis
+            reconnectez-vous.
+          </p>
+          <button
+            type="button"
+            onClick={() => profile.refetch()}
+            className="mt-3 inline-flex h-9 items-center rounded-md bg-amber-600 px-3 text-[12.5px] font-semibold text-white hover:bg-amber-700"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 pb-20">
