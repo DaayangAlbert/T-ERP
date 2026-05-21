@@ -14,7 +14,7 @@ const amendmentSchema = z.object({
   reason: z.string().min(3).max(300),
 });
 
-const ALLOWED: Role[] = [Role.DG, Role.DAF, Role.TECH_DIRECTOR];
+const ALLOWED: Role[] = [Role.DG, Role.DAF, Role.TECH_DIRECTOR, Role.TENANT_ADMIN];
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = getCurrentSession();

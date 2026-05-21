@@ -26,6 +26,9 @@ function serialize(site: NonNullable<Awaited<ReturnType<typeof loadScopedSite>>>
   return {
     ...site,
     budget: site.budget.toString(),
+    // actualSpentAmount est aussi un BigInt → doit être converti sinon
+    // NextResponse.json lève "Do not know how to serialize a BigInt".
+    actualSpentAmount: site.actualSpentAmount.toString(),
     startDate: site.startDate.toISOString(),
     plannedEndDate: site.plannedEndDate.toISOString(),
     actualEndDate: site.actualEndDate?.toISOString() ?? null,
