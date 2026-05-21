@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { Search, Plus, Download, Building2, Pencil } from "lucide-react";
+import { Search, Plus, Download, Building2, Pencil, Eye } from "lucide-react";
 import { clsx } from "clsx";
 
 interface ItSite {
@@ -157,13 +157,21 @@ export default function ItSitesPage() {
                           {s.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-right">
-                        <Link
-                          href={`/informatique/sites/${s.id}`}
-                          className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[11.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
-                        >
-                          <Pencil className="h-3.5 w-3.5" /> Modifier
-                        </Link>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/chantiers/${s.id}`}
+                            className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[11.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Voir la fiche
+                          </Link>
+                          <Link
+                            href={`/informatique/sites/${s.id}`}
+                            className="inline-flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[11.5px] font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Modifier
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
