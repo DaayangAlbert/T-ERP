@@ -27,14 +27,6 @@ export default function EmpHomePage() {
         )}
       </header>
 
-      <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <p className="font-semibold">Bootstrap Bloc 0 — Espace EMP activé.</p>
-        <p className="mt-1">
-          Les 5 fonctions seront livrées dans les prompts 1.1 à 1.5 : tableau
-          de bord personnel, bulletins, congés, pointage, profil.
-        </p>
-      </section>
-
       <nav className="mt-6 grid grid-cols-2 gap-3">
         {[
           { href: "/employe/dashboard", label: "Tableau de bord", icon: "📊" },
