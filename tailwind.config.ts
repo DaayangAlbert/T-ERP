@@ -11,6 +11,7 @@ const config: Config = {
       colors: {
         // ===== Palette T-ERP =====
         primary: {
+          DEFAULT: "#A855F7", // = 500, pour `bg-primary` / `text-primary` / `border-primary`
           50: "#FAF5FF",
           100: "#F3E8FF",
           200: "#E9D5FF",
