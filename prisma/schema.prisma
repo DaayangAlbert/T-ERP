@@ -95,6 +95,9 @@ model Tenant {
   financialPeriods          FinancialPeriod[]
   financialCommitments      FinancialCommitment[]
   bankAccounts              BankAccount[]
+  projectAccounts           ProjectAccount[]
+  salaryAccount             SalaryAccount?
+  overheadRuns              OverheadRun[]
   accountingPeriods         AccountingPeriod[]
   accountingEntries         AccountingEntry[]
   annualClosures            AnnualClosure[]
@@ -458,6 +461,10 @@ model User {
   employmentContracts            EmploymentContract[]          @relation("EmploymentContractEmployee")
   employmentContractsDrafted     EmploymentContract[]          @relation("EmploymentContractDrafter")
   employmentContractsSigned      EmploymentContract[]          @relation("EmploymentContractEmployerSigner")
+  // CPT analytique — comptes projet / compte salaire / répartition charges siège
+  projectAccountMovements        ProjectAccountMovement[]
+  salaryAccountMovements         SalaryAccountMovement[]
+  overheadRunsExecuted           OverheadRun[]                 @relation("OverheadRunExecutor")
 
   @@index([tenantId, email])
   @@index([tenantId, role])
@@ -728,6 +735,7 @@ model Site {
   supplierInvoices         SupplierInvoice[]             @relation("InvoiceSite")
   progressBillings         ProgressBilling[]             @relation("BillingSite")
   cashbox                  SiteCashbox?
+  projectAccount           ProjectAccount?
   // DT — relations
   rex                      SiteRex[]
   hseIncidents             HseIncident[]
@@ -3081,7 +3089,9 @@ model BankAccount {
   isActive Boolean   @default(true)
   closedAt DateTime?
 
-  movements BankMovement[]
+  movements       BankMovement[]
+  projectAccounts ProjectAccount[]
+  salaryAccounts  SalaryAccount[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3979,6 +3989,175 @@ model CashboxMovement {
 enum CashDirection {
   IN
   OUT
+}
+
+// ============================================================
+// CPT — COMPTABILITÉ ANALYTIQUE PAR PROJET (DAF + Comptable)
+// ============================================================
+// Chaque chantier dispose d'un « compte projet » adossé à un compte
+// bancaire réel de l'entreprise. Il suit crédits (approvisionnement,
+// production) et débits (dépenses, salaires propres, quote-part siège,
+// remboursements). Le solde peut être NÉGATIF = dette du projet tant
+// qu'il n'a pas produit. Un compte salaire global par tenant centralise
+// la masse salariale ; la quote-part siège est répartie au prorata du
+// montant de chaque marché.
+// ============================================================
+
+// Direction d'un mouvement analytique : CREDIT augmente le solde
+// (entrée / disponibilité), DEBIT le diminue (sortie / dette).
+enum CptDirection {
+  CREDIT
+  DEBIT
+}
+
+// Nature d'un mouvement de compte projet.
+enum ProjectAccountEntryType {
+  FUNDING // approvisionnement depuis la banque (crédit)
+  EXPENSE // dépense projet (débit)
+  PROJECT_SALARY // salaire du personnel propre au chantier (débit)
+  OVERHEAD_SALARY // quote-part masse salariale siège (débit)
+  REVENUE // encaissement / production (crédit)
+  REPAYMENT // remboursement vers la banque (débit)
+  ADJUSTMENT // régularisation (crédit ou débit)
+}
+
+model ProjectAccount {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  siteId String @unique
+  site   Site   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  // Compte bancaire réel auquel ce compte projet est adossé (source des
+  // approvisionnements). Optionnel : un compte projet peut être ouvert avant
+  // d'être rattaché à une banque.
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+
+  // Solde analytique. Peut être négatif = dette du projet.
+  balance BigInt @default(0)
+
+  isActive Boolean   @default(true)
+  closedAt DateTime?
+
+  movements ProjectAccountMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("cpt_project_accounts")
+}
+
+model ProjectAccountMovement {
+  id        String         @id @default(cuid())
+  accountId String
+  account   ProjectAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  type       ProjectAccountEntryType
+  direction  CptDirection
+  amount     BigInt // toujours positif ; le signe vient de `direction`
+  reason     String
+  reference  String?
+  occurredAt DateTime
+
+  // Solde du compte après application du mouvement (audit / relevé).
+  balanceAfter BigInt
+
+  recordedById String
+  recordedBy   User   @relation(fields: [recordedById], references: [id])
+
+  // Rattachement optionnel à une répartition de charges siège.
+  overheadRunId String?
+  overheadRun   OverheadRun? @relation(fields: [overheadRunId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([accountId, occurredAt])
+  @@map("cpt_project_account_movements")
+}
+
+// Compte salaire global du tenant : centralise la masse salariale payée
+// par les projets (salaires propres + quote-parts siège).
+model SalaryAccount {
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+
+  balance BigInt @default(0)
+
+  movements SalaryAccountMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cpt_salary_accounts")
+}
+
+model SalaryAccountMovement {
+  id        String        @id @default(cuid())
+  accountId String
+  account   SalaryAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  direction  CptDirection
+  amount     BigInt
+  reason     String
+  reference  String?
+  occurredAt DateTime
+
+  balanceAfter BigInt
+
+  // Chantier d'origine (pour une quote-part / salaire projet).
+  siteId String?
+
+  recordedById String
+  recordedBy   User   @relation(fields: [recordedById], references: [id])
+
+  overheadRunId String?
+  overheadRun   OverheadRun? @relation(fields: [overheadRunId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([accountId, occurredAt])
+  @@map("cpt_salary_account_movements")
+}
+
+// Répartition de la masse salariale siège sur les projets, au prorata du
+// montant des marchés. Un run = un mois (ou une période) avec un montant
+// total à répartir. Le run garde la trace de la base de calcul pour audit.
+model OverheadRun {
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  period      String // "2026-05"
+  totalAmount BigInt // masse salariale siège à répartir
+  basis       Json // [{ siteId, code, marketAmount, weight, share }]
+  status      OverheadRunStatus @default(PENDING)
+
+  executedById String?
+  executedBy   User?     @relation("OverheadRunExecutor", fields: [executedById], references: [id])
+  executedAt   DateTime?
+
+  projectMovements ProjectAccountMovement[]
+  salaryMovements  SalaryAccountMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, period])
+  @@index([tenantId])
+  @@map("cpt_overhead_runs")
+}
+
+enum OverheadRunStatus {
+  PENDING // prévisualisé, non appliqué
+  APPLIED // mouvements générés
+  CANCELLED
 }
 
 // ============================================================
@@ -7516,34 +7695,34 @@ enum CcPlanningTaskPriority {
 // ========================================
 
 model CdtWeeklyReport {
-  id        String @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
-  authorId  String
-  author    User   @relation("CdtWeeklyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String
+  author   User   @relation("CdtWeeklyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   // Semaine couverte (lundi → dimanche)
   weekStart DateTime
   weekEnd   DateTime
-  weekLabel String?  // "Semaine 12 — 16/03 → 22/03/2026"
+  weekLabel String? // "Semaine 12 — 16/03 → 22/03/2026"
 
-  status    CdtWeeklyReportStatus @default(DRAFT)
+  status CdtWeeklyReportStatus @default(DRAFT)
 
   // Synthèse cadre
-  workingDays      Int     @default(0) // jours travaillés réels
-  weatherDays      Int     @default(0) // jours intempéries
+  workingDays           Int @default(0) // jours travaillés réels
+  weatherDays           Int @default(0) // jours intempéries
   subcontractorsPresent Int @default(0) // nb sous-traitants présents sur la période
 
   // Sections narratives
-  globalSummary       String? @db.Text // synthèse globale
-  keyAchievements     String? @db.Text // réalisations clés transverses
-  transverseIssues    String? @db.Text // difficultés / risques transverses
-  scheduleSlippages   String? @db.Text // glissements jalons à risque
-  arbitrationsNeeded  String? @db.Text // arbitrages demandés au DTrav
-  nextWeekPlan        String? @db.Text // programme semaine suivante
+  globalSummary      String? @db.Text // synthèse globale
+  keyAchievements    String? @db.Text // réalisations clés transverses
+  transverseIssues   String? @db.Text // difficultés / risques transverses
+  scheduleSlippages  String? @db.Text // glissements jalons à risque
+  arbitrationsNeeded String? @db.Text // arbitrages demandés au DTrav
+  nextWeekPlan       String? @db.Text // programme semaine suivante
 
   // Snapshots des chantiers couverts (relation 1:N vers CdtWeeklyReportSite)
-  sites             CdtWeeklyReportSite[]
+  sites CdtWeeklyReportSite[]
 
   // Workflow
   submittedAt     DateTime?
@@ -7552,7 +7731,7 @@ model CdtWeeklyReport {
   validatedAt     DateTime?
   rejectionReason String?   @db.Text
 
-  pdfUrl          String?
+  pdfUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -7564,18 +7743,18 @@ model CdtWeeklyReport {
 }
 
 model CdtWeeklyReportSite {
-  id        String @id @default(cuid())
-  reportId  String
-  report    CdtWeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  siteId    String
-  site      Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id       String          @id @default(cuid())
+  reportId String
+  report   CdtWeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  siteId   String
+  site     Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   // KPI snapshot (figés au moment de la rédaction)
-  physicalProgressPercent  Float    @default(0)
-  financialProgressPercent Float    @default(0)
-  valueProducedXAF         BigInt   @default(0) // valeur produite pendant la semaine
-  avgWorkforce             Int      @default(0)
-  hseIncidentsCount        Int      @default(0)
+  physicalProgressPercent  Float  @default(0)
+  financialProgressPercent Float  @default(0)
+  valueProducedXAF         BigInt @default(0) // valeur produite pendant la semaine
+  avgWorkforce             Int    @default(0)
+  hseIncidentsCount        Int    @default(0)
 
   // Jalons (texte libre court)
   milestonesAchieved String? @db.Text
@@ -7602,35 +7781,35 @@ enum CdtWeeklyReportStatus {
 // ========================================
 
 model DtMonthlyTechReport {
-  id        String @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
-  authorId  String
-  author    User   @relation("DtMonthlyTechReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String
+  author   User   @relation("DtMonthlyTechReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   period      DateTime // 1er du mois couvert
-  periodLabel String?  // "Avril 2026"
+  periodLabel String? // "Avril 2026"
   status      DtMonthlyTechReportStatus @default(DRAFT)
 
   // 1) Synthèse portefeuille (KPIs)
-  sitesActiveCount       Int     @default(0)
-  sitesCompletedCount    Int     @default(0)
-  sitesAtRiskCount       Int     @default(0)
-  avgPhysicalProgress    Float   @default(0)
-  avgFinancialProgress   Float   @default(0)
-  totalRevenueXAF        BigInt  @default(0) // CA produit cumul du mois
-  totalSpentXAF          BigInt  @default(0)
-  portfolioMarginPercent Float   @default(0)
+  sitesActiveCount       Int    @default(0)
+  sitesCompletedCount    Int    @default(0)
+  sitesAtRiskCount       Int    @default(0)
+  avgPhysicalProgress    Float  @default(0)
+  avgFinancialProgress   Float  @default(0)
+  totalRevenueXAF        BigInt @default(0) // CA produit cumul du mois
+  totalSpentXAF          BigInt @default(0)
+  portfolioMarginPercent Float  @default(0)
 
   // 2) QHSE consolidé
-  hseTotalIncidents     Int     @default(0)
-  hseTf1                Float   @default(0)
-  hseAuditsConducted    Int     @default(0)
-  hseNcOpen             Int     @default(0)
+  hseTotalIncidents  Int   @default(0)
+  hseTf1             Float @default(0)
+  hseAuditsConducted Int   @default(0)
+  hseNcOpen          Int   @default(0)
 
   // 3) Sous-traitance
-  subcontractorsActive  Int     @default(0)
-  subcontractorsAtRisk  Int     @default(0)
+  subcontractorsActive Int @default(0)
+  subcontractorsAtRisk Int @default(0)
 
   // Sections narratives
   executiveSummary       String? @db.Text // synthèse direction
@@ -7643,7 +7822,7 @@ model DtMonthlyTechReport {
   nextMonthOutlook       String? @db.Text // vision mois suivant
 
   // Snapshots par chantier
-  sites             DtMonthlyTechReportSite[]
+  sites DtMonthlyTechReportSite[]
 
   // Workflow
   submittedAt     DateTime?
@@ -7652,7 +7831,7 @@ model DtMonthlyTechReport {
   validatedAt     DateTime?
   rejectionReason String?   @db.Text
 
-  pdfUrl          String?
+  pdfUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -7664,11 +7843,11 @@ model DtMonthlyTechReport {
 }
 
 model DtMonthlyTechReportSite {
-  id        String @id @default(cuid())
-  reportId  String
-  report    DtMonthlyTechReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  siteId    String
-  site      Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  id       String              @id @default(cuid())
+  reportId String
+  report   DtMonthlyTechReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  siteId   String
+  site     Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   // Snapshot KPI
   physicalProgressPercent  Float   @default(0)
@@ -7701,54 +7880,54 @@ enum DtMonthlyTechReportStatus {
 // ========================================
 
 model DtravMonthlyReport {
-  id        String @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
-  authorId  String
-  author    User   @relation("DtravMonthlyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String
+  author   User   @relation("DtravMonthlyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   period      DateTime
   periodLabel String?
   status      DtravMonthlyReportStatus @default(DRAFT)
 
   // 1) Production
-  revenueProducedXAF    BigInt  @default(0) // CA produit
-  revenueDeliveredXAF   BigInt  @default(0) // CA livré
-  marginPercent         Float   @default(0)
-  sitesDelivered        Int     @default(0)
+  revenueProducedXAF  BigInt @default(0) // CA produit
+  revenueDeliveredXAF BigInt @default(0) // CA livré
+  marginPercent       Float  @default(0)
+  sitesDelivered      Int    @default(0)
 
   // 2) Recouvrement
-  receivablesXAF        BigInt  @default(0) // encours client total
-  overdueReceivablesXAF BigInt  @default(0) // créances >30j
-  dso                   Int     @default(0) // jours moyen recouvrement
-  decompteIssuedCount   Int     @default(0)
-  decompteIssuedXAF     BigInt  @default(0)
+  receivablesXAF        BigInt @default(0) // encours client total
+  overdueReceivablesXAF BigInt @default(0) // créances >30j
+  dso                   Int    @default(0) // jours moyen recouvrement
+  decompteIssuedCount   Int    @default(0)
+  decompteIssuedXAF     BigInt @default(0)
 
   // 3) Contractuel
-  amendmentsCount       Int     @default(0)
-  penaltiesAppliedXAF   BigInt  @default(0)
-  litigationsOpen       Int     @default(0)
+  amendmentsCount     Int    @default(0)
+  penaltiesAppliedXAF BigInt @default(0)
+  litigationsOpen     Int    @default(0)
 
   // 4) Performance CDT
-  cdtCount              Int     @default(0) // CDT supervisés
-  cdtReportsValidated   Int     @default(0) // rapports hebdo validés du mois
-  cdtUnderperforming    Int     @default(0)
+  cdtCount            Int @default(0) // CDT supervisés
+  cdtReportsValidated Int @default(0) // rapports hebdo validés du mois
+  cdtUnderperforming  Int @default(0)
 
   // 5) Effectifs & coûts MO
-  workforceTotal        Int     @default(0)
+  workforceTotal         Int    @default(0)
   workforceOvertimeHours Float  @default(0)
-  workforceCostXAF      BigInt  @default(0)
+  workforceCostXAF       BigInt @default(0)
 
   // Sections narratives
-  executiveSummary       String? @db.Text
-  productionAnalysis     String? @db.Text
-  collectionsAnalysis    String? @db.Text
-  contractualSituation   String? @db.Text
-  cdtPerformance         String? @db.Text
-  workforceAnalysis      String? @db.Text
-  majorIssues            String? @db.Text
-  arbitragesRequested    String? @db.Text
-  nextMonthStrategy      String? @db.Text
+  executiveSummary     String? @db.Text
+  productionAnalysis   String? @db.Text
+  collectionsAnalysis  String? @db.Text
+  contractualSituation String? @db.Text
+  cdtPerformance       String? @db.Text
+  workforceAnalysis    String? @db.Text
+  majorIssues          String? @db.Text
+  arbitragesRequested  String? @db.Text
+  nextMonthStrategy    String? @db.Text
 
   // Workflow
   submittedAt     DateTime?
@@ -7757,7 +7936,7 @@ model DtravMonthlyReport {
   validatedAt     DateTime?
   rejectionReason String?   @db.Text
 
-  pdfUrl          String?
+  pdfUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -7781,64 +7960,64 @@ enum DtravMonthlyReportStatus {
 // ========================================
 
 model QhseMonthlyReport {
-  id        String @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
-  authorId  String
-  author    User   @relation("QhseMonthlyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String
+  author   User   @relation("QhseMonthlyReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   period      DateTime
   periodLabel String?
   status      QhseMonthlyReportStatus @default(DRAFT)
 
   // 1) Sinistralité globale
-  totalHoursWorked        BigInt  @default(0) // heures travaillées mois (pour TF/TG)
-  totalIncidents          Int     @default(0)
-  lostTimeIncidents       Int     @default(0) // incidents avec arrêt
-  noLostTimeIncidents     Int     @default(0)
-  daysLost                Int     @default(0) // jours perdus cumulés
-  tf1                     Float   @default(0) // (LTI * 1M) / heures travaillées
-  tg                      Float   @default(0) // (jours perdus * 1000) / heures travaillées
-  daysWithoutAccident     Int     @default(0) // jours sans accident (compteur)
+  totalHoursWorked    BigInt @default(0) // heures travaillées mois (pour TF/TG)
+  totalIncidents      Int    @default(0)
+  lostTimeIncidents   Int    @default(0) // incidents avec arrêt
+  noLostTimeIncidents Int    @default(0)
+  daysLost            Int    @default(0) // jours perdus cumulés
+  tf1                 Float  @default(0) // (LTI * 1M) / heures travaillées
+  tg                  Float  @default(0) // (jours perdus * 1000) / heures travaillées
+  daysWithoutAccident Int    @default(0) // jours sans accident (compteur)
 
   // 2) Typologie incidents
-  cutsCount               Int     @default(0)
-  fallsCount              Int     @default(0)
-  electricalCount         Int     @default(0)
-  chemicalCount           Int     @default(0)
-  vehiclesCount           Int     @default(0)
-  otherCount              Int     @default(0)
+  cutsCount       Int @default(0)
+  fallsCount      Int @default(0)
+  electricalCount Int @default(0)
+  chemicalCount   Int @default(0)
+  vehiclesCount   Int @default(0)
+  otherCount      Int @default(0)
 
   // 3) Audits & inspections
-  internalAudits          Int     @default(0)
-  externalAudits          Int     @default(0)
-  inspectionsCount        Int     @default(0)
-  observationsCount       Int     @default(0)
+  internalAudits    Int @default(0)
+  externalAudits    Int @default(0)
+  inspectionsCount  Int @default(0)
+  observationsCount Int @default(0)
 
   // 4) Non-conformités
-  ncOpened                Int     @default(0)
-  ncClosed                Int     @default(0)
-  ncCritical              Int     @default(0)
-  ncOverdue               Int     @default(0)
+  ncOpened   Int @default(0)
+  ncClosed   Int @default(0)
+  ncCritical Int @default(0)
+  ncOverdue  Int @default(0)
 
   // 5) Formations
-  safetyTrainings         Int     @default(0)
-  trainingHours           Float   @default(0)
-  personsTrained          Int     @default(0)
+  safetyTrainings Int   @default(0)
+  trainingHours   Float @default(0)
+  personsTrained  Int   @default(0)
 
   // 6) EPI
-  epiDistributed          Int     @default(0)
-  epiCheckCompliance      Float   @default(0) // % de conformité
+  epiDistributed     Int   @default(0)
+  epiCheckCompliance Float @default(0) // % de conformité
 
   // Sections narratives
-  executiveSummary   String? @db.Text
-  incidentsAnalysis  String? @db.Text
-  auditFindings      String? @db.Text
-  ncAnalysis         String? @db.Text
-  trainingsAnalysis  String? @db.Text
-  epiAnalysis        String? @db.Text
-  actionPlans        String? @db.Text
-  trendsAnalysis     String? @db.Text
+  executiveSummary     String? @db.Text
+  incidentsAnalysis    String? @db.Text
+  auditFindings        String? @db.Text
+  ncAnalysis           String? @db.Text
+  trainingsAnalysis    String? @db.Text
+  epiAnalysis          String? @db.Text
+  actionPlans          String? @db.Text
+  trendsAnalysis       String? @db.Text
   chsctRecommendations String? @db.Text
 
   // Workflow
@@ -7848,7 +8027,7 @@ model QhseMonthlyReport {
   validatedAt     DateTime?
   rejectionReason String?   @db.Text
 
-  pdfUrl          String?
+  pdfUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -7873,77 +8052,77 @@ enum QhseMonthlyReportStatus {
 // ========================================
 
 model DafMonthlyFinancialReport {
-  id        String @id @default(cuid())
-  tenantId  String
+  id       String @id @default(cuid())
+  tenantId String
 
-  authorId  String
-  author    User   @relation("DafMonthlyFinancialReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorId String
+  author   User   @relation("DafMonthlyFinancialReportAuthor", fields: [authorId], references: [id], onDelete: Restrict)
 
   period      DateTime // 1er du mois couvert
-  periodLabel String?  // "Avril 2026"
+  periodLabel String? // "Avril 2026"
   status      DafMonthlyFinancialReportStatus @default(DRAFT)
 
   // ── 1) Performance financière (P&L mensuel) ─────────────────────────
-  revenueMonthXAF        BigInt  @default(0) // CA produit du mois
-  revenueYtdXAF          BigInt  @default(0) // CA cumul YTD
-  revenueBudgetMonthXAF  BigInt  @default(0) // CA budgété mois
-  expensesMonthXAF       BigInt  @default(0) // charges du mois
-  grossMarginXAF         BigInt  @default(0) // marge brute
-  grossMarginPercent     Float   @default(0)
-  netMarginXAF           BigInt  @default(0) // marge nette
-  netMarginPercent       Float   @default(0)
-  ebitdaXAF              BigInt  @default(0)
-  ebitdaPercent          Float   @default(0)
+  revenueMonthXAF       BigInt @default(0) // CA produit du mois
+  revenueYtdXAF         BigInt @default(0) // CA cumul YTD
+  revenueBudgetMonthXAF BigInt @default(0) // CA budgété mois
+  expensesMonthXAF      BigInt @default(0) // charges du mois
+  grossMarginXAF        BigInt @default(0) // marge brute
+  grossMarginPercent    Float  @default(0)
+  netMarginXAF          BigInt @default(0) // marge nette
+  netMarginPercent      Float  @default(0)
+  ebitdaXAF             BigInt @default(0)
+  ebitdaPercent         Float  @default(0)
 
   // ── 2) Trésorerie ──────────────────────────────────────────────────
-  cashBalanceXAF         BigInt  @default(0) // solde trésorerie fin de mois
-  cashVariationXAF       BigInt  @default(0) // Δ vs mois précédent
-  creditLinesUsedXAF     BigInt  @default(0) // lignes utilisées
-  creditLinesAvailableXAF BigInt @default(0) // capacité restante
+  cashBalanceXAF           BigInt @default(0) // solde trésorerie fin de mois
+  cashVariationXAF         BigInt @default(0) // Δ vs mois précédent
+  creditLinesUsedXAF       BigInt @default(0) // lignes utilisées
+  creditLinesAvailableXAF  BigInt @default(0) // capacité restante
   capacityAutofinancingXAF BigInt @default(0) // CAF du mois
 
   // ── 3) Créances clients (BFR) ──────────────────────────────────────
-  accountsReceivableXAF  BigInt  @default(0) // encours total
-  overdueReceivablesXAF  BigInt  @default(0) // créances échues
-  doubtfulReceivablesXAF BigInt  @default(0) // créances douteuses
-  dso                    Float   @default(0) // Days Sales Outstanding
+  accountsReceivableXAF  BigInt @default(0) // encours total
+  overdueReceivablesXAF  BigInt @default(0) // créances échues
+  doubtfulReceivablesXAF BigInt @default(0) // créances douteuses
+  dso                    Float  @default(0) // Days Sales Outstanding
 
   // ── 4) Dettes fournisseurs ────────────────────────────────────────
-  accountsPayableXAF     BigInt  @default(0) // encours total
-  overduePayablesXAF     BigInt  @default(0) // dettes échues
-  dpo                    Float   @default(0) // Days Payable Outstanding
+  accountsPayableXAF BigInt @default(0) // encours total
+  overduePayablesXAF BigInt @default(0) // dettes échues
+  dpo                Float  @default(0) // Days Payable Outstanding
 
   // ── 5) Structure financière ───────────────────────────────────────
-  workingCapitalNeedXAF  BigInt  @default(0) // BFR
-  financialDebtLtXAF     BigInt  @default(0) // dette financière long terme
-  financialDebtStXAF     BigInt  @default(0) // dette financière court terme
-  gearingPercent         Float   @default(0) // dette / fonds propres
-  capexMonthXAF          BigInt  @default(0) // investissements du mois
+  workingCapitalNeedXAF BigInt @default(0) // BFR
+  financialDebtLtXAF    BigInt @default(0) // dette financière long terme
+  financialDebtStXAF    BigInt @default(0) // dette financière court terme
+  gearingPercent        Float  @default(0) // dette / fonds propres
+  capexMonthXAF         BigInt @default(0) // investissements du mois
 
   // ── 6) Paie & masse salariale ─────────────────────────────────────
-  payrollMassMonthXAF    BigInt  @default(0) // masse salariale du mois (brut+charges)
-  payrollHeadcount       Int     @default(0) // effectifs payés
+  payrollMassMonthXAF     BigInt @default(0) // masse salariale du mois (brut+charges)
+  payrollHeadcount        Int    @default(0) // effectifs payés
   payrollVsRevenuePercent Float  @default(0) // masse / CA
 
   // ── 7) Fiscal & réglementaire ─────────────────────────────────────
-  vatCollectedXAF        BigInt  @default(0) // TVA collectée
-  vatDeductibleXAF       BigInt  @default(0) // TVA déductible
-  vatDueXAF              BigInt  @default(0) // solde à payer
-  corporateTaxProvisionXAF BigInt @default(0) // IS provisionné
-  socialChargesUpToDate  Boolean @default(true) // CNPS/IRPP à jour
-  fiscalDeadlinesNext30d Int     @default(0) // nombre d'échéances ≤ 30j
+  vatCollectedXAF          BigInt  @default(0) // TVA collectée
+  vatDeductibleXAF         BigInt  @default(0) // TVA déductible
+  vatDueXAF                BigInt  @default(0) // solde à payer
+  corporateTaxProvisionXAF BigInt  @default(0) // IS provisionné
+  socialChargesUpToDate    Boolean @default(true) // CNPS/IRPP à jour
+  fiscalDeadlinesNext30d   Int     @default(0) // nombre d'échéances ≤ 30j
 
   // Sections narratives
-  executiveSummary       String? @db.Text // synthèse direction
-  performanceAnalysis    String? @db.Text // analyse P&L
-  cashFlowAnalysis       String? @db.Text // analyse trésorerie
-  receivablesAnalysis    String? @db.Text // analyse créances / recouvrement
-  payablesAnalysis       String? @db.Text // analyse fournisseurs / dettes
-  fiscalAnalysis         String? @db.Text // fiscal / réglementaire
-  financialRisks         String? @db.Text // risques financiers identifiés
-  financialDecisions     String? @db.Text // décisions financières du mois
-  recommendations        String? @db.Text // recommandations / arbitrages COMEX
-  nextMonthOutlook       String? @db.Text // prévisions mois suivant
+  executiveSummary    String? @db.Text // synthèse direction
+  performanceAnalysis String? @db.Text // analyse P&L
+  cashFlowAnalysis    String? @db.Text // analyse trésorerie
+  receivablesAnalysis String? @db.Text // analyse créances / recouvrement
+  payablesAnalysis    String? @db.Text // analyse fournisseurs / dettes
+  fiscalAnalysis      String? @db.Text // fiscal / réglementaire
+  financialRisks      String? @db.Text // risques financiers identifiés
+  financialDecisions  String? @db.Text // décisions financières du mois
+  recommendations     String? @db.Text // recommandations / arbitrages COMEX
+  nextMonthOutlook    String? @db.Text // prévisions mois suivant
 
   // Workflow
   submittedAt     DateTime?
@@ -7952,7 +8131,7 @@ model DafMonthlyFinancialReport {
   validatedAt     DateTime?
   rejectionReason String?   @db.Text
 
-  pdfUrl          String?
+  pdfUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -7978,11 +8157,11 @@ enum DafMonthlyFinancialReportStatus {
 // ========================================
 
 model ProfileChangeRequest {
-  id        String   @id @default(cuid())
-  tenantId  String
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation("ChangeRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation("ChangeRequestUser", fields: [userId], references: [id], onDelete: Cascade)
 
   // Champs demandés (JSON {field, currentValue, requestedValue}[])
   changes Json

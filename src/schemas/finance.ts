@@ -78,6 +78,79 @@ export const fundCashboxSchema = z.object({
   occurredAt: z.string().optional(),
 });
 
+// ─── Comptabilité analytique : comptes projet / salaire / charges siège ────
+
+const positiveAmount = amountString.refine((v) => BigInt(v) > 0n, "Le montant doit être positif");
+
+export const createProjectAccountSchema = z.object({
+  siteId: z.string().min(1),
+  bankAccountId: z.string().optional().nullable(),
+});
+
+export const updateProjectAccountSchema = z.object({
+  bankAccountId: z.string().optional().nullable(),
+  isActive: z.boolean().optional(),
+});
+
+// Approvisionnement d'un compte projet depuis un compte bancaire (banque → projet).
+export const fundProjectAccountSchema = z.object({
+  bankAccountId: z.string().min(1),
+  amount: positiveAmount,
+  reason: z.string().min(2).max(200).default("Approvisionnement compte projet"),
+  reference: z.string().max(60).optional(),
+  occurredAt: z.string().optional(),
+});
+
+// Mouvement manuel sur un compte projet. Selon le type, sens imposé :
+//   crédit (+): REVENUE          ; débit (−): EXPENSE, PROJECT_SALARY, REPAYMENT
+//   ADJUSTMENT : sens libre via `direction`.
+export const PROJECT_MOVEMENT_TYPES = [
+  "EXPENSE",
+  "PROJECT_SALARY",
+  "REVENUE",
+  "REPAYMENT",
+  "ADJUSTMENT",
+] as const;
+
+export const projectMovementSchema = z.object({
+  type: z.enum(PROJECT_MOVEMENT_TYPES),
+  amount: positiveAmount,
+  reason: z.string().min(2).max(200),
+  reference: z.string().max(60).optional(),
+  occurredAt: z.string().optional(),
+  // Requis seulement pour ADJUSTMENT.
+  direction: z.enum(["CREDIT", "DEBIT"]).optional(),
+  // Requis pour REPAYMENT (compte bancaire crédité en retour).
+  bankAccountId: z.string().optional(),
+});
+
+// Compte salaire — mouvement manuel (paiement masse salariale siège, etc.).
+export const salaryMovementSchema = z.object({
+  direction: z.enum(["CREDIT", "DEBIT"]),
+  amount: positiveAmount,
+  reason: z.string().min(2).max(200),
+  reference: z.string().max(60).optional(),
+  occurredAt: z.string().optional(),
+  bankAccountId: z.string().optional().nullable(),
+});
+
+export const linkSalaryBankSchema = z.object({
+  bankAccountId: z.string().optional().nullable(),
+});
+
+// Répartition de la masse salariale siège (prorata du montant des marchés).
+export const overheadPreviewSchema = z.object({
+  period: z.string().regex(/^\d{4}-\d{2}$/, "Période attendue au format AAAA-MM"),
+  totalAmount: positiveAmount,
+});
+
+export type CreateProjectAccountInput = z.infer<typeof createProjectAccountSchema>;
+export type UpdateProjectAccountInput = z.infer<typeof updateProjectAccountSchema>;
+export type FundProjectAccountInput = z.infer<typeof fundProjectAccountSchema>;
+export type ProjectMovementInput = z.infer<typeof projectMovementSchema>;
+export type SalaryMovementInput = z.infer<typeof salaryMovementSchema>;
+export type OverheadPreviewInput = z.infer<typeof overheadPreviewSchema>;
+
 export type CreateCommitmentInput = z.infer<typeof createCommitmentSchema>;
 export type CreateBankAccountInput = z.infer<typeof createBankAccountSchema>;
 export type UpdateBankAccountInput = z.infer<typeof updateBankAccountSchema>;
