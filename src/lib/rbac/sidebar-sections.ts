@@ -323,6 +323,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Factures fournisseurs", href: "/comptable/factures-frns", icon: Receipt },
       { label: "Situations clients", href: "/comptable/factures-clients", icon: FileText },
       { label: "Trésorerie", href: "/comptable/tresorerie", icon: Coins },
+      { label: "Comptes projet", href: "/comptable/comptes-projets", icon: PieChart },
       { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
       { label: "Actifs", href: "/comptable/actifs", icon: Package },
       { label: "Fiscalité", href: "/comptable/fiscal", icon: ScrollText, hideForRoles: [Role.DAF] },

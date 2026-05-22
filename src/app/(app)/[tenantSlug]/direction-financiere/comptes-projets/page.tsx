@@ -1,3 +1,6 @@
+import { ProjectAccountsSection } from "@/components/cpt/ProjectAccountsSection";
+import { SalaryAccountSection } from "@/components/cpt/SalaryAccountSection";
+import { OverheadDistributionSection } from "@/components/cpt/OverheadDistributionSection";
 import { AccountantsAssignSection } from "@/components/daf/accountants/AccountantsAssignSection";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +16,11 @@ export default function ComptesProjetsPage() {
       </header>
 
       <div className="space-y-4">
+        <ProjectAccountsSection />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SalaryAccountSection />
+          <OverheadDistributionSection />
+        </div>
         <AccountantsAssignSection />
       </div>
     </>
