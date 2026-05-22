@@ -148,13 +148,20 @@ const DAF_PILOTAGE: NavSection = {
 };
 
 const DAF_TRESORERIE: NavSection = {
-  title: "Trésorerie & comptabilité",
+  title: "Trésorerie",
   items: [
     { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
-    { label: "Comptabilité analytique", href: "/direction-financiere/comptes-projets", icon: PieChart },
     { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
-    { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
     { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
+  ],
+};
+
+const DAF_COMPTA: NavSection = {
+  title: "Comptabilité",
+  items: [
+    { label: "Comptabilité analytique", href: "/direction-financiere/comptes-projets", icon: PieChart },
+    { label: "Comptabilité générale", href: "/direction-financiere/comptabilite", icon: FileText },
+    { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
   ],
 };
 
@@ -166,7 +173,6 @@ const DAF_CYCLES: NavSection = {
     { label: "Engagements financiers", href: "/direction-financiere/engagements", icon: Wallet },
     { label: "Circuits de paiement", href: "/direction-financiere/circuits-paiement", icon: GitBranch },
     { label: "RH financier", href: "/direction-financiere/rh", icon: Users },
-    { label: "Fiscalité", href: "/direction-financiere/fiscal", icon: ScrollText },
   ],
 };
 
@@ -201,6 +207,7 @@ const FULL: Record<Module, NavSection> = {
     items: [
       ...DAF_PILOTAGE.items,
       ...DAF_TRESORERIE.items,
+      ...DAF_COMPTA.items,
       ...DAF_CYCLES.items,
       ...DAF_VALIDATIONS.items,
     ],
@@ -496,11 +503,11 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
       sections.push(DG_PILOTAGE, DG_FINANCE, DG_VALIDATIONS, DG_STRATEGIE);
       continue;
     }
-    // Même logique pour le DAF : sidebar split en 4 sous-sections
-    // (Pilotage, Trésorerie & comptabilité, Cycles de gestion,
+    // Même logique pour le DAF : sidebar split en sous-sections
+    // (Pilotage, Trésorerie, Comptabilité, Cycles de gestion,
     // Validations & rapports).
     if (role === Role.DAF && m === MODULES.DAF) {
-      sections.push(DAF_PILOTAGE, DAF_TRESORERIE, DAF_CYCLES, DAF_VALIDATIONS);
+      sections.push(DAF_PILOTAGE, DAF_TRESORERIE, DAF_COMPTA, DAF_CYCLES, DAF_VALIDATIONS);
       continue;
     }
 
