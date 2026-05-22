@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Wallet, ArrowDownToLine, ArrowLeftRight, Eye, Building2 } from "lucide-react";
+import { Plus, Wallet, ArrowDownToLine, ArrowLeftRight, Eye, Building2, Pencil } from "lucide-react";
 import { clsx } from "clsx";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useAccess } from "@/hooks/useAccess";
@@ -12,6 +12,7 @@ import {
   useProjectAccounts,
   useProjectAccount,
   useCreateProjectAccount,
+  useUpdateProjectAccount,
   useFundProjectAccount,
   useProjectMovement,
   type ProjectAccountItem,
@@ -40,6 +41,7 @@ export function ProjectAccountsSection({ variant = "daf" }: { variant?: "daf" | 
   const [creating, setCreating] = useState(false);
   const [funding, setFunding] = useState<ProjectAccountItem | null>(null);
   const [moving, setMoving] = useState<ProjectAccountItem | null>(null);
+  const [editing, setEditing] = useState<ProjectAccountItem | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
 
   // Liste des banques : nécessaire uniquement côté DAF (endpoint réservé DAF/DG).
@@ -126,6 +128,11 @@ export function ProjectAccountsSection({ variant = "daf" }: { variant?: "daf" | 
                             <ArrowLeftRight className="h-3.5 w-3.5" /> Mouvt.
                           </button>
                         )}
+                        {isDaf && (
+                          <button type="button" onClick={() => setEditing(a)} title="Modifier" className="inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-[11px] text-ink-2 hover:border-primary-300 hover:text-primary-700">
+                            <Pencil className="h-3.5 w-3.5" /> Modifier
+                          </button>
+                        )}
                         <button type="button" onClick={() => setViewing(a.id)} title="Relevé" className="inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-[11px] text-ink-2 hover:border-primary-300 hover:text-primary-700">
                           <Eye className="h-3.5 w-3.5" /> Relevé
                         </button>
@@ -142,6 +149,7 @@ export function ProjectAccountsSection({ variant = "daf" }: { variant?: "daf" | 
       {creating && <CreateModal onClose={() => setCreating(false)} existingSiteIds={(data?.items ?? []).map((i) => i.siteId)} banks={banks} />}
       {funding && <FundModal account={funding} onClose={() => setFunding(null)} banks={banks} />}
       {moving && <MovementModal account={moving} onClose={() => setMoving(null)} banks={banks} allowRepayment={isDaf} />}
+      {editing && <EditModal account={editing} onClose={() => setEditing(null)} banks={banks} />}
       {viewing && <DetailDrawer id={viewing} onClose={() => setViewing(null)} />}
     </section>
   );
@@ -331,6 +339,70 @@ function MovementModal({ account, onClose, banks, allowRepayment }: { account: P
           <button type="submit" disabled={mv.isPending} className="rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-primary-600 disabled:opacity-50">
             {mv.isPending ? "Enregistrement…" : "Enregistrer"}
           </button>
+        </div>
+      </form>
+    </TreasuryModal>
+  );
+}
+
+function EditModal({ account, onClose, banks }: { account: ProjectAccountItem; onClose: () => void; banks: BankOption[] }) {
+  const update = useUpdateProjectAccount();
+  const [bankAccountId, setBankAccountId] = useState(account.bankAccountId ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const saveBank = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await update.mutateAsync({ id: account.id, bankAccountId: bankAccountId || null });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    }
+  };
+
+  const toggleActive = async () => {
+    const closing = account.isActive;
+    if (closing && !confirm(`Clôturer le compte projet ${account.siteCode} ? Il n'acceptera plus de mouvement.`)) return;
+    setError(null);
+    try {
+      await update.mutateAsync({ id: account.id, isActive: !account.isActive });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    }
+  };
+
+  return (
+    <TreasuryModal open onClose={onClose} title={`Modifier · ${account.siteCode}`}>
+      <form onSubmit={saveBank} className="space-y-3">
+        <Field label="Compte bancaire de rattachement">
+          <select className={inputCls} value={bankAccountId} onChange={(e) => setBankAccountId(e.target.value)}>
+            <option value="">Aucun</option>
+            {banks.map((b) => (
+              <option key={b.id} value={b.id}>{b.bank} · {b.accountNumber}</option>
+            ))}
+          </select>
+        </Field>
+        {error && <p className="rounded-md bg-rose-50 px-3 py-2 text-[12px] text-rose-700">{error}</p>}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <button
+            type="button"
+            onClick={toggleActive}
+            disabled={update.isPending}
+            className={clsx(
+              "rounded-md border px-3 py-2 text-[12.5px] font-medium disabled:opacity-50",
+              account.isActive ? "border-rose-200 text-danger hover:bg-rose-50" : "border-line text-ink-2 hover:bg-surface-alt",
+            )}
+          >
+            {account.isActive ? "Clôturer le compte" : "Rouvrir le compte"}
+          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-[13px] font-medium text-ink-3 hover:bg-surface-alt">Annuler</button>
+            <button type="submit" disabled={update.isPending} className="rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-primary-600 disabled:opacity-50">
+              {update.isPending ? "…" : "Enregistrer"}
+            </button>
+          </div>
         </div>
       </form>
     </TreasuryModal>
