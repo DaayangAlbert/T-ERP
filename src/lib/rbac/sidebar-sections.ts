@@ -151,6 +151,7 @@ const DAF_TRESORERIE: NavSection = {
   title: "Trésorerie & comptabilité",
   items: [
     { label: "Trésorerie temps réel", href: "/direction-financiere/tresorerie", icon: Coins },
+    { label: "Comptabilité analytique", href: "/direction-financiere/comptes-projets", icon: PieChart },
     { label: "Historique trésorerie", href: "/historique-tresorerie", icon: History },
     { label: "Comptabilité", href: "/direction-financiere/comptabilite", icon: FileText },
     { label: "Recouvrement", href: "/direction-financiere/recouvrement", icon: Receipt, badge: { value: "8", alert: true } },
