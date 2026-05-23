@@ -5,6 +5,7 @@ import Link from "next/link";
 import { clsx } from "clsx";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
+import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerDecisions, useDecide, type OwnerDecision } from "@/hooks/useOwnerDecisions";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
@@ -17,11 +18,12 @@ const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
 
 export default function OwnerDecisionsPage() {
   const { data, isLoading, isError } = useOwnerDecisions();
+  const tenantHref = useTenantHref();
 
   return (
     <div className="space-y-4">
       <header className="border-b border-line pb-4">
-        <Link href="/proprietaire" className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
+        <Link href={tenantHref("/proprietaire")} className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
           <ArrowLeft className="h-3.5 w-3.5" /> Retour au tableau de bord
         </Link>
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Décisions à valider</h1>

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { clsx } from "clsx";
 import { Coins, Building2, Users, TrendingUp, ArrowRight, CheckCircle2 } from "lucide-react";
 import { formatFCFA, formatPercent } from "@/lib/format";
+import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerCockpit } from "@/hooks/useOwnerCockpit";
 
 const fcfa = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function ProprietaireCockpitPage() {
   const { data, isLoading, isError } = useOwnerCockpit();
+  const tenantHref = useTenantHref();
 
   if (isError) {
     return <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">Impossible de charger le tableau de bord.</div>;
@@ -105,7 +107,7 @@ export default function ProprietaireCockpitPage() {
           <Line label="Valeur totale des marchés" value={fcfa(commercial.valeurMarches)} />
           <Line label="Nouveaux marchés ce mois" value={`${commercial.nouveauxMarchesMois}`} tone={commercial.nouveauxMarchesMois > 0 ? "ok" : "neutral"} />
           <Link
-            href="/proprietaire/decisions"
+            href={tenantHref("/proprietaire/decisions")}
             className={clsx(
               "mt-1 flex items-center justify-between rounded-lg border px-3 py-2.5 text-[13px] font-medium transition",
               commercial.decisionsEnAttente > 0
