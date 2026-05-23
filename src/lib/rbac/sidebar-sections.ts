@@ -200,7 +200,9 @@ const OWNER_CONSULTER: NavSection = {
   readOnly: true,
   items: [
     { label: "Finances", href: "/proprietaire/finances", icon: Coins },
+    { label: "Recouvrement & paiements", href: "/proprietaire/recouvrement", icon: Receipt },
     { label: "Chantiers", href: "/proprietaire/chantiers", icon: HardHat },
+    { label: "Stocks", href: "/proprietaire/stocks", icon: Package },
     { label: "Personnel", href: "/proprietaire/personnel", icon: Users },
     { label: "Gouvernance", href: "/proprietaire/gouvernance", icon: Landmark },
   ],

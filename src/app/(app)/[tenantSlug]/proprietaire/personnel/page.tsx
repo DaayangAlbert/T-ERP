@@ -1,8 +1,9 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { clsx } from "clsx";
+import { Users, Wallet } from "lucide-react";
 import { formatFCFA } from "@/lib/format";
-import { useOwnerPersonnel } from "@/hooks/useOwnerDetails";
+import { useOwnerPersonnel, useOwnerSalaires } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Row, Explain, Loading, ErrorBox } from "@/components/owner/ui";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
@@ -45,6 +46,62 @@ export default function OwnerPersonnelPage() {
           ))
         )}
       </Section>
+
+      <SalairesSection />
     </div>
+  );
+}
+
+function SalairesSection() {
+  const { data, isLoading, isError } = useOwnerSalaires();
+
+  return (
+    <Section title="Salaires & paiements" icon={<Wallet className="h-4 w-4" />}>
+      <Explain>Pour chaque personne : son salaire de base, le nombre de mois <strong className="text-success">payés</strong> et <strong className="text-danger">impayés</strong> (sur les 12 derniers mois). Les mois impayés sont des bulletins calculés mais pas encore réglés.</Explain>
+      {isError ? (
+        <p className="py-3 text-center text-[12px] text-danger">Impossible de charger les salaires.</p>
+      ) : isLoading || !data ? (
+        <div className="h-24 animate-pulse rounded bg-surface-alt" />
+      ) : (
+        <>
+          {BigInt(data.resume.masseImpayee) > 0n && (
+            <div className="mb-3 rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-[12.5px] text-ink-2">
+              <strong className="text-warning">{data.resume.avecImpayes} personne(s)</strong> ont des salaires impayés, pour un total de <strong>{f(data.resume.masseImpayee)}</strong> restant à payer.
+            </div>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-[12.5px]">
+              <thead className="border-b border-line text-left text-[10.5px] uppercase tracking-wider text-ink-3">
+                <tr>
+                  <th className="px-2 py-2">Personne</th>
+                  <th className="px-2 py-2 text-right">Salaire de base</th>
+                  <th className="px-2 py-2 text-center">Mois payés</th>
+                  <th className="px-2 py-2 text-center">Mois impayés</th>
+                  <th className="px-2 py-2 text-right">Reste à payer</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((p) => (
+                  <tr key={p.id} className="border-b border-line">
+                    <td className="px-2 py-2">
+                      <div className="font-medium text-ink">{p.nom}</div>
+                      {p.poste && <div className="text-[11px] text-ink-3">{p.poste}</div>}
+                    </td>
+                    <td className="px-2 py-2 text-right tabular-nums">{BigInt(p.salaire) > 0n ? f(p.salaire) : "—"}</td>
+                    <td className="px-2 py-2 text-center"><span className="rounded bg-success/10 px-2 py-0.5 font-medium text-success">{p.moisPayes}</span></td>
+                    <td className="px-2 py-2 text-center">
+                      <span className={clsx("rounded px-2 py-0.5 font-medium", p.moisImpayes > 0 ? "bg-danger/10 text-danger" : "bg-ink-3/10 text-ink-3")} title={p.impayes.join(", ")}>
+                        {p.moisImpayes}
+                      </span>
+                    </td>
+                    <td className={clsx("px-2 py-2 text-right tabular-nums", BigInt(p.resteAPayer) > 0n ? "font-semibold text-danger" : "text-ink-3")}>{BigInt(p.resteAPayer) > 0n ? f(p.resteAPayer) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </Section>
   );
 }
