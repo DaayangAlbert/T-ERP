@@ -199,10 +199,10 @@ const OWNER_CONSULTER: NavSection = {
   title: "Consulter (lecture)",
   readOnly: true,
   items: [
-    { label: "Finances", href: "/direction-financiere", icon: Coins },
-    { label: "Chantiers", href: "/direction-technique", icon: HardHat },
-    { label: "Personnel", href: "/ressources-humaines", icon: Users },
-    { label: "Gouvernance", href: "/secretaire-general", icon: Landmark },
+    { label: "Finances", href: "/proprietaire/finances", icon: Coins },
+    { label: "Chantiers", href: "/proprietaire/chantiers", icon: HardHat },
+    { label: "Personnel", href: "/proprietaire/personnel", icon: Users },
+    { label: "Gouvernance", href: "/proprietaire/gouvernance", icon: Landmark },
   ],
 };
 
