@@ -631,6 +631,9 @@ model DgSettings {
 }
 
 enum Role {
+  // Gouvernance / actionnariat
+  OWNER // Propriétaire / PCA — contrôle de gouvernance : voit tout, valide le critique
+
   // Direction
   DG // Directeur Général
   DAF // Directeur Administratif et Financier

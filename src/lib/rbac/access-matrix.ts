@@ -68,6 +68,32 @@ type Matrix = Partial<Record<Role, Partial<Record<Module, AccessLevel>>>>;
 
 const MATRIX: Matrix = {
   // ═══════════════════════════════════════════════════════════════════════
+  // OWNER — Propriétaire / PCA : gouvernance. Voit TOUT (lecture) + son
+  // cockpit (FULL) + validation des décisions critiques. Aucune édition
+  // opérationnelle (sécurité : pas de saisie comptable directe).
+  // ═══════════════════════════════════════════════════════════════════════
+  OWNER: {
+    OWNER: "FULL",
+    DG: "READ",
+    DAF: "READ",
+    RH: "READ",
+    DT: "READ",
+    SG: "READ",
+    DTRAV: "READ",
+    CDT: "READ",
+    CC: "READ",
+    CPT: "READ",
+    LOG: "READ",
+    MAG: "READ",
+    GED: "READ",
+    OUV: "NONE",
+    IT: "NONE",
+    EMP: "OWN",
+    CAND: "NONE",
+    PLATFORM: "NONE",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
   // SUPER_ADMIN — accès plateforme (hors tenant) + drill-down lecture
   // ═══════════════════════════════════════════════════════════════════════
   SUPER_ADMIN: {

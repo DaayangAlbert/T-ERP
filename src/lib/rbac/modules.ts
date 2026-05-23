@@ -16,6 +16,9 @@
  */
 
 export const MODULES = {
+  // ───────────────────────── Gouvernance / actionnariat ─────────────────
+  OWNER: "OWNER", // /proprietaire (Propriétaire / PCA)
+
   // ───────────────────────── Pilotage direction ─────────────────────────
   DG: "DG", // /direction-generale
   DAF: "DAF", // /direction-financiere
@@ -51,6 +54,7 @@ export type Module = (typeof MODULES)[keyof typeof MODULES];
  * L'ordre détermine l'ordre d'affichage dans les menus latéraux.
  */
 export const MODULE_ORDER: Module[] = [
+  MODULES.OWNER,
   MODULES.DG,
   MODULES.DAF,
   MODULES.RH,
@@ -76,6 +80,7 @@ export const MODULE_ORDER: Module[] = [
  * `null` = pas d'espace UI dédié (rare : ex. PLATFORM est hors tenantSlug).
  */
 export const MODULE_ROUTE: Record<Module, string | null> = {
+  OWNER: "/proprietaire",
   DG: "/direction-generale",
   DAF: "/direction-financiere",
   RH: "/ressources-humaines",
@@ -99,6 +104,7 @@ export const MODULE_ROUTE: Record<Module, string | null> = {
  * Libellé court FR pour affichage UI (sidebar, banner, breadcrumb).
  */
 export const MODULE_LABEL: Record<Module, string> = {
+  OWNER: "Propriétaire / PCA",
   DG: "Direction Générale",
   DAF: "Direction Financière",
   RH: "Ressources Humaines",

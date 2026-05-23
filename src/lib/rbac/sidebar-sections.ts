@@ -186,7 +186,28 @@ const DAF_VALIDATIONS: NavSection = {
   ],
 };
 
+// ─── Propriétaire / PCA — sidebar volontairement simple ────────────────────
+const OWNER_COCKPIT: NavSection = {
+  title: "Pilotage",
+  items: [
+    { label: "Vue d'ensemble", href: "/proprietaire", icon: Crown },
+    { label: "Décisions à valider", href: "/proprietaire/decisions", icon: CheckCircle2 },
+  ],
+};
+
+const OWNER_CONSULTER: NavSection = {
+  title: "Consulter (lecture)",
+  readOnly: true,
+  items: [
+    { label: "Finances", href: "/direction-financiere", icon: Coins },
+    { label: "Chantiers", href: "/direction-technique", icon: HardHat },
+    { label: "Personnel", href: "/ressources-humaines", icon: Users },
+    { label: "Gouvernance", href: "/secretaire-general", icon: Landmark },
+  ],
+};
+
 const FULL: Record<Module, NavSection> = {
+  OWNER: { title: "Espace Propriétaire", items: [...OWNER_COCKPIT.items, ...OWNER_CONSULTER.items] },
   DG: {
     // Section "plate" — utilisée comme fallback. La sidebar DG réelle est
     // composée des 3 sub-sections `DG_PILOTAGE`, `DG_FINANCE`,
@@ -415,6 +436,7 @@ const FULL: Record<Module, NavSection> = {
 // ════════════════════════════════════════════════════════════════════════
 
 const READ_ITEM: Record<Module, NavItem> = {
+  OWNER: { label: "Vue Propriétaire / PCA", href: "/proprietaire", icon: Crown },
   DG: { label: "Vue Direction Générale", href: "/direction-generale", icon: Crown },
   DAF: { label: "Vue Finance (DAF)", href: "/direction-financiere", icon: Briefcase },
   RH: { label: "Vue RH", href: "/ressources-humaines", icon: Users },
@@ -470,6 +492,13 @@ const OUV_PERSONAL: NavSection = {
  */
 export function getSidebarSections(role: Role | null | undefined): NavSection[] {
   if (!role) return [];
+
+  // Propriétaire / PCA : sidebar curatée et volontairement simple (cockpit +
+  // file de décisions + quelques vues lecture), au lieu d'exposer les ~12
+  // modules en lecture qui la rendraient illisible.
+  if (role === Role.OWNER) {
+    return [OWNER_COCKPIT, OWNER_CONSULTER];
+  }
 
   const accessible = getAccessibleModules(role);
   const fullModules: Module[] = [];

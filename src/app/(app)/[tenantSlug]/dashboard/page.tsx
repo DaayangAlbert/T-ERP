@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
  * affiche "tableau de bord en construction".
  */
 const ROLE_TO_PATH: Record<Role, string> = {
+  OWNER: "/proprietaire",
   DG: "/dashboard/dg",
   DAF: "/direction-financiere",
   HR: "/ressources-humaines",
