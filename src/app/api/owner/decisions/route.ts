@@ -19,12 +19,20 @@ export async function GET() {
   }
 
   const scopeIds = await getTenantScopeIds(session.tenantId);
+  // Le PCA ne voit que les demandes que le DG lui a explicitement transmises.
   const items = await prisma.validation.findMany({
-    where: { tenantId: { in: scopeIds }, status: ValidationStatus.PENDING },
+    where: { tenantId: { in: scopeIds }, status: ValidationStatus.PENDING, ownerDecision: "PENDING" },
     include: { initiator: { select: { firstName: true, lastName: true } } },
-    orderBy: { createdAt: "desc" },
+    orderBy: { ownerEscalatedAt: "desc" },
     take: 100,
   });
+
+  // Résout le nom du DG qui a transmis chaque demande.
+  const dgIds = Array.from(new Set(items.map((v) => v.ownerEscalatedById).filter(Boolean))) as string[];
+  const dgs = dgIds.length
+    ? await prisma.user.findMany({ where: { id: { in: dgIds } }, select: { id: true, firstName: true, lastName: true } })
+    : [];
+  const dgName = new Map(dgs.map((d) => [d.id, `${d.firstName} ${d.lastName}`]));
 
   const sorted = items
     .map((v) => ({
@@ -37,6 +45,7 @@ export async function GET() {
       priority: v.priority,
       currentStep: v.currentStep,
       initiator: `${v.initiator.firstName} ${v.initiator.lastName}`,
+      demandeur: v.ownerEscalatedById ? dgName.get(v.ownerEscalatedById) ?? "Direction Générale" : "Direction Générale",
       dueDate: v.dueDate?.toISOString() ?? null,
       createdAt: v.createdAt.toISOString(),
     }))

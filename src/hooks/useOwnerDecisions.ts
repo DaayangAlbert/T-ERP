@@ -12,6 +12,7 @@ export interface OwnerDecision {
   priority: string;
   currentStep: string | null;
   initiator: string;
+  demandeur?: string;
   dueDate: string | null;
   createdAt: string;
 }

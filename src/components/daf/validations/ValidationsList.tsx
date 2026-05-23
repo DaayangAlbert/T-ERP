@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Check, X, MessageSquare, AlertOctagon } from "lucide-react";
 import { ValidationType, ValidationPriority, Role } from "@prisma/client";
-import { useApproveValidation, useBulkApprove } from "@/hooks/useValidations";
+import { useApproveValidation, useBulkApprove, useEscalateOwner } from "@/hooks/useValidations";
+import { Crown } from "lucide-react";
 import { RejectModal } from "@/components/validations/RejectModal";
 import { RequestInfoModal } from "@/components/validations/RequestInfoModal";
 import { WorkflowInline } from "./WorkflowInline";
@@ -45,6 +46,9 @@ interface Item {
   initiatorPosition: string | null;
   workflow: { steps: Array<{ key: string; label: string; role: Role; status: string }> };
   ageDays: number;
+  ownerDecision?: string | null;
+  ownerDecisionReason?: string | null;
+  ownerEscalatedAt?: string | null;
 }
 
 interface ValidationsListProps {
@@ -68,6 +72,15 @@ export function ValidationsList({
   const [comment, setComment] = useState<Record<string, string>>({});
   const approve = useApproveValidation();
   const bulk = useBulkApprove();
+  const escalate = useEscalateOwner();
+  // L'escalade au Propriétaire / PCA n'existe que pour le DG.
+  const isDg = module === MODULES.DG;
+
+  const onEscalate = async (id: string) => {
+    if (!confirm("Demander l'autorisation du Propriétaire / PCA pour cette décision ?")) return;
+    await escalate.mutateAsync({ id });
+    onChange?.();
+  };
   // L'autorisation d'agir vient de la matrice : DAF a canValidate=true sur
   // MODULES.DAF (FULL), DG a canValidate=true sur MODULES.DG.
   const access = useAccess(module);
@@ -165,6 +178,25 @@ export function ValidationsList({
                 </div>
               </div>
 
+              {/* Escalade Propriétaire / PCA — DG uniquement */}
+              {isDg && v.ownerDecision && (
+                <div
+                  className={clsx(
+                    "mt-2 flex items-start gap-2 rounded-md px-3 py-2 text-[12px]",
+                    v.ownerDecision === "PENDING" && "bg-warning/10 text-warning",
+                    v.ownerDecision === "APPROVED" && "bg-success/10 text-success",
+                    v.ownerDecision === "REJECTED" && "bg-danger/10 text-danger",
+                  )}
+                >
+                  <Crown className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    {v.ownerDecision === "PENDING" && "En attente de l'autorisation du Propriétaire / PCA…"}
+                    {v.ownerDecision === "APPROVED" && "Le Propriétaire / PCA a donné son accord. Vous pouvez confirmer votre validation."}
+                    {v.ownerDecision === "REJECTED" && `Le Propriétaire / PCA a refusé${v.ownerDecisionReason ? ` : ${v.ownerDecisionReason}` : "."}`}
+                  </span>
+                </div>
+              )}
+
               {canAct && (
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                   <input
@@ -174,13 +206,24 @@ export function ValidationsList({
                     className="h-10 rounded-md border border-line bg-white px-2.5 text-[13px]"
                   />
                   <div className="flex gap-2">
+                    {isDg && !v.ownerDecision && (
+                      <button
+                        type="button"
+                        onClick={() => onEscalate(v.id)}
+                        disabled={escalate.isPending}
+                        className="inline-flex h-10 items-center gap-1.5 rounded-md border border-primary-300 bg-primary-50 px-3 text-[13px] font-medium text-primary-700 hover:bg-primary-100"
+                      >
+                        <Crown className="h-4 w-4" /> Demander au PCA
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onApprove(v.id)}
-                      disabled={approve.isPending}
-                      className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-success px-3 text-[13px] font-medium text-white hover:opacity-90 sm:flex-none"
+                      disabled={approve.isPending || (isDg && v.ownerDecision === "PENDING")}
+                      title={isDg && v.ownerDecision === "PENDING" ? "En attente de l'accord du PCA" : undefined}
+                      className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-success px-3 text-[13px] font-medium text-white hover:opacity-90 disabled:opacity-50 sm:flex-none"
                     >
-                      <Check className="h-4 w-4" /> Valider
+                      <Check className="h-4 w-4" /> {isDg && v.ownerDecision === "APPROVED" ? "Confirmer" : "Valider"}
                     </button>
                     <button
                       type="button"

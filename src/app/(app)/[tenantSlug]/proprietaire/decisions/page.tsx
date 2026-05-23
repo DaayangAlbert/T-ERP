@@ -79,8 +79,8 @@ function DecisionCard({ d }: { d: OwnerDecision }) {
           <h3 className="mt-1 text-[14px] font-semibold text-ink">{d.title}</h3>
           {d.description && <p className="mt-0.5 line-clamp-2 text-[12px] text-ink-3">{d.description}</p>}
           <p className="mt-1 text-[11.5px] text-ink-3">
-            Demandé par {d.initiator} · {formatDate(d.createdAt)}
-            {d.currentStep ? ` · étape ${d.currentStep}` : ""}
+            {d.demandeur ? <>Transmis par le DG ({d.demandeur}) · </> : null}
+            Demande initiale : {d.initiator} · {formatDate(d.createdAt)}
           </p>
         </div>
         {d.amount && (

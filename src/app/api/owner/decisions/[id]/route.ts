@@ -3,7 +3,7 @@ import { z, ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getTenantScopeIds } from "@/lib/tenant";
-import { Role, ValidationStatus } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -30,46 +30,41 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       where: { id: params.id, tenantId: { in: scopeIds } },
     });
     if (!validation) return NextResponse.json({ error: "Décision introuvable" }, { status: 404 });
-    if (validation.status !== ValidationStatus.PENDING) {
-      return NextResponse.json({ error: "Cette décision a déjà été tranchée" }, { status: 409 });
+    if (validation.ownerDecision !== "PENDING") {
+      return NextResponse.json({ error: "Cette demande n'attend pas (ou plus) votre avis" }, { status: 409 });
     }
     if (decision === "REJECT" && !reason?.trim()) {
       return NextResponse.json({ error: "Un motif est requis pour refuser" }, { status: 400 });
     }
 
-    const newStatus = decision === "APPROVE" ? ValidationStatus.APPROVED : ValidationStatus.REJECTED;
-    const comments = Array.isArray(validation.comments) ? (validation.comments as object[]) : [];
-    const note = {
-      by: session.sub,
-      role: "OWNER",
-      kind: "governance_decision",
-      decision,
-      reason: reason ?? null,
-      at: new Date().toISOString(),
-    };
+    // Le PCA rend un AVIS (autorisation), il ne finalise pas : c'est le DG qui
+    // confirmera ensuite sa validation. On enregistre l'avis du PCA.
+    const ownerDecision = decision === "APPROVE" ? "APPROVED" : "REJECTED";
 
     await prisma.$transaction([
       prisma.validation.update({
         where: { id: validation.id },
         data: {
-          status: newStatus,
-          decidedById: session.sub,
-          decisionAt: new Date(),
-          decisionReason: reason ?? null,
-          currentStep: "OWNER",
-          currentApproverId: null,
-          comments: [...comments, note] as object,
+          ownerDecision,
+          ownerDecisionAt: new Date(),
+          ownerDecisionById: session.sub,
+          ownerDecisionReason: reason ?? null,
         },
       }),
-      prisma.notification.create({
-        data: {
-          userId: validation.initiatorId,
-          type: "validation_decided",
-          title: decision === "APPROVE" ? "Décision approuvée par la direction" : "Décision refusée par la direction",
-          body: `${validation.reference} — ${validation.title}${reason ? ` : ${reason}` : ""}`,
-          link: "/suivi-paiement",
-        },
-      }),
+      // Notifie le DG qui a demandé l'autorisation.
+      ...(validation.ownerEscalatedById
+        ? [
+            prisma.notification.create({
+              data: {
+                userId: validation.ownerEscalatedById,
+                type: "owner_decision_done",
+                title: decision === "APPROVE" ? "Le PCA a donné son accord" : "Le PCA a refusé",
+                body: `${validation.reference} — ${validation.title}${reason ? ` : ${reason}` : ""}`,
+                link: "/direction-generale/validations",
+              },
+            }),
+          ]
+        : []),
       prisma.auditLog.create({
         data: {
           tenantId: session.tenantId,
@@ -82,7 +77,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       }),
     ]);
 
-    return NextResponse.json({ ok: true, status: newStatus });
+    return NextResponse.json({ ok: true, ownerDecision });
   } catch (err) {
     if (err instanceof ZodError) {
       return NextResponse.json({ error: "Validation", issues: err.flatten() }, { status: 400 });

@@ -145,6 +145,19 @@ export function useApproveValidation() {
   });
 }
 
+// DG → demande l'autorisation du Propriétaire / PCA pour une validation.
+export function useEscalateOwner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      fetchJson(`/api/dg/validations/${id}/escalate-owner`, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dg", "validations"] });
+      qc.invalidateQueries({ queryKey: ["validations"] });
+    },
+  });
+}
+
 export function useRejectValidation() {
   const qc = useQueryClient();
   return useMutation({

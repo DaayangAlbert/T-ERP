@@ -2503,6 +2503,17 @@ model Validation {
   dtComments           String?   @db.Text
   dtAttachments        String[]  @default([])
 
+  // Escalade au Propriétaire / PCA (gouvernance). Seul le DG peut demander
+  // l'autorisation du PCA ; après accord du PCA, le DG confirme sa validation.
+  // ownerDecision : null = non escaladé · "PENDING" = en attente PCA ·
+  // "APPROVED"/"REJECTED" = avis rendu par le PCA.
+  ownerEscalatedAt   DateTime?
+  ownerEscalatedById String?
+  ownerDecision      String?
+  ownerDecisionAt    DateTime?
+  ownerDecisionById  String?
+  ownerDecisionReason String?  @db.Text
+
   @@unique([tenantId, reference])
   @@index([tenantId, status])
   @@index([currentApproverId, status])
