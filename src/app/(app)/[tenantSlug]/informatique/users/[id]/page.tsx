@@ -73,6 +73,7 @@ async function fetchUser(id: string): Promise<UserDetailPayload | null> {
 }
 
 const ROLE_LABELS: Record<string, string> = {
+  OWNER: "Propriétaire / PCA",
   DG: "Directeur Général",
   DAF: "DAF",
   SECRETARY_GENERAL: "Secrétaire Général(e)",

@@ -8,6 +8,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useTenantStore } from "@/stores/tenant-store";
 
 const ROLE_LABELS: Record<string, string> = {
+  OWNER: "Propriétaire / PCA",
   DG: "Directeur Général",
   DAF: "Directrice administrative et financière",
   SG: "Secrétaire générale",

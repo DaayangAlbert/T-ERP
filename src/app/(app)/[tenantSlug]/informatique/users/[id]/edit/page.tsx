@@ -18,6 +18,7 @@ const SITE_ROLES = new Set([
 
 // Rôles modifiables par l'IT (idem création — SUPER_ADMIN / TENANT_ADMIN exclus).
 const ROLE_OPTIONS = [
+  { value: "OWNER", label: "Propriétaire / PCA" },
   { value: "DG", label: "Directeur Général" },
   { value: "DAF", label: "DAF" },
   { value: "TECH_DIRECTOR", label: "Directeur Technique" },

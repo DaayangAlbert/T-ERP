@@ -10,6 +10,7 @@ import { ArrowLeft, Save, UserPlus, Building2, Copy, Check } from "lucide-react"
 // DG est autorisé : le TENANT_ADMIN gère le DG de son tenant (suspension,
 // remplacement, etc.) sans dépendre du SUPER_ADMIN T-ERP.
 const ROLE_OPTIONS = [
+  { value: "OWNER", label: "Propriétaire / PCA" },
   { value: "DG", label: "Directeur Général" },
   { value: "DAF", label: "DAF" },
   { value: "TECH_DIRECTOR", label: "Directeur Technique" },
