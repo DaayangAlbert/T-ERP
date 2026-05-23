@@ -6,7 +6,7 @@ import { Role, RhAlertType, AlertSeverity, AppStage } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN];
+const ALLOWED: Role[] = [Role.HR, Role.DG, Role.DAF, Role.TENANT_ADMIN, Role.OWNER];
 
 const TYPE_TITLE: Record<RhAlertType, string> = {
   MEDICAL_VISIT_DUE: "5 visites médicales urgentes",

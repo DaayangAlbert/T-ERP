@@ -6,7 +6,7 @@ import { Role, ValidationStatus, SiteStatus, CptEntryStatus } from "@prisma/clie
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.DAF, Role.DG, Role.TENANT_ADMIN];
+const ALLOWED: Role[] = [Role.DAF, Role.DG, Role.TENANT_ADMIN, Role.OWNER];
 
 // Familles SYSCOHADA charges pour la répartition des sorties.
 const OUTFLOW_FAMILIES: Array<{ prefix: string; label: string; color: string }> = [

@@ -6,7 +6,7 @@ import { Role, SiteStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.TENANT_ADMIN];
+const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.TENANT_ADMIN, Role.OWNER];
 
 export async function GET() {
   const session = getCurrentSession();
