@@ -5,7 +5,9 @@ import { clsx } from "clsx";
 import { Plus, FileText, Trash2 } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
-import { usePurchaseOrders, useCreatePurchaseOrder, useSuppliers, type PurchaseOrderItem } from "@/hooks/usePurchase";
+import { usePurchaseOrders, useCreatePurchaseOrder, useSuppliers } from "@/hooks/usePurchase";
+import { useArticles } from "@/hooks/useArticles";
+import { ArticleCreateModal } from "@/components/articles/ArticleCreateModal";
 import { TreasuryModal, Field, inputCls } from "@/components/daf/treasury/TreasuryModal";
 
 const fmt = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
@@ -88,21 +90,30 @@ export function OrdersManager() {
   );
 }
 
-interface LineDraft { designation: string; quantity: string; unitPrice: string }
-const emptyLine = (): LineDraft => ({ designation: "", quantity: "1", unitPrice: "" });
+interface LineDraft { articleId: string; designation: string; unit: string; quantity: string; unitPrice: string }
+const emptyLine = (): LineDraft => ({ articleId: "", designation: "", unit: "", quantity: "1", unitPrice: "" });
 
 function CreateOrderModal({ onClose }: { onClose: () => void }) {
   const create = useCreatePurchaseOrder();
   const { data: suppliers } = useSuppliers();
+  const { data: articlesData } = useArticles();
+  const articles = articlesData?.items ?? [];
   const [supplierId, setSupplierId] = useState("");
   const [category, setCategory] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
+  const [newArticleFor, setNewArticleFor] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ reference: string; status: string } | null>(null);
 
   const setLine = (i: number, patch: Partial<LineDraft>) => setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   const addLine = () => setLines((ls) => [...ls, emptyLine()]);
   const removeLine = (i: number) => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls));
+
+  const onPickArticle = (i: number, articleId: string) => {
+    if (articleId === "__new__") { setNewArticleFor(i); return; }
+    const a = articles.find((x) => x.id === articleId);
+    setLine(i, { articleId, designation: a?.name ?? "", unit: a?.unit ?? "" });
+  };
 
   const lineAmount = (l: LineDraft) => {
     const q = parseFloat(l.quantity.replace(",", ".")) || 0;
@@ -117,9 +128,9 @@ function CreateOrderModal({ onClose }: { onClose: () => void }) {
     if (!supplierId) { setError("Choisissez un fournisseur"); return; }
     if (!category.trim()) { setError("Catégorie requise"); return; }
     const clean = lines
-      .map((l) => ({ designation: l.designation.trim(), quantity: parseFloat(l.quantity.replace(",", ".")) || 0, unitPrice: onlyDigits(l.unitPrice) }))
+      .map((l) => ({ designation: l.designation.trim(), unit: l.unit || undefined, quantity: parseFloat(l.quantity.replace(",", ".")) || 0, unitPrice: onlyDigits(l.unitPrice) }))
       .filter((l) => l.designation && l.quantity > 0 && l.unitPrice && l.unitPrice !== "0");
-    if (clean.length === 0) { setError("Ajoutez au moins un article (désignation, quantité, prix)"); return; }
+    if (clean.length === 0) { setError("Choisissez au moins un article avec quantité et prix"); return; }
     try {
       const r = await create.mutateAsync({ supplierId, category: category.trim(), lines: clean });
       setDone({ reference: r.reference, status: r.status });
@@ -129,6 +140,7 @@ function CreateOrderModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
+    <>
     <TreasuryModal open onClose={onClose} title="Nouveau bon de commande">
       {done ? (
         <div className="space-y-3 text-center">
@@ -154,15 +166,20 @@ function CreateOrderModal({ onClose }: { onClose: () => void }) {
             <div className="mb-1 flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Articles</span>
               <button type="button" onClick={addLine} className="inline-flex items-center gap-1 text-[12px] font-medium text-primary-700 hover:underline">
-                <Plus className="h-3.5 w-3.5" /> Ajouter un article
+                <Plus className="h-3.5 w-3.5" /> Ajouter une ligne
               </button>
             </div>
             <div className="space-y-2">
               {lines.map((l, i) => (
                 <div key={i} className="rounded-lg border border-line p-2">
-                  <input className={clsx(inputCls, "mb-1.5")} value={l.designation} onChange={(e) => setLine(i, { designation: e.target.value })} placeholder="Désignation (ex: Sac de ciment CPJ 42.5)" />
+                  <select className={clsx(inputCls, "mb-1.5")} value={l.articleId} onChange={(e) => onPickArticle(i, e.target.value)}>
+                    <option value="">— Choisir un article —</option>
+                    {articles.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.unit})</option>)}
+                    <option value="__new__">＋ Nouvel article…</option>
+                  </select>
                   <div className="flex items-center gap-2">
-                    <input className={clsx(inputCls, "w-20")} inputMode="decimal" value={l.quantity} onChange={(e) => setLine(i, { quantity: e.target.value })} placeholder="Qté" />
+                    <input className={clsx(inputCls, "w-24")} inputMode="decimal" value={l.quantity} onChange={(e) => setLine(i, { quantity: e.target.value })} placeholder="Qté" />
+                    {l.unit ? <span className="text-[11px] text-ink-3">{l.unit}</span> : null}
                     <input className={clsx(inputCls, "flex-1")} inputMode="numeric" value={l.unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.value })} placeholder="Prix unitaire" />
                     <span className="w-28 shrink-0 text-right text-[12px] tabular-nums text-ink-2">{fmt(String(lineAmount(l)))}</span>
                     <button type="button" onClick={() => removeLine(i)} disabled={lines.length === 1} title="Retirer" className="grid h-8 w-8 shrink-0 place-items-center rounded text-ink-3 hover:bg-rose-50 hover:text-danger disabled:opacity-30">
@@ -187,5 +204,12 @@ function CreateOrderModal({ onClose }: { onClose: () => void }) {
         </form>
       )}
     </TreasuryModal>
+    {newArticleFor !== null && (
+      <ArticleCreateModal
+        onClose={() => setNewArticleFor(null)}
+        onCreated={(a) => { setLine(newArticleFor, { articleId: a.id, designation: a.name, unit: a.unit }); setNewArticleFor(null); }}
+      />
+    )}
+    </>
   );
 }

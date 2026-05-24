@@ -105,6 +105,7 @@ export function usePurchaseOrders() {
 
 export interface PoLineInput {
   designation: string;
+  unit?: string;
   quantity: number;
   unitPrice: string;
 }

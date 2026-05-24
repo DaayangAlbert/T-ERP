@@ -14,6 +14,7 @@ const SEUIL_DIRECT = 2_000_000n;
 
 const lineSchema = z.object({
   designation: z.string().min(1).max(200),
+  unit: z.string().max(20).optional(),
   quantity: z.number().positive().max(1_000_000),
   unitPrice: z.string().regex(/^\d+$/, "Prix invalide"),
 });
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
     const lines = data.lines.map((l) => {
       const lineAmount = BigInt(Math.round(l.quantity * Number(BigInt(l.unitPrice))));
       amount += lineAmount;
-      return { designation: l.designation.trim(), quantity: l.quantity, unitPrice: l.unitPrice, amount: lineAmount.toString() };
+      return { designation: l.designation.trim(), unit: l.unit ?? "", quantity: l.quantity, unitPrice: l.unitPrice, amount: lineAmount.toString() };
     });
     if (amount <= 0n) return NextResponse.json({ error: "Le montant total doit être positif" }, { status: 400 });
 

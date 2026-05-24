@@ -2,6 +2,7 @@ import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 
 export interface PoLine {
   designation: string;
+  unit?: string;
   quantity: number;
   unitPrice: string;
   amount: string;
@@ -108,7 +109,7 @@ export function PurchaseOrderPDF({ po }: { po: PoPdfData }) {
         {po.lines.map((l, i) => (
           <View style={styles.td} key={i}>
             <Text style={{ flex: 4 }}>{l.designation}</Text>
-            <Text style={{ flex: 1, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(l.quantity)}</Text>
+            <Text style={{ flex: 1, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(l.quantity)}{l.unit ? ` ${l.unit}` : ""}</Text>
             <Text style={{ flex: 1.5, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(BigInt(l.unitPrice))}</Text>
             <Text style={{ flex: 1.5, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(BigInt(l.amount))}</Text>
           </View>

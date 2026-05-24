@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Package } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Package, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import { ArticleCreateModal } from "@/components/articles/ArticleCreateModal";
+import { useArticles } from "@/hooks/useArticles";
 
 interface CatalogueItem {
   id: string;
@@ -37,6 +39,9 @@ export default function MagCataloguePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [onlyRuptures, setOnlyRuptures] = useState(initialOnlyRuptures);
+  const [showNew, setShowNew] = useState(false);
+  const qc = useQueryClient();
+  const canManage = useArticles().data?.canManage ?? false;
 
   const { data, isLoading } = useQuery({
     queryKey: ["mag", "catalogue", search, category, onlyRuptures],
@@ -60,7 +65,14 @@ export default function MagCataloguePage() {
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Catalogue articles</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <button type="button" onClick={() => setShowNew(true)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700">
+              <Plus className="h-3.5 w-3.5" /> Nouvel article
+            </button>
+          )}
+          <SyncStatusBadge />
+        </div>
       </header>
 
       <section>
@@ -147,6 +159,13 @@ export default function MagCataloguePage() {
           ))
         )}
       </section>
+
+      {showNew && (
+        <ArticleCreateModal
+          onClose={() => setShowNew(false)}
+          onCreated={() => qc.invalidateQueries({ queryKey: ["mag", "catalogue"] })}
+        />
+      )}
     </div>
   );
 }
