@@ -19,6 +19,7 @@ const ROLE_LABELS: Record<string, string> = {
   SITE_MANAGER: "Chef de chantier",
   WORKER: "Ouvrier",
   ACCOUNTANT: "Comptable",
+  PURCHASING_OFFICER: "Chargé des achats",
   LOGISTICS: "Logistique",
   WAREHOUSE: "Magasinier",
   GED: "Gestion documentaire",

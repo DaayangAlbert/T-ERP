@@ -217,6 +217,13 @@ const OWNER_CONSULTER: NavSection = {
 
 const FULL: Record<Module, NavSection> = {
   OWNER: { title: "Espace Propriétaire", items: [...OWNER_COCKPIT.items, ...OWNER_CONSULTER.items] },
+  ACHATS: {
+    title: "Espace Achats",
+    items: [
+      { label: "Espace Achats", href: "/achats", icon: ShoppingCart },
+      { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
+    ],
+  },
   DG: {
     // Section "plate" — utilisée comme fallback. La sidebar DG réelle est
     // composée des 3 sub-sections `DG_PILOTAGE`, `DG_FINANCE`,
@@ -446,6 +453,7 @@ const FULL: Record<Module, NavSection> = {
 
 const READ_ITEM: Record<Module, NavItem> = {
   OWNER: { label: "Vue Propriétaire / PCA", href: "/proprietaire", icon: Crown },
+  ACHATS: { label: "Vue Achats", href: "/achats", icon: ShoppingCart },
   DG: { label: "Vue Direction Générale", href: "/direction-generale", icon: Crown },
   DAF: { label: "Vue Finance (DAF)", href: "/direction-financiere", icon: Briefcase },
   RH: { label: "Vue RH", href: "/ressources-humaines", icon: Users },
@@ -507,6 +515,28 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
   // modules en lecture qui la rendraient illisible.
   if (role === Role.OWNER) {
     return [OWNER_COCKPIT, OWNER_CONSULTER];
+  }
+
+  // Chargé des achats : espace Achats (page à onglets) + consultation lecture.
+  if (role === Role.PURCHASING_OFFICER) {
+    return [
+      {
+        title: "Achats",
+        items: [
+          { label: "Espace Achats", href: "/achats", icon: ShoppingCart },
+          { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
+        ],
+      },
+      {
+        title: "Consulter (lecture)",
+        readOnly: true,
+        items: [
+          { label: "Stocks (magasin)", href: "/magasin", icon: Package },
+          { label: "Comptabilité", href: "/comptable", icon: FileText },
+        ],
+      },
+      { title: "Mon espace", items: [{ label: "Mon profil", href: "/employe", icon: User }] },
+    ];
   }
 
   const accessible = getAccessibleModules(role);

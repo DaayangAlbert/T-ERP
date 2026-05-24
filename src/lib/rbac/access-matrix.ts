@@ -83,9 +83,37 @@ const MATRIX: Matrix = {
     CDT: "READ",
     CC: "READ",
     CPT: "READ",
+    ACHATS: "READ",
     LOG: "READ",
     MAG: "READ",
     GED: "READ",
+    OUV: "NONE",
+    IT: "NONE",
+    EMP: "OWN",
+    CAND: "NONE",
+    PLATFORM: "NONE",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PURCHASING_OFFICER — Chargé des achats. FULL sur ACHATS ; lecture sur
+  // magasin, compta, finance, logistique, chantiers et technique. Aucune
+  // édition opérationnelle ailleurs (séparation des tâches : il engage la
+  // commande, il ne paie pas et ne comptabilise pas).
+  // ═══════════════════════════════════════════════════════════════════════
+  PURCHASING_OFFICER: {
+    ACHATS: "FULL",
+    MAG: "READ",
+    CPT: "READ",
+    DAF: "READ",
+    LOG: "READ",
+    DT: "READ",
+    DTRAV: "READ",
+    CDT: "READ",
+    CC: "READ",
+    DG: "NONE",
+    RH: "NONE",
+    SG: "NONE",
+    GED: "NONE",
     OUV: "NONE",
     IT: "NONE",
     EMP: "OWN",
@@ -108,6 +136,7 @@ const MATRIX: Matrix = {
     CC: "READ",
     OUV: "NONE", // pas de sens pour SUPER_ADMIN d'aller dans le PWA ouvrier
     CPT: "READ",
+    ACHATS: "READ",
     LOG: "READ",
     MAG: "READ",
     GED: "READ",
@@ -132,6 +161,7 @@ const MATRIX: Matrix = {
     OUV: "NONE",
     // CPT retiré : doublon avec Vue Finance (DAF)
     CPT: "NONE",
+    ACHATS: "READ", // valide les gros bons de commande (N3)
     // LOG / MAG / GED gardés mais redirigés vers pages condensées DG
     LOG: "READ",
     MAG: "READ",
@@ -148,6 +178,7 @@ const MATRIX: Matrix = {
   DAF: {
     DAF: "FULL",
     CPT: "FULL", // DAF supervise la compta
+    ACHATS: "FULL", // DAF valide les engagements (N2) et supervise les achats
     // Pas de drill-down DG depuis l'espace DAF : la DG est hiérarchiquement
     // au-dessus, ses vues consolidées ne lui sont pas destinées.
     DG: "NONE",

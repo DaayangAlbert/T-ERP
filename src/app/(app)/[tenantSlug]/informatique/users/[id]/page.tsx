@@ -84,6 +84,7 @@ const ROLE_LABELS: Record<string, string> = {
   SITE_MANAGER: "Chef de Chantier",
   WORKER: "Ouvrier",
   ACCOUNTANT: "Comptable",
+  PURCHASING_OFFICER: "Chargé des achats",
   LOGISTICS: "Logisticien",
   WAREHOUSE: "Magasinier",
   ARCHIVIST: "Référent Documentaire",

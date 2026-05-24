@@ -649,6 +649,7 @@ enum Role {
 
   // Support
   ACCOUNTANT
+  PURCHASING_OFFICER // Chargé des achats / Responsable approvisionnements
   LOGISTICS
   WAREHOUSE // Magasinier
   ARCHIVIST // Documentaliste-Archiviste (Référent documentaire transverse, canReadAllDocuments)

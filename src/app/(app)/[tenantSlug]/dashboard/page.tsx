@@ -22,6 +22,7 @@ const ROLE_TO_PATH: Record<Role, string> = {
   SITE_MANAGER: "/chef-chantier",
   WORKER: "/ouv/dashboard",
   ACCOUNTANT: "/comptable",
+  PURCHASING_OFFICER: "/achats",
   LOGISTICS: "/logistique",
   WAREHOUSE: "/magasin",
   ARCHIVIST: "/gestion-documentaire",

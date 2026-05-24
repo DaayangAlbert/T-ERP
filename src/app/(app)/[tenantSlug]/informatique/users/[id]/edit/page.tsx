@@ -27,6 +27,7 @@ const ROLE_OPTIONS = [
   { value: "SITE_MANAGER", label: "Chef de Chantier" },
   { value: "HR", label: "Responsable RH" },
   { value: "ACCOUNTANT", label: "Comptable" },
+  { value: "PURCHASING_OFFICER", label: "Chargé des achats" },
   { value: "SECRETARY_GENERAL", label: "Secrétaire Général(e)" },
   { value: "ARCHIVIST", label: "Référent Documentaire" },
   { value: "WAREHOUSE", label: "Magasinier" },

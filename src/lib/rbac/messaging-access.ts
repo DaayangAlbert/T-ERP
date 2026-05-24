@@ -32,6 +32,7 @@ export const CADRE_ROLES: ReadonlySet<Role> = new Set<Role>([
   Role.WORKS_MANAGER,
   Role.SITE_MANAGER,
   Role.ACCOUNTANT,
+  Role.PURCHASING_OFFICER,
   Role.TENANT_ADMIN,
 ]);
 

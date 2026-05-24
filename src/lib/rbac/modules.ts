@@ -34,6 +34,7 @@ export const MODULES = {
 
   // ───────────────────────── Support / opérationnel ─────────────────────
   CPT: "CPT", // /comptable
+  ACHATS: "ACHATS", // /achats (Chargé des achats)
   LOG: "LOG", // /logistique
   MAG: "MAG", // /magasin
   GED: "GED", // /gestion-documentaire
@@ -65,6 +66,7 @@ export const MODULE_ORDER: Module[] = [
   MODULES.CC,
   MODULES.OUV,
   MODULES.CPT,
+  MODULES.ACHATS,
   MODULES.LOG,
   MODULES.MAG,
   MODULES.GED,
@@ -91,6 +93,7 @@ export const MODULE_ROUTE: Record<Module, string | null> = {
   CC: "/chef-chantier",
   OUV: "/ouv",
   CPT: "/comptable",
+  ACHATS: "/achats",
   LOG: "/logistique",
   MAG: "/magasin",
   GED: "/gestion-documentaire",
@@ -115,6 +118,7 @@ export const MODULE_LABEL: Record<Module, string> = {
   CC: "Chef Chantier",
   OUV: "Espace Ouvrier",
   CPT: "Comptabilité",
+  ACHATS: "Achats",
   LOG: "Logistique",
   MAG: "Magasin",
   GED: "Gestion Documentaire",
