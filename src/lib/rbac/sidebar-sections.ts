@@ -535,7 +535,8 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
           { label: "Comptabilité", href: "/comptable", icon: FileText },
         ],
       },
-      { title: "Mon espace", items: [{ label: "Mon profil", href: "/employe", icon: User }] },
+      // « Mon espace » identique aux autres cadres (profil, paie, congés…).
+      FULL.EMP,
     ];
   }
 

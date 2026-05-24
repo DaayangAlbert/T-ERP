@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ShoppingCart, ClipboardCheck, Crown, FileSignature, BarChart3 } from "lucide-react";
 import { PendingPosTable } from "@/components/purchase/PendingPosTable";
+import { OrdersManager } from "@/components/purchase/OrdersManager";
+import { SupplierCreate } from "@/components/purchase/SupplierCreate";
 import { SuppliersTable } from "@/components/purchase/SuppliersTable";
 import { FrameworkContractsTable } from "@/components/purchase/FrameworkContractsTable";
 import { PurchaseAnalytics } from "@/components/purchase/PurchaseAnalytics";
@@ -56,17 +58,14 @@ export default function AchatsPage() {
         ))}
       </div>
 
-      {tab === "orders" && (
-        <div className="rounded-xl border border-dashed border-line bg-surface-alt p-8 text-center">
-          <ShoppingCart className="mx-auto h-8 w-8 text-ink-3" />
-          <h3 className="mt-2 text-sm font-semibold text-ink">Liste des bons de commande</h3>
-          <p className="mt-1 text-[12.5px] text-ink-3">
-            Module de saisie complet à venir. L'onglet « À valider » montre déjà les BC en attente DG.
-          </p>
-        </div>
-      )}
+      {tab === "orders" && <OrdersManager />}
       {tab === "pending" && <PendingPosTable />}
-      {tab === "suppliers" && <SuppliersTable />}
+      {tab === "suppliers" && (
+        <>
+          <SupplierCreate />
+          <SuppliersTable />
+        </>
+      )}
       {tab === "contracts" && <FrameworkContractsTable />}
       {tab === "analytics" && <PurchaseAnalytics />}
     </>

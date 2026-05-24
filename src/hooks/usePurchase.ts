@@ -84,6 +84,54 @@ export function usePendingPos() {
   });
 }
 
+export interface PurchaseOrderItem {
+  id: string;
+  reference: string;
+  label: string;
+  supplier: string;
+  category: string;
+  chantier: string | null;
+  amount: string;
+  status: PoStatus;
+  createdAt: string;
+}
+
+export function usePurchaseOrders() {
+  return useQuery({
+    queryKey: ["purchase", "orders"],
+    queryFn: () => getJson<{ items: PurchaseOrderItem[]; canManage: boolean }>(`/api/purchase/orders`),
+  });
+}
+
+export function useCreatePurchaseOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { supplierId: string; label: string; amount: string; category: string; siteId?: string | null }) =>
+      getJson<{ id: string; reference: string; status: PoStatus }>(`/api/purchase/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase", "orders"] });
+      qc.invalidateQueries({ queryKey: ["purchase", "pending-dg"] });
+    },
+  });
+}
+
+export function useCreateSupplier() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; category: string; taxId?: string; rccm?: string; phone?: string; email?: string; city?: string; address?: string; strategic?: boolean }) =>
+      getJson<{ id: string }>(`/api/purchase/suppliers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["purchase", "suppliers"] }),
+  });
+}
+
 export function useApprovePo() {
   const qc = useQueryClient();
   return useMutation({
