@@ -9,11 +9,13 @@ import { SuppliersTable } from "@/components/purchase/SuppliersTable";
 import { FrameworkContractsTable } from "@/components/purchase/FrameworkContractsTable";
 import { PurchaseAnalytics } from "@/components/purchase/PurchaseAnalytics";
 import { usePendingPos } from "@/hooks/usePurchase";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { clsx } from "clsx";
 
 type Tab = "orders" | "pending" | "suppliers" | "contracts" | "analytics";
 
-const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
+const ALL_TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
   { key: "orders", label: "Bons de commande", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   { key: "pending", label: "À valider", icon: <ClipboardCheck className="h-3.5 w-3.5" /> },
   { key: "suppliers", label: "Fournisseurs stratégiques", icon: <Crown className="h-3.5 w-3.5" /> },
@@ -22,7 +24,11 @@ const TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
 ];
 
 export default function AchatsPage() {
-  const [tab, setTab] = useState<Tab>("pending");
+  // La validation des bons de commande relève du DG. Les rôles qui ne valident
+  // pas au niveau DG (chargé des achats, DAF…) ne voient pas l'onglet « À valider ».
+  const canValidateDg = useAccess(MODULES.DG).canValidate;
+  const TABS = ALL_TABS.filter((t) => t.key !== "pending" || canValidateDg);
+  const [tab, setTab] = useState<Tab>(canValidateDg ? "pending" : "orders");
   const { data: pending } = usePendingPos();
   const pendingCount = pending?.summary.total ?? 0;
 

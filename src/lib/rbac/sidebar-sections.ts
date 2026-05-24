@@ -219,10 +219,7 @@ const FULL: Record<Module, NavSection> = {
   OWNER: { title: "Espace Propriétaire", items: [...OWNER_COCKPIT.items, ...OWNER_CONSULTER.items] },
   ACHATS: {
     title: "Espace Achats",
-    items: [
-      { label: "Espace Achats", href: "/achats", icon: ShoppingCart },
-      { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
-    ],
+    items: [{ label: "Espace Achats", href: "/achats", icon: ShoppingCart }],
   },
   DG: {
     // Section "plate" — utilisée comme fallback. La sidebar DG réelle est
@@ -522,10 +519,7 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
     return [
       {
         title: "Achats",
-        items: [
-          { label: "Espace Achats", href: "/achats", icon: ShoppingCart },
-          { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
-        ],
+        items: [{ label: "Espace Achats", href: "/achats", icon: ShoppingCart }],
       },
       {
         title: "Consulter (lecture)",
@@ -535,7 +529,7 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
           { label: "Comptabilité", href: "/comptable", icon: FileText },
         ],
       },
-      // « Mon espace » identique aux autres cadres (profil, paie, congés…).
+      // « Mon espace » identique aux cadres (profil, paie, congés, messagerie).
       FULL.EMP,
     ];
   }
