@@ -1,5 +1,12 @@
 import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 
+export interface PoLine {
+  designation: string;
+  quantity: number;
+  unitPrice: string;
+  amount: string;
+}
+
 export interface PoPdfData {
   reference: string;
   date: string;
@@ -9,6 +16,7 @@ export interface PoPdfData {
   status: string;
   chantier: string | null;
   initiator: string;
+  lines: PoLine[];
   supplier: { name: string; taxId: string | null; rccm: string | null; phone: string | null; address: string | null; city: string | null };
   tenant: { name: string; address: string | null; phone: string | null; email: string | null; taxId: string | null; primaryColor: string | null };
 }
@@ -89,18 +97,22 @@ export function PurchaseOrderPDF({ po }: { po: PoPdfData }) {
           </Text>
         </View>
 
-        {/* Détail */}
+        {/* Détail des articles */}
+        <Text style={[styles.muted, { marginTop: 14 }]}>Catégorie : {po.category}{po.chantier ? ` · Chantier : ${po.chantier}` : ""}</Text>
         <View style={styles.th}>
-          <Text style={{ flex: 3 }}>Désignation</Text>
-          <Text style={{ flex: 1 }}>Catégorie</Text>
-          <Text style={{ flex: 1, textAlign: "right" }}>Montant (HT)</Text>
+          <Text style={{ flex: 4 }}>Désignation</Text>
+          <Text style={{ flex: 1, textAlign: "right" }}>Qté</Text>
+          <Text style={{ flex: 1.5, textAlign: "right" }}>Prix unit.</Text>
+          <Text style={{ flex: 1.5, textAlign: "right" }}>Montant</Text>
         </View>
-        <View style={styles.td}>
-          <Text style={{ flex: 3 }}>{po.label}</Text>
-          <Text style={{ flex: 1 }}>{po.category}</Text>
-          <Text style={{ flex: 1, textAlign: "right" }}>{fcfa(po.amount)}</Text>
-        </View>
-        {po.chantier ? <Text style={[styles.muted, { marginTop: 6 }]}>Chantier : {po.chantier}</Text> : null}
+        {po.lines.map((l, i) => (
+          <View style={styles.td} key={i}>
+            <Text style={{ flex: 4 }}>{l.designation}</Text>
+            <Text style={{ flex: 1, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(l.quantity)}</Text>
+            <Text style={{ flex: 1.5, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(BigInt(l.unitPrice))}</Text>
+            <Text style={{ flex: 1.5, textAlign: "right" }}>{new Intl.NumberFormat("fr-FR").format(BigInt(l.amount))}</Text>
+          </View>
+        ))}
 
         {/* Total */}
         <View style={styles.total}>

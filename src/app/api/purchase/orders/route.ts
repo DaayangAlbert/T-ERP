@@ -12,11 +12,16 @@ const MANAGE_ROLES: Role[] = [Role.PURCHASING_OFFICER, Role.DAF, Role.TENANT_ADM
 // Seuil d'engagement direct (FCFA). Au-delà → validation DAF (puis DG).
 const SEUIL_DIRECT = 2_000_000n;
 
+const lineSchema = z.object({
+  designation: z.string().min(1).max(200),
+  quantity: z.number().positive().max(1_000_000),
+  unitPrice: z.string().regex(/^\d+$/, "Prix invalide"),
+});
+
 const createSchema = z.object({
   supplierId: z.string().min(1),
-  label: z.string().min(2).max(200),
-  amount: z.string().regex(/^\d+$/, "Montant invalide").refine((v) => BigInt(v) > 0n, "Montant > 0 requis"),
   category: z.string().min(2).max(60),
+  lines: z.array(lineSchema).min(1, "Au moins un article"),
   siteId: z.string().optional().nullable(),
 });
 
@@ -77,7 +82,15 @@ export async function POST(req: Request) {
   }
   try {
     const data = createSchema.parse(await req.json());
-    const amount = BigInt(data.amount);
+
+    // Calcule chaque ligne (montant = quantité × prix unitaire) et le total.
+    let amount = 0n;
+    const lines = data.lines.map((l) => {
+      const lineAmount = BigInt(Math.round(l.quantity * Number(BigInt(l.unitPrice))));
+      amount += lineAmount;
+      return { designation: l.designation.trim(), quantity: l.quantity, unitPrice: l.unitPrice, amount: lineAmount.toString() };
+    });
+    if (amount <= 0n) return NextResponse.json({ error: "Le montant total doit être positif" }, { status: 400 });
 
     const supplier = await prisma.supplier.findFirst({
       where: { id: data.supplierId, tenantId: session.tenantId },
@@ -91,6 +104,9 @@ export async function POST(req: Request) {
       if (!site) return NextResponse.json({ error: "Chantier introuvable" }, { status: 404 });
     }
 
+    // Libellé synthétique du bon (1er article + nombre).
+    const label = lines.length === 1 ? lines[0].designation : `${lines[0].designation} +${lines.length - 1} article(s)`;
+
     // ≤ seuil : émis directement (APPROVED). Au-delà : soumis au DAF.
     const status = amount <= SEUIL_DIRECT ? PoStatus.APPROVED : PoStatus.PENDING_DAF;
     const reference = await nextReference(session.tenantId);
@@ -101,9 +117,10 @@ export async function POST(req: Request) {
         supplierId: supplier.id,
         siteId: data.siteId || null,
         reference,
-        label: data.label.trim(),
+        label,
         amount,
         category: data.category.trim(),
+        lines: lines as object,
         initiatorId: session.sub,
         status,
       },
@@ -116,7 +133,7 @@ export async function POST(req: Request) {
         action: "purchase.order.create",
         entityType: "PurchaseOrder",
         entityId: created.id,
-        metadata: { reference, amount: data.amount, supplier: supplier.name, status },
+        metadata: { reference, amount: amount.toString(), articles: lines.length, supplier: supplier.name, status },
       },
     });
 

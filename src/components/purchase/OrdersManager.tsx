@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { clsx } from "clsx";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Trash2 } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
 import { usePurchaseOrders, useCreatePurchaseOrder, useSuppliers, type PurchaseOrderItem } from "@/hooks/usePurchase";
@@ -88,26 +88,40 @@ export function OrdersManager() {
   );
 }
 
+interface LineDraft { designation: string; quantity: string; unitPrice: string }
+const emptyLine = (): LineDraft => ({ designation: "", quantity: "1", unitPrice: "" });
+
 function CreateOrderModal({ onClose }: { onClose: () => void }) {
   const create = useCreatePurchaseOrder();
   const { data: suppliers } = useSuppliers();
   const [supplierId, setSupplierId] = useState("");
-  const [label, setLabel] = useState("");
   const [category, setCategory] = useState("");
-  const [amount, setAmount] = useState("");
+  const [lines, setLines] = useState<LineDraft[]>([emptyLine()]);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ reference: string; status: string } | null>(null);
+
+  const setLine = (i: number, patch: Partial<LineDraft>) => setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+  const addLine = () => setLines((ls) => [...ls, emptyLine()]);
+  const removeLine = (i: number) => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : ls));
+
+  const lineAmount = (l: LineDraft) => {
+    const q = parseFloat(l.quantity.replace(",", ".")) || 0;
+    const pu = Number(onlyDigits(l.unitPrice) || "0");
+    return Math.round(q * pu);
+  };
+  const total = lines.reduce((s, l) => s + lineAmount(l), 0);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const a = onlyDigits(amount);
     if (!supplierId) { setError("Choisissez un fournisseur"); return; }
-    if (!label.trim()) { setError("Désignation requise"); return; }
     if (!category.trim()) { setError("Catégorie requise"); return; }
-    if (!a || a === "0") { setError("Montant invalide"); return; }
+    const clean = lines
+      .map((l) => ({ designation: l.designation.trim(), quantity: parseFloat(l.quantity.replace(",", ".")) || 0, unitPrice: onlyDigits(l.unitPrice) }))
+      .filter((l) => l.designation && l.quantity > 0 && l.unitPrice && l.unitPrice !== "0");
+    if (clean.length === 0) { setError("Ajoutez au moins un article (désignation, quantité, prix)"); return; }
     try {
-      const r = await create.mutateAsync({ supplierId, label: label.trim(), category: category.trim(), amount: a });
+      const r = await create.mutateAsync({ supplierId, category: category.trim(), lines: clean });
       setDone({ reference: r.reference, status: r.status });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
@@ -126,15 +140,45 @@ function CreateOrderModal({ onClose }: { onClose: () => void }) {
       ) : (
         <form onSubmit={submit} className="space-y-3">
           <p className="rounded-md bg-surface-alt px-3 py-2 text-[12px] text-ink-2">Le numéro (BC-0000-{new Date().getFullYear()}) est généré automatiquement.</p>
-          <Field label="Fournisseur">
-            <select className={inputCls} value={supplierId} onChange={(e) => setSupplierId(e.target.value)} required>
-              <option value="">Sélectionner…</option>
-              {(suppliers?.items ?? []).map((s) => <option key={s.id} value={s.id}>{s.name} ({s.category})</option>)}
-            </select>
-          </Field>
-          <Field label="Désignation"><input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Ex: 200 sacs de ciment CPJ 42.5" /></Field>
-          <Field label="Catégorie"><input className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ex: Ciment" /></Field>
-          <Field label="Montant HT (FCFA)"><input className={inputCls} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" /></Field>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Fournisseur">
+              <select className={inputCls} value={supplierId} onChange={(e) => setSupplierId(e.target.value)} required>
+                <option value="">Sélectionner…</option>
+                {(suppliers?.items ?? []).map((s) => <option key={s.id} value={s.id}>{s.name} ({s.category})</option>)}
+              </select>
+            </Field>
+            <Field label="Catégorie"><input className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ex: Gros œuvre" /></Field>
+          </div>
+
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Articles</span>
+              <button type="button" onClick={addLine} className="inline-flex items-center gap-1 text-[12px] font-medium text-primary-700 hover:underline">
+                <Plus className="h-3.5 w-3.5" /> Ajouter un article
+              </button>
+            </div>
+            <div className="space-y-2">
+              {lines.map((l, i) => (
+                <div key={i} className="rounded-lg border border-line p-2">
+                  <input className={clsx(inputCls, "mb-1.5")} value={l.designation} onChange={(e) => setLine(i, { designation: e.target.value })} placeholder="Désignation (ex: Sac de ciment CPJ 42.5)" />
+                  <div className="flex items-center gap-2">
+                    <input className={clsx(inputCls, "w-20")} inputMode="decimal" value={l.quantity} onChange={(e) => setLine(i, { quantity: e.target.value })} placeholder="Qté" />
+                    <input className={clsx(inputCls, "flex-1")} inputMode="numeric" value={l.unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.value })} placeholder="Prix unitaire" />
+                    <span className="w-28 shrink-0 text-right text-[12px] tabular-nums text-ink-2">{fmt(String(lineAmount(l)))}</span>
+                    <button type="button" onClick={() => removeLine(i)} disabled={lines.length === 1} title="Retirer" className="grid h-8 w-8 shrink-0 place-items-center rounded text-ink-3 hover:bg-rose-50 hover:text-danger disabled:opacity-30">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg bg-surface-alt px-3 py-2">
+            <span className="text-[12.5px] font-medium text-ink-2">Total HT</span>
+            <span className="text-[15px] font-bold tabular-nums text-ink">{fmt(String(total))}</span>
+          </div>
+
           {error && <p className="rounded-md bg-rose-50 px-3 py-2 text-[12px] text-rose-700">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="rounded-md px-3 py-2 text-[13px] font-medium text-ink-3 hover:bg-surface-alt">Annuler</button>

@@ -42,6 +42,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     status: po.status,
     chantier: site?.code ?? null,
     initiator: initiator ? `${initiator.firstName} ${initiator.lastName}` : "—",
+    lines: (Array.isArray(po.lines) ? po.lines : []) as unknown as PoPdfData["lines"],
     supplier: {
       name: po.supplier.name,
       taxId: po.supplier.taxId,

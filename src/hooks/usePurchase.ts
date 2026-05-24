@@ -103,10 +103,16 @@ export function usePurchaseOrders() {
   });
 }
 
+export interface PoLineInput {
+  designation: string;
+  quantity: number;
+  unitPrice: string;
+}
+
 export function useCreatePurchaseOrder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { supplierId: string; label: string; amount: string; category: string; siteId?: string | null }) =>
+    mutationFn: (data: { supplierId: string; category: string; lines: PoLineInput[]; siteId?: string | null }) =>
       getJson<{ id: string; reference: string; status: PoStatus }>(`/api/purchase/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
