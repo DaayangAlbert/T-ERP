@@ -205,6 +205,7 @@ const OWNER_CONSULTER: NavSection = {
     { label: "Suivi des décomptes", href: "/proprietaire/decomptes", icon: ClipboardCheck },
     { label: "Chantiers", href: "/proprietaire/chantiers", icon: HardHat },
     { label: "Stocks", href: "/proprietaire/stocks", icon: Package },
+    { label: "Logistique & engins", href: "/proprietaire/logistique", icon: Truck },
     { label: "Personnel", href: "/proprietaire/personnel", icon: Users },
     { label: "Gouvernance", href: "/proprietaire/gouvernance", icon: Landmark },
   ],

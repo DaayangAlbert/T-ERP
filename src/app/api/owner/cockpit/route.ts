@@ -7,6 +7,10 @@ import {
   ProjectAccountEntryType,
   MovementDirection,
   ValidationStatus,
+  BillingStatus,
+  InvoiceStatus,
+  PaymentStepStatus,
+  EquipmentStatus,
 } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +32,10 @@ export async function GET() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [banks, bankMoves, projDebtRows, sites, headcount, payrollAgg, newSitesCount, pendingDecisions] =
+  const [
+    banks, bankMoves, projDebtRows, sites, headcount, payrollAgg, newSitesCount, pendingDecisions,
+    billings, supplierInvoices, blockedSteps, stockAgg, lowStockCount, equipment,
+  ] =
     await Promise.all([
       prisma.bankAccount.findMany({
         where: { tenantId: { in: scopeIds }, isActive: true },
@@ -64,7 +71,30 @@ export async function GET() {
         _sum: { baseSalary: true },
       }),
       prisma.site.count({ where: { tenantId: { in: scopeIds }, createdAt: { gte: monthStart } } }),
-      prisma.validation.count({ where: { tenantId: { in: scopeIds }, status: ValidationStatus.PENDING } }),
+      prisma.validation.count({ where: { tenantId: { in: scopeIds }, status: ValidationStatus.PENDING, ownerDecision: "PENDING" } }),
+      // Recouvrement — créances clients ouvertes
+      prisma.progressBilling.findMany({
+        where: { tenantId: { in: scopeIds }, status: { in: [BillingStatus.ISSUED, BillingStatus.PARTIALLY_PAID, BillingStatus.OVERDUE, BillingStatus.DISPUTED] } },
+        select: { netToReceive: true, paidAmount: true },
+      }),
+      // Dettes fournisseurs ouvertes
+      prisma.supplierInvoice.findMany({
+        where: { tenantId: { in: scopeIds }, status: { in: [InvoiceStatus.RECEIVED, InvoiceStatus.PENDING_3WAY_MATCH, InvoiceStatus.ACCOUNTED, InvoiceStatus.PENDING_PAYMENT, InvoiceStatus.DISPUTED] } },
+        select: { amountTtc: true },
+      }),
+      // Décomptes bloqués (étapes bloquées) + montant
+      prisma.paymentTrackStep.findMany({
+        where: { status: PaymentStepStatus.BLOCKED, track: { receivable: { tenantId: { in: scopeIds } } } },
+        select: { track: { select: { receivableId: true, receivable: { select: { amount: true } } } } },
+      }),
+      // Stocks — valeur + seuils
+      prisma.warehouseStock.findMany({ where: { warehouse: { tenantId: { in: scopeIds } } }, select: { totalValue: true, quantity: true, minThreshold: true } }),
+      Promise.resolve(null),
+      // Logistique — engins
+      prisma.equipment.findMany({
+        where: { tenantId: { in: scopeIds } },
+        select: { status: true, isRented: true, assignments: { where: { active: true }, select: { id: true }, take: 1 } },
+      }),
     ]);
 
   // ── Finance ────────────────────────────────────────────────────────────
@@ -100,6 +130,29 @@ export async function GET() {
   // ── Commercial ────────────────────────────────────────────────────────────
   const nombreMarches = sites.filter((s) => s.status !== "ARCHIVED").length;
 
+  // ── Recouvrement / dettes ──────────────────────────────────────────────────
+  const aEncaisser = billings.reduce((s, b) => s + (b.netToReceive - (b.paidAmount ?? 0n)), 0n);
+  const aPayer = supplierInvoices.reduce((s, i) => s + i.amountTtc, 0n);
+
+  // ── Décomptes bloqués ──────────────────────────────────────────────────────
+  const blockedReceivables = new Map<string, bigint>();
+  for (const st of blockedSteps) {
+    blockedReceivables.set(st.track.receivableId, st.track.receivable.amount);
+  }
+  const decomptesBloques = blockedReceivables.size;
+  const montantBloque = Array.from(blockedReceivables.values()).reduce((s, a) => s + a, 0n);
+
+  // ── Stocks ──────────────────────────────────────────────────────────────────
+  const stockValeur = stockAgg.reduce((s, x) => s + x.totalValue, 0n);
+  const stockAlertes = stockAgg.filter((x) => x.minThreshold != null && x.quantity <= x.minThreshold).length;
+  void lowStockCount;
+
+  // ── Logistique ──────────────────────────────────────────────────────────────
+  const enginsTotal = equipment.length;
+  const enginsLoues = equipment.filter((e) => e.isRented).length;
+  const enginsAuTravail = equipment.filter((e) => e.status === EquipmentStatus.IN_SERVICE && e.assignments.length > 0).length;
+  const enginsInactifs = equipment.filter((e) => e.status === EquipmentStatus.IN_SERVICE && e.assignments.length === 0).length;
+
   return NextResponse.json({
     finance: {
       tresorerie: tresorerie.toString(),
@@ -127,6 +180,24 @@ export async function GET() {
       valeurMarches: valeurPortefeuille.toString(),
       nouveauxMarchesMois: newSitesCount,
       decisionsEnAttente: pendingDecisions,
+    },
+    recouvrement: {
+      aEncaisser: aEncaisser.toString(),
+      aPayer: aPayer.toString(),
+    },
+    decomptes: {
+      bloques: decomptesBloques,
+      montantBloque: montantBloque.toString(),
+    },
+    stocks: {
+      valeur: stockValeur.toString(),
+      alertes: stockAlertes,
+    },
+    logistique: {
+      total: enginsTotal,
+      auTravail: enginsAuTravail,
+      inactifs: enginsInactifs,
+      loues: enginsLoues,
     },
     generatedAt: now.toISOString(),
   });

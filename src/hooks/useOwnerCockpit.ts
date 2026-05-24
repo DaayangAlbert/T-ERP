@@ -30,6 +30,10 @@ export interface OwnerCockpit {
     nouveauxMarchesMois: number;
     decisionsEnAttente: number;
   };
+  recouvrement: { aEncaisser: string; aPayer: string };
+  decomptes: { bloques: number; montantBloque: string };
+  stocks: { valeur: string; alertes: number };
+  logistique: { total: number; auTravail: number; inactifs: number; loues: number };
   generatedAt: string;
 }
 

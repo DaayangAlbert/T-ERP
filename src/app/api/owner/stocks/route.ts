@@ -40,26 +40,32 @@ export async function GET() {
   const magasins = warehouses.map((w) => {
     let valeur = 0n;
     let alertes = 0;
-    for (const s of w.stocks) {
-      valeur += s.totalValue;
-      const low = s.minThreshold != null && s.quantity <= s.minThreshold;
-      if (low) {
-        alertes++;
-        if (ruptures.length < 50) {
-          ruptures.push({ article: s.article.name, magasin: w.name, quantite: s.quantity, seuil: s.minThreshold ?? 0, unite: s.article.unit });
+    const articles = w.stocks
+      .filter((s) => s.quantity > 0 || (s.minThreshold != null && s.quantity <= s.minThreshold))
+      .map((s) => {
+        valeur += s.totalValue;
+        const low = s.minThreshold != null && s.quantity <= s.minThreshold;
+        if (low) {
+          alertes++;
+          if (ruptures.length < 50) {
+            ruptures.push({ article: s.article.name, magasin: w.name, quantite: s.quantity, seuil: s.minThreshold ?? 0, unite: s.article.unit });
+          }
         }
-      }
-    }
+        return { article: s.article.name, quantite: s.quantity, unite: s.article.unit, valeur: s.totalValue.toString(), low };
+      })
+      .sort((a, b) => a.article.localeCompare(b.article));
     valeurTotale += valeur;
-    articlesTotal += w.stocks.length;
+    articlesTotal += articles.length;
     alertesTotal += alertes;
     return {
+      id: w.id,
       nom: w.name,
       type: SCOPE_LABEL[w.scope] ?? w.scope,
       chantier: w.site ? `${w.site.code} · ${w.site.name}` : null,
-      nbArticles: w.stocks.length,
+      nbArticles: articles.length,
       valeur: valeur.toString(),
       alertes,
+      articles,
     };
   });
 

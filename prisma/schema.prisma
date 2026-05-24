@@ -5748,6 +5748,8 @@ model Equipment {
   acquisitionValue BigInt
   currentValue     BigInt
   status           EquipmentStatus @default(IN_SERVICE)
+  // true = engin loué à un tiers (coût récurrent) ; false = propriété de l'entreprise.
+  isRented         Boolean         @default(false)
   counterUnit      String          @default("h") // "h" engins TP, "km" véhicules
   counter          Float           @default(0)
   insuranceUntil   DateTime?

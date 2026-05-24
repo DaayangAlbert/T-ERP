@@ -41,8 +41,16 @@ export interface OwnerRecouvrement {
 }
 export interface OwnerStocks {
   resume: { valeurTotale: string; nbMagasins: number; nbArticles: number; nbAlertes: number };
-  magasins: { nom: string; type: string; chantier: string | null; nbArticles: number; valeur: string; alertes: number }[];
+  magasins: {
+    id: string; nom: string; type: string; chantier: string | null; nbArticles: number; valeur: string; alertes: number;
+    articles: { article: string; quantite: number; unite: string; valeur: string; low: boolean }[];
+  }[];
   ruptures: { article: string; magasin: string; quantite: number; seuil: number; unite: string }[];
+}
+export interface OwnerLogistique {
+  resume: { total: number; auTravail: number; inactifs: number; enMaintenance: number; loues: number; valeurParc: string };
+  chantiers: string[];
+  items: { id: string; immatriculation: string; nom: string; type: string; statut: string; tone: string; chantier: string | null; inactifJours: number | null; isRented: boolean; valeur: string }[];
 }
 export interface OwnerSalaires {
   resume: { effectif: number; avecImpayes: number; masseImpayee: string };
@@ -74,4 +82,5 @@ export const useOwnerPersonnel = () => useQuery({ queryKey: ["owner", "personnel
 export const useOwnerGouvernance = () => useQuery({ queryKey: ["owner", "gouvernance"], queryFn: () => get<OwnerGouvernance>("/api/owner/gouvernance") });
 export const useOwnerRecouvrement = () => useQuery({ queryKey: ["owner", "recouvrement"], queryFn: () => get<OwnerRecouvrement>("/api/owner/recouvrement") });
 export const useOwnerStocks = () => useQuery({ queryKey: ["owner", "stocks"], queryFn: () => get<OwnerStocks>("/api/owner/stocks") });
+export const useOwnerLogistique = () => useQuery({ queryKey: ["owner", "logistique"], queryFn: () => get<OwnerLogistique>("/api/owner/logistique") });
 export const useOwnerSalaires = () => useQuery({ queryKey: ["owner", "salaires"], queryFn: () => get<OwnerSalaires>("/api/owner/salaires") });
