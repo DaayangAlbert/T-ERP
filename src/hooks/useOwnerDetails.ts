@@ -102,3 +102,10 @@ export const useOwnerRecouvrement = () => useQuery({ queryKey: ["owner", "recouv
 export const useOwnerStocks = () => useQuery({ queryKey: ["owner", "stocks"], queryFn: () => get<OwnerStocks>("/api/owner/stocks") });
 export const useOwnerLogistique = () => useQuery({ queryKey: ["owner", "logistique"], queryFn: () => get<OwnerLogistique>("/api/owner/logistique") });
 export const useOwnerSalaires = () => useQuery({ queryKey: ["owner", "salaires"], queryFn: () => get<OwnerSalaires>("/api/owner/salaires") });
+
+export interface OwnerFournisseurs {
+  resume: { total: number; totalDu: string; avecDette: number };
+  categories: { categorie: string; nombre: number }[];
+  items: { id: string; nom: string; categorie: string; ville: string | null; contact: string | null; note: number | null; volumeAnnee: string; duMontant: string; duFactures: number }[];
+}
+export const useOwnerFournisseurs = () => useQuery({ queryKey: ["owner", "fournisseurs"], queryFn: () => get<OwnerFournisseurs>("/api/owner/fournisseurs") });

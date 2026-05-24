@@ -210,6 +210,7 @@ const OWNER_CONSULTER: NavSection = {
     { label: "Stocks", href: "/proprietaire/stocks", icon: Package },
     { label: "Logistique & engins", href: "/proprietaire/logistique", icon: Truck },
     { label: "Personnel", href: "/proprietaire/personnel", icon: Users },
+    { label: "Fournisseurs", href: "/proprietaire/fournisseurs", icon: Store },
     { label: "Gouvernance", href: "/proprietaire/gouvernance", icon: Landmark },
   ],
 };
