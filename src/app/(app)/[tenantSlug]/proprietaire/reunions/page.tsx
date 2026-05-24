@@ -8,7 +8,7 @@ import { OwnerHeader, Section, Explain, Loading, ErrorBox } from "@/components/o
 
 export default function OwnerReunionsPage() {
   const { data, isLoading, isError } = useOwnerReunions();
-  const head = <OwnerHeader title="Conseil d'administration" subtitle="Vos réunions de gouvernance programmées et passées." />;
+  const head = <OwnerHeader title="Agenda" subtitle="Vos réunions de gouvernance (conseil, assemblées) programmées et passées." />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

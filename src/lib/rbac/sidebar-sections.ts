@@ -193,7 +193,7 @@ const OWNER_COCKPIT: NavSection = {
     { label: "Vue d'ensemble", href: "/proprietaire", icon: Crown },
     { label: "Décisions à valider", href: "/proprietaire/decisions", icon: CheckCircle2 },
     { label: "Rapports reçus", href: "/proprietaire/rapports", icon: FileText },
-    { label: "Conseil d'administration", href: "/proprietaire/reunions", icon: Gavel },
+    { label: "Agenda", href: "/proprietaire/reunions", icon: Gavel },
     { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
   ],
 };

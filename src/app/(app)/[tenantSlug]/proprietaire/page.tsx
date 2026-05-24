@@ -108,7 +108,7 @@ export default function ProprietaireCockpitPage() {
           <Stat label="Valeur des marchés" value={fcfa(commercial.valeurMarches)} />
         </Card>
 
-        <Card icon={<Gavel className="h-4 w-4" />} title="Conseil d'administration" href={tenantHref("/proprietaire/reunions")}>
+        <Card icon={<Gavel className="h-4 w-4" />} title="Agenda" href={tenantHref("/proprietaire/reunions")}>
           {data.prochainConseil ? (
             <>
               <Stat label="Prochaine réunion" value={data.prochainConseil.type} />
