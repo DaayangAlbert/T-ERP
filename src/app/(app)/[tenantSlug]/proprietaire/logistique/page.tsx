@@ -45,6 +45,36 @@ export default function OwnerLogistiquePage() {
         )}
       </Section>
 
+      <Section title="Quantités par type d'engin">
+        <Explain>Combien vous possédez de chaque type de matériel, et dans quel état (au travail, inactif, loué).</Explain>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[12.5px]">
+            <thead className="border-b border-line text-left text-[10.5px] uppercase tracking-wider text-ink-3">
+              <tr>
+                <th className="px-2 py-2">Engin</th>
+                <th className="px-2 py-2 text-center">Quantité</th>
+                <th className="px-2 py-2 text-center">Au travail</th>
+                <th className="px-2 py-2 text-center">Inactifs</th>
+                <th className="px-2 py-2 text-center">Loués</th>
+                <th className="px-2 py-2 text-right">Valeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.parModele.map((g) => (
+                <tr key={g.nom} className="border-b border-line">
+                  <td className="px-2 py-2"><span className="font-medium text-ink">{g.nom}</span> <span className="text-[11px] text-ink-3">· {g.type}</span></td>
+                  <td className="px-2 py-2 text-center text-[14px] font-bold tabular-nums text-ink">{g.quantite}</td>
+                  <td className="px-2 py-2 text-center tabular-nums text-success">{g.auTravail || "—"}</td>
+                  <td className="px-2 py-2 text-center tabular-nums text-danger">{g.inactifs || "—"}</td>
+                  <td className="px-2 py-2 text-center tabular-nums text-warning">{g.loues || "—"}</td>
+                  <td className="px-2 py-2 text-right tabular-nums text-ink-3">{f(g.valeur)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
       <Section title="Détail par engin">
         <Explain>Filtrez par chantier pour voir <strong>ce qui y est affecté</strong>, ou isolez les engins inactifs / loués.</Explain>
         <select value={chantier} onChange={(e) => setChantier(e.target.value)} className="mb-3 h-10 w-full rounded-md border border-line bg-white px-3 text-[13px] sm:max-w-md">

@@ -88,6 +88,22 @@ export async function GET() {
   // Liste des chantiers ayant au moins un engin affecté (pour le filtre).
   const chantiers = Array.from(new Set(items.filter((i) => i.chantier).map((i) => i.chantier as string))).sort();
 
+  // Quantités par type d'engin (combien de Pelles CAT 320, de camions…).
+  const groupes = new Map<string, { nom: string; type: string; quantite: number; auTravail: number; inactifs: number; loues: number; valeur: bigint }>();
+  for (const e of engins) {
+    const g = groupes.get(e.designation) ?? { nom: e.designation, type: TYPE_LABEL[e.type] ?? e.type, quantite: 0, auTravail: 0, inactifs: 0, loues: 0, valeur: 0n };
+    g.quantite++;
+    g.valeur += e.currentValue;
+    if (e.isRented) g.loues++;
+    const active = e.assignments.find((a) => a.active && a.site);
+    if (e.status === EquipmentStatus.IN_SERVICE && active) g.auTravail++;
+    else if (e.status === EquipmentStatus.IN_SERVICE && !active) g.inactifs++;
+    groupes.set(e.designation, g);
+  }
+  const parModele = Array.from(groupes.values())
+    .map((g) => ({ ...g, valeur: g.valeur.toString() }))
+    .sort((a, b) => b.quantite - a.quantite || a.nom.localeCompare(b.nom));
+
   return NextResponse.json({
     resume: {
       total: items.length,
@@ -97,6 +113,7 @@ export async function GET() {
       loues,
       valeurParc: valeurParc.toString(),
     },
+    parModele,
     chantiers,
     items,
   });

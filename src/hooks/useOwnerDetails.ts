@@ -49,6 +49,7 @@ export interface OwnerStocks {
 }
 export interface OwnerLogistique {
   resume: { total: number; auTravail: number; inactifs: number; enMaintenance: number; loues: number; valeurParc: string };
+  parModele: { nom: string; type: string; quantite: number; auTravail: number; inactifs: number; loues: number; valeur: string }[];
   chantiers: string[];
   items: { id: string; immatriculation: string; nom: string; type: string; statut: string; tone: string; chantier: string | null; inactifJours: number | null; isRented: boolean; valeur: string }[];
 }
