@@ -22,6 +22,7 @@ import { prisma } from "@/lib/prisma";
 
 /** Rôles considérés comme "cadres" — droits messagerie élargis. */
 export const CADRE_ROLES: ReadonlySet<Role> = new Set<Role>([
+  Role.OWNER,
   Role.DG,
   Role.DAF,
   Role.HR,

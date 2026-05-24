@@ -192,6 +192,7 @@ const OWNER_COCKPIT: NavSection = {
   items: [
     { label: "Vue d'ensemble", href: "/proprietaire", icon: Crown },
     { label: "Décisions à valider", href: "/proprietaire/decisions", icon: CheckCircle2 },
+    { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
   ],
 };
 
@@ -201,6 +202,7 @@ const OWNER_CONSULTER: NavSection = {
   items: [
     { label: "Finances", href: "/proprietaire/finances", icon: Coins },
     { label: "Recouvrement & paiements", href: "/proprietaire/recouvrement", icon: Receipt },
+    { label: "Suivi des décomptes", href: "/proprietaire/decomptes", icon: ClipboardCheck },
     { label: "Chantiers", href: "/proprietaire/chantiers", icon: HardHat },
     { label: "Stocks", href: "/proprietaire/stocks", icon: Package },
     { label: "Personnel", href: "/proprietaire/personnel", icon: Users },

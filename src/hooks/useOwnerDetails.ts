@@ -49,7 +49,26 @@ export interface OwnerSalaires {
   items: { id: string; nom: string; poste: string | null; salaire: string; moisPayes: number; moisImpayes: number; impayes: string[]; resteAPayer: string }[];
 }
 
+export interface OwnerDecomptes {
+  resume: { total: number; enCours: number; bloques: number; termines: number; montantTotal: string; montantBloque: string };
+  items: {
+    id: string;
+    decompte: string;
+    client: string;
+    montant: string;
+    reste: string;
+    echeance: string;
+    suiviPar: string | null;
+    etapesTotal: number;
+    etapesValidees: number;
+    etapeCourante: string;
+    statut: "termine" | "bloque" | "en_cours";
+    blocages: { etape: string; motif: string | null; depuis: string | null; documentsManquants: string[] }[];
+  }[];
+}
+
 export const useOwnerFinances = () => useQuery({ queryKey: ["owner", "finances"], queryFn: () => get<OwnerFinances>("/api/owner/finances") });
+export const useOwnerDecomptes = () => useQuery({ queryKey: ["owner", "decomptes"], queryFn: () => get<OwnerDecomptes>("/api/owner/decomptes") });
 export const useOwnerChantiers = () => useQuery({ queryKey: ["owner", "chantiers"], queryFn: () => get<OwnerChantiers>("/api/owner/chantiers") });
 export const useOwnerPersonnel = () => useQuery({ queryKey: ["owner", "personnel"], queryFn: () => get<OwnerPersonnel>("/api/owner/personnel") });
 export const useOwnerGouvernance = () => useQuery({ queryKey: ["owner", "gouvernance"], queryFn: () => get<OwnerGouvernance>("/api/owner/gouvernance") });
