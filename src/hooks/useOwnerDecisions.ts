@@ -17,6 +17,29 @@ export interface OwnerDecision {
   createdAt: string;
 }
 
+export interface OwnerDecisionHistory {
+  id: string;
+  reference: string;
+  title: string;
+  type: string;
+  amount: string | null;
+  decision: "APPROVED" | "REJECTED";
+  motif: string | null;
+  decidedAt: string | null;
+  initiator: string;
+}
+
+export function useOwnerDecisionsHistory() {
+  return useQuery({
+    queryKey: ["owner", "decisions", "history"],
+    queryFn: async () => {
+      const res = await fetch("/api/owner/decisions/history", { credentials: "same-origin" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<{ resume: { total: number; approuves: number; rejetes: number }; items: OwnerDecisionHistory[] }>;
+    },
+  });
+}
+
 export function useOwnerDecisions() {
   return useQuery({
     queryKey: ["owner", "decisions"],

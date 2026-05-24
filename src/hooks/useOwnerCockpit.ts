@@ -34,6 +34,7 @@ export interface OwnerCockpit {
   decomptes: { bloques: number; montantBloque: string };
   stocks: { valeur: string; alertes: number };
   logistique: { total: number; auTravail: number; inactifs: number; loues: number };
+  prochainConseil: { type: string; date: string; joursRestants: number } | null;
   generatedAt: string;
 }
 

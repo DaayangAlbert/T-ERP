@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { clsx } from "clsx";
-import { Coins, Building2, Users, TrendingUp, ArrowRight, CheckCircle2, Receipt, ClipboardCheck, Package, Truck } from "lucide-react";
+import { Coins, Building2, Users, TrendingUp, ArrowRight, CheckCircle2, Receipt, ClipboardCheck, Package, Truck, Gavel, FileText } from "lucide-react";
 import { formatFCFA, formatPercent } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerCockpit } from "@/hooks/useOwnerCockpit";
@@ -106,6 +106,25 @@ export default function ProprietaireCockpitPage() {
         <Card icon={<TrendingUp className="h-4 w-4" />} title="Gouvernance" href={tenantHref("/proprietaire/gouvernance")}>
           <Stat label="Marchés en cours" value={`${commercial.nombreMarches}`} tone="ok" />
           <Stat label="Valeur des marchés" value={fcfa(commercial.valeurMarches)} />
+        </Card>
+
+        <Card icon={<Gavel className="h-4 w-4" />} title="Conseil d'administration" href={tenantHref("/proprietaire/reunions")}>
+          {data.prochainConseil ? (
+            <>
+              <Stat label="Prochaine réunion" value={data.prochainConseil.type} />
+              <Stat
+                label="Quand"
+                value={data.prochainConseil.joursRestants <= 0 ? "Aujourd'hui" : `Dans ${data.prochainConseil.joursRestants} j`}
+                tone={data.prochainConseil.joursRestants <= 7 ? "warn" : "neutral"}
+              />
+            </>
+          ) : (
+            <Stat label="Réunions programmées" value="Aucune" tone="neutral" />
+          )}
+        </Card>
+
+        <Card icon={<FileText className="h-4 w-4" />} title="Rapports reçus" href={tenantHref("/proprietaire/rapports")}>
+          <Stat label="Du DG, financiers, techniques" value="Consulter" />
         </Card>
 
         {/* Décisions à valider — action directe */}

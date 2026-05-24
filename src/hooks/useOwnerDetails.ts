@@ -75,7 +75,24 @@ export interface OwnerDecomptes {
   }[];
 }
 
+export interface OwnerPlanning {
+  resume: { chantiers: number; phases: number; enRetard: number };
+  items: { code: string; name: string; avancement: number; phases: { nom: string; debut: string; fin: string; progress: number; statut: string; tone: string }[] }[];
+}
+export interface OwnerReunions {
+  aVenir: { id: string; type: string; date: string; lieu: string; nbPoints: number; statut: string; joursRestants?: number }[];
+  passees: { id: string; type: string; date: string; lieu: string; nbPoints: number; statut: string; nbDecisions?: number }[];
+}
+export interface OwnerRapports {
+  conseil: { id: string; titre: string; date: string; auteur: string; pdfUrl: string | null }[];
+  financier: { id: string; titre: string; date: string; auteur: string; pdfUrl: string | null }[];
+  technique: { id: string; titre: string; date: string; auteur: string; pdfUrl: string | null }[];
+}
+
 export const useOwnerFinances = () => useQuery({ queryKey: ["owner", "finances"], queryFn: () => get<OwnerFinances>("/api/owner/finances") });
+export const useOwnerPlanning = () => useQuery({ queryKey: ["owner", "planning"], queryFn: () => get<OwnerPlanning>("/api/owner/planning") });
+export const useOwnerReunions = () => useQuery({ queryKey: ["owner", "reunions"], queryFn: () => get<OwnerReunions>("/api/owner/reunions") });
+export const useOwnerRapports = () => useQuery({ queryKey: ["owner", "rapports"], queryFn: () => get<OwnerRapports>("/api/owner/rapports") });
 export const useOwnerDecomptes = () => useQuery({ queryKey: ["owner", "decomptes"], queryFn: () => get<OwnerDecomptes>("/api/owner/decomptes") });
 export const useOwnerChantiers = () => useQuery({ queryKey: ["owner", "chantiers"], queryFn: () => get<OwnerChantiers>("/api/owner/chantiers") });
 export const useOwnerPersonnel = () => useQuery({ queryKey: ["owner", "personnel"], queryFn: () => get<OwnerPersonnel>("/api/owner/personnel") });

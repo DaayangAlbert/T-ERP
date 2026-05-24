@@ -147,6 +147,21 @@ export async function GET() {
   const stockAlertes = stockAgg.filter((x) => x.minThreshold != null && x.quantity <= x.minThreshold).length;
   void lowStockCount;
 
+  // ── Prochain conseil d'administration ────────────────────────────────────
+  const prochainMeeting = await prisma.governanceMeeting.findFirst({
+    where: { tenantId: session.tenantId, scheduledAt: { gte: now }, status: { in: ["SCHEDULED", "POSTPONED"] } },
+    orderBy: { scheduledAt: "asc" },
+    select: { type: true, scheduledAt: true },
+  });
+  const MEETING_LABEL: Record<string, string> = { BOARD_MEETING: "Conseil d'administration", ORDINARY_AG: "AG ordinaire", EXTRAORDINARY_AG: "AG extraordinaire" };
+  const prochainConseil = prochainMeeting
+    ? {
+        type: MEETING_LABEL[prochainMeeting.type] ?? prochainMeeting.type,
+        date: prochainMeeting.scheduledAt.toISOString(),
+        joursRestants: Math.ceil((prochainMeeting.scheduledAt.getTime() - now.getTime()) / 86_400_000),
+      }
+    : null;
+
   // ── Logistique ──────────────────────────────────────────────────────────────
   const enginsTotal = equipment.length;
   const enginsLoues = equipment.filter((e) => e.isRented).length;
@@ -199,6 +214,7 @@ export async function GET() {
       inactifs: enginsInactifs,
       loues: enginsLoues,
     },
+    prochainConseil,
     generatedAt: now.toISOString(),
   });
 }

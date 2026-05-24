@@ -6,7 +6,7 @@ import { clsx } from "clsx";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
-import { useOwnerDecisions, useDecide, type OwnerDecision } from "@/hooks/useOwnerDecisions";
+import { useOwnerDecisions, useOwnerDecisionsHistory, useDecide, type OwnerDecision } from "@/hooks/useOwnerDecisions";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   CRITICAL: { label: "Critique", cls: "bg-danger/10 text-danger" },
@@ -47,7 +47,55 @@ export default function OwnerDecisionsPage() {
           {data.items.map((d) => <DecisionCard key={d.id} d={d} />)}
         </ul>
       )}
+
+      <HistorySection />
     </div>
+  );
+}
+
+function HistorySection() {
+  const { data, isLoading } = useOwnerDecisionsHistory();
+  return (
+    <section className="rounded-2xl border border-line bg-white p-4 shadow-card">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink"><FileText className="h-4 w-4 text-primary-600" /> Historique de mes décisions</h2>
+        {data && (
+          <span className="text-[11.5px] text-ink-3">
+            <span className="text-success">{data.resume.approuves} approuvée(s)</span> · <span className="text-danger">{data.resume.rejetes} refusée(s)</span>
+          </span>
+        )}
+      </div>
+      {isLoading ? (
+        <div className="h-16 animate-pulse rounded bg-surface-alt" />
+      ) : !data || data.items.length === 0 ? (
+        <p className="py-4 text-center text-[12px] text-ink-3">Aucune décision rendue pour l&apos;instant.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[12.5px]">
+            <thead className="text-left text-[10.5px] uppercase tracking-wider text-ink-3">
+              <tr><th className="px-2 py-1">Demande</th><th className="px-2 py-1 text-right">Montant</th><th className="px-2 py-1">Décision</th><th className="px-2 py-1">Date</th></tr>
+            </thead>
+            <tbody>
+              {data.items.map((h) => (
+                <tr key={h.id} className="border-t border-line/60">
+                  <td className="px-2 py-1.5">
+                    <span className="font-mono text-[11px] text-ink-3">{h.reference}</span> {h.title}
+                    {h.decision === "REJECTED" && h.motif ? <span className="block text-[11px] text-danger">Motif : {h.motif}</span> : null}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">{h.amount ? formatFCFA(BigInt(h.amount), { scale: "raw" }) : "—"}</td>
+                  <td className="px-2 py-1.5">
+                    <span className={clsx("rounded px-2 py-0.5 text-[11px] font-medium", h.decision === "APPROVED" ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                      {h.decision === "APPROVED" ? "Approuvée" : "Refusée"}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 text-ink-3">{formatDate(h.decidedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

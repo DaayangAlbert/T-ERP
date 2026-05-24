@@ -192,6 +192,8 @@ const OWNER_COCKPIT: NavSection = {
   items: [
     { label: "Vue d'ensemble", href: "/proprietaire", icon: Crown },
     { label: "Décisions à valider", href: "/proprietaire/decisions", icon: CheckCircle2 },
+    { label: "Rapports reçus", href: "/proprietaire/rapports", icon: FileText },
+    { label: "Conseil d'administration", href: "/proprietaire/reunions", icon: Gavel },
     { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
   ],
 };
@@ -204,6 +206,7 @@ const OWNER_CONSULTER: NavSection = {
     { label: "Recouvrement & paiements", href: "/proprietaire/recouvrement", icon: Receipt },
     { label: "Suivi des décomptes", href: "/proprietaire/decomptes", icon: ClipboardCheck },
     { label: "Chantiers", href: "/proprietaire/chantiers", icon: HardHat },
+    { label: "Planning des chantiers", href: "/proprietaire/planning", icon: Calendar },
     { label: "Stocks", href: "/proprietaire/stocks", icon: Package },
     { label: "Logistique & engins", href: "/proprietaire/logistique", icon: Truck },
     { label: "Personnel", href: "/proprietaire/personnel", icon: Users },
