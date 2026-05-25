@@ -6,6 +6,7 @@ import { clsx } from "clsx";
 import {
   LayoutDashboard,
   Building2,
+  Users,
   Receipt,
   Settings,
   Activity,
@@ -23,6 +24,7 @@ interface Entry {
 const ENTRIES: Entry[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/tenants", label: "Tenants", icon: Building2 },
+  { href: "/admin/users", label: "Utilisateurs", icon: Users },
   { href: "/admin/billing", label: "Facturation", icon: Receipt },
   { href: "/admin/platform", label: "Plateforme", icon: Settings },
   { href: "/admin/monitoring", label: "Monitoring", icon: Activity },
