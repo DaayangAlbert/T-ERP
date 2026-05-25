@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, ClipboardCheck, Crown, FileSignature, BarChart3 } from "lucide-react";
+import { ShoppingCart, ClipboardCheck, Crown, FileSignature, BarChart3, Package } from "lucide-react";
 import { PendingPosTable } from "@/components/purchase/PendingPosTable";
 import { OrdersManager } from "@/components/purchase/OrdersManager";
+import { ArticlesCatalogue } from "@/components/purchase/ArticlesCatalogue";
 import { SupplierCreate } from "@/components/purchase/SupplierCreate";
 import { SuppliersTable } from "@/components/purchase/SuppliersTable";
 import { FrameworkContractsTable } from "@/components/purchase/FrameworkContractsTable";
@@ -13,11 +14,12 @@ import { useAccess } from "@/hooks/useAccess";
 import { MODULES } from "@/lib/rbac/modules";
 import { clsx } from "clsx";
 
-type Tab = "orders" | "pending" | "suppliers" | "contracts" | "analytics";
+type Tab = "orders" | "pending" | "articles" | "suppliers" | "contracts" | "analytics";
 
 const ALL_TABS: Array<{ key: Tab; label: string; icon: React.ReactNode }> = [
   { key: "orders", label: "Bons de commande", icon: <ShoppingCart className="h-3.5 w-3.5" /> },
   { key: "pending", label: "À valider", icon: <ClipboardCheck className="h-3.5 w-3.5" /> },
+  { key: "articles", label: "Articles", icon: <Package className="h-3.5 w-3.5" /> },
   { key: "suppliers", label: "Fournisseurs stratégiques", icon: <Crown className="h-3.5 w-3.5" /> },
   { key: "contracts", label: "Contrats-cadres", icon: <FileSignature className="h-3.5 w-3.5" /> },
   { key: "analytics", label: "Analyse achats", icon: <BarChart3 className="h-3.5 w-3.5" /> },
@@ -66,6 +68,7 @@ export default function AchatsPage() {
 
       {tab === "orders" && <OrdersManager />}
       {tab === "pending" && <PendingPosTable />}
+      {tab === "articles" && <ArticlesCatalogue />}
       {tab === "suppliers" && (
         <>
           <SupplierCreate />

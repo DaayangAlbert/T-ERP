@@ -15,7 +15,7 @@ const VIEW_ROLES: Role[] = [
 ];
 const MANAGE_ROLES: Role[] = [Role.WAREHOUSE, Role.PURCHASING_OFFICER, Role.DAF, Role.TENANT_ADMIN];
 
-export const CATEGORY_LABELS: Record<ArticleCategory, string> = {
+const CATEGORY_LABELS: Record<ArticleCategory, string> = {
   CEMENT_CONCRETE: "Ciment & béton",
   STEEL_REBAR: "Acier / ferraillage",
   AGGREGATES: "Agrégats",

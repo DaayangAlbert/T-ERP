@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { createFrameworkContractSchema } from "@/schemas/purchase";
 
 export const dynamic = "force-dynamic";
+
+// Création/gestion des contrats-cadres : achats + direction.
+const MANAGE_ROLES: Role[] = [Role.PURCHASING_OFFICER, Role.DAF, Role.DG, Role.TENANT_ADMIN];
 
 export async function GET() {
   const session = getCurrentSession();
@@ -37,9 +41,19 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = getCurrentSession();
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!MANAGE_ROLES.includes(session.role as Role)) {
+    return NextResponse.json({ error: "Réservé aux achats / direction" }, { status: 403 });
+  }
 
   try {
     const data = createFrameworkContractSchema.parse(await req.json());
+    // Le fournisseur doit appartenir au tenant.
+    const supplier = await prisma.supplier.findFirst({
+      where: { id: data.supplierId, tenantId: session.tenantId },
+      select: { id: true },
+    });
+    if (!supplier) return NextResponse.json({ error: "Fournisseur introuvable" }, { status: 404 });
+
     const created = await prisma.frameworkContract.create({
       data: {
         tenantId: session.tenantId,
@@ -51,6 +65,16 @@ export async function POST(req: Request) {
         endDate: new Date(data.endDate),
         conditions: (data.conditions ?? {}) as object,
         status: data.status,
+      },
+    });
+    await prisma.auditLog.create({
+      data: {
+        tenantId: session.tenantId,
+        userId: session.sub,
+        action: "purchase.contract.create",
+        entityType: "FrameworkContract",
+        entityId: created.id,
+        metadata: { reference: created.reference, maxAmount: data.maxAmount },
       },
     });
     return NextResponse.json({ id: created.id }, { status: 201 });

@@ -20,6 +20,9 @@ interface SupplierItem {
   id: string;
   name: string;
   category: string;
+  phone: string | null;
+  email: string | null;
+  city: string | null;
   paymentTerms: number;
   ratingQuality: number | null;
   ratingDelay: number | null;
@@ -174,8 +177,37 @@ export function useSuppliers(filters: { strategic?: boolean; q?: string } = {}) 
     queryFn: () =>
       getJson<{
         items: SupplierItem[];
+        canManage: boolean;
         summary: { total: number; strategic: number; blocked: number; totalVolumeYTD: string };
       }>(`/api/purchase/suppliers?${sp.toString()}`),
+  });
+}
+
+export interface SupplierFormInput {
+  name: string;
+  category: string;
+  taxId?: string;
+  rccm?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  address?: string;
+  strategic?: boolean;
+}
+
+export function useUpdateSupplier(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<SupplierFormInput>) =>
+      getJson<{ id: string }>(`/api/purchase/suppliers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["purchase", "suppliers"] });
+      qc.invalidateQueries({ queryKey: ["purchase", "supplier", id] });
+    },
   });
 }
 
@@ -204,6 +236,30 @@ export function useFrameworkContracts() {
   return useQuery({
     queryKey: ["purchase", "contracts"],
     queryFn: () => getJson<{ items: ContractItem[] }>(`/api/purchase/framework-contracts`),
+  });
+}
+
+export interface FrameworkContractInput {
+  supplierId: string;
+  reference: string;
+  subject: string;
+  maxAmount: string;
+  startDate: string;
+  endDate: string;
+  status: ContractStatus;
+  conditions?: { paymentTerms?: number; penalties?: string; revisionClause?: string };
+}
+
+export function useCreateFrameworkContract() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FrameworkContractInput) =>
+      getJson<{ id: string }>(`/api/purchase/framework-contracts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["purchase", "contracts"] }),
   });
 }
 

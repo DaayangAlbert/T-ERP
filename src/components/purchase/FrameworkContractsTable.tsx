@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Plus, FileSignature } from "lucide-react";
 import { useFrameworkContracts } from "@/hooks/usePurchase";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
+import { FrameworkContractCreate } from "@/components/purchase/FrameworkContractCreate";
 import { ContractStatus } from "@prisma/client";
 import { formatDate, formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
@@ -15,6 +19,8 @@ const STATUS_BADGE: Record<ContractStatus, string> = {
 
 export function FrameworkContractsTable() {
   const { data, isLoading } = useFrameworkContracts();
+  const canManage = useAccess(MODULES.ACHATS).canEdit;
+  const [creating, setCreating] = useState(false);
 
   if (isLoading || !data) return <div className="h-32 animate-pulse rounded-xl bg-surface-alt" />;
 
@@ -24,15 +30,18 @@ export function FrameworkContractsTable() {
         <h2 className="text-[12px] font-semibold uppercase tracking-wider text-ink-3">
           {data.items.length} contrat{data.items.length > 1 ? "s" : ""}-cadre{data.items.length > 1 ? "s" : ""}
         </h2>
-        <button
-          type="button"
-          disabled
-          title="Wizard nouveau contrat — disponible en V2"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500/40 px-3 text-[12.5px] font-medium text-white disabled:cursor-not-allowed"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouveau contrat-cadre
-        </button>
+        {canManage && (
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouveau contrat-cadre
+          </button>
+        )}
       </div>
+
+      {creating && <FrameworkContractCreate onClose={() => setCreating(false)} />}
 
       <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-card">
         <table className="w-full min-w-[860px] text-[12.5px]">

@@ -89,6 +89,9 @@ export async function GET(req: Request) {
       id: s.id,
       name: s.name,
       category: s.category,
+      phone: s.phone,
+      email: s.email,
+      city: s.city,
       paymentTerms: s.paymentTerms,
       ratingQuality: s.ratingQuality,
       ratingDelay: s.ratingDelay,
@@ -99,6 +102,7 @@ export async function GET(req: Request) {
       volumeYTD: s.volumeYTD.toString(),
       poCount: s.poCount,
     })),
+    canManage: MANAGE_ROLES.includes(session.role as Role),
     summary: {
       total: items.length,
       strategic: items.filter((s) => s.strategic).length,

@@ -1,18 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { Search, Star, ShieldOff } from "lucide-react";
+import { Search, Star, ShieldOff, Phone, Mail, Pencil } from "lucide-react";
 import { useSuppliers } from "@/hooks/usePurchase";
+import { SupplierFormModal, type SupplierFormValues } from "@/components/purchase/SupplierFormModal";
 import { formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
 
 export function SuppliersTable() {
   const [search, setSearch] = useState("");
   const [strategicOnly, setStrategicOnly] = useState(false);
+  const [editing, setEditing] = useState<SupplierFormValues | null>(null);
   const { data, isLoading } = useSuppliers({ strategic: strategicOnly, q: search || undefined });
 
   if (isLoading || !data) return <div className="h-64 animate-pulse rounded-xl bg-surface-alt" />;
+  const canManage = data.canManage;
 
   return (
     <div className="space-y-3">
@@ -37,39 +39,53 @@ export function SuppliersTable() {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-card">
-        <table className="w-full min-w-[920px] text-[12.5px]">
+        <table className="w-full min-w-[980px] text-[12.5px]">
           <thead className="bg-surface-alt text-[11px] uppercase tracking-wide text-ink-3">
             <tr>
               <th className="py-2 pl-3 text-left">Nom</th>
               <th className="py-2 text-left">Catégorie</th>
+              <th className="py-2 text-left">Contact</th>
               <th className="py-2 text-right">Volume YTD</th>
               <th className="py-2 text-right">BC</th>
-              <th className="py-2 text-right">Délai paiement</th>
+              <th className="py-2 text-right">Délai</th>
               <th className="py-2 text-center">Notation</th>
-              <th className="py-2 pr-3 text-center">Tags</th>
+              <th className="py-2 text-center">Tags</th>
+              {canManage && <th className="py-2 pr-3 text-center">Action</th>}
             </tr>
           </thead>
           <tbody>
             {data.items.map((s) => (
               <tr key={s.id} className={clsx("border-t border-line hover:bg-surface-alt", s.blocked && "bg-danger/5")}>
-                <td className="py-2 pl-3">
-                  <Link href={`/achats/fournisseurs/${s.id}`} className="font-medium text-ink hover:text-primary-700">
-                    {s.name}
-                  </Link>
-                </td>
+                <td className="py-2 pl-3 font-medium text-ink">{s.name}</td>
                 <td className="py-2 text-ink-3">{s.category}</td>
+                <td className="py-2">
+                  {s.phone || s.email ? (
+                    <div className="flex flex-col gap-0.5">
+                      {s.phone && (
+                        <a href={`tel:${s.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1 text-primary-700 hover:underline">
+                          <Phone className="h-3 w-3" /> {s.phone}
+                        </a>
+                      )}
+                      {s.email && (
+                        <a href={`mailto:${s.email}`} className="inline-flex items-center gap-1 text-ink-3 hover:text-primary-700 hover:underline">
+                          <Mail className="h-3 w-3" /> {s.email}
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-ink-3">
+                      <Phone className="h-3 w-3 opacity-40" /> Non renseigné
+                    </span>
+                  )}
+                </td>
                 <td className="py-2 text-right font-mono tabular-nums">{formatFCFA(BigInt(s.volumeYTD))}</td>
                 <td className="py-2 text-right">{s.poCount}</td>
                 <td className="py-2 text-right">{s.paymentTerms} j</td>
+                <td className="py-2 text-center"><Stars value={s.ratingQuality} /></td>
                 <td className="py-2 text-center">
-                  <Stars value={s.ratingQuality} />
-                </td>
-                <td className="py-2 pr-3 text-center">
                   <div className="inline-flex gap-1">
                     {s.strategic && (
-                      <span className="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700">
-                        Stratégique
-                      </span>
+                      <span className="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700">Stratégique</span>
                     )}
                     {s.blocked && (
                       <span className="inline-flex items-center gap-0.5 rounded bg-danger/10 px-1.5 py-0.5 text-[10px] font-semibold text-danger">
@@ -78,11 +94,25 @@ export function SuppliersTable() {
                     )}
                   </div>
                 </td>
+                {canManage && (
+                  <td className="py-2 pr-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setEditing({ id: s.id, name: s.name, category: s.category, taxId: null, rccm: null, phone: s.phone, email: s.email, city: s.city, strategic: s.strategic })}
+                      title="Modifier le contact"
+                      className="inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-[11px] text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                    >
+                      <Pencil className="h-3 w-3" /> Éditer
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editing && <SupplierFormModal initial={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }
