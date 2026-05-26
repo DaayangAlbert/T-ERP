@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { guardIt } from "@/lib/rbac/it-guard";
+import { getTenantScopeIds } from "@/lib/tenant";
 import { DEFAULT_ATTENDANCE_RADIUS_M } from "@/lib/presence/access";
 
 export const dynamic = "force-dynamic";
@@ -14,13 +15,16 @@ export async function GET() {
   if (guard instanceof NextResponse) return guard;
   const tenantId = guard.session.tenantId!;
 
+  // Périmètre groupe : l'IT de la holding configure aussi les chantiers
+  // des filiales (tenantId enfants).
+  const scopeIds = await getTenantScopeIds(tenantId);
   const [tenant, sites] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { name: true, officeLat: true, officeLng: true, officeRadiusM: true },
     }),
     prisma.site.findMany({
-      where: { tenantId },
+      where: { tenantId: { in: scopeIds } },
       select: { id: true, code: true, name: true, lat: true, lng: true, attendanceRadiusM: true },
       orderBy: { code: "asc" },
     }),

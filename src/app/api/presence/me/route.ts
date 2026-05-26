@@ -4,7 +4,7 @@ import { getCurrentSession } from "@/lib/session";
 import { Role } from "@prisma/client";
 import { canAccess } from "@/lib/rbac/access-matrix";
 import { MODULES } from "@/lib/rbac/modules";
-import { canClockIn, canViewAllAttendance, canViewSiteAttendance, todayDate } from "@/lib/presence/access";
+import { canClockIn, canViewAllAttendance, canViewSitesAttendance, canViewSiteAttendance, todayDate } from "@/lib/presence/access";
 import { resolveAttendanceLocation } from "@/lib/presence/location";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export async function GET() {
   return NextResponse.json({
     canClockIn: canClockIn(role),
     canViewAll: canViewAllAttendance(role),
+    canViewSites: canViewSitesAttendance(role),
     canViewSite: canViewSiteAttendance(role),
     location: location
       ? {

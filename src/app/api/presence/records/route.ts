@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getTenantScopeIds } from "@/lib/tenant";
 import { Role } from "@prisma/client";
-import { canViewAllAttendance, canViewSiteAttendance } from "@/lib/presence/access";
+import { canViewAllAttendance, canViewSitesAttendance, canViewSiteAttendance } from "@/lib/presence/access";
 import { roleLabel } from "@/components/admin/users/roleLabels";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +18,9 @@ export async function GET(req: Request) {
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   const role = session.role as Role;
   const viewAll = canViewAllAttendance(role);
+  const viewSites = canViewSitesAttendance(role);
   const viewSite = canViewSiteAttendance(role);
-  if (!viewAll && !viewSite) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (!viewAll && !viewSites && !viewSite) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const url = new URL(req.url);
   const dateParam = url.searchParams.get("date");
@@ -30,12 +31,17 @@ export async function GET(req: Request) {
   const scopeIds = await getTenantScopeIds(session.tenantId);
   const where: Record<string, unknown> = { tenantId: { in: scopeIds }, date };
 
-  // Chef de chantier : restreint à ses chantiers affectés.
+  // Périmètre de consultation :
+  //  - viewAll  : tout le personnel (bureau + chantiers).
+  //  - viewSites: TOUS les chantiers (DT) — exclut le bureau (siteId non nul).
+  //  - viewSite : SON chantier (Chef de chantier).
   if (!viewAll && viewSite) {
     const me = await prisma.user.findUnique({ where: { id: session.sub }, select: { assignedSiteIds: true } });
     const sites = me?.assignedSiteIds ?? [];
     if (sites.length === 0) return NextResponse.json({ date: date.toISOString(), items: [], summary: { present: 0, outOfZone: 0 } });
     where.siteId = { in: siteFilter && sites.includes(siteFilter) ? [siteFilter] : sites };
+  } else if (!viewAll && viewSites) {
+    where.siteId = siteFilter ? siteFilter : { not: null };
   } else if (siteFilter) {
     where.siteId = siteFilter;
   }

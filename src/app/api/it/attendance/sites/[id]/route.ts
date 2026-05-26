@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { guardItMutation } from "@/lib/rbac/it-guard";
+import { getTenantScopeIds } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const guard = await guardItMutation();
   if (guard instanceof NextResponse) return guard;
   const tenantId = guard.session.tenantId!;
+  const scopeIds = await getTenantScopeIds(tenantId);
 
-  const site = await prisma.site.findFirst({ where: { id: params.id, tenantId }, select: { id: true } });
+  const site = await prisma.site.findFirst({ where: { id: params.id, tenantId: { in: scopeIds } }, select: { id: true } });
   if (!site) return NextResponse.json({ error: "Chantier introuvable" }, { status: 404 });
 
   try {

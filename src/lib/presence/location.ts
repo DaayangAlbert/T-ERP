@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getTenantScopeIds } from "@/lib/tenant";
 import { DEFAULT_ATTENDANCE_RADIUS_M } from "@/lib/presence/access";
 
 export interface AttendanceLocation {
@@ -30,8 +31,10 @@ export async function resolveAttendanceLocation(
   if (!user) return null;
 
   if (user.assignedSiteIds.length > 0) {
+    // En contexte holding, les chantiers sont sur les tenants filles.
+    const scopeIds = await getTenantScopeIds(tenantId);
     const sites = await prisma.site.findMany({
-      where: { id: { in: user.assignedSiteIds }, tenantId },
+      where: { id: { in: user.assignedSiteIds }, tenantId: { in: scopeIds } },
       select: { id: true, code: true, name: true, lat: true, lng: true, attendanceRadiusM: true },
     });
     // Privilégie un chantier dont les coordonnées sont configurées.

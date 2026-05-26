@@ -9,6 +9,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 interface MeResp {
   canClockIn: boolean;
   canViewAll: boolean;
+  canViewSites: boolean;
   canViewSite: boolean;
   location: { type: "OFFICE" | "SITE"; name: string; lat: number | null; lng: number | null; radiusM: number; configured: boolean } | null;
   today: { arrivalTime: string | null; departureTime: string | null; status: string; outOfGeofence: boolean } | null;
@@ -34,6 +35,7 @@ async function getJson<T>(url: string): Promise<T> {
 export default function PresencePage() {
   const me = useQuery({ queryKey: ["presence", "me"], queryFn: () => getJson<MeResp>("/api/presence/me") });
   const [tab, setTab] = useState<"pointer" | "suivi">("pointer");
+  const canConsult = Boolean(me.data && (me.data.canViewAll || me.data.canViewSites || me.data.canViewSite));
 
   useEffect(() => {
     if (me.data) setTab(me.data.canClockIn ? "pointer" : "suivi");
@@ -44,7 +46,7 @@ export default function PresencePage() {
   }
 
   const d = me.data;
-  const showTabs = d.canClockIn && (d.canViewAll || d.canViewSite);
+  const showTabs = d.canClockIn && canConsult;
 
   return (
     <div className="space-y-4 pb-16">
@@ -63,7 +65,7 @@ export default function PresencePage() {
       )}
 
       {d.canClockIn && (!showTabs || tab === "pointer") && <MyClock data={d} onChange={() => me.refetch()} />}
-      {(d.canViewAll || d.canViewSite) && (!showTabs || tab === "suivi") && <Consultation />}
+      {canConsult && (!showTabs || tab === "suivi") && <Consultation />}
     </div>
   );
 }
@@ -200,17 +202,41 @@ function MyClock({ data, onChange }: { data: MeResp; onChange: () => void }) {
 
 function Consultation() {
   const [date, setDate] = useState(ymd(new Date()));
-  const q = useQuery({ queryKey: ["presence", "records", date], queryFn: () => getJson<RecordsResp>(`/api/presence/records?date=${date}`) });
+  const isToday = date === ymd(new Date());
+  // Rafraîchissement automatique toutes les 15 s quand on regarde la journée
+  // en cours (vue « temps réel »). Pour une date passée : pas de polling.
+  const q = useQuery({
+    queryKey: ["presence", "records", date],
+    queryFn: () => getJson<RecordsResp>(`/api/presence/records?date=${date}`),
+    refetchInterval: isToday ? 15_000 : false,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-white p-3 shadow-card">
         <label className="text-[12.5px] font-medium text-ink-2">Journée</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-md border border-line bg-surface-alt px-3 text-[13px]" />
+        {isToday && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Temps réel · auto 15 s
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => q.refetch()}
+          disabled={q.isFetching}
+          title="Actualiser maintenant"
+          className="inline-flex h-9 items-center gap-1 rounded-md border border-line px-2.5 text-[12px] text-ink-2 hover:bg-surface-alt disabled:opacity-50"
+        >
+          <RefreshCw className={clsx("h-3.5 w-3.5", q.isFetching && "animate-spin")} /> Actualiser
+        </button>
         {q.data && (
           <span className="ml-auto text-[11.5px] text-ink-3">
             <strong className="text-ink">{q.data.summary.present}</strong> présent(s)
             {q.data.summary.outOfZone > 0 && <> · <span className="text-amber-700">{q.data.summary.outOfZone} hors zone</span></>}
+            {q.dataUpdatedAt > 0 && <span className="ml-2 text-[10.5px]">· maj {new Date(q.dataUpdatedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>}
           </span>
         )}
       </div>
