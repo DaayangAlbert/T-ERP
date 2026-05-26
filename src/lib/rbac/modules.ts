@@ -42,6 +42,7 @@ export const MODULES = {
 
   // ───────────────────────── Espace personnel ───────────────────────────
   EMP: "EMP", // /employe (espace bureau personnel)
+  PRESENCE: "PRESENCE", // /presence (pointage de présence — tous sauf DG/PCA)
 
   // ───────────────────────── Externe / SaaS ─────────────────────────────
   CAND: "CAND", // /cand (candidat — accès via (candidate) route group)
@@ -72,6 +73,7 @@ export const MODULE_ORDER: Module[] = [
   MODULES.GED,
   MODULES.IT,
   MODULES.EMP,
+  MODULES.PRESENCE,
   MODULES.CAND,
   MODULES.PLATFORM,
 ];
@@ -99,6 +101,7 @@ export const MODULE_ROUTE: Record<Module, string | null> = {
   GED: "/gestion-documentaire",
   IT: "/informatique",
   EMP: "/employe",
+  PRESENCE: "/presence",
   CAND: null, // hors route group (app)
   PLATFORM: null, // hors route group (app) — réservé SUPER_ADMIN
 };
@@ -124,6 +127,7 @@ export const MODULE_LABEL: Record<Module, string> = {
   GED: "Gestion Documentaire",
   IT: "Administration IT",
   EMP: "Espace Personnel",
+  PRESENCE: "Présence",
   CAND: "Espace Candidat",
   PLATFORM: "Console Plateforme",
 };

@@ -194,6 +194,7 @@ const OWNER_COCKPIT: NavSection = {
     { label: "Décisions à valider", href: "/proprietaire/decisions", icon: CheckCircle2 },
     { label: "Rapports reçus", href: "/proprietaire/rapports", icon: FileText },
     { label: "Agenda", href: "/proprietaire/reunions", icon: Gavel },
+    { label: "Présences (pointage)", href: "/presence", icon: Clock },
     { label: "Messagerie", href: "/messagerie", icon: MessageSquare },
   ],
 };
@@ -416,6 +417,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Demandes modif. profil", href: "/informatique/change-requests", icon: ClipboardList },
       { label: "Paramètres tenant", href: "/informatique/settings", icon: Settings },
       { label: "Chantiers (admin)", href: "/informatique/sites", icon: Building2 },
+      { label: "Pointage (GPS)", href: "/informatique/pointage", icon: Clock },
       { label: "Intégrations", href: "/informatique/integrations", icon: Network },
     ],
   },
@@ -425,8 +427,13 @@ const FULL: Record<Module, NavSection> = {
       { label: "Mon profil", href: "/employe/profil", icon: User },
       { label: "Ma paie", href: "/employe/paie", icon: CreditCard },
       { label: "Mes congés", href: "/employe/conges", icon: Calendar },
+      { label: "Présence", href: "/presence", icon: Clock },
       { label: "Messagerie", href: "/messagerie", icon: MessageSquare, badge: { value: "3" } },
     ],
+  },
+  PRESENCE: {
+    title: "Présence",
+    items: [{ label: "Pointage de présence", href: "/presence", icon: Clock }],
   },
   CAND: {
     title: "Espace Candidat",
@@ -466,6 +473,7 @@ const READ_ITEM: Record<Module, NavItem> = {
   GED: { label: "Vue Documentaire", href: "/gestion-documentaire", icon: FolderOpen },
   IT: { label: "Vue IT", href: "/informatique", icon: Settings },
   EMP: { label: "Espace personnel", href: "/employe", icon: User },
+  PRESENCE: { label: "Présence", href: "/presence", icon: Clock },
   CAND: { label: "Espace candidat", href: "/cand", icon: User },
   PLATFORM: { label: "Console plateforme", href: "/tenants", icon: Building2 },
 };

@@ -43,6 +43,13 @@ model Tenant {
   stampImageUrl     String?
   drhSignatoryName  String? // nom imprimé sous la signature (ex: "Mme Marie ETOUNDI")
 
+  // Pointage de présence — coordonnées GPS du bureau (siège/direction).
+  // Les employés de la direction (sans chantier affecté) pointent ici ;
+  // configuré par l'informaticien. officeRadiusM = rayon de tolérance (m).
+  officeLat     Float?
+  officeLng     Float?
+  officeRadiusM Int?
+
   // Limites plan (override Enterprise)
   maxUsers     Int? @default(50)
   maxSites     Int? @default(10)
@@ -707,6 +714,9 @@ model Site {
   // Géoloc pour la vue carte (Phase 2 / Bloc 3 — fn 3.1)
   lat Float?
   lng Float?
+  // Pointage de présence — rayon de tolérance (m) autour de lat/lng pour ce
+  // chantier. Null = rayon par défaut. Configuré par l'informaticien.
+  attendanceRadiusM Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
