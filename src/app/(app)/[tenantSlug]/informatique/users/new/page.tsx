@@ -17,6 +17,7 @@ const ROLE_OPTIONS = [
   { value: "WORKS_DIRECTOR", label: "Directeur de Travaux" },
   { value: "WORKS_MANAGER", label: "Conducteur de Travaux" },
   { value: "SITE_MANAGER", label: "Chef de Chantier" },
+  { value: "QHSE_MANAGER", label: "Responsable QHSE" },
   { value: "HR", label: "Responsable RH" },
   { value: "ACCOUNTANT", label: "Comptable" },
   { value: "PURCHASING_OFFICER", label: "Chargé des achats" },

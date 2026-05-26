@@ -9,6 +9,7 @@ export const ROLE_LABELS: Record<string, string> = {
   WORKS_DIRECTOR: "Directeur des Travaux",
   WORKS_MANAGER: "Conducteur de Travaux",
   SITE_MANAGER: "Chef de Chantier",
+  QHSE_MANAGER: "Responsable QHSE",
   WORKER: "Ouvrier",
   ACCOUNTANT: "Comptable",
   PURCHASING_OFFICER: "Chargé des achats",

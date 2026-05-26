@@ -343,6 +343,14 @@ const FULL: Record<Module, NavSection> = {
       { label: "Mon espace CC", href: "/chef-chantier/profil", icon: User },
     ],
   },
+  QHSE: {
+    title: "Espace Responsable QHSE",
+    items: [
+      { label: "Tableau de bord QHSE", href: "/responsable-qhse", icon: ShieldAlert },
+      // Onglets internes au tableau (Incidents / Audits / NC / Certifs).
+      { label: "Rapports mensuels QHSE", href: "/direction-technique/rapports-qhse", icon: FileText },
+    ],
+  },
   // Section "chantier" uniquement (l'espace personnel ouvrier vit dans
   // OUV_PERSONAL, ajouté séparément par getSidebarSections quand WORKER
   // a OUV en OWN — voir plus bas).
@@ -467,6 +475,7 @@ const READ_ITEM: Record<Module, NavItem> = {
   CDT: { label: "Vue Conduite Travaux", href: "/conducteur-travaux", icon: ListChecks },
   CC: { label: "Vue Chefs Chantier", href: "/chef-chantier", icon: ClipboardCheck },
   OUV: { label: "Vue Ouvriers", href: "/ouv/dashboard", icon: HardHat },
+  QHSE: { label: "Vue QHSE", href: "/responsable-qhse", icon: ShieldAlert },
   CPT: { label: "Vue Comptabilité", href: "/comptable", icon: FileText },
   LOG: { label: "Vue Logistique", href: "/logistique", icon: Truck },
   MAG: { label: "Vue Stocks (Magasin)", href: "/magasin", icon: Package },

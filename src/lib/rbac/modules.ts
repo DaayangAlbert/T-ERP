@@ -31,6 +31,7 @@ export const MODULES = {
   CDT: "CDT", // /conducteur-travaux
   CC: "CC", // /chef-chantier
   OUV: "OUV", // /ouv (PWA mobile-first ouvrier)
+  QHSE: "QHSE", // /responsable-qhse (Qualité Hygiène Sécurité Environnement)
 
   // ───────────────────────── Support / opérationnel ─────────────────────
   CPT: "CPT", // /comptable
@@ -66,6 +67,7 @@ export const MODULE_ORDER: Module[] = [
   MODULES.CDT,
   MODULES.CC,
   MODULES.OUV,
+  MODULES.QHSE,
   MODULES.CPT,
   MODULES.ACHATS,
   MODULES.LOG,
@@ -94,6 +96,7 @@ export const MODULE_ROUTE: Record<Module, string | null> = {
   CDT: "/conducteur-travaux",
   CC: "/chef-chantier",
   OUV: "/ouv",
+  QHSE: "/responsable-qhse",
   CPT: "/comptable",
   ACHATS: "/achats",
   LOG: "/logistique",
@@ -120,6 +123,7 @@ export const MODULE_LABEL: Record<Module, string> = {
   CDT: "Conduite Travaux",
   CC: "Chef Chantier",
   OUV: "Espace Ouvrier",
+  QHSE: "Responsable QHSE",
   CPT: "Comptabilité",
   ACHATS: "Achats",
   LOG: "Logistique",

@@ -7,8 +7,9 @@ import { Criticality, NcCategory, NcStatus, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+// Cf /api/dt/qhse/ncs : TECH_DIRECTOR retiré (READ depuis l'arrivée de QHSE_MANAGER).
 const EDIT_ALLOWED: Role[] = [
-  Role.TECH_DIRECTOR,
+  Role.QHSE_MANAGER,
   Role.WORKS_DIRECTOR,
   Role.SITE_MANAGER,
   Role.TENANT_ADMIN,

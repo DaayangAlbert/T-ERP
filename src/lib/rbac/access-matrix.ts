@@ -82,6 +82,7 @@ const MATRIX: Matrix = {
     DTRAV: "READ",
     CDT: "READ",
     CC: "READ",
+    QHSE: "READ",
     CPT: "READ",
     ACHATS: "READ",
     LOG: "READ",
@@ -132,6 +133,7 @@ const MATRIX: Matrix = {
     DAF: "READ",
     RH: "READ",
     DT: "READ",
+    QHSE: "READ",
     SG: "READ",
     DTRAV: "READ",
     CDT: "READ",
@@ -155,6 +157,7 @@ const MATRIX: Matrix = {
     DAF: "READ",
     RH: "READ",
     DT: "READ", // couvre déjà DTRAV/CDT/CC dans la vue technique
+    QHSE: "READ", // valide les rapports mensuels QHSE
     SG: "READ",
     // CC / DTRAV / CDT retirés du drill-down DG : doublons avec Vue Technique
     DTRAV: "NONE",
@@ -182,6 +185,7 @@ const MATRIX: Matrix = {
     DAF: "FULL",
     CPT: "FULL", // DAF supervise la compta
     ACHATS: "FULL", // DAF valide les engagements (N2) et supervise les achats
+    QHSE: "READ", // suivi des coûts QHSE (incidents, formations)
     // Pas de drill-down DG depuis l'espace DAF : la DG est hiérarchiquement
     // au-dessus, ses vues consolidées ne lui sont pas destinées.
     DG: "NONE",
@@ -231,6 +235,7 @@ const MATRIX: Matrix = {
   // ═══════════════════════════════════════════════════════════════════════
   TECH_DIRECTOR: {
     DT: "FULL",
+    QHSE: "READ", // QHSE est détenu par le Responsable QHSE — DT en lecture seule
     DG: "NONE",
     DAF: "READ",
     RH: "NONE",
@@ -291,6 +296,35 @@ const MATRIX: Matrix = {
     LOG: "READ",
     MAG: "READ",
     GED: "READ",
+    IT: "NONE",
+    EMP: "OWN",
+    PRESENCE: "OWN",
+    CAND: "NONE",
+    PLATFORM: "NONE",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // QHSE_MANAGER — Responsable QHSE (Qualité, Hygiène, Sécurité, Environnement).
+  // FULL sur QHSE (incidents, NC, audits, certifications, rapports mensuels) ;
+  // READ sur DT/DTRAV/CDT/CC pour comprendre l'organisation chantier. Aucune
+  // édition sur la production. Rédige le rapport mensuel QHSE validé par le DG.
+  // ═══════════════════════════════════════════════════════════════════════
+  QHSE_MANAGER: {
+    QHSE: "FULL",
+    DT: "READ",
+    DTRAV: "READ",
+    CDT: "READ",
+    CC: "READ",
+    DG: "NONE",
+    DAF: "NONE",
+    RH: "NONE",
+    SG: "NONE",
+    OUV: "NONE",
+    CPT: "NONE",
+    ACHATS: "NONE",
+    LOG: "NONE",
+    MAG: "NONE",
+    GED: "READ", // accès aux procédures et plans HSE archivés
     IT: "NONE",
     EMP: "OWN",
     PRESENCE: "OWN",

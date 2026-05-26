@@ -653,6 +653,7 @@ enum Role {
   WORKS_MANAGER // Conducteur de travaux
   SITE_MANAGER // Chef de chantier
   WORKER // Ouvrier
+  QHSE_MANAGER // Responsable QHSE (Qualité, Hygiène, Sécurité, Environnement)
 
   // Support
   ACCOUNTANT

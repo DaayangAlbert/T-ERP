@@ -7,7 +7,7 @@ import { updateQhseMonthlyReportSchema } from "@/schemas/qhse-monthly-report";
 
 export const dynamic = "force-dynamic";
 
-const VIEWER_ROLES: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.DAF, Role.WORKS_DIRECTOR, Role.SUPER_ADMIN];
+const VIEWER_ROLES: Role[] = [Role.QHSE_MANAGER, Role.TECH_DIRECTOR, Role.DG, Role.OWNER, Role.DAF, Role.WORKS_DIRECTOR, Role.SUPER_ADMIN];
 
 async function load(id: string) {
   return prisma.qhseMonthlyReport.findUnique({
@@ -91,7 +91,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const { id } = await ctx.params;
   const report = await load(id);
   if (!report) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
-  if (session.role !== Role.TECH_DIRECTOR || report.authorId !== session.sub) {
+  if (session.role !== Role.QHSE_MANAGER || report.authorId !== session.sub) {
     return NextResponse.json({ error: "Édition réservée à l'auteur" }, { status: 403 });
   }
   if (report.status !== "DRAFT" && report.status !== "REJECTED") {
@@ -164,7 +164,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   const { id } = await ctx.params;
   const report = await load(id);
   if (!report) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
-  if (session.role !== Role.TECH_DIRECTOR || report.authorId !== session.sub) {
+  if (session.role !== Role.QHSE_MANAGER || report.authorId !== session.sub) {
     return NextResponse.json({ error: "Suppression réservée à l'auteur" }, { status: 403 });
   }
   if (report.status === "VALIDATED") {

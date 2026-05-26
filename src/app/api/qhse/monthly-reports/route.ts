@@ -7,10 +7,14 @@ import { createQhseMonthlyReportSchema } from "@/schemas/qhse-monthly-report";
 
 export const dynamic = "force-dynamic";
 
-const AUTHOR_ROLES: Role[] = [Role.TECH_DIRECTOR];
+// Depuis mai 2026 : le rapport mensuel QHSE est rédigé par le Responsable
+// QHSE (QHSE_MANAGER). Le DT n'a plus le droit de rédiger (passé en READ).
+const AUTHOR_ROLES: Role[] = [Role.QHSE_MANAGER];
 const VIEWER_ROLES: Role[] = [
+  Role.QHSE_MANAGER,
   Role.TECH_DIRECTOR,
   Role.DG,
+  Role.OWNER,
   Role.DAF,
   Role.WORKS_DIRECTOR,
   Role.SUPER_ADMIN,
@@ -27,6 +31,9 @@ export async function GET(req: Request) {
   const statusFilter = url.searchParams.get("status") ?? undefined;
 
   const where: Prisma.QhseMonthlyReportWhereInput = { tenantId: session.tenantId };
+  // Historiquement : DT voyait seulement ses propres rapports (1 DT par tenant).
+  // Aujourd'hui : QHSE_MANAGER voit tous les rapports du tenant (rôle unique).
+  // TECH_DIRECTOR garde la vue restreinte à ses anciens rapports (auteur).
   if (session.role === Role.TECH_DIRECTOR) where.authorId = session.sub;
   if (statusFilter) where.status = statusFilter as Prisma.QhseMonthlyReportWhereInput["status"];
 

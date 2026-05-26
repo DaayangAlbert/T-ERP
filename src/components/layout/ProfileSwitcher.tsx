@@ -17,6 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
   WORKS_DIRECTOR: "Directeur de travaux",
   WORKS_MANAGER: "Conducteur de travaux",
   SITE_MANAGER: "Chef de chantier",
+  QHSE_MANAGER: "Responsable QHSE",
   WORKER: "Ouvrier",
   ACCOUNTANT: "Comptable",
   PURCHASING_OFFICER: "Chargé des achats",

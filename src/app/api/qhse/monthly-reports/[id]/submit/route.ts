@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = getCurrentSession();
   if (!session?.tenantId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (session.role !== Role.TECH_DIRECTOR) {
-    return NextResponse.json({ error: "Réservé responsable QHSE" }, { status: 403 });
+  if (session.role !== Role.QHSE_MANAGER) {
+    return NextResponse.json({ error: "Réservé Responsable QHSE" }, { status: 403 });
   }
 
   const { id } = await ctx.params;

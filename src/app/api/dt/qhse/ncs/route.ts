@@ -7,8 +7,11 @@ import { Criticality, NcCategory, NcStatus, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+// QHSE_MANAGER est propriétaire des NC depuis l'arrivée du rôle (mai 2026).
+// SITE_MANAGER garde la création pour les NC de son chantier. TECH_DIRECTOR
+// n'a plus le droit d'écrire (passé en READ sur QHSE).
 const CREATE_ALLOWED: Role[] = [
-  Role.TECH_DIRECTOR,
+  Role.QHSE_MANAGER,
   Role.WORKS_DIRECTOR,
   Role.SITE_MANAGER,
   Role.TENANT_ADMIN,

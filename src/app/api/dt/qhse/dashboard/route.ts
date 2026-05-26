@@ -6,7 +6,8 @@ import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED: Role[] = [Role.TECH_DIRECTOR, Role.WORKS_DIRECTOR, Role.DG, Role.TENANT_ADMIN];
+// QHSE_MANAGER est propriétaire du QHSE (FULL). DT/DG/OWNER/DAF/SUPER_ADMIN gardent une vue READ.
+const ALLOWED: Role[] = [Role.QHSE_MANAGER, Role.TECH_DIRECTOR, Role.WORKS_DIRECTOR, Role.DG, Role.OWNER, Role.DAF, Role.TENANT_ADMIN, Role.SUPER_ADMIN];
 
 export async function GET() {
   const session = getCurrentSession();

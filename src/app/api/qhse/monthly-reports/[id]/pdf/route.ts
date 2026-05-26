@@ -10,7 +10,7 @@ import { QhseMonthlyReportPDF, type QhseReportPdfData } from "@/components/qhse/
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const VIEWER_ROLES: Role[] = [Role.TECH_DIRECTOR, Role.DG, Role.DAF, Role.WORKS_DIRECTOR, Role.SUPER_ADMIN];
+const VIEWER_ROLES: Role[] = [Role.QHSE_MANAGER, Role.TECH_DIRECTOR, Role.DG, Role.OWNER, Role.DAF, Role.WORKS_DIRECTOR, Role.SUPER_ADMIN];
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = getCurrentSession();
