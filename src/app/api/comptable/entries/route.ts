@@ -66,7 +66,7 @@ async function storeAttachment(
 const SITE_ACCOUNTANT_JOURNALS = new Set(["ACH", "VTE", "CAI"]);
 
 const lineSchema = z.object({
-  accountCode: z.string().min(1),
+  accountCode: z.string().min(1, "compte manquant sur une ligne"),
   thirdPartyId: z.string().nullable().optional(),
   description: z.string(),
   debit: z.coerce.number().nonnegative().default(0),
@@ -75,14 +75,40 @@ const lineSchema = z.object({
 });
 
 const createSchema = z.object({
-  journalCode: z.string().min(2),
-  entryDate: z.string(), // ISO
-  reference: z.string().min(1),
-  description: z.string().min(1),
+  journalCode: z.string().min(2, "journal invalide"),
+  entryDate: z.string().min(1, "date requise"), // ISO
+  reference: z.string().min(1, "référence requise (ex: FA-2026-0042)"),
+  description: z.string().min(1, "libellé requis"),
   siteId: z.string().nullable().optional(),
-  lines: z.array(lineSchema).min(2),
+  lines: z.array(lineSchema).min(2, "au moins 2 lignes avec un compte renseigné"),
   validate: z.boolean().optional(),
 });
+
+// Transforme les erreurs Zod en message FR lisible par l'utilisateur final.
+function formatZodError(err: z.ZodError): string {
+  const labels: Record<string, string> = {
+    journalCode: "Journal",
+    entryDate: "Date",
+    reference: "Référence",
+    description: "Libellé",
+    siteId: "Chantier",
+    lines: "Lignes",
+    accountCode: "Compte",
+    debit: "Débit",
+    credit: "Crédit",
+  };
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const issue of err.issues) {
+    const top = String(issue.path[0] ?? "");
+    const label = labels[top] ?? top;
+    const key = label + ":" + issue.message;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(`${label} : ${issue.message}`);
+  }
+  return out.length ? out.join(" · ") : "Données invalides";
+}
 
 export async function GET(req: Request) {
   const session = getCurrentSession();
@@ -185,7 +211,10 @@ export async function POST(req: Request) {
 
   const parsed = createSchema.safeParse(rawPayload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Validation", issues: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: formatZodError(parsed.error), issues: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   // Validation du fichier joint (avant tout traitement)

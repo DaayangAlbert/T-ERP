@@ -66,6 +66,14 @@ export function EntryFormModal({ open, onClose, journalCode, defaultSiteId, isSi
   const totalDebit = lines.reduce((s, l) => s + (Number(l.debit) || 0), 0);
   const totalCredit = lines.reduce((s, l) => s + (Number(l.credit) || 0), 0);
   const balanced = totalDebit === totalCredit && totalDebit > 0;
+  // Champs obligatoires côté UI — évite l'erreur 400 du backend a posteriori.
+  const filledLineCount = lines.filter((l) => l.accountCode.trim()).length;
+  const missing: string[] = [];
+  if (!reference.trim()) missing.push("Référence");
+  if (!description.trim()) missing.push("Libellé");
+  if (isSiteAccountant && !siteId) missing.push("Chantier");
+  if (filledLineCount < 2) missing.push("au moins 2 lignes avec un compte");
+  const canSubmit = balanced && missing.length === 0;
 
   const applyTemplate = (key: TemplateKey | "") => {
     setTemplateKey(key);
@@ -353,6 +361,12 @@ export function EntryFormModal({ open, onClose, journalCode, defaultSiteId, isSi
             )}
           </div>
 
+          {!canSubmit && missing.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/5 p-2 text-[12px] text-warning">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              <span>Champs manquants : <strong>{missing.join(", ")}</strong></span>
+            </div>
+          )}
           {create.error && (
             <div className="mt-2 rounded-md border border-danger/30 bg-danger/5 p-2 text-[12px] text-danger">
               {String((create.error as Error).message)}
@@ -371,7 +385,8 @@ export function EntryFormModal({ open, onClose, journalCode, defaultSiteId, isSi
           <button
             type="button"
             onClick={() => submit(false)}
-            disabled={!balanced || create.isPending}
+            disabled={!canSubmit || create.isPending}
+            title={!canSubmit && missing.length ? `Manque : ${missing.join(", ")}` : undefined}
             className="h-9 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 disabled:opacity-50"
           >
             Enregistrer en brouillard
@@ -379,7 +394,8 @@ export function EntryFormModal({ open, onClose, journalCode, defaultSiteId, isSi
           <button
             type="button"
             onClick={() => submit(true)}
-            disabled={!balanced || create.isPending}
+            disabled={!canSubmit || create.isPending}
+            title={!canSubmit && missing.length ? `Manque : ${missing.join(", ")}` : undefined}
             className="h-9 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             Enregistrer et valider
