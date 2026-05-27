@@ -12,7 +12,7 @@ export function SiteSwitcher() {
 
   if (isLoading || !activeChantier) {
     return (
-      <div className="sticky top-14 z-20 mb-3 h-12 animate-pulse rounded-xl border border-line bg-surface-alt" />
+      <div className="mb-3 h-12 animate-pulse rounded-xl border border-line bg-surface-alt" />
     );
   }
 
@@ -23,7 +23,7 @@ export function SiteSwitcher() {
 
   return (
     <>
-      <div className="sticky top-14 z-20 mb-3 rounded-xl border border-line bg-white shadow-sm">
+      <div className="mb-3 rounded-xl border border-line bg-white shadow-sm">
         <div className="flex flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
           <MapPin className="h-4 w-4 shrink-0 text-ink-3" />
           <div className="min-w-0 flex-1">

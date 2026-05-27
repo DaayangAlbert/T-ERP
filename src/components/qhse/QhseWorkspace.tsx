@@ -76,7 +76,7 @@ export function QhseWorkspace({
   return (
     <div className="space-y-3">
       {criticalOpen && (
-        <div className="sticky top-14 z-30 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800 shadow-md">
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800 shadow-md">
           <AlertOctagon className="mr-1.5 inline h-3.5 w-3.5" />
           Incident <strong>CRITIQUE</strong> non clôturé sur {criticalOpen.siteName}
         </div>
