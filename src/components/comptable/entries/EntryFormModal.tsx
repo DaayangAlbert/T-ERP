@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Trash2, X, Paperclip, FileText, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useCreateEntry, type CptEntryLine } from "@/hooks/useCptEntries";
+import { AccountPicker } from "@/components/comptable/entries/AccountPicker";
 
 const MAX_ATTACHMENT_MB = 20;
 const ALLOWED_EXT = ".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.doc,.docx,.xls,.xlsx";
@@ -431,15 +432,12 @@ function LineRow({ line, template, idx, availableSites, onChange, onRemove }: Li
   return (
     <tr className={clsx("border-b border-line", locked.account && "bg-primary-50/30")}>
       <td className="px-2 py-1">
-        <input
+        <AccountPicker
           value={line.accountCode}
-          onChange={(e) => onChange({ accountCode: e.target.value })}
-          placeholder="401001"
+          onChange={(code) => onChange({ accountCode: code })}
           disabled={locked.account}
-          className={clsx(
-            "h-8 w-24 rounded border border-line px-1.5 text-[12px] outline-none focus:border-primary-400",
-            locked.account && "bg-surface-alt text-ink-3"
-          )}
+          placeholder="601000"
+          className="h-8 w-24 rounded border border-line px-1.5 text-[12px] outline-none focus:border-primary-400"
         />
       </td>
       <td className="px-2 py-1">
@@ -505,15 +503,12 @@ function LineCard({ line, template, idx, availableSites, onChange }: LineRowProp
   return (
     <div className={clsx("rounded-md border border-line bg-white p-2", locked.account && "bg-primary-50/30")}>
       <div className="grid grid-cols-2 gap-1.5">
-        <input
+        <AccountPicker
           value={line.accountCode}
-          onChange={(e) => onChange({ accountCode: e.target.value })}
-          placeholder="Compte"
+          onChange={(code) => onChange({ accountCode: code })}
           disabled={locked.account}
-          className={clsx(
-            "h-8 rounded border border-line px-1.5 text-[12px]",
-            locked.account && "bg-surface-alt text-ink-3"
-          )}
+          placeholder="Compte"
+          className="h-8 rounded border border-line px-1.5 text-[12px]"
         />
         <select
           value={line.siteId ?? ""}
