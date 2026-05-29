@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/session";
 import { denyIfReadOnly } from "@/lib/rbac/guard";
 import { MODULES } from "@/lib/rbac/modules";
 import { getAccessibleSiteIds, isSiteAllowed } from "@/lib/rbac/site-filter";
+import { periodOf, isPeriodLocked } from "@/lib/comptable/periods";
 import { Role, CptEntryStatus } from "@prisma/client";
 
 const ALLOWED_ROLES: Role[] = [Role.ACCOUNTANT, Role.DAF, Role.DG, Role.SUPER_ADMIN];
@@ -27,6 +28,10 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   }
   if (entry.status !== CptEntryStatus.DRAFT) {
     return NextResponse.json({ error: "Écriture déjà validée ou annulée" }, { status: 409 });
+  }
+  const period = periodOf(entry.entryDate);
+  if (await isPeriodLocked(session.tenantId, period)) {
+    return NextResponse.json({ error: `Période ${period} clôturée — validation impossible.` }, { status: 409 });
   }
 
   await prisma.entry.update({

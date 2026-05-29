@@ -8,6 +8,7 @@ import { getCurrentSession } from "@/lib/session";
 import { denyIfReadOnly } from "@/lib/rbac/guard";
 import { MODULES } from "@/lib/rbac/modules";
 import { getAccessibleSiteIds, isSiteAllowed } from "@/lib/rbac/site-filter";
+import { periodOf, isPeriodLocked } from "@/lib/comptable/periods";
 import { Role, CptEntryStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -264,6 +265,12 @@ export async function POST(req: Request) {
   const totalCredit = parsed.data.lines.reduce((s, l) => s + l.credit, 0);
   if (totalDebit !== totalCredit || totalDebit === 0) {
     return NextResponse.json({ error: "Écriture non équilibrée (débit ≠ crédit)" }, { status: 400 });
+  }
+
+  // Période close : interdiction de saisir sur un mois clôturé/verrouillé.
+  const period = periodOf(new Date(parsed.data.entryDate));
+  if (await isPeriodLocked(session.tenantId, period)) {
+    return NextResponse.json({ error: `Période ${period} clôturée — saisie impossible.` }, { status: 409 });
   }
 
   // Stockage du fichier UNE FOIS toutes les validations passées (évite
