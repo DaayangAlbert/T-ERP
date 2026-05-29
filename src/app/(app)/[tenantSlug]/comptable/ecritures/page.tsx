@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Plus, Paperclip } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useCptEntries, useValidateEntry } from "@/hooks/useCptEntries";
+import { useCptEntries, useValidateEntry, useReverseEntry } from "@/hooks/useCptEntries";
 import { JournalSelector } from "@/components/comptable/entries/JournalSelector";
 import { EntryFormModal } from "@/components/comptable/entries/EntryFormModal";
 
@@ -14,6 +14,7 @@ export default function ComptableEntriesPage() {
 
   const { data, isLoading } = useCptEntries(journal, period);
   const validate = useValidateEntry();
+  const reverse = useReverseEntry();
 
   const sitesQuery = useQuery({
     queryKey: ["comptable", "sites-scope"],
@@ -149,6 +150,20 @@ export default function ComptableEntriesPage() {
                             className="text-[11.5px] font-medium text-primary-700 hover:underline"
                           >
                             Valider
+                          </button>
+                        )}
+                        {e.status === "VALIDATED" && (
+                          <button
+                            type="button"
+                            disabled={reverse.isPending}
+                            onClick={() => {
+                              if (confirm(`Contrepasser l'écriture ${e.reference} ? Une écriture inverse sera générée (l'originale est conservée).`)) {
+                                reverse.mutate(e.id);
+                              }
+                            }}
+                            className="text-[11.5px] font-medium text-ink-3 hover:text-danger hover:underline disabled:opacity-50"
+                          >
+                            Contrepasser
                           </button>
                         )}
                       </td>

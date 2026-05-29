@@ -110,3 +110,21 @@ export function useValidateEntry() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comptable", "entries"] }),
   });
 }
+
+export function useReverseEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/comptable/entries/${id}/reverse`, {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comptable", "entries"] }),
+  });
+}
