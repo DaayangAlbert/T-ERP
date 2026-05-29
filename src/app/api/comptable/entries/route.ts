@@ -267,6 +267,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Écriture non équilibrée (débit ≠ crédit)" }, { status: 400 });
   }
 
+  // Contrôle plan comptable : refuse les comptes inconnus au plan SYSCOHADA du
+  // tenant. Gardé : on ne bloque que si le tenant possède un plan (sinon on
+  // laisse passer pour ne pas casser un tenant sans plan seedé).
+  const codes = Array.from(new Set(parsed.data.lines.map((l) => l.accountCode)));
+  const known = await prisma.chartOfAccounts.findMany({
+    where: { tenantId: session.tenantId, code: { in: codes } },
+    select: { code: true },
+  });
+  if (known.length < codes.length) {
+    const chartSize = await prisma.chartOfAccounts.count({ where: { tenantId: session.tenantId } });
+    if (chartSize > 0) {
+      const knownSet = new Set(known.map((k) => k.code));
+      const unknown = codes.filter((c) => !knownSet.has(c));
+      return NextResponse.json(
+        { error: `Compte(s) inconnu(s) au plan comptable : ${unknown.join(", ")}. Utilisez l'autocomplétion.` },
+        { status: 400 },
+      );
+    }
+  }
+
   // Période close : interdiction de saisir sur un mois clôturé/verrouillé.
   const period = periodOf(new Date(parsed.data.entryDate));
   if (await isPeriodLocked(session.tenantId, period)) {
