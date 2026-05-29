@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/session";
 import { getAccessibleSiteIds } from "@/lib/rbac/site-filter";
 import { AccountingReportPDF, type AccountingReportData, type BalanceRow } from "@/components/comptable/reports/AccountingReportPDF";
-import { ProfitLossReportPDF, type ProfitLossData, type PnLAccountRow } from "@/components/comptable/reports/ProfitLossReportPDF";
+import { ProfitLossReportPDF, type ProfitLossData, type PnLAccountRow, type BilanRow } from "@/components/comptable/reports/ProfitLossReportPDF";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -167,6 +167,70 @@ async function renderProfitLoss(
   const totalCharges = chargesRows.reduce((s, r) => s + BigInt(r.amount), 0n);
   const totalProduits = produitsRows.reduce((s, r) => s + BigInt(r.amount), 0n);
 
+  // --- Bilan provisoire (classes 1 à 5) ---
+  const bilanLines = await prisma.entryLine.findMany({
+    where: {
+      entry: entryWhere,
+      OR: [
+        { accountCode: { startsWith: "1" } },
+        { accountCode: { startsWith: "2" } },
+        { accountCode: { startsWith: "3" } },
+        { accountCode: { startsWith: "4" } },
+        { accountCode: { startsWith: "5" } },
+      ],
+    },
+    select: { accountCode: true, debit: true, credit: true },
+  });
+
+  const balByAccount = new Map<string, { cls: string; bal: bigint }>();
+  for (const l of bilanLines) {
+    const key = l.accountCode.slice(0, 4);
+    const cls = l.accountCode.slice(0, 1);
+    const cur = balByAccount.get(key) ?? { cls, bal: 0n };
+    cur.bal += BigInt(l.debit) - BigInt(l.credit);
+    balByAccount.set(key, cur);
+  }
+
+  // Libellés pour les comptes du bilan (premier match par préfixe 4 chiffres).
+  const bilanCodes = Array.from(balByAccount.keys());
+  const bilanLabels = new Map<string, string>();
+  if (bilanCodes.length > 0) {
+    const accs = await prisma.chartOfAccounts.findMany({
+      where: { tenantId, OR: bilanCodes.map((c) => ({ code: { startsWith: c } })) },
+      select: { code: true, name: true },
+    });
+    for (const a of accs) {
+      const k = a.code.slice(0, 4);
+      if (!bilanLabels.has(k)) bilanLabels.set(k, a.name);
+    }
+  }
+
+  const immobilisations: BilanRow[] = [];
+  const stocks: BilanRow[] = [];
+  const creances: BilanRow[] = [];
+  const tresorerieA: BilanRow[] = [];
+  const capitaux: BilanRow[] = [];
+  const dettes: BilanRow[] = [];
+  const decouverts: BilanRow[] = [];
+
+  for (const [code, { cls, bal }] of balByAccount) {
+    if (bal === 0n) continue;
+    const label = bilanLabels.get(code) ?? null;
+    const abs = bal < 0n ? -bal : bal;
+    const row: BilanRow = { code, label, amount: abs.toString() };
+    if (cls === "2" && bal > 0n) immobilisations.push(row);
+    else if (cls === "3" && bal > 0n) stocks.push(row);
+    else if (cls === "4") (bal > 0n ? creances : dettes).push(row);
+    else if (cls === "5") (bal > 0n ? tresorerieA : decouverts).push(row);
+    else if (cls === "1" && bal < 0n) capitaux.push(row);
+    // class 1 solde débiteur (anormal) ou class 2/3 solde créditeur (anormal) → ignorés.
+  }
+
+  const sumRows = (rows: BilanRow[]) => rows.reduce((s, r) => s + BigInt(r.amount), 0n);
+  const resultat = totalProduits - totalCharges;
+  const totalActif = sumRows(immobilisations) + sumRows(stocks) + sumRows(creances) + sumRows(tresorerieA);
+  const totalPassif = sumRows(capitaux) + resultat + sumRows(dettes) + sumRows(decouverts);
+
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true } });
 
   const data: ProfitLossData = {
@@ -178,6 +242,22 @@ async function renderProfitLoss(
     produits: produitsRows,
     totalCharges: totalCharges.toString(),
     totalProduits: totalProduits.toString(),
+    bilan: {
+      actif: {
+        immobilisations: immobilisations.sort((a, b) => a.code.localeCompare(b.code)),
+        stocks: stocks.sort((a, b) => a.code.localeCompare(b.code)),
+        creances: creances.sort((a, b) => a.code.localeCompare(b.code)),
+        tresorerie: tresorerieA.sort((a, b) => a.code.localeCompare(b.code)),
+        total: totalActif.toString(),
+      },
+      passif: {
+        capitaux: capitaux.sort((a, b) => a.code.localeCompare(b.code)),
+        resultat: resultat.toString(),
+        dettes: dettes.sort((a, b) => a.code.localeCompare(b.code)),
+        decouverts: decouverts.sort((a, b) => a.code.localeCompare(b.code)),
+        total: totalPassif.toString(),
+      },
+    },
   };
 
   try {
