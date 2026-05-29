@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Paperclip } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCptEntries, useValidateEntry } from "@/hooks/useCptEntries";
 import { JournalSelector } from "@/components/comptable/entries/JournalSelector";
@@ -92,6 +92,7 @@ export default function ComptableEntriesPage() {
                     <th className="px-3 py-2 text-right">Débit</th>
                     <th className="px-3 py-2 text-right">Crédit</th>
                     <th className="px-3 py-2">Statut</th>
+                    <th className="px-3 py-2">Pièce</th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
@@ -125,6 +126,21 @@ export default function ComptableEntriesPage() {
                           {e.status === "VALIDATED" ? "Validée" : e.status === "CANCELLED" ? "Annulée" : "Brouillard"}
                         </span>
                       </td>
+                      <td className="px-3 py-2">
+                        {e.attachmentUrl ? (
+                          <a
+                            href={`/api/comptable/entries/${e.id}/attachment`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={e.attachmentName ?? "Justificatif"}
+                            className="inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-[11px] text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                          >
+                            <Paperclip className="h-3.5 w-3.5" /> Voir
+                          </a>
+                        ) : (
+                          <span className="text-[11px] text-ink-3">—</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right">
                         {e.status === "DRAFT" && (
                           <button
@@ -150,7 +166,7 @@ export default function ComptableEntriesPage() {
                     <td className="px-3 py-2 text-right tabular-nums">
                       {(data?.totals.credit ?? 0).toLocaleString("fr-FR")}
                     </td>
-                    <td colSpan={2} className={data?.totals.balanced ? "text-success" : "text-danger"}>
+                    <td colSpan={3} className={data?.totals.balanced ? "text-success" : "text-danger"}>
                       {data?.totals.balanced ? "✓ Équilibré" : "✗ Déséquilibre"}
                     </td>
                   </tr>
@@ -179,10 +195,20 @@ export default function ComptableEntriesPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-[12.5px] text-ink-2">{e.description}</p>
-                  <div className="mt-2 flex justify-between text-[12px]">
+                  <div className="mt-2 flex items-center justify-between text-[12px]">
                     <span className="text-ink-3">D : {e.totalDebit.toLocaleString("fr-FR")}</span>
                     <span className="text-ink-3">C : {e.totalCredit.toLocaleString("fr-FR")}</span>
                   </div>
+                  {e.attachmentUrl && (
+                    <a
+                      href={`/api/comptable/entries/${e.id}/attachment`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 rounded border border-line px-2 py-1 text-[11.5px] text-ink-2"
+                    >
+                      <Paperclip className="h-3.5 w-3.5" /> Justificatif
+                    </a>
+                  )}
                 </div>
               ))}
               {data?.items.length === 0 && (
