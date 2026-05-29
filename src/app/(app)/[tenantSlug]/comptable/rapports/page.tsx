@@ -15,6 +15,7 @@ const PDF_AVAILABLE = new Set([
   "CPT_BALANCE_AUX_SUPPLIERS",
   "CPT_BALANCE_AUX_CUSTOMERS",
   "CPT_SITE_BALANCE",
+  "CPT_MONTHLY_SYNTHESIS", // compte de résultat (P&L)
 ]);
 
 export default function ComptableReportsPage() {
