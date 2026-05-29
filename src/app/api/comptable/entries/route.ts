@@ -273,18 +273,30 @@ export async function POST(req: Request) {
   const codes = Array.from(new Set(parsed.data.lines.map((l) => l.accountCode)));
   const known = await prisma.chartOfAccounts.findMany({
     where: { tenantId: session.tenantId, code: { in: codes } },
-    select: { code: true },
+    select: { code: true, requiresThirdParty: true },
   });
+  const knownMap = new Map(known.map((k) => [k.code, k]));
   if (known.length < codes.length) {
     const chartSize = await prisma.chartOfAccounts.count({ where: { tenantId: session.tenantId } });
     if (chartSize > 0) {
-      const knownSet = new Set(known.map((k) => k.code));
-      const unknown = codes.filter((c) => !knownSet.has(c));
+      const unknown = codes.filter((c) => !knownMap.has(c));
       return NextResponse.json(
         { error: `Compte(s) inconnu(s) au plan comptable : ${unknown.join(", ")}. Utilisez l'autocomplétion.` },
         { status: 400 },
       );
     }
+  }
+
+  // Tiers obligatoire sur les comptes auxiliaires (401 fournisseurs / 411 clients).
+  const missingTiers = parsed.data.lines.filter(
+    (l) => knownMap.get(l.accountCode)?.requiresThirdParty && !(l.thirdPartyId && l.thirdPartyId.trim()),
+  );
+  if (missingTiers.length > 0) {
+    const accs = Array.from(new Set(missingTiers.map((l) => l.accountCode)));
+    return NextResponse.json(
+      { error: `Tiers obligatoire (fournisseur/client) pour le(s) compte(s) : ${accs.join(", ")}.` },
+      { status: 400 },
+    );
   }
 
   // Période close : interdiction de saisir sur un mois clôturé/verrouillé.

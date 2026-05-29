@@ -5,6 +5,7 @@ import { Plus, Trash2, X, Paperclip, FileText, AlertTriangle } from "lucide-reac
 import { clsx } from "clsx";
 import { useCreateEntry, type CptEntryLine } from "@/hooks/useCptEntries";
 import { AccountPicker } from "@/components/comptable/entries/AccountPicker";
+import { ThirdPartyPicker, accountNeedsTiers } from "@/components/comptable/entries/ThirdPartyPicker";
 
 const MAX_ATTACHMENT_MB = 20;
 const ALLOWED_EXT = ".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.doc,.docx,.xls,.xlsx";
@@ -254,6 +255,7 @@ export function EntryFormModal({ open, onClose, journalCode, defaultSiteId, isSi
                 <thead className="border-b border-line bg-surface-alt text-left text-[11px] uppercase tracking-wider text-ink-3">
                   <tr>
                     <th className="px-2 py-1.5">Compte</th>
+                    <th className="px-2 py-1.5">Tiers</th>
                     <th className="px-2 py-1.5">Libellé ligne</th>
                     <th className="px-2 py-1.5 text-right">Débit</th>
                     <th className="px-2 py-1.5 text-right">Crédit</th>
@@ -441,6 +443,18 @@ function LineRow({ line, template, idx, availableSites, onChange, onRemove }: Li
         />
       </td>
       <td className="px-2 py-1">
+        {accountNeedsTiers(line.accountCode) ? (
+          <ThirdPartyPicker
+            accountCode={line.accountCode}
+            value={line.thirdPartyId ?? ""}
+            onChange={(v) => onChange({ thirdPartyId: v })}
+            className="h-8 w-28 rounded border border-line px-1.5 text-[12px] outline-none focus:border-primary-400"
+          />
+        ) : (
+          <span className="text-[11px] text-ink-3">—</span>
+        )}
+      </td>
+      <td className="px-2 py-1">
         <input
           value={line.description}
           onChange={(e) => onChange({ description: e.target.value })}
@@ -520,6 +534,14 @@ function LineCard({ line, template, idx, availableSites, onChange }: LineRowProp
             <option key={s.id} value={s.id}>{s.code}</option>
           ))}
         </select>
+        {accountNeedsTiers(line.accountCode) && (
+          <ThirdPartyPicker
+            accountCode={line.accountCode}
+            value={line.thirdPartyId ?? ""}
+            onChange={(v) => onChange({ thirdPartyId: v })}
+            className="col-span-2 h-8 rounded border border-line px-1.5 text-[12px]"
+          />
+        )}
         <input
           value={line.description}
           onChange={(e) => onChange({ description: e.target.value })}
