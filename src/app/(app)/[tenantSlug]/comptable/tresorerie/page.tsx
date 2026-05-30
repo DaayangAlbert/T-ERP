@@ -193,13 +193,14 @@ export default function TresoreriePage() {
       {tab === "reconciliation" && isDirection && (
         <section className="rounded-xl border border-line bg-white p-6 shadow-card text-center text-[12.5px] text-ink-3">
           <p>
-            Le module de rapprochement bancaire complet (import OFX/CSV, matching) est sur la page{" "}
-            <strong className="text-primary-700">Comptabilité — supervision DAF</strong>.
+            Le rapprochement bancaire (import CSV + pointage auto/manuel) se fait sur la page dédiée :
           </p>
-          <p className="mt-2 text-[12px]">
-            Ici tu peux consulter les soldes et créer des écritures via « Saisie d&apos;écritures ». Pour
-            les rapprochements détaillés, va dans l&apos;espace DAF si tu y as accès.
-          </p>
+          <a
+            href="/comptable/rapprochement"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-4 py-2 text-[13px] font-medium text-white hover:bg-primary-700"
+          >
+            Ouvrir le rapprochement bancaire →
+          </a>
         </section>
       )}
 
