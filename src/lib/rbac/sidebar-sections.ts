@@ -381,6 +381,7 @@ const FULL: Record<Module, NavSection> = {
       { label: "Grand livre", href: "/comptable/grand-livre", icon: BarChart3 },
       { label: "Échéancier tiers", href: "/comptable/echeancier", icon: Clock },
       { label: "Rapprochement bancaire", href: "/comptable/rapprochement", icon: Coins },
+      { label: "Écritures récurrentes", href: "/comptable/recurrentes", icon: History },
       { label: "Clôtures", href: "/comptable/clotures", icon: Lock },
       { label: "Validations N1", href: "/comptable/validations", icon: CheckCircle2 },
       { label: "Suivi paiement assigné", href: "/suivi-paiement", icon: ClipboardCheck },

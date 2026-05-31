@@ -8217,3 +8217,28 @@ enum ProfileChangeRequestStatus {
   REJECTED
   CANCELLED
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Écritures comptables récurrentes (loyers, abonnements, provisions…).
+// Stocke un modèle d'écriture (journal + lignes équilibrées) à rejouer
+// mensuellement. Pas de FK Prisma sur tenantId/createdById pour éviter
+// d'éditer les modèles Tenant/User (filtrage applicatif suffisant).
+// ─────────────────────────────────────────────────────────────────────────
+model RecurringEntry {
+  id            String    @id @default(cuid())
+  tenantId      String
+  label         String // "Loyer bureau Yaoundé", "Abonnement ENEO"
+  journalCode   String // "OD", "ACH"...
+  description   String // libellé qui sera repris sur l'écriture générée
+  lines         Json      @default("[]") // [{accountCode, debit, credit, thirdPartyId?, description?, siteId?}]
+  active        Boolean   @default(true)
+  dayOfMonth    Int? // jour préféré du mois (1-28), purement indicatif pour l'UI
+  lastRunAt     DateTime?
+  lastRunPeriod String? // "YYYY-MM" du dernier run, anti-doublon
+  createdById   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([tenantId, active])
+  @@map("recurring_entries")
+}
