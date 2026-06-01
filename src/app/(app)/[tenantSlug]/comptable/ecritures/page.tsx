@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useCptEntries, useValidateEntry, useReverseEntry } from "@/hooks/useCptEntries";
 import { JournalSelector } from "@/components/comptable/entries/JournalSelector";
 import { EntryFormModal } from "@/components/comptable/entries/EntryFormModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EcrituresTutorial } from "@/components/help/tutorials/EcrituresTutorial";
 
 export default function ComptableEntriesPage() {
   const [journal, setJournal] = useState("ACH");
@@ -47,13 +49,18 @@ export default function ComptableEntriesPage() {
             Journaux comptables SYSCOHADA — équilibre débit/crédit en temps réel.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouvelle écriture
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Saisie d'écritures">
+            <EcrituresTutorial />
+          </PageHelp>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvelle écriture
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
