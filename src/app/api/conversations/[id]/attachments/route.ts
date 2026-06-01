@@ -77,7 +77,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       { status: 413 }
     );
   }
-  if (!ALLOWED_MIMES.has(file.type)) {
+  // Normalise le MIME : Chrome enregistre les notes vocales en
+  // `audio/webm;codecs=opus` → on retire le paramètre `;codecs=…` pour
+  // matcher la whitelist (sinon 415 alors que c'est bien du audio/webm).
+  const baseMime = file.type.split(";")[0].trim();
+  if (!ALLOWED_MIMES.has(baseMime)) {
     return NextResponse.json(
       { error: `Type non supporté (${file.type})` },
       { status: 415 }
