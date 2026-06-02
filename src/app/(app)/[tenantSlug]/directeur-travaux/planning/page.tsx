@@ -76,8 +76,8 @@ export default function PlanningPage() {
   const qc = useQueryClient();
   const [openModal, setOpenModal] = useState<
     | { kind: "phase"; phase?: Phase }
-    | { kind: "task"; phaseId: string; phaseName: string }
-    | { kind: "milestone" }
+    | { kind: "task"; phaseId: string; phaseName: string; task?: Task }
+    | { kind: "milestone"; milestone?: Milestone }
     | null
   >(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -347,15 +347,28 @@ export default function PlanningPage() {
                                     {Math.round(t.progressPercent)}%
                                   </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (confirm(`Supprimer la tâche "${t.name}" ?`)) deleteTask.mutate(t.id);
-                                  }}
-                                  className="grid h-7 w-7 flex-shrink-0 place-items-center rounded text-ink-3 hover:text-rose-600"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                                <div className="flex flex-shrink-0 gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenModal({ kind: "task", phaseId: ph.id, phaseName: ph.name, task: t })
+                                    }
+                                    title="Modifier la tâche"
+                                    className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:text-primary-700"
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (confirm(`Supprimer la tâche "${t.name}" ?`)) deleteTask.mutate(t.id);
+                                    }}
+                                    title="Supprimer"
+                                    className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:text-rose-600"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
                               </li>
                             ))}
                           </ul>
@@ -411,6 +424,14 @@ export default function PlanningPage() {
                       )}
                       <button
                         type="button"
+                        onClick={() => setOpenModal({ kind: "milestone", milestone: m })}
+                        title="Modifier le jalon"
+                        className="grid h-8 w-8 place-items-center rounded-md border border-line-2 bg-white text-ink-2 hover:border-primary-300 hover:text-primary-700"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => {
                           if (confirm(`Supprimer le jalon "${m.code}" ?`)) deleteMilestone.mutate(m.id);
                         }}
@@ -443,6 +464,7 @@ export default function PlanningPage() {
         <TaskModal
           phaseId={openModal.phaseId}
           phaseName={openModal.phaseName}
+          task={openModal.task}
           onClose={() => setOpenModal(null)}
           onDone={() => {
             invalidate();
@@ -453,6 +475,7 @@ export default function PlanningPage() {
       {openModal?.kind === "milestone" && (
         <MilestoneModal
           siteId={activeChantierId!}
+          milestone={openModal.milestone}
           onClose={() => setOpenModal(null)}
           onDone={() => {
             invalidate();
@@ -573,17 +596,21 @@ function PhaseModal({
 function TaskModal({
   phaseId,
   phaseName,
+  task,
   onClose,
   onDone,
 }: {
   phaseId: string;
   phaseName: string;
+  task?: Task;
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [name, setName] = useState("");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const editing = !!task;
+  const [name, setName] = useState(task?.name ?? "");
+  const [start, setStart] = useState(task?.plannedStart.slice(0, 10) ?? "");
+  const [end, setEnd] = useState(task?.plannedEnd.slice(0, 10) ?? "");
+  const [progress, setProgress] = useState(task?.progressPercent ?? 0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -593,15 +620,26 @@ function TaskModal({
     if (!start || !end) return setError("Dates requises.");
     if (new Date(end) <= new Date(start)) return setError("La date de fin doit être après le début.");
     setSaving(true);
-    const res = await fetch(`/api/dtrav/planning/phases/${phaseId}/tasks`, {
-      method: "POST",
+    const url = editing
+      ? `/api/dtrav/planning/tasks/${task.id}`
+      : `/api/dtrav/planning/phases/${phaseId}/tasks`;
+    const body = editing
+      ? {
+          name: name.trim(),
+          plannedStart: new Date(start).toISOString(),
+          plannedEnd: new Date(end).toISOString(),
+          progressPercent: progress,
+        }
+      : {
+          name: name.trim(),
+          plannedStart: new Date(start).toISOString(),
+          plannedEnd: new Date(end).toISOString(),
+        };
+    const res = await fetch(url, {
+      method: editing ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({
-        name: name.trim(),
-        plannedStart: new Date(start).toISOString(),
-        plannedEnd: new Date(end).toISOString(),
-      }),
+      body: JSON.stringify(body),
     });
     setSaving(false);
     if (!res.ok) {
@@ -613,7 +651,7 @@ function TaskModal({
   }
 
   return (
-    <Modal title={`Nouvelle tâche · ${phaseName}`} onClose={onClose}>
+    <Modal title={editing ? `Modifier · ${task.name}` : `Nouvelle tâche · ${phaseName}`} onClose={onClose}>
       <Field label="Nom de la tâche" required>
         <input
           value={name}
@@ -630,6 +668,18 @@ function TaskModal({
           <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={INPUT} />
         </Field>
       </div>
+      {editing && (
+        <Field label={`Avancement (${progress}%)`}>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={progress}
+            onChange={(e) => setProgress(Number(e.target.value))}
+            className="mt-2 w-full"
+          />
+        </Field>
+      )}
       {error && <ErrorBox>{error}</ErrorBox>}
       <ModalFooter onClose={onClose} onSave={submit} saving={saving} />
     </Modal>
@@ -638,16 +688,19 @@ function TaskModal({
 
 function MilestoneModal({
   siteId,
+  milestone,
   onClose,
   onDone,
 }: {
   siteId: string;
+  milestone?: Milestone;
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [code, setCode] = useState("");
-  const [description, setDescription] = useState("");
-  const [due, setDue] = useState("");
+  const editing = !!milestone;
+  const [code, setCode] = useState(milestone?.code ?? "");
+  const [description, setDescription] = useState(milestone?.description ?? "");
+  const [due, setDue] = useState(milestone?.contractDueDate.slice(0, 10) ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -657,8 +710,11 @@ function MilestoneModal({
     if (!description.trim()) return setError("Description requise.");
     if (!due) return setError("Échéance requise.");
     setSaving(true);
-    const res = await fetch(`/api/dtrav/sites/${siteId}/planning/milestones`, {
-      method: "POST",
+    const url = editing
+      ? `/api/dtrav/planning/milestones/${milestone.id}`
+      : `/api/dtrav/sites/${siteId}/planning/milestones`;
+    const res = await fetch(url, {
+      method: editing ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
       body: JSON.stringify({
@@ -677,7 +733,7 @@ function MilestoneModal({
   }
 
   return (
-    <Modal title="Nouveau jalon contractuel" onClose={onClose}>
+    <Modal title={editing ? `Modifier jalon · ${milestone.code}` : "Nouveau jalon contractuel"} onClose={onClose}>
       <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
         <Field label="Code" required>
           <input
