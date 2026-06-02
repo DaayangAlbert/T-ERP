@@ -15,7 +15,10 @@ import {
   Flag,
   Layers,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
 
@@ -69,6 +72,7 @@ const PHASE_STATUS_LABEL: Record<Phase["status"], string> = {
 
 export default function PlanningPage() {
   const { activeChantierId, activeChantier } = useChantier();
+  const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const qc = useQueryClient();
   const [openModal, setOpenModal] = useState<
     | { kind: "phase"; phase?: Phase }
@@ -161,21 +165,31 @@ export default function PlanningPage() {
     <div id="screen-dtrav-planning" className="space-y-3">
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Planning chantier</h1>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Planning général (contractuel)
+          </h1>
           <p className="mt-1 text-[12.5px] text-ink-3">
-            {activeChantier?.code ?? "—"} — phases, tâches, jalons MOA. Téléchargeable en PDF avec en-tête entreprise.
+            {activeChantier?.code ?? "—"} — phases, tâches, jalons MOA. Document contractuel signé avec le maître d&apos;ouvrage.
           </p>
         </div>
-        {activeChantierId && hasPlanning && (
-          <a
-            href={pdfHref}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-primary-600 px-4 text-sm font-semibold text-white shadow-card hover:bg-primary-700"
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/${tenantSlug}/directeur-travaux/planning-operationnel`}
+            className="inline-flex h-10 items-center gap-2 rounded-md border border-line-2 bg-white px-3 text-sm font-medium text-ink-2 hover:border-primary-300 hover:text-primary-700"
           >
-            <Download className="h-4 w-4" /> Télécharger le PDF
-          </a>
-        )}
+            Planning opérationnel <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          {activeChantierId && hasPlanning && (
+            <a
+              href={pdfHref}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-primary-600 px-4 text-sm font-semibold text-white shadow-card hover:bg-primary-700"
+            >
+              <Download className="h-4 w-4" /> Télécharger le PDF
+            </a>
+          )}
+        </div>
       </header>
 
       {!activeChantierId && (

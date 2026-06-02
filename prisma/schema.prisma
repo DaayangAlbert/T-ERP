@@ -82,6 +82,7 @@ model Tenant {
 
   users                     User[]
   sites                     Site[]
+  operationalPlans          OperationalPlan[]
   jobOffers                 JobOffer[]
   payslips                  Payslip[]
   conversations             Conversation[]
@@ -336,6 +337,7 @@ model User {
   notifications                  Notification[]
   auditLogs                      AuditLog[]
   managedSites                   Site[]                        @relation("SiteManager")
+  authoredOperationalPlans       OperationalPlan[]             @relation("AuthoredOperationalPlans")
   materialRequestsCreated        MaterialRequest[]             @relation("MaterialRequester")
   materialRequestsFulfilled      MaterialRequest[]             @relation("MaterialFulfiller")
   progressReportsAuthored        SiteProgressReport[]          @relation("ProgressReportAuthor")
@@ -767,6 +769,7 @@ model Site {
   workforceMembers         SiteWorkforceMember[]
   teams                    SiteTeam[]
   planning                 SitePlanning?
+  operationalPlans         OperationalPlan[]
   amendments               ContractAmendment[]
   penalties                SitePenalty[]
   stockAlerts              SiteStockAlert[]
@@ -5071,6 +5074,66 @@ enum SiteMilestoneStatus {
   LATE
   MOA_VALIDATED
   MISSED
+}
+
+// ========================================
+// Planning OPÉRATIONNEL (CDT + DTrav)
+// ----------------------------------------
+// Distinct du planning général contractuel (SitePlanning) : ce sont les
+// déclinaisons d'exécution rédigées par le Conducteur de Travaux et/ou le
+// Directeur des Travaux pour piloter l'opérationnel.
+//
+// 2 horizons : MONTHLY (mois N+1) et WEEKLY (semaine S+1). Le JOURNALIER reste
+// porté par DailyPlan (modèle existant) qu'on intègre via l'UI à onglets.
+// ========================================
+enum PlanHorizon {
+  MONTHLY
+  WEEKLY
+}
+
+enum OperationalPlanStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model OperationalPlan {
+  id          String                @id @default(cuid())
+  tenantId    String
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  siteId      String
+  site        Site                  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User                  @relation("AuthoredOperationalPlans", fields: [authorId], references: [id])
+  horizon     PlanHorizon
+  periodStart DateTime
+  periodEnd   DateTime
+  title       String? // ex: "Mai 2026" ou "Semaine 19"
+  objective   String?               @db.Text
+  status      OperationalPlanStatus @default(DRAFT)
+  tasks       OperationalTask[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@index([siteId, horizon, periodStart])
+  @@index([tenantId, horizon])
+  @@map("operational_plans")
+}
+
+model OperationalTask {
+  id              String          @id @default(cuid())
+  planId          String
+  plan            OperationalPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  name            String
+  plannedStart    DateTime
+  plannedEnd      DateTime
+  progressPercent Float           @default(0)
+  assignedTeamId  String? // optionnel : équipe affectée (SiteTeam)
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([planId, plannedStart])
+  @@map("operational_tasks")
 }
 
 // ========================================
