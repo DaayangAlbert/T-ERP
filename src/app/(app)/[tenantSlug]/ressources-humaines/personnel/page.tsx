@@ -7,6 +7,8 @@ import { PersonnelFilters } from "@/components/rh/personnel/PersonnelFilters";
 import { PersonnelTable } from "@/components/rh/personnel/PersonnelTable";
 import { PersonnelPagination } from "@/components/rh/personnel/PersonnelPagination";
 import { EmployeeFiche } from "@/components/rh/personnel/EmployeeFiche";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhPersonnelTutorial } from "@/components/help/tutorials/RhPersonnelTutorial";
 
 const LIMIT = 8;
 
@@ -56,6 +58,7 @@ export default function PersonnelPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Personnel"><RhPersonnelTutorial /></PageHelp>
           <a
             href="/api/rh/personnel/export"
             className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12.5px] font-medium text-ink-3 hover:bg-surface-alt"

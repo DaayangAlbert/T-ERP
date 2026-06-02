@@ -13,6 +13,8 @@ import {
   type RhPendingValidation,
 } from "@/hooks/useRhValidations";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhValidationsTutorial } from "@/components/help/tutorials/RhValidationsTutorial";
 
 type Tab = "n1" | "circuit" | "delegations";
 
@@ -50,9 +52,12 @@ export default function RhValidationsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Validations RH</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">Mes N1 RH, vue transverse du circuit, délégations en cas d&apos;absence.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Validations RH</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">Mes N1 RH, vue transverse du circuit, délégations en cas d&apos;absence.</p>
+        </div>
+        <PageHelp title="Aide — Validations RH"><RhValidationsTutorial /></PageHelp>
       </header>
 
       <div className="rounded-xl border border-primary-200 bg-primary-50 p-3 text-primary-900">

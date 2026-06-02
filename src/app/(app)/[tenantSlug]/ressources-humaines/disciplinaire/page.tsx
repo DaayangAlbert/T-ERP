@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Shield, ShieldAlert, Users2, History, Gavel, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useDisciplinary, type DisciplinaryCase } from "@/hooks/useRhDisciplinary";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhDisciplinaireTutorial } from "@/components/help/tutorials/RhDisciplinaireTutorial";
 
 type Tab = "active" | "history" | "negotiated" | "collective";
 
@@ -37,11 +39,14 @@ export default function DisciplinairePage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Procédures disciplinaires et conflits sociaux</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Données sensibles · accès RH uniquement · journalisé en audit.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Procédures disciplinaires et conflits sociaux</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Données sensibles · accès RH uniquement · journalisé en audit.
+          </p>
+        </div>
+        <PageHelp title="Aide — Disciplinaire & conflits"><RhDisciplinaireTutorial /></PageHelp>
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">

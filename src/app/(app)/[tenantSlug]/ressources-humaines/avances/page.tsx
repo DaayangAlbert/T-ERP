@@ -13,6 +13,8 @@ import {
 import { clsx } from "clsx";
 import { formatFCFA } from "@/lib/format";
 import { ContactActions } from "@/components/contact/ContactActions";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhAvancesTutorial } from "@/components/help/tutorials/RhAvancesTutorial";
 
 interface AdvanceItem {
   id: string;
@@ -103,14 +105,17 @@ export default function DrhAdvancesPage() {
 
   return (
     <>
-      <header className="mb-5 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Avances sur salaire — à valider
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Demandes émises par les ouvriers via leur PWA mobile. Chaque action
-          envoie une notification à l'ouvrier (push + cloche).
-        </p>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Avances sur salaire — à valider
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Demandes émises par les ouvriers via leur PWA mobile. Chaque action
+            envoie une notification à l&apos;ouvrier (push + cloche).
+          </p>
+        </div>
+        <PageHelp title="Aide — Avances sur salaire"><RhAvancesTutorial /></PageHelp>
       </header>
 
       {/* Feedback bandeau */}

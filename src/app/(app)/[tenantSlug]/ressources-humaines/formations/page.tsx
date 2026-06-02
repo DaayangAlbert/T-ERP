@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Calendar, GraduationCap, ShieldCheck, RefreshCw, Wallet, Activity, Users } from "lucide-react";
 import { clsx } from "clsx";
 import { useCertifications, useTrainings, type CertificationItem, type TrainingPlan } from "@/hooks/useRhTrainings";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhFormationsTutorial } from "@/components/help/tutorials/RhFormationsTutorial";
 
 type Tab = "plan" | "current" | "certifs" | "recycles";
 
@@ -49,6 +51,7 @@ export default function FormationsPage() {
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Formations et certifications</h1>
           <p className="mt-1 text-[12.5px] text-ink-3">Plan annuel, sessions en cours, certifications CACES et recyclages.</p>
         </div>
+        <PageHelp title="Aide — Formations et certifications"><RhFormationsTutorial /></PageHelp>
       </header>
 
       {/* KPIs */}

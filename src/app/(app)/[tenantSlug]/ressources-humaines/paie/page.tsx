@@ -13,6 +13,8 @@ import {
 import { PayrollWorkflowBar } from "@/components/rh/payroll-input/PayrollWorkflowBar";
 import { PayrollInputKpis } from "@/components/rh/payroll-input/PayrollInputKpis";
 import { PayrollInputTable } from "@/components/rh/payroll-input/PayrollInputTable";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhPaieTutorial } from "@/components/help/tutorials/RhPaieTutorial";
 
 const CATEGORIES = ["Journaliers", "Heures sup permanents", "Primes", "Avances", "Retenues"] as const;
 
@@ -49,6 +51,7 @@ export default function PayrollInputPage() {
             <span className="font-semibold text-primary-700">{cycle.status}</span>
           </p>
         </div>
+        <PageHelp title="Aide — Saisie de paie"><RhPaieTutorial /></PageHelp>
       </header>
 
       <PayrollWorkflowBar status={cycle.status} />

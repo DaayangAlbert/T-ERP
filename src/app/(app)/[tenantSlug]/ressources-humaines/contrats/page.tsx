@@ -15,6 +15,8 @@ import {
   type CreateContractPayload,
 } from "@/hooks/useRhContracts";
 import { usePersonnel } from "@/hooks/useRhPersonnel";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhContratsTutorial } from "@/components/help/tutorials/RhContratsTutorial";
 
 function fmtFCFA(n: number): string {
   return new Intl.NumberFormat("fr-FR")
@@ -51,12 +53,15 @@ export default function ContractsPage() {
             Les contrats signés sont archivés automatiquement dans le dossier du salarié.
           </p>
         </div>
-        <button
-          onClick={() => setWizardOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" /> Nouveau contrat
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Contrats de travail"><RhContratsTutorial /></PageHelp>
+          <button
+            onClick={() => setWizardOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> Nouveau contrat
+          </button>
+        </div>
       </header>
 
       {/* Filtres */}

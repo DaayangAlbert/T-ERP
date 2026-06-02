@@ -16,6 +16,8 @@ import { HeadcountEvolutionChart } from "@/components/rh/dashboard/HeadcountEvol
 import { CategoryDonut } from "@/components/rh/dashboard/CategoryDonut";
 import { HiringPipelineTable } from "@/components/rh/dashboard/HiringPipelineTable";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhDashboardTutorial } from "@/components/help/tutorials/RhDashboardTutorial";
 
 type Tab = "overview" | "payroll" | "succession" | "social" | "trainings";
 
@@ -40,6 +42,7 @@ function RhDashboardScreen() {
             Vue d&apos;ensemble {user ? `pour ${user.firstName} ${user.lastName}, Responsable RH` : "RH"}.
           </p>
         </div>
+        <PageHelp title="Aide — Tableau de bord RH"><RhDashboardTutorial /></PageHelp>
       </header>
 
       {isLoading || !data ? (
@@ -81,12 +84,15 @@ export default function RhPage() {
             Vue stratégique : masse salariale, succession, indicateurs sociaux, formations.
           </p>
         </div>
-        <Link
-          href="/ressources-humaines/succession"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
-        >
-          <Crown className="h-3.5 w-3.5" /> Organigramme dédié
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Ressources humaines"><RhDashboardTutorial /></PageHelp>
+          <Link
+            href="/ressources-humaines/succession"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
+          >
+            <Crown className="h-3.5 w-3.5" /> Organigramme dédié
+          </Link>
+        </div>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 border-b border-line">

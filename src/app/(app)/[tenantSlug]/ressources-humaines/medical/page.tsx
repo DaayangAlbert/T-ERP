@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Stethoscope, CalendarClock, AlertTriangle, ShieldCheck, AlertCircle, UserCog } from "lucide-react";
 import { clsx } from "clsx";
 import { useMedicalVisits, type MedicalVisit } from "@/hooks/useRhMedical";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhMedicalTutorial } from "@/components/help/tutorials/RhMedicalTutorial";
 
 type Tab = "due" | "calendar" | "fitness" | "doctor";
 
@@ -41,9 +43,12 @@ export default function MedicalPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Visites médicales et aptitudes</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">Médecine du travail · aptitudes · échéances obligatoires.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Visites médicales et aptitudes</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">Médecine du travail · aptitudes · échéances obligatoires.</p>
+        </div>
+        <PageHelp title="Aide — Visites médicales"><RhMedicalTutorial /></PageHelp>
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">

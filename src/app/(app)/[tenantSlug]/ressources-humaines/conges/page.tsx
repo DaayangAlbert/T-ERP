@@ -8,6 +8,8 @@ import { TeamCalendar } from "@/components/rh/leaves/TeamCalendar";
 import { LeaveBalancesTable } from "@/components/rh/leaves/LeaveBalancesTable";
 import { AbsencesTable } from "@/components/rh/leaves/AbsencesTable";
 import { usePendingLeaves } from "@/hooks/useRhLeaves";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhCongesTutorial } from "@/components/help/tutorials/RhCongesTutorial";
 
 type Tab = "pending" | "calendar" | "balances" | "absences";
 
@@ -32,6 +34,7 @@ export default function CongesPage() {
             Validation des demandes RH (N1), calendrier équipes, soldes et absences déclarées.
           </p>
         </div>
+        <PageHelp title="Aide — Congés et absences"><RhCongesTutorial /></PageHelp>
       </header>
 
       <div className="-mx-3 overflow-x-auto px-3">

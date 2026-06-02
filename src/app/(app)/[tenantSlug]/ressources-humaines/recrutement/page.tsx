@@ -6,6 +6,8 @@ import { useRecruitmentDashboard } from "@/hooks/useRhRecruitment";
 import { KanbanBoard } from "@/components/rh/recruitment/KanbanBoard";
 import { OffersSection } from "@/components/rh/recruitment/OffersSection";
 import { ApplicationDrawer } from "@/components/rh/recruitment/ApplicationDrawer";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RhRecrutementTutorial } from "@/components/help/tutorials/RhRecrutementTutorial";
 
 function fmt(n: number): string {
   return new Intl.NumberFormat("fr-FR").format(n);
@@ -24,6 +26,7 @@ export default function RecrutementPage() {
             Pipeline de candidatures, offres publiées et entretiens.
           </p>
         </div>
+        <PageHelp title="Aide — Recrutement"><RhRecrutementTutorial /></PageHelp>
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
