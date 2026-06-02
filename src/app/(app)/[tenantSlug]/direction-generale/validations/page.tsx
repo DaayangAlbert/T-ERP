@@ -11,6 +11,8 @@ import { AllCircuitView } from "@/components/daf/validations/AllCircuitView";
 import { ValidationStatsCharts } from "@/components/daf/validations/ValidationStatsCharts";
 import { DelegationsManager } from "@/components/daf/validations/DelegationsManager";
 import { MODULES } from "@/lib/rbac/modules";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgValidationsTutorial } from "@/components/help/tutorials/DgValidationsTutorial";
 
 type Tab = "n3" | "circuit" | "stats" | "delegations";
 
@@ -100,13 +102,16 @@ export default function DgValidationsPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Validations — vue DG
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Mes N3 (décision finale), vue transverse du circuit, statistiques et délégations.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Validations — vue DG
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Mes N3 (décision finale), vue transverse du circuit, statistiques et délégations.
+          </p>
+        </div>
+        <PageHelp title="Aide — Validations N3 DG"><DgValidationsTutorial /></PageHelp>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">

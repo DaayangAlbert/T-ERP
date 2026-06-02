@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Landmark, Calendar, ClipboardCheck, AlertTriangle, Users } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgGouvernanceTutorial } from "@/components/help/tutorials/DgGouvernanceTutorial";
 
 const MEETING_TYPE_LABEL: Record<string, string> = {
   BOARD_MEETING: "Conseil d'administration",
@@ -56,11 +58,14 @@ export default function DgGouvernancePage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <Landmark className="h-5 w-5 text-violet-600" /> Calendrier &amp; décisions gouvernance
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Réunions CA/AG à 90 jours · décisions en suivi · mandats administrateurs</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <Landmark className="h-5 w-5 text-violet-600" /> Calendrier &amp; décisions gouvernance
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Réunions CA/AG à 90 jours · décisions en suivi · mandats administrateurs</p>
+        </div>
+        <PageHelp title="Aide — Gouvernance"><DgGouvernanceTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

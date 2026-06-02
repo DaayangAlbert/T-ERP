@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { FolderOpen, Search, Download, FileText, Building2, Briefcase } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgVuesTutorial } from "@/components/help/tutorials/DgVuesTutorial";
 
 interface DocItem {
   id: string;
@@ -75,13 +77,16 @@ export default function DgVueDocumentairePage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
-          <FolderOpen className="h-5 w-5 text-violet-600" /> Vue Documentaire
-        </h1>
-        <p className="text-[12.5px] text-ink-3">
-          Tous les documents du groupe · tri par catégorie / chantier / direction · recherche et téléchargement
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
+            <FolderOpen className="h-5 w-5 text-violet-600" /> Vue Documentaire
+          </h1>
+          <p className="text-[12.5px] text-ink-3">
+            Tous les documents du groupe · tri par catégorie / chantier / direction · recherche et téléchargement
+          </p>
+        </div>
+        <PageHelp title="Aide — Vue Documentaire DG"><DgVuesTutorial domaine="Documentaire" /></PageHelp>
       </header>
 
       {/* Barre de recherche + filtres */}

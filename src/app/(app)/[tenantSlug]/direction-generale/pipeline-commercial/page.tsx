@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Target, TrendingUp, CheckCircle2, XCircle, Briefcase } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgPipelineTutorial } from "@/components/help/tutorials/DgPipelineTutorial";
 
 const STAGE_LABEL: Record<string, string> = {
   OPPORTUNITY: "Opportunité",
@@ -92,11 +94,14 @@ export default function DgPipelinePage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <Target className="h-5 w-5 text-violet-600" /> Pipeline commercial
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Appels d'offres en cours · probabilité pondérée · taux de conversion</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <Target className="h-5 w-5 text-violet-600" /> Pipeline commercial
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Appels d&apos;offres en cours · probabilité pondérée · taux de conversion</p>
+        </div>
+        <PageHelp title="Aide — Pipeline commercial"><DgPipelineTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

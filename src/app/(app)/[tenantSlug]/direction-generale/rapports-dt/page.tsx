@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, FileText, Download, AlertOctagon, X } from "lucide-react";
 import { clsx } from "clsx";
 import { SignatureConfirmModal } from "@/components/common/SignatureConfirmModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgRapportsValidationTutorial } from "@/components/help/tutorials/DgRapportsValidationTutorial";
 
 interface ListItem {
   id: string;
@@ -106,11 +108,14 @@ export default function DgDtReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
         <h1 className="text-[20px] font-bold text-ink">Rapports mensuels DT</h1>
         <p className="text-[12.5px] text-ink-3">
           Validation des rapports mensuels techniques pour COMEX
         </p>
+        </div>
+        <PageHelp title="Aide — Rapports DT à valider"><DgRapportsValidationTutorial kind="DT" /></PageHelp>
       </header>
 
       <div className="flex gap-1 border-b border-line">

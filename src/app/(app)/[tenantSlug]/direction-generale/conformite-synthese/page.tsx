@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, AlertTriangle, Archive, Award } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgConformiteTutorial } from "@/components/help/tutorials/DgConformiteTutorial";
 
 const APPROVAL_STATUS_CLS: Record<string, string> = {
   VALID: "bg-emerald-100 text-emerald-800",
@@ -57,11 +59,14 @@ export default function DgConformitePage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <ShieldCheck className="h-5 w-5 text-violet-600" /> Conformité &amp; agréments
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Agréments professionnels · certifications ISO · registres réglementaires</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <ShieldCheck className="h-5 w-5 text-violet-600" /> Conformité &amp; agréments
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Agréments professionnels · certifications ISO · registres réglementaires</p>
+        </div>
+        <PageHelp title="Aide — Conformité &amp; agréments"><DgConformiteTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

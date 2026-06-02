@@ -8,6 +8,8 @@ import { StackedRevenueChart } from "@/components/dg/StackedRevenueChart";
 import { GroupRevenueDonut } from "@/components/dg/GroupRevenueDonut";
 import { IntragroupTransactions } from "@/components/dg/IntragroupTransactions";
 import { formatFCFA } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgConsolidationTutorial } from "@/components/help/tutorials/DgConsolidationTutorial";
 
 export default function ConsolidationPage() {
   const { data, isLoading, isError, error } = useDgConsolidation();
@@ -58,6 +60,7 @@ export default function ConsolidationPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PageHelp title="Aide — Consolidation groupe"><DgConsolidationTutorial /></PageHelp>
           <select
             aria-label="Période"
             className="h-8 rounded-md border border-line-2 bg-white px-3 text-[12.5px] text-ink-2 hover:border-primary-300 focus:outline-none focus:border-primary-400"

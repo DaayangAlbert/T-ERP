@@ -8,6 +8,8 @@ import { CashFlowChart } from "@/components/dg/CashFlowChart";
 import { CashFlowTable } from "@/components/dg/CashFlowTable";
 import { MajorDueDates } from "@/components/dg/MajorDueDates";
 import { ManualForecastModal } from "@/components/dg/ManualForecastModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgTresorerieTutorial } from "@/components/help/tutorials/DgTresorerieTutorial";
 
 export default function TresoreriePrevisionnellePage() {
   const [weeks, setWeeks] = useState(12);
@@ -39,6 +41,7 @@ export default function TresoreriePrevisionnellePage() {
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          <PageHelp title="Aide — Trésorerie prévisionnelle"><DgTresorerieTutorial /></PageHelp>
           <select
             aria-label="Horizon"
             value={weeks}

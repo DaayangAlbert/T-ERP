@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus, Search, Star, AlertOctagon, MapPin, X } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgFournisseursTutorial } from "@/components/help/tutorials/DgFournisseursTutorial";
 
 interface Supplier {
   id: string;
@@ -65,11 +67,14 @@ export default function DgFournisseursPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <Building2 className="h-5 w-5 text-violet-600" /> Fournisseurs
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Classement par ville · catégorie · ajout d'un nouveau fournisseur</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <Building2 className="h-5 w-5 text-violet-600" /> Fournisseurs
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Classement par ville · catégorie · ajout d&apos;un nouveau fournisseur</p>
+        </div>
+        <PageHelp title="Aide — Fournisseurs DG"><DgFournisseursTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

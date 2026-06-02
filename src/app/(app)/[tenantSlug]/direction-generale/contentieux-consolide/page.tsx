@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gavel, AlertOctagon, CheckCircle2, XCircle, Briefcase } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgContentieuxTutorial } from "@/components/help/tutorials/DgContentieuxTutorial";
 
 const STATUS_LABEL: Record<string, string> = {
   OPEN: "Ouvert",
@@ -91,11 +93,14 @@ export default function DgContentieuxPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <Gavel className="h-5 w-5 text-violet-600" /> Suivi contentieux consolidé
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Litiges actifs · montants à risque · audiences à venir · taux de couverture provisions</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <Gavel className="h-5 w-5 text-violet-600" /> Suivi contentieux consolidé
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Litiges actifs · montants à risque · audiences à venir · taux de couverture provisions</p>
+        </div>
+        <PageHelp title="Aide — Contentieux consolidé"><DgContentieuxTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

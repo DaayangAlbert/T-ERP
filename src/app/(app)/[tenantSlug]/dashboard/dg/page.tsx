@@ -16,6 +16,8 @@ import { DailyKeyStats } from "@/components/dg/DailyKeyStats";
 import { WeeklyTrendChart } from "@/components/dg/WeeklyTrendChart";
 import { DashboardCustomizer } from "@/components/dg/DashboardCustomizer";
 import { formatFCFA, formatNumber, formatDate } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgDashboardTutorial } from "@/components/help/tutorials/DgDashboardTutorial";
 
 export default function DgDashboard() {
   const { tenant } = useTenant();
@@ -71,6 +73,7 @@ export default function DgDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PageHelp title="Aide — Tableau de bord DG"><DgDashboardTutorial /></PageHelp>
           <ActionStub icon={<Calendar className="h-3.5 w-3.5" />}>{today}</ActionStub>
           <button
             type="button"

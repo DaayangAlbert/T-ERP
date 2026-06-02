@@ -12,6 +12,8 @@ import {
 import { ObjectivesGrid } from "@/components/dg/ObjectivesGrid";
 import { ObjectiveTrajectoryChart } from "@/components/dg/ObjectiveTrajectoryChart";
 import { ObjectiveFormModal } from "@/components/dg/ObjectiveFormModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgObjectifsTutorial } from "@/components/help/tutorials/DgObjectifsTutorial";
 
 const YEARS = [2024, 2025, 2026];
 
@@ -63,6 +65,7 @@ export default function ObjectifsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PageHelp title="Aide — Mes objectifs"><DgObjectifsTutorial /></PageHelp>
           <select
             aria-label="Année"
             value={year}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Package, ArrowDownLeft, ArrowUpRight, Building2, Warehouse, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgVuesTutorial } from "@/components/help/tutorials/DgVuesTutorial";
 
 interface Summary {
   summary: {
@@ -73,13 +75,16 @@ export default function DgVueStocksPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
-          <Package className="h-5 w-5 text-violet-600" /> Vue Stocks
-        </h1>
-        <p className="text-[12.5px] text-ink-3">
-          Stock disponible par chantier et entrepôt · historique mouvements sur {data.summary.periodDays} jours
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
+            <Package className="h-5 w-5 text-violet-600" /> Vue Stocks
+          </h1>
+          <p className="text-[12.5px] text-ink-3">
+            Stock disponible par chantier et entrepôt · historique mouvements sur {data.summary.periodDays} jours
+          </p>
+        </div>
+        <PageHelp title="Aide — Vue Stocks DG"><DgVuesTutorial domaine="Stocks" /></PageHelp>
       </header>
 
       {/* KPIs */}

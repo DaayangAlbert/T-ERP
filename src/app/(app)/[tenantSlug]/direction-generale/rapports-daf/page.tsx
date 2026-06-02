@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, FileText, AlertOctagon, X, Coins, Receipt, TrendingUp, ScrollText, CreditCard, Briefcase } from "lucide-react";
 import { clsx } from "clsx";
 import { SignatureConfirmModal } from "@/components/common/SignatureConfirmModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgRapportsValidationTutorial } from "@/components/help/tutorials/DgRapportsValidationTutorial";
 
 interface ListItem {
   id: string;
@@ -132,11 +134,14 @@ export default function DgDafReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
         <h1 className="text-[20px] font-bold text-ink">Rapports financiers mensuels DAF</h1>
         <p className="text-[12.5px] text-ink-3">
           Validation des rapports financiers du Directeur Administratif et Financier
         </p>
+        </div>
+        <PageHelp title="Aide — Rapports DAF à valider"><DgRapportsValidationTutorial kind="DAF" /></PageHelp>
       </header>
 
       <div className="flex gap-1 border-b border-line">

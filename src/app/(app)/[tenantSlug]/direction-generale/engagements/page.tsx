@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet, AlertOctagon, CheckCircle2, Landmark } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgEngagementsTutorial } from "@/components/help/tutorials/DgEngagementsTutorial";
 
 const TYPE_LABEL: Record<string, string> = {
   BANK_GUARANTEE: "Caution bancaire",
@@ -85,11 +87,14 @@ export default function DgEngagementsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
-          <Wallet className="h-5 w-5 text-violet-600" /> Engagements financiers
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Cautions bancaires · garanties · lettres de crédit · engagements d'achat</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="flex items-center gap-2 text-[20px] font-bold text-ink">
+            <Wallet className="h-5 w-5 text-violet-600" /> Engagements financiers
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Cautions bancaires · garanties · lettres de crédit · engagements d&apos;achat</p>
+        </div>
+        <PageHelp title="Aide — Engagements DG"><DgEngagementsTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

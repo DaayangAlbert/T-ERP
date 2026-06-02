@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Truck, Wrench, AlertOctagon, CheckCircle2, Power, ArrowLeftRight, InfoIcon } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgVuesTutorial } from "@/components/help/tutorials/DgVuesTutorial";
 
 type Status = "IN_SERVICE" | "MAINTENANCE" | "BREAKDOWN" | "RETIRED" | "TRANSFER";
 
@@ -78,11 +80,14 @@ export default function DgVueLogistiquePage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
-          <Truck className="h-5 w-5 text-violet-600" /> Vue Logistique
-        </h1>
-        <p className="text-[12.5px] text-ink-3">Matériel du groupe · production par chantier · maintenance · location</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink flex items-center gap-2">
+            <Truck className="h-5 w-5 text-violet-600" /> Vue Logistique
+          </h1>
+          <p className="text-[12.5px] text-ink-3">Matériel du groupe · production par chantier · maintenance · location</p>
+        </div>
+        <PageHelp title="Aide — Vue Logistique DG"><DgVuesTutorial domaine="Logistique" /></PageHelp>
       </header>
 
       {/* KPIs */}

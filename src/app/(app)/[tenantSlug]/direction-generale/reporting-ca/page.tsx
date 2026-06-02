@@ -8,6 +8,8 @@ import { clsx } from "clsx";
 import { useDgBoardReports, useDeleteBoardReport } from "@/hooks/useDgBoardReports";
 import { BoardReportTemplateCard } from "@/components/dg/BoardReportTemplateCard";
 import { formatDate } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DgReportingCaTutorial } from "@/components/help/tutorials/DgReportingCaTutorial";
 
 const TYPE_LABEL: Record<BoardReportType, string> = {
   MONTHLY: "Mensuel",
@@ -59,12 +61,15 @@ export default function ReportingCaPage() {
             Générer et diffuser les rapports CA mensuels, trimestriels et annuels
           </p>
         </div>
-        <Link
-          href="/direction-generale/reporting-ca/nouveau?type=MONTHLY"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-4 text-sm font-medium text-white hover:bg-primary-600"
-        >
-          + Nouveau rapport CA
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Reporting CA"><DgReportingCaTutorial /></PageHelp>
+          <Link
+            href="/direction-generale/reporting-ca/nouveau?type=MONTHLY"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-4 text-sm font-medium text-white hover:bg-primary-600"
+          >
+            + Nouveau rapport CA
+          </Link>
+        </div>
       </header>
 
       <section className="mb-6">
