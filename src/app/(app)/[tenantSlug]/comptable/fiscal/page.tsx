@@ -2,6 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock, AlertOctagon, CalendarClock, FileCheck, Wallet } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { FiscalTutorial } from "@/components/help/tutorials/FiscalTutorial";
 import { clsx } from "clsx";
 import type { TaxType, TaxAuthority, DeclarationStatus, PaymentStatus } from "@prisma/client";
 
@@ -140,13 +142,16 @@ export default function FiscalPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-fiscal">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Déclarations fiscales et sociales
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          TVA · DIPE CNPS · IRPP · IS · DSF — préparation, déclaration et paiement.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Déclarations fiscales et sociales
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            TVA · DIPE CNPS · IRPP · IS · DSF — préparation, déclaration et paiement.
+          </p>
+        </div>
+        <PageHelp title="Aide — Déclarations fiscales et sociales"><FiscalTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

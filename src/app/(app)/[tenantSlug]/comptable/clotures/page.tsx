@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Lock, LockOpen, ShieldCheck } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CloturesTutorial } from "@/components/help/tutorials/CloturesTutorial";
 
 interface PeriodRow {
   period: string;
@@ -84,11 +86,14 @@ export default function CloturesPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-clotures">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Clôtures comptables</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Clôture mensuelle SYSCOHADA — une période clôturée n&apos;accepte plus de saisie ni de validation.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Clôtures comptables</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Clôture mensuelle SYSCOHADA — une période clôturée n&apos;accepte plus de saisie ni de validation.
+          </p>
+        </div>
+        <PageHelp title="Aide — Clôtures comptables"><CloturesTutorial /></PageHelp>
       </header>
 
       {error && <div className="rounded-md border border-danger/30 bg-danger/5 p-3 text-[12.5px] text-danger">{error}</div>}

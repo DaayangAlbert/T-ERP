@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Users, Building2, AlertTriangle } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EcheancierTutorial } from "@/components/help/tutorials/EcheancierTutorial";
 
 interface TierRow {
   tier: string;
@@ -37,11 +39,14 @@ export default function EcheancierPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-echeancier">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Échéancier tiers</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Balance âgée par fournisseur (compte 40x) et par client (compte 41x) — lignes non lettrées.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Échéancier tiers</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Balance âgée par fournisseur (compte 40x) et par client (compte 41x) — lignes non lettrées.
+          </p>
+        </div>
+        <PageHelp title="Aide — Échéancier tiers"><EcheancierTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap gap-1 border-b border-line">

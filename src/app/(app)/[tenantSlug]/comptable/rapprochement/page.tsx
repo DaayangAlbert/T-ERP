@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Upload, Save, CheckCircle2, AlertTriangle, FileSpreadsheet, Link2 } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RapprochementTutorial } from "@/components/help/tutorials/RapprochementTutorial";
 
 interface Bank { id: string; bankName: string; accountNumber: string; currency: string }
 interface BookMovement {
@@ -194,11 +196,14 @@ export default function ReconciliationPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-rapprochement">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Rapprochement bancaire</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Importez le relevé bancaire de la période (CSV), pointez les mouvements avec votre comptabilité, enregistrez le snapshot.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Rapprochement bancaire</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Importez le relevé bancaire de la période (CSV), pointez les mouvements avec votre comptabilité, enregistrez le snapshot.
+          </p>
+        </div>
+        <PageHelp title="Aide — Rapprochement bancaire"><RapprochementTutorial /></PageHelp>
       </header>
 
       <section className="flex flex-wrap items-end gap-3 rounded-lg border border-line bg-white p-3 shadow-card">

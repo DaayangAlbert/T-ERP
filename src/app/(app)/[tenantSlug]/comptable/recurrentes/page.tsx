@@ -6,6 +6,8 @@ import { clsx } from "clsx";
 import { Plus, PlayCircle, Trash2, X } from "lucide-react";
 import { AccountPicker } from "@/components/comptable/entries/AccountPicker";
 import { ThirdPartyPicker, accountNeedsTiers } from "@/components/comptable/entries/ThirdPartyPicker";
+import { PageHelp } from "@/components/help/PageHelp";
+import { RecurrentesTutorial } from "@/components/help/tutorials/RecurrentesTutorial";
 
 interface TplLine {
   accountCode: string;
@@ -110,13 +112,16 @@ export default function RecurrentesPage() {
             l&apos;écriture du mois en un clic, équilibrée et validée automatiquement.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouveau modèle
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Écritures récurrentes"><RecurrentesTutorial /></PageHelp>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouveau modèle
+          </button>
+        </div>
       </header>
 
       {err && <div className="rounded-md border border-danger/30 bg-danger/5 p-3 text-[12.5px] text-danger">{err}</div>}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCptDashboard } from "@/hooks/useCptDashboard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DashboardTutorial } from "@/components/help/tutorials/DashboardTutorial";
 import { CptScopeBanner } from "@/components/comptable/dashboard/CptScopeBanner";
 import { CptKpiRow } from "@/components/comptable/dashboard/CptKpiRow";
 import { CptPrioritiesList } from "@/components/comptable/dashboard/CptPrioritiesList";
@@ -29,6 +31,7 @@ export default function ComptablePage() {
                 : "Chargement…"}
           </p>
         </div>
+        <PageHelp title="Aide — Tableau de bord comptable"><DashboardTutorial /></PageHelp>
       </header>
 
       {error && (

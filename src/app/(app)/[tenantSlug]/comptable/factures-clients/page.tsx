@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Plus } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { FacturesClientsTutorial } from "@/components/help/tutorials/FacturesClientsTutorial";
 
 interface Billing {
   id: string;
@@ -76,13 +78,16 @@ export default function FacturesClientsPage() {
             Émission BPU + TVA 19,25% + retenue garantie 5% + retenue source 2,2%.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setWizardOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouvelle situation
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Situations de travaux"><FacturesClientsTutorial /></PageHelp>
+          <button
+            type="button"
+            onClick={() => setWizardOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvelle situation
+          </button>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { FacturesFrnsTutorial } from "@/components/help/tutorials/FacturesFrnsTutorial";
 
 interface Invoice {
   id: string;
@@ -71,11 +73,14 @@ export default function FacturesFrnsPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-factures-frns">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Factures fournisseurs</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Réception, OCR, comptabilisation 3-way matching, suivi paiement.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Factures fournisseurs</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Réception, OCR, comptabilisation 3-way matching, suivi paiement.
+          </p>
+        </div>
+        <PageHelp title="Aide — Factures fournisseurs"><FacturesFrnsTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

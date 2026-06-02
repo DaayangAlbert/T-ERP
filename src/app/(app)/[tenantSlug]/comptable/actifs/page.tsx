@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Building, Package, PlayCircle } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ActifsTutorial } from "@/components/help/tutorials/ActifsTutorial";
 
 interface Asset {
   id: string;
@@ -77,17 +79,20 @@ export default function ActifsPage() {
             Stocks valorisés (PMP) + immobilisations + amortissements automatiques.
           </p>
         </div>
-        {assets.data?.scope.isDirection && (
-          <button
-            type="button"
-            onClick={() => runDepreciation.mutate()}
-            disabled={runDepreciation.isPending}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-          >
-            <PlayCircle className="h-3.5 w-3.5" />
-            {runDepreciation.isPending ? "Calcul…" : "Calcul amortissement mensuel"}
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Actifs comptables"><ActifsTutorial /></PageHelp>
+          {assets.data?.scope.isDirection && (
+            <button
+              type="button"
+              onClick={() => runDepreciation.mutate()}
+              disabled={runDepreciation.isPending}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              {runDepreciation.isPending ? "Calcul…" : "Calcul amortissement mensuel"}
+            </button>
+          )}
+        </div>
       </header>
 
       {runDepreciation.data && (

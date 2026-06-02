@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, AlertOctagon, Wallet, Clock, ClipboardList } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ValidationsTutorial } from "@/components/help/tutorials/ValidationsTutorial";
 import { clsx } from "clsx";
 import { useCptDashboard } from "@/hooks/useCptDashboard";
 import { CptValidationsBanner } from "@/components/comptable/validations/CptValidationsBanner";
@@ -51,12 +53,15 @@ export default function ComptableValidationsPage() {
             et l&apos;écriture comptable avant validation officielle.
           </p>
         </div>
-        <Link
-          href="/validations"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
-        >
-          Tout le circuit <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Préparation comptable amont"><ValidationsTutorial /></PageHelp>
+          <Link
+            href="/validations"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line-2 bg-white px-3 text-[12.5px] font-medium text-ink-2 hover:border-primary-300"
+          >
+            Tout le circuit <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </header>
 
       <CptValidationsBanner isDirection={dashboard?.scope.isDirection ?? false} siteCount={dashboard?.scope.siteCount} />

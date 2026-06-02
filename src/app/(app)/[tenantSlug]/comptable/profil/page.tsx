@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Mail, Building2, Bell, Shield } from "lucide-react";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ProfilTutorial } from "@/components/help/tutorials/ProfilTutorial";
 
 interface AssignedData {
   isDirection: boolean;
@@ -23,9 +25,12 @@ export default function ComptableProfilePage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-profil">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon espace comptable</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">Profil, paie, messagerie comptable, préférences alertes.</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon espace comptable</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">Profil, paie, messagerie comptable, préférences alertes.</p>
+        </div>
+        <PageHelp title="Aide — Mon espace comptable"><ProfilTutorial /></PageHelp>
       </header>
 
       <AvatarUploader />

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Link2 } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GrandLivreTutorial } from "@/components/help/tutorials/GrandLivreTutorial";
 
 interface LedgerLine {
   id: string;
@@ -82,11 +84,14 @@ export default function GrandLivrePage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-grand-livre">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Grand livre · balance · lettrage</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Consultation détaillée des comptes, balance générale et auxiliaire, lettrage manuel.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Grand livre · balance · lettrage</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Consultation détaillée des comptes, balance générale et auxiliaire, lettrage manuel.
+          </p>
+        </div>
+        <PageHelp title="Aide — Grand livre · balance · lettrage"><GrandLivreTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap gap-1 border-b border-line">

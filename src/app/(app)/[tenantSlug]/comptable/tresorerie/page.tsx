@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Building2, Wallet, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { TresorerieTutorial } from "@/components/help/tutorials/TresorerieTutorial";
 
 interface Cashbox {
   id: string;
@@ -60,13 +62,16 @@ export default function TresoreriePage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-cpt-tresorerie">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Trésorerie comptable</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {isDirection
-            ? "Banques + caisses chantier · rapprochements + import relevés."
-            : "Caisses des chantiers assignés · enregistrement des mouvements."}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Trésorerie comptable</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {isDirection
+              ? "Banques + caisses chantier · rapprochements + import relevés."
+              : "Caisses des chantiers assignés · enregistrement des mouvements."}
+          </p>
+        </div>
+        <PageHelp title="Aide — Trésorerie comptable"><TresorerieTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
