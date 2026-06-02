@@ -223,14 +223,56 @@ export interface SitePlanningPdfData {
   };
 }
 
+// ───────── Sélection automatique du format papier ─────────
+// On part de l'A4 paysage et on monte d'un cran (A3 → A2 → A1 → A0) si le
+// contenu ne tient pas (trop de phases ou trop de mois). Garantit 1 page.
+const PAPER_SIZES = [
+  { name: "A4" as const, w: 842, h: 595 },
+  { name: "A3" as const, w: 1191, h: 842 },
+  { name: "A2" as const, w: 1684, h: 1191 },
+  { name: "A1" as const, w: 2384, h: 1684 },
+  { name: "A0" as const, w: 3370, h: 2384 },
+];
+type PaperName = (typeof PAPER_SIZES)[number]["name"];
+
+function pickPaperSize(data: SitePlanningPdfData): { name: PaperName; w: number; h: number } {
+  // Hauteur de contenu requise (estimation conservative)
+  const phaseRowH = 22;
+  const milestoneChipRowH = 14;
+  const milestoneRows = Math.ceil(Math.max(1, data.milestones.length) / 4);
+  const fixedH =
+    100 /* en-tête */ +
+    35 /* cartouche projet */ +
+    30 /* en-tête tableau */ +
+    milestoneRows * milestoneChipRowH +
+    8 /* padding bandeau jalons */ +
+    140 /* bandeau bas (récap + courbe + obs) */ +
+    95 /* signatures + notes */ +
+    35; /* marges page */
+  const contentH = fixedH + data.phases.length * phaseRowH;
+
+  // Largeur de contenu requise : colonnes fixes + grille Gantt à minWeekW pt/semaine
+  const { monthCount } = computeMonthCount(data);
+  const totalWeeks = monthCount * 4;
+  const minWeekW = 7;
+  const fixedColsW = 22 + 180 + 34 + 42 + 42 + 50 + 36;
+  const contentW = fixedColsW + totalWeeks * minWeekW;
+
+  for (const sz of PAPER_SIZES) {
+    if (contentW <= sz.w && contentH <= sz.h) return sz;
+  }
+  return PAPER_SIZES[PAPER_SIZES.length - 1]; // A0 fallback (impossible en pratique)
+}
+
 // ───────── Composant principal ─────────
 export function SitePlanningPDF({ data }: { data: SitePlanningPdfData }) {
+  const paper = pickPaperSize(data);
   return (
     <Document
       title={`Planning d'exécution — ${data.site.code} ${data.site.name}`}
       author={data.authorName ?? data.tenant.name}
     >
-      <Page size="A4" orientation="landscape" style={styles.page}>
+      <Page size={paper.name} orientation="landscape" style={styles.page}>
         <TopHeader data={data} />
         <ProjectInfoStrip data={data} />
         <GanttTable data={data} />
