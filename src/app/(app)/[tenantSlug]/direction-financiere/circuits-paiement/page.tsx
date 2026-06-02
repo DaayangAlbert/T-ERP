@@ -10,6 +10,8 @@ import {
   useArchiveCircuitTemplate,
   type CircuitTemplate,
 } from "@/hooks/usePaymentCircuits";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafCircuitsPaiementTutorial } from "@/components/help/tutorials/DafCircuitsPaiementTutorial";
 
 interface StepDraft {
   order: number;
@@ -41,6 +43,7 @@ export default function CircuitsPaiementPage() {
             son maître d&apos;ouvrage.
           </p>
         </div>
+        <PageHelp title="Aide — Circuits de paiement"><DafCircuitsPaiementTutorial /></PageHelp>
         {canEdit && !creating && (
           <button
             type="button"

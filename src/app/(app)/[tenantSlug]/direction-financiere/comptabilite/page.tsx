@@ -12,6 +12,8 @@ import { PendingInvoicesPanel } from "@/components/daf/accounting/PendingInvoice
 import { TaxCalendarPanel } from "@/components/daf/accounting/TaxCalendarPanel";
 import { VariationPanel } from "@/components/daf/accounting/VariationPanel";
 import { AuditTrailPanel } from "@/components/daf/accounting/AuditTrailPanel";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafComptabiliteTutorial } from "@/components/help/tutorials/DafComptabiliteTutorial";
 
 function shiftPeriod(period: string, delta: number): string {
   const [y, m] = period.split("-").map(Number);
@@ -34,22 +36,25 @@ export default function DafComptabilitePage() {
             Validation écritures, rapprochements, préparation clôture.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-2 py-1">
-          <button
-            type="button"
-            onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
-            className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="font-mono text-[13px] font-semibold text-ink">{period}</span>
-          <button
-            type="button"
-            onClick={() => setPeriod((p) => shiftPeriod(p, +1))}
-            className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Comptabilité DAF"><DafComptabiliteTutorial /></PageHelp>
+          <div className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-2 py-1">
+            <button
+              type="button"
+              onClick={() => setPeriod((p) => shiftPeriod(p, -1))}
+              className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="font-mono text-[13px] font-semibold text-ink">{period}</span>
+            <button
+              type="button"
+              onClick={() => setPeriod((p) => shiftPeriod(p, +1))}
+              className="grid h-7 w-7 place-items-center rounded text-ink-3 hover:bg-surface-alt"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 

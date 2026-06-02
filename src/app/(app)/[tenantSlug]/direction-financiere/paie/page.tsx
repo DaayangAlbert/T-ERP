@@ -8,6 +8,8 @@ import { PayrollKpis } from "@/components/daf/payroll/PayrollKpis";
 import { PayrollWarningsList } from "@/components/daf/payroll/PayrollWarningsList";
 import { PayrollActionsCard } from "@/components/daf/payroll/PayrollActionsCard";
 import { PayrollMassChart } from "@/components/daf/payroll/PayrollMassChart";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafPaieTutorial } from "@/components/help/tutorials/DafPaieTutorial";
 
 export default function DafPayrollPage() {
   const { user } = useAuth();
@@ -40,13 +42,16 @@ export default function DafPayrollPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Cycle de paie · {data.period}
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Pilotage mensuel : statut, contrôles, validation N2, états officiels.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Cycle de paie · {data.period}
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Pilotage mensuel : statut, contrôles, validation N2, états officiels.
+          </p>
+        </div>
+        <PageHelp title="Aide — Cycle de paie DAF"><DafPaieTutorial /></PageHelp>
       </header>
 
       <div className="space-y-4 pb-20 sm:pb-4">

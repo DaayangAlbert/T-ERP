@@ -4,17 +4,22 @@ import { useAgingBalance } from "@/hooks/useDafReceivables";
 import { ReceivablesKpis } from "@/components/daf/receivables/ReceivablesKpis";
 import { AgingBalanceTable } from "@/components/daf/receivables/AgingBalanceTable";
 import { ActiveRemindersList } from "@/components/daf/receivables/ActiveRemindersList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafRecouvrementTutorial } from "@/components/help/tutorials/DafRecouvrementTutorial";
 
 export default function RecouvrementPage() {
   const { data, isLoading } = useAgingBalance();
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Recouvrement clients</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Balance âgée, dossiers en relance et niveaux R1/R2/R3.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Recouvrement clients</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Balance âgée, dossiers en relance et niveaux R1/R2/R3.
+          </p>
+        </div>
+        <PageHelp title="Aide — Recouvrement clients"><DafRecouvrementTutorial /></PageHelp>
       </header>
 
       {isLoading || !data ? (

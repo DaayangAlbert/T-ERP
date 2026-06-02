@@ -11,6 +11,8 @@ import { ScenarioSimulator } from "@/components/daf/finance/ScenarioSimulator";
 import { BankingReportGenerator } from "@/components/daf/finance/BankingReportGenerator";
 import { PnLTable } from "@/components/finance/PnLTable";
 import { BfrEvolution } from "@/components/finance/BfrEvolution";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafFinancesTutorial } from "@/components/help/tutorials/DafFinancesTutorial";
 
 type Tab = "overview" | "variances" | "profitability" | "scenarios" | "banking";
 
@@ -43,12 +45,15 @@ export default function DafFinancesPage() {
             Écarts budgétaires, profitabilité chantiers, simulations et reporting bancaire.
           </p>
         </div>
-        <input
-          type="month"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="h-9 rounded-md border border-line bg-white px-2.5 text-[12.5px]"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Finances DAF"><DafFinancesTutorial /></PageHelp>
+          <input
+            type="month"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="h-9 rounded-md border border-line bg-white px-2.5 text-[12.5px]"
+          />
+        </div>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">

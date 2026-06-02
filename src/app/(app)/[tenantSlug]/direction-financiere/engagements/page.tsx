@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Wallet, Plus, AlertOctagon, CheckCircle2, X, Landmark } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafEngagementsTutorial } from "@/components/help/tutorials/DafEngagementsTutorial";
 
 const TYPE_LABEL: Record<string, string> = {
   BANK_GUARANTEE: "Caution bancaire",
@@ -66,13 +68,16 @@ export default function DafEngagementsPage() {
           </h1>
           <p className="text-[12.5px] text-ink-3">Cautions, garanties 1er ordre, lettres de crédit, engagements d'achat</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouvel engagement
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Engagements financiers"><DafEngagementsTutorial /></PageHelp>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvel engagement
+          </button>
+        </div>
       </header>
 
       {isLoading || !data ? (

@@ -5,17 +5,22 @@ import { FiscalKpis } from "@/components/daf/fiscal/FiscalKpis";
 import { TaxDeadlinesTable } from "@/components/daf/fiscal/TaxDeadlinesTable";
 import { RecentSubmissionsList } from "@/components/daf/fiscal/RecentSubmissionsList";
 import { AuditsList } from "@/components/daf/fiscal/AuditsList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafFiscalTutorial } from "@/components/help/tutorials/DafFiscalTutorial";
 
 export default function FiscalPage() {
   const { data, isLoading } = useTaxDeadlines(60);
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Fiscalité &amp; déclarations</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Échéancier réglementaire, dépôts récents, audits en cours.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Fiscalité &amp; déclarations</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Échéancier réglementaire, dépôts récents, audits en cours.
+          </p>
+        </div>
+        <PageHelp title="Aide — Fiscalité DAF"><DafFiscalTutorial /></PageHelp>
       </header>
 
       {isLoading || !data ? (

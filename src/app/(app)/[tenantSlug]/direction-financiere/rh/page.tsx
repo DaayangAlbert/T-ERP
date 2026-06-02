@@ -9,6 +9,8 @@ import { DeparturesTable } from "@/components/daf/hr/DeparturesTable";
 import { OvertimeAnalysis } from "@/components/daf/hr/OvertimeAnalysis";
 import { SubsidiesTracker } from "@/components/daf/hr/SubsidiesTracker";
 import { PersonnelCoutsPanel } from "@/components/daf/hr/PersonnelCoutsPanel";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafRhTutorial } from "@/components/help/tutorials/DafRhTutorial";
 
 type Tab = "overview" | "personnel" | "provisions" | "departures" | "overtime" | "subsidies";
 
@@ -26,13 +28,16 @@ export default function DafRhPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          RH & Paie — vue financière DAF
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Masse salariale, provisions sociales, départs et indemnités, heures supplémentaires, subventions.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            RH & Paie — vue financière DAF
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Masse salariale, provisions sociales, départs et indemnités, heures supplémentaires, subventions.
+          </p>
+        </div>
+        <PageHelp title="Aide — RH financier DAF"><DafRhTutorial /></PageHelp>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">

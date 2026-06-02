@@ -10,6 +10,8 @@ import { ProvisionsList } from "@/components/daf/purchase/ProvisionsList";
 import { PendingPosTable } from "@/components/purchase/PendingPosTable";
 import { FrameworkContractsTable } from "@/components/purchase/FrameworkContractsTable";
 import { usePoN2Pending } from "@/hooks/useDafPurchase";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafAchatsTutorial } from "@/components/help/tutorials/DafAchatsTutorial";
 
 type Tab = "n2" | "orders" | "suppliers" | "contracts" | "commitments";
 
@@ -28,13 +30,16 @@ export default function DafAchatsPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Achats — supervision DAF
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Validation N2 (5 M – 50 M), suivi financier des fournisseurs, engagements et provisions.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Achats — supervision DAF
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Validation N2 (5 M – 50 M), suivi financier des fournisseurs, engagements et provisions.
+          </p>
+        </div>
+        <PageHelp title="Aide — Achats DAF"><DafAchatsTutorial /></PageHelp>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">

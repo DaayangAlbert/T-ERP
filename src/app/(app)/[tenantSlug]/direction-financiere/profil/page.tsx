@@ -8,6 +8,8 @@ import { AlertPreferencesCard } from "@/components/daf/profile/AlertPreferencesC
 import { SignaturePowerCard } from "@/components/daf/profile/SignaturePowerCard";
 import { ProxiesCard } from "@/components/daf/profile/ProxiesCard";
 import { DafAgendaCard } from "@/components/daf/profile/DafAgendaCard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafProfilTutorial } from "@/components/help/tutorials/DafProfilTutorial";
 
 const FINANCE_GROUPS = [
   "Comité financier (DAF + DG + comptable + auditeur externe)",
@@ -29,14 +31,17 @@ export default function DafProfilePage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Mon espace Direction Financière
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {user ? `${user.firstName} ${user.lastName} · ` : ""}
-          Préférences alertes, habilitations de signature, mandats actifs, agenda financier.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Mon espace Direction Financière
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {user ? `${user.firstName} ${user.lastName} · ` : ""}
+            Préférences alertes, habilitations de signature, mandats actifs, agenda financier.
+          </p>
+        </div>
+        <PageHelp title="Aide — Mon espace DAF"><DafProfilTutorial /></PageHelp>
       </header>
 
       <AvatarUploader />

@@ -7,6 +7,8 @@ import { BanksSection } from "@/components/daf/treasury/BanksSection";
 import { CashboxesPanel } from "@/components/daf/treasury/CashboxesPanel";
 import { TreasuryEvolutionChart } from "@/components/daf/treasury/TreasuryEvolutionChart";
 import { LatestMovementsList } from "@/components/daf/treasury/LatestMovementsList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafTresorerieTutorial } from "@/components/help/tutorials/DafTresorerieTutorial";
 
 export default function TreasoreriePage() {
   const { data, isLoading, isError } = useDafTreasury();
@@ -26,11 +28,14 @@ export default function TreasoreriePage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Trésorerie temps réel</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Multi-banques · synchro automatique · vue mobile-first.
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Trésorerie temps réel</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Multi-banques · synchro automatique · vue mobile-first.
+          </p>
+        </div>
+        <PageHelp title="Aide — Trésorerie DAF"><DafTresorerieTutorial /></PageHelp>
       </header>
 
       <div className="space-y-4">

@@ -7,6 +7,8 @@ import { clsx } from "clsx";
 import { PerformanceBonusesHistory } from "@/components/payroll/PerformanceBonusesHistory";
 import { BenefitsTable } from "@/components/payroll/BenefitsTable";
 import { useBonuses } from "@/hooks/useDgProfile";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafPaiePersoTutorial } from "@/components/help/tutorials/DafPaiePersoTutorial";
 
 type Tab = "bonuses" | "benefits" | "savings";
 
@@ -66,16 +68,19 @@ export default function DafPaiePersoPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-4">
-        <Link href="/paie" className="mb-1 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
-          <ArrowLeft className="h-3.5 w-3.5" /> Retour à ma paie
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Ma rémunération DAF
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Bonus performance financière, avantages spécifiques DAF et plan d&apos;épargne.
-        </p>
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <Link href="/paie" className="mb-1 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour à ma paie
+          </Link>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Ma rémunération DAF
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Bonus performance financière, avantages spécifiques DAF et plan d&apos;épargne.
+          </p>
+        </div>
+        <PageHelp title="Aide — Ma rémunération DAF"><DafPaiePersoTutorial /></PageHelp>
       </header>
 
       <BonusProvisionBanner />

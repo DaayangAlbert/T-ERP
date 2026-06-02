@@ -8,6 +8,8 @@ import { useReports, useScheduledReports, useRegenerateReport } from "@/hooks/us
 import { StrategicReportCard } from "@/components/reports/StrategicReportCard";
 import { REPORT_TYPE_LABEL } from "@/lib/report-blocks";
 import { formatDate } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DafRapportsTutorial } from "@/components/help/tutorials/DafRapportsTutorial";
 
 const SCHEDULE_LABEL: Record<string, string> = {
   WEEKLY_MONDAY_06: "Tous les lundis à 06h00",
@@ -52,12 +54,15 @@ export default function DafRapportsPage() {
             Templates DAF, reportings réglementaires, planification et historique.
           </p>
         </div>
-        <Link
-          href="/rapports/nouveau?type=DAF_FINANCIAL_MONTHLY"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
-        >
-          <Plus className="h-3.5 w-3.5" /> Rapport DAF sur mesure
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Rapports DAF"><DafRapportsTutorial /></PageHelp>
+          <Link
+            href="/rapports/nouveau?type=DAF_FINANCIAL_MONTHLY"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
+          >
+            <Plus className="h-3.5 w-3.5" /> Rapport DAF sur mesure
+          </Link>
+        </div>
       </header>
 
       {/* 4 cards templates DAF */}
