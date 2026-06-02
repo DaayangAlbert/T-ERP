@@ -1,8 +1,50 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardDtravSite } from "@/lib/rbac/dtrav-guard";
+import { guardDtravSite, guardDtravSiteMutation } from "@/lib/rbac/dtrav-guard";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Bootstrap le planning d'un chantier (idempotent — si déjà existant, le
+ * retourne tel quel). Durée par défaut = (plannedEndDate − startDate) en jours.
+ */
+export async function POST(_req: Request, { params }: { params: { siteId: string } }) {
+  const guard = await guardDtravSiteMutation(params.siteId);
+  if (guard instanceof NextResponse) return guard;
+  const { session } = guard;
+
+  const existing = await prisma.sitePlanning.findUnique({ where: { siteId: params.siteId } });
+  if (existing) return NextResponse.json({ id: existing.id, alreadyExisted: true });
+
+  const site = await prisma.site.findUnique({
+    where: { id: params.siteId },
+    select: { startDate: true, plannedEndDate: true },
+  });
+  if (!site) return NextResponse.json({ error: "Chantier introuvable" }, { status: 404 });
+
+  const totalDurationDays = Math.max(
+    1,
+    Math.round((site.plannedEndDate.getTime() - site.startDate.getTime()) / 86_400_000),
+  );
+
+  const created = await prisma.sitePlanning.create({
+    data: { siteId: params.siteId, totalDurationDays },
+    select: { id: true },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      tenantId: session.tenantId!,
+      userId: session.sub,
+      action: "dtrav.planning.bootstrap",
+      entityType: "SitePlanning",
+      entityId: created.id,
+      metadata: { siteId: params.siteId, totalDurationDays },
+    },
+  });
+
+  return NextResponse.json({ id: created.id, alreadyExisted: false }, { status: 201 });
+}
 
 export async function GET(_req: Request, { params }: { params: { siteId: string } }) {
   const guard = await guardDtravSite(params.siteId);
