@@ -44,10 +44,11 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const PHASES = [
+// ───────── Template BÂTIMENT (R+2, immeuble) ─────────
+const PHASES_BUILDING = [
   {
     name: "Installation de chantier",
-    weight: 5, // pourcentage de la durée totale
+    weight: 5,
     progress: 100,
     status: "COMPLETED",
     tasks: [
@@ -62,12 +63,7 @@ const PHASES = [
     weight: 10,
     progress: 90,
     status: "IN_PROGRESS",
-    tasks: [
-      "Décapage de la terre végétale",
-      "Fouilles en pleine masse",
-      "Fouilles en rigoles pour fondations",
-      "Évacuation des déblais",
-    ],
+    tasks: ["Décapage de la terre végétale", "Fouilles en pleine masse", "Fouilles en rigoles pour fondations", "Évacuation des déblais"],
   },
   {
     name: "Fondations",
@@ -101,12 +97,7 @@ const PHASES = [
     weight: 10,
     progress: 0,
     status: "PLANNED",
-    tasks: [
-      "Préfabrication charpente bois",
-      "Pose charpente + chevrons",
-      "Couverture tôle bac acier",
-      "Pose chéneaux et descentes EP",
-    ],
+    tasks: ["Préfabrication charpente bois", "Pose charpente + chevrons", "Couverture tôle bac acier", "Pose chéneaux et descentes EP"],
   },
   {
     name: "Second œuvre — cloisons & réseaux",
@@ -126,33 +117,141 @@ const PHASES = [
     weight: 12,
     progress: 0,
     status: "PLANNED",
-    tasks: [
-      "Enduits intérieurs + extérieurs",
-      "Carrelage sols + faïence pièces humides",
-      "Pose portes et fenêtres alu",
-      "Peinture deux couches",
-    ],
+    tasks: ["Enduits intérieurs + extérieurs", "Carrelage sols + faïence pièces humides", "Pose portes et fenêtres alu", "Peinture deux couches"],
   },
   {
     name: "Finitions & réception",
     weight: 8,
     progress: 0,
     status: "PLANNED",
-    tasks: [
-      "Pose appareillage électrique + sanitaire",
-      "Nettoyage final livraison",
-      "Levée des réserves OPR",
-      "Réception provisoire MOA",
-    ],
+    tasks: ["Pose appareillage électrique + sanitaire", "Nettoyage final livraison", "Levée des réserves OPR", "Réception provisoire MOA"],
   },
 ];
 
-const MILESTONES = [
+const MILESTONES_BUILDING = [
   { code: "J1", description: "Ordre de service / démarrage effectif", offsetPct: 0 },
   { code: "J2", description: "Hors d'eau / hors d'air", offsetPct: 65 },
   { code: "J3", description: "Livraison provisoire", offsetPct: 95 },
   { code: "J4", description: "Livraison définitive (fin GPA)", offsetPct: 100 },
 ];
+
+// ───────── Template AEP (adduction d'eau potable rurale) ─────────
+const PHASES_AEP = [
+  {
+    name: "Installation de chantier & études d'exécution",
+    weight: 6,
+    progress: 100,
+    status: "COMPLETED",
+    tasks: [
+      "Clôture site + signalisation",
+      "Études d'exécution + validation tracé",
+      "Piquetage topographique du linéaire",
+      "Installation base vie",
+    ],
+  },
+  {
+    name: "Forage & captage",
+    weight: 12,
+    progress: 85,
+    status: "IN_PROGRESS",
+    tasks: [
+      "Implantation tête de forage",
+      "Foration et tubage du forage",
+      "Développement et essais de pompage",
+      "Équipement tête (pompe immergée + accessoires)",
+    ],
+  },
+  {
+    name: "Terrassement & tranchées canalisations",
+    weight: 18,
+    progress: 60,
+    status: "IN_PROGRESS",
+    tasks: [
+      "Décapage emprise du linéaire",
+      "Fouilles en tranchées (profondeur 0,80 m)",
+      "Lit de pose en sable",
+      "Évacuation des déblais excédentaires",
+    ],
+  },
+  {
+    name: "Pose canalisations PEHD / PVC",
+    weight: 22,
+    progress: 35,
+    status: "IN_PROGRESS",
+    tasks: [
+      "Descente et alignement des conduites",
+      "Soudure thermique PEHD / raccords PVC",
+      "Pose vannes de sectionnement",
+      "Remblaiement en couches successives",
+      "Compactage et réfection de surface",
+    ],
+  },
+  {
+    name: "Château d'eau (génie civil)",
+    weight: 18,
+    progress: 10,
+    status: "IN_PROGRESS",
+    tasks: [
+      "Fondations + radier château d'eau",
+      "Coffrage et coulage du fût",
+      "Coulage de la cuve béton armé",
+      "Couverture et garde-corps périphérique",
+      "Échelle d'accès + crinoline",
+    ],
+  },
+  {
+    name: "Branchements particuliers & bornes-fontaines",
+    weight: 12,
+    progress: 0,
+    status: "PLANNED",
+    tasks: [
+      "Pose des bornes-fontaines publiques",
+      "Branchements particuliers abonnés",
+      "Pose compteurs + regards de comptage",
+      "Raccordement final au réseau primaire",
+    ],
+  },
+  {
+    name: "Désinfection, essais & mise en service",
+    weight: 7,
+    progress: 0,
+    status: "PLANNED",
+    tasks: [
+      "Test d'étanchéité réseau primaire",
+      "Désinfection / chloration des conduites",
+      "Analyses bactériologiques + physico-chimiques",
+      "Mise en eau progressive du réseau",
+    ],
+  },
+  {
+    name: "Réception provisoire & formation exploitant",
+    weight: 5,
+    progress: 0,
+    status: "PLANNED",
+    tasks: [
+      "Formation comité de gestion / exploitant",
+      "Remise des plans de recolement",
+      "Levée des réserves OPR",
+      "Réception provisoire MOA + procès-verbal",
+    ],
+  },
+];
+
+const MILESTONES_AEP = [
+  { code: "J1", description: "Ordre de service / démarrage effectif", offsetPct: 0 },
+  { code: "J2", description: "Forage productif + essais validés", offsetPct: 25 },
+  { code: "J3", description: "Réseau primaire posé (épreuves d'étanchéité)", offsetPct: 75 },
+  { code: "J4", description: "Mise en service + réception provisoire", offsetPct: 100 },
+];
+
+function pickTemplate(site) {
+  // Détection AEP : type HYDRAULIC, ou nom évocateur (AEP, forage, adduction, eau…)
+  if (site.type === "HYDRAULIC") return { phases: PHASES_AEP, milestones: MILESTONES_AEP, kind: "AEP" };
+  if (/\b(aep|forage|adduction|hydraulique|eau\s+potable)\b/i.test(site.name)) {
+    return { phases: PHASES_AEP, milestones: MILESTONES_AEP, kind: "AEP" };
+  }
+  return { phases: PHASES_BUILDING, milestones: MILESTONES_BUILDING, kind: "BÂTIMENT" };
+}
 
 function addDays(d, n) {
   const r = new Date(d);
@@ -189,8 +288,10 @@ async function pickSite(args) {
 
 (async () => {
   const site = await pickSite(process.argv.slice(2));
+  const tpl = pickTemplate(site);
   console.log(`✓ Chantier cible : ${site.code} — ${site.name}`);
-  console.log(`  Période : ${site.startDate.toISOString().slice(0, 10)} → ${site.plannedEndDate.toISOString().slice(0, 10)}`);
+  console.log(`  Type détecté   : ${site.type ?? "—"} → template ${tpl.kind}`);
+  console.log(`  Période        : ${site.startDate.toISOString().slice(0, 10)} → ${site.plannedEndDate.toISOString().slice(0, 10)}`);
 
   const totalDays = Math.max(
     30,
@@ -217,7 +318,7 @@ async function pickSite(args) {
   // Phases échelonnées proportionnellement à totalDays
   let cursor = new Date(site.startDate);
   let orderIndex = 0;
-  for (const ph of PHASES) {
+  for (const ph of tpl.phases) {
     const days = Math.max(3, Math.round((totalDays * ph.weight) / 100));
     const start = new Date(cursor);
     const end = addDays(start, days);
@@ -255,7 +356,7 @@ async function pickSite(args) {
   }
 
   // Jalons
-  for (const m of MILESTONES) {
+  for (const m of tpl.milestones) {
     const due = addDays(site.startDate, (totalDays * m.offsetPct) / 100);
     await prisma.siteMilestone.create({
       data: {
@@ -266,7 +367,7 @@ async function pickSite(args) {
       },
     });
   }
-  console.log(`  · ${MILESTONES.length} jalons MOA créés`);
+  console.log(`  · ${tpl.milestones.length} jalons MOA créés`);
 
   console.log("\n✓ Données de test prêtes.");
   console.log(`  → Connecte-toi en Directeur des travaux, sélectionne le chantier ${site.code} dans la barre supérieure,`);

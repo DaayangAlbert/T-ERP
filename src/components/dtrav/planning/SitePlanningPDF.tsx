@@ -26,7 +26,23 @@ const CATEGORIES = {
   TERRASSEMENT: {
     label: "TERRASSEMENTS - FONDATIONS",
     color: "#4CAF50",
-    keywords: [/terrassement/i, /fondation/i, /fouille/i, /excav/i, /décap/i, /semelle/i, /longrine/i, /dallage/i],
+    keywords: [
+      /terrassement/i,
+      /fondation/i,
+      /fouille/i,
+      /excav/i,
+      /décap/i,
+      /semelle/i,
+      /longrine/i,
+      /dallage/i,
+      // AEP : forage, captage, tranchées
+      /forage/i,
+      /captage/i,
+      /tranchée/i,
+      /tranchee/i,
+      /puits/i,
+      /tubage/i,
+    ],
   },
   GROS_OEUVRE: {
     label: "GROS ŒUVRE",
@@ -46,6 +62,14 @@ const CATEGORIES = {
       /escalier/i,
       /agglo/i,
       /planch/i,
+      // AEP : ouvrages génie civil
+      /château\s*d'?eau/i,
+      /chateau\s*d'?eau/i,
+      /réservoir/i,
+      /reservoir/i,
+      /cuve/i,
+      /\bfût\b/i,
+      /radier/i,
     ],
   },
   CHARPENTE: {
@@ -70,6 +94,16 @@ const CATEGORIES = {
       /assainiss/i,
       /étanch/i,
       /etanch/i,
+      // AEP : canalisations, branchements, équipements hydrauliques
+      /canalisation/i,
+      /conduite/i,
+      /branchement/i,
+      /borne[\s-]*fontaine/i,
+      /pehd/i,
+      /\bpvc\b/i,
+      /vanne/i,
+      /compteur/i,
+      /raccordement/i,
     ],
   },
   REVETEMENTS: {
@@ -90,7 +124,24 @@ const CATEGORIES = {
   RECEPTION: {
     label: "RÉCEPTION",
     color: "#E74C3C",
-    keywords: [/réception/i, /reception/i, /nettoy/i, /livraison/i, /opr/i, /réserve/i, /reserve/i],
+    keywords: [
+      /réception/i,
+      /reception/i,
+      /nettoy/i,
+      /livraison/i,
+      /opr/i,
+      /réserve/i,
+      /reserve/i,
+      // AEP : tests, désinfection, mise en service
+      /désinfection/i,
+      /desinfection/i,
+      /chloration/i,
+      /essai/i,
+      /mise\s+en\s+service/i,
+      /mise\s+en\s+eau/i,
+      /analyse/i,
+      /formation\s+exploitant/i,
+    ],
   },
   AUTRE: {
     label: "AUTRES",
