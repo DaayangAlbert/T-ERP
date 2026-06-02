@@ -1,5 +1,16 @@
 import * as React from "react";
-import { Document, Page, StyleSheet, Text, View, Image } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Svg,
+  Line,
+  Polyline,
+  Circle,
+} from "@react-pdf/renderer";
 
 // ───────── Couleurs ─────────
 const C = {
@@ -223,6 +234,7 @@ export function SitePlanningPDF({ data }: { data: SitePlanningPdfData }) {
         <TopHeader data={data} />
         <ProjectInfoStrip data={data} />
         <GanttTable data={data} />
+        <MilestonesRow data={data} />
         <BottomStrip data={data} />
         <Signatures data={data} />
       </Page>
@@ -481,7 +493,62 @@ function PhaseRow({
   );
 }
 
-// ───────── Bandeau bas : récap + observations ─────────
+// ───────── Calculs courbe S (physique + financier) ─────────
+function computeMonthCount(data: SitePlanningPdfData): { monthCount: number; minMs: number } {
+  const startMs = new Date(data.site.startDate).getTime();
+  const endMs = new Date(data.site.plannedEndDate).getTime();
+  let minMs = startMs;
+  let maxMs = endMs;
+  for (const ph of data.phases) {
+    minMs = Math.min(minMs, new Date(ph.plannedStart).getTime());
+    maxMs = Math.max(maxMs, new Date(ph.plannedEnd).getTime());
+  }
+  const span = Math.max(7 * DAY, maxMs - minMs);
+  const totalWeeks = Math.max(4, Math.ceil(span / (7 * DAY)));
+  return { monthCount: Math.max(1, Math.ceil(totalWeeks / 4)), minMs };
+}
+
+function computePhysicalCurve(data: SitePlanningPdfData, monthCount: number, minMs: number): number[] {
+  // Avancement physique cumulé à chaque borne de mois, pondéré par la durée des phases.
+  let totalWeight = 0;
+  for (const ph of data.phases) {
+    const d = new Date(ph.plannedEnd).getTime() - new Date(ph.plannedStart).getTime();
+    totalWeight += Math.max(0, d);
+  }
+  if (totalWeight === 0 || data.phases.length === 0) {
+    // Pas de phases → courbe linéaire pour visualisation
+    return Array.from({ length: monthCount + 1 }, (_, i) => Math.round((i / monthCount) * 100));
+  }
+  const monthMs = (30.44 * DAY);
+  const curve: number[] = [];
+  for (let m = 0; m <= monthCount; m++) {
+    const boundary = minMs + m * monthMs;
+    let cumulated = 0;
+    for (const ph of data.phases) {
+      const phStart = new Date(ph.plannedStart).getTime();
+      const phEnd = new Date(ph.plannedEnd).getTime();
+      if (phEnd <= phStart) continue;
+      const overlap = Math.max(0, Math.min(phEnd, boundary) - phStart);
+      cumulated += overlap;
+    }
+    curve.push(Math.min(100, Math.round((cumulated / totalWeight) * 100)));
+  }
+  return curve;
+}
+
+function computeFinancialCurve(physical: number[]): number[] {
+  // L'avancement financier suit l'avancement physique avec ~1 mois de retard
+  // (décompte produit après exécution + délai validation MOA + paiement).
+  const n = physical.length;
+  return physical.map((_, i) => {
+    if (i <= 1) return 0;
+    const lagged = physical[Math.max(0, i - 1)];
+    const lagFactor = 0.7 + 0.3 * (i / Math.max(1, n - 1)); // moins de retard en fin de chantier
+    return Math.min(100, Math.round(lagged * lagFactor));
+  });
+}
+
+// ───────── Bandeau bas : récap + courbe S + observations ─────────
 function BottomStrip({ data }: { data: SitePlanningPdfData }) {
   const months = Math.round(data.totalDurationDays / 30.44);
   const weeks = Math.round(data.totalDurationDays / 7);
@@ -494,26 +561,142 @@ function BottomStrip({ data }: { data: SitePlanningPdfData }) {
         <RecapLine label="DATE DE DÉMARRAGE" value={fmtFull(data.site.startDate)} />
         <RecapLine label="DATE DE FIN PRÉVISIONNELLE" value={fmtFull(data.site.plannedEndDate)} />
       </View>
-      <View style={styles.milestonesBox}>
-        <Text style={styles.boxTitle}>JALONS CONTRACTUELS MOA</Text>
-        {data.milestones.length === 0 ? (
-          <Text style={styles.empty}>Aucun jalon saisi.</Text>
-        ) : (
-          data.milestones.slice(0, 5).map((m, i) => (
-            <View key={i} style={styles.milestoneLine}>
-              <Text style={styles.milestoneCode}>{m.code}</Text>
-              <Text style={styles.milestoneDesc}>{m.description}</Text>
-              <Text style={styles.milestoneDate}>{fmtFull(m.contractDueDate)}</Text>
-            </View>
-          ))
-        )}
+      <View style={styles.curveBox}>
+        <Text style={styles.boxTitle}>COURBES D&apos;AVANCEMENT PHYSIQUE ET FINANCIER</Text>
+        <SCurve data={data} />
       </View>
       <View style={styles.observationsBox}>
         <Text style={styles.boxTitle}>OBSERVATIONS</Text>
         <View style={styles.observationLines}>
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <View key={i} style={styles.dottedLine} />
           ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ───────── Bandeau jalons (au-dessus du bas, slim) ─────────
+function MilestonesRow({ data }: { data: SitePlanningPdfData }) {
+  if (data.milestones.length === 0) return null;
+  return (
+    <View style={styles.milestonesRow}>
+      <Text style={styles.milestonesRowTitle}>JALONS CONTRACTUELS MOA</Text>
+      <View style={styles.milestonesRowList}>
+        {data.milestones.slice(0, 6).map((m, i) => (
+          <View key={i} style={styles.milestoneChip}>
+            <Text style={styles.milestoneChipCode}>{m.code}</Text>
+            <Text style={styles.milestoneChipDesc}>
+              {m.description} <Text style={styles.milestoneChipDate}>· {fmtFull(m.contractDueDate)}</Text>
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ───────── Composant courbe S (SVG) ─────────
+function SCurve({ data }: { data: SitePlanningPdfData }) {
+  const { monthCount, minMs } = computeMonthCount(data);
+  const physical = computePhysicalCurve(data, monthCount, minMs);
+  const financial = computeFinancialCurve(physical);
+
+  const W = 280;
+  const H = 95;
+  const padL = 20;
+  const padR = 6;
+  const padT = 6;
+  const padB = 14;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const xFor = (i: number) => padL + (i / Math.max(1, monthCount)) * chartW;
+  const yFor = (pct: number) => padT + chartH * (1 - pct / 100);
+
+  const physStr = physical
+    .map((p, i) => `${xFor(i).toFixed(1)},${yFor(p).toFixed(1)}`)
+    .join(" ");
+  const finStr = financial
+    .map((p, i) => `${xFor(i).toFixed(1)},${yFor(p).toFixed(1)}`)
+    .join(" ");
+
+  const yTicks = [0, 20, 40, 60, 80, 100];
+
+  return (
+    <View style={{ width: W, height: H + 14, position: "relative" }}>
+      <Svg width={W} height={H} style={{ position: "absolute", top: 0, left: 0 }}>
+        {/* Lignes horizontales (grille) */}
+        {yTicks.map((p) => (
+          <Line
+            key={p}
+            x1={padL}
+            y1={yFor(p)}
+            x2={W - padR}
+            y2={yFor(p)}
+            stroke={p === 0 || p === 100 ? "#cbd5e1" : "#e5e7eb"}
+            strokeWidth={0.3}
+          />
+        ))}
+        {/* Axe Y (vertical) */}
+        <Line x1={padL} y1={padT} x2={padL} y2={padT + chartH} stroke="#94a3b8" strokeWidth={0.4} />
+        {/* Courbe physique (bleue) */}
+        <Polyline points={physStr} stroke="#2563eb" strokeWidth={1.3} fill="none" />
+        {/* Courbe financière (rouge) */}
+        <Polyline points={finStr} stroke="#dc2626" strokeWidth={1.3} fill="none" />
+        {/* Points physiques */}
+        {physical.map((p, i) => (
+          <Circle key={`p${i}`} cx={xFor(i)} cy={yFor(p)} r={1.4} fill="#2563eb" />
+        ))}
+        {/* Points financiers */}
+        {financial.map((p, i) => (
+          <Circle key={`f${i}`} cx={xFor(i)} cy={yFor(p)} r={1.4} fill="#dc2626" />
+        ))}
+      </Svg>
+      {/* Étiquettes Y (gauche) */}
+      {yTicks.map((p) => (
+        <Text
+          key={p}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: yFor(p) - 4,
+            width: padL - 2,
+            textAlign: "right",
+            fontSize: 6,
+            color: "#6b7280",
+          }}
+        >
+          {p}%
+        </Text>
+      ))}
+      {/* Étiquettes X (mois en dessous) */}
+      {Array.from({ length: monthCount + 1 }).map((_, i) => (
+        <Text
+          key={i}
+          style={{
+            position: "absolute",
+            left: xFor(i) - 7,
+            top: H - 2,
+            width: 14,
+            textAlign: "center",
+            fontSize: 6,
+            color: "#6b7280",
+          }}
+        >
+          M{i + 1}
+        </Text>
+      ))}
+      {/* Légende courbes */}
+      <View style={styles.curveLegend}>
+        <View style={styles.curveLegendItem}>
+          <View style={[styles.curveLegendLine, { backgroundColor: "#2563eb" }]} />
+          <Text style={styles.curveLegendLabel}>AVANCEMENT PHYSIQUE (%)</Text>
+        </View>
+        <View style={styles.curveLegendItem}>
+          <View style={[styles.curveLegendLine, { backgroundColor: "#dc2626" }]} />
+          <Text style={styles.curveLegendLabel}>AVANCEMENT FINANCIER (%)</Text>
         </View>
       </View>
     </View>
@@ -533,9 +716,7 @@ function RecapLine({ label, value }: { label: string; value: string }) {
 function Signatures({ data }: { data: SitePlanningPdfData }) {
   return (
     <View style={styles.signatures} wrap={false}>
-      <SignBlock title="PRÉPARÉ PAR" role="CONDUCTEUR DES TRAVAUX" />
-      <SignBlock title="VÉRIFIÉ PAR" role="CHEF DE PROJET" />
-      <SignBlock title="APPROUVÉ PAR" role="DIRECTEUR DE PROJET" cachet />
+      <SignBlock title="APPROUVÉ PAR" role="DIRECTEUR DES TRAVAUX" cachet />
       <View style={styles.notesBlock}>
         <Text style={styles.signTitle}>NOTES</Text>
         <Text style={styles.noteLine}>‣ Le présent planning est établi sur une base de 6 jours ouvrés par semaine.</Text>
@@ -728,26 +909,39 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   recapBox: {
-    width: 200,
+    width: 175,
     borderWidth: 0.6,
     borderColor: C.line,
     padding: 5,
     backgroundColor: C.bgInfoBox,
   },
-  milestonesBox: {
+  curveBox: {
     flex: 1,
     borderWidth: 0.6,
     borderColor: C.line,
     padding: 5,
     backgroundColor: C.white,
+    alignItems: "center",
   },
   observationsBox: {
-    width: 200,
+    width: 175,
     borderWidth: 0.6,
     borderColor: C.line,
     padding: 5,
     backgroundColor: C.white,
   },
+  curveLegend: {
+    position: "absolute",
+    bottom: -1,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
+  },
+  curveLegendItem: { flexDirection: "row", alignItems: "center", gap: 3 },
+  curveLegendLine: { width: 10, height: 1.5 },
+  curveLegendLabel: { fontSize: 6.5, color: C.ink2, fontFamily: "Helvetica-Bold" },
   boxTitle: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
@@ -759,11 +953,41 @@ const styles = StyleSheet.create({
   recapLine: { flexDirection: "row", justifyContent: "space-between", marginVertical: 1 },
   recapLabel: { fontSize: 7, color: C.ink2 },
   recapValue: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.ink },
-  milestoneLine: { flexDirection: "row", marginVertical: 0.8, alignItems: "center" },
-  milestoneCode: { width: 22, fontSize: 7, fontFamily: "Helvetica-Bold", color: C.title },
-  milestoneDesc: { flex: 1, fontSize: 7, color: C.ink2 },
-  milestoneDate: { width: 60, fontSize: 7, color: C.ink, textAlign: "right" },
   observationLines: { marginTop: 3 },
+  // Bandeau jalons (slim, entre Gantt et BottomStrip)
+  milestonesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    borderWidth: 0.5,
+    borderColor: C.line,
+    borderTopWidth: 0,
+    backgroundColor: C.bgInfoBox,
+    paddingVertical: 3,
+    paddingHorizontal: 5,
+    gap: 4,
+  },
+  milestonesRowTitle: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.title,
+    letterSpacing: 0.5,
+    marginRight: 6,
+  },
+  milestonesRowList: { flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 4 },
+  milestoneChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: C.white,
+    borderWidth: 0.3,
+    borderColor: C.line,
+    paddingVertical: 1,
+    paddingHorizontal: 3,
+    borderRadius: 2,
+  },
+  milestoneChipCode: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.title, marginRight: 3 },
+  milestoneChipDesc: { fontSize: 6.8, color: C.ink2 },
+  milestoneChipDate: { fontSize: 6.5, color: C.mute },
   dottedLine: {
     height: 0,
     borderBottomWidth: 0.4,
