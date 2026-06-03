@@ -6,6 +6,8 @@ import { Camera, Edit3, Check, X, Truck } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcLivraisonsTutorial } from "@/components/help/tutorials/CcLivraisonsTutorial";
 
 interface Delivery {
   id: string;
@@ -33,7 +35,10 @@ export default function LivraisonsPage() {
     <div id="screen-cc-livraisons" className="space-y-3">
       <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
         <h1 className="text-[16px] font-semibold text-ink">Livraisons du jour</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Livraisons"><CcLivraisonsTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="space-y-2">

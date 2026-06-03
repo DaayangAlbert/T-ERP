@@ -6,6 +6,8 @@ import { Plus, Check, X } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcProductionTutorial } from "@/components/help/tutorials/CcProductionTutorial";
 
 interface ProductionData {
   report: { id: string; status: string; productionValue: number };
@@ -59,7 +61,10 @@ export default function ProductionPage() {
     <div id="screen-cc-production" className="space-y-3 pb-24">
       <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
         <h1 className="truncate text-[16px] font-semibold text-ink">Production journalière</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Production"><CcProductionTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

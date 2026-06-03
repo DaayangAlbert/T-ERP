@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { formatFCFA } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcValidationsTutorial } from "@/components/help/tutorials/CcValidationsTutorial";
 
 type LeaveItem = {
   id: string;
@@ -121,14 +123,17 @@ export default function CcValidationsPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          Validations & demandes équipe
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Demandes des ouvriers de votre chantier — congés (à valider N1), signalements
-          HSE assignés, avances en cours (information).
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            Validations & demandes équipe
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Demandes des ouvriers de votre chantier — congés (à valider N1), signalements
+            HSE assignés, avances en cours (information).
+          </p>
+        </div>
+        <PageHelp title="Aide — Validations CC"><CcValidationsTutorial /></PageHelp>
       </header>
 
       {feedback && (

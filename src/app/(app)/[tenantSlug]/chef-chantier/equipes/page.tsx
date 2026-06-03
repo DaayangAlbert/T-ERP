@@ -6,6 +6,8 @@ import { Search, Check, X } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { ContactActions } from "@/components/contact/ContactActions";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcEquipesTutorial } from "@/components/help/tutorials/CcEquipesTutorial";
 
 interface Worker {
   userId: string;
@@ -44,7 +46,10 @@ export default function EquipesPage() {
     <div id="screen-cc-equipes" className="space-y-3">
       <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
         <h1 className="text-[16px] font-semibold text-ink">Mes équipes</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Mes équipes"><CcEquipesTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

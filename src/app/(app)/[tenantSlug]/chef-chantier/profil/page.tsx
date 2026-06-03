@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcProfilTutorial } from "@/components/help/tutorials/CcProfilTutorial";
 
 interface ProfileData {
   user: {
@@ -74,16 +76,19 @@ export default function CcProfilePage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Mon espace Chef de Chantier
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data?.user
-            ? `${data.user.firstName} ${data.user.lastName} · ${data.user.position ?? "Chef de chantier"}`
-            : ""}
-          {data?.user.matricule ? ` · ${data.user.matricule}` : ""}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Mon espace Chef de Chantier
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data?.user
+              ? `${data.user.firstName} ${data.user.lastName} · ${data.user.position ?? "Chef de chantier"}`
+              : ""}
+            {data?.user.matricule ? ` · ${data.user.matricule}` : ""}
+          </p>
+        </div>
+        <PageHelp title="Aide — Mon espace CC"><CcProfilTutorial /></PageHelp>
       </header>
 
       <AvatarUploader />

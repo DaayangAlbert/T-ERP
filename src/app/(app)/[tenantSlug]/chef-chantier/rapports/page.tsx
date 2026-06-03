@@ -24,6 +24,8 @@ import {
 import { useCcSite } from "@/contexts/CcSiteContext";
 import { REPORT_TYPE_LABEL, REPORT_STATUS_LABEL } from "@/schemas/site-progress-report";
 import { formatFCFA } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcRapportsTutorial } from "@/components/help/tutorials/CcRapportsTutorial";
 
 const STATUS_TONES: Record<string, string> = {
   DRAFT: "bg-slate-100 text-slate-700",
@@ -83,14 +85,17 @@ export default function CcReportsPage() {
             Brouillon · soumission au DTrav · validation · export PDF
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[13px] font-semibold text-white hover:bg-violet-700"
-        >
-          <Plus className="h-4 w-4" />
-          Nouveau rapport
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[13px] font-semibold text-white hover:bg-violet-700"
+          >
+            <Plus className="h-4 w-4" />
+            Nouveau rapport
+          </button>
+          <PageHelp title="Aide — Rapports CC"><CcRapportsTutorial /></PageHelp>
+        </div>
       </header>
 
       {/* KPIs */}

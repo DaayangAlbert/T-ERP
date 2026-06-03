@@ -5,6 +5,8 @@ import { clsx } from "clsx";
 import { CalendarDays, Users } from "lucide-react";
 import { PlanningTab } from "@/components/cc/planning/PlanningTab";
 import { TeamsTab } from "@/components/cc/planning/TeamsTab";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcPlanningTutorial } from "@/components/help/tutorials/CcPlanningTutorial";
 
 type Tab = "planning" | "teams";
 
@@ -13,11 +15,14 @@ export default function CcPlanningPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink">Planning & équipes</h1>
-        <p className="text-[12.5px] text-ink-3">
-          Tâches journalières · constitution d&apos;équipes · suivi avancement
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink">Planning & équipes</h1>
+          <p className="text-[12.5px] text-ink-3">
+            Tâches journalières · constitution d&apos;équipes · suivi avancement
+          </p>
+        </div>
+        <PageHelp title="Aide — Planning CC"><CcPlanningTutorial /></PageHelp>
       </header>
 
       <nav className="flex gap-1 rounded-lg border border-line bg-white p-1 shadow-card">

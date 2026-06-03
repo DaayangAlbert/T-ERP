@@ -9,6 +9,8 @@ import {
   type OvertimeRow,
   OVERTIME_TYPE_LABEL,
 } from "@/hooks/useCcOvertime";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcHeuresSupTutorial } from "@/components/help/tutorials/CcHeuresSupTutorial";
 
 const TYPE_BADGE: Record<string, string> = {
   evening_125: "bg-amber-100 text-amber-800",
@@ -57,12 +59,15 @@ export default function OvertimeValidationPage() {
             Après validation, elles seront automatiquement remontées en paie.
           </p>
         </div>
-        <input
-          type="month"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="month"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <PageHelp title="Aide — Heures sup"><CcHeuresSupTutorial /></PageHelp>
+        </div>
       </header>
 
       <div className="grid grid-cols-4 gap-4">

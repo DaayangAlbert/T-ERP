@@ -7,6 +7,8 @@ import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcPointageTutorial } from "@/components/help/tutorials/CcPointageTutorial";
 
 interface Worker {
   userId: string;
@@ -120,7 +122,10 @@ export default function PointagePage() {
     <div id="screen-cc-pointage" className="space-y-3 pb-24">
       <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
         <h1 className="truncate text-[16px] font-semibold text-ink">Pointage matinal</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Pointage"><CcPointageTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

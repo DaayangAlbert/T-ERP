@@ -12,6 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcDemandesMaterielTutorial } from "@/components/help/tutorials/CcDemandesMaterielTutorial";
 
 type Status = "PENDING" | "FULFILLED" | "PARTIAL" | "REJECTED" | "CANCELLED";
 type Priority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
@@ -106,12 +108,15 @@ export default function CcMaterialRequestsPage() {
             chantier. Vous serez notifié dès qu'une demande est traitée.
           </p>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" /> Nouvelle demande
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" /> Nouvelle demande
+          </button>
+          <PageHelp title="Aide — Demandes matériel"><CcDemandesMaterielTutorial /></PageHelp>
+        </div>
       </header>
 
       {feedback && (

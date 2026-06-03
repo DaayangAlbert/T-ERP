@@ -12,6 +12,8 @@ import {
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { useCcSite } from "@/contexts/CcSiteContext";
 import { useAuth } from "@/hooks/useAuth";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcDashboardTutorial } from "@/components/help/tutorials/CcDashboardTutorial";
 
 interface DashboardData {
   site: { id: string; code: string; name: string; client: string } | null;
@@ -46,7 +48,10 @@ export default function CcDashboardPage() {
             {site ? `${site.code} · ${site.name}` : "Chargement…"}
           </div>
         </div>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Chef Chantier"><CcDashboardTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

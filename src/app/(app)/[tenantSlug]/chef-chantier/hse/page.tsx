@@ -7,6 +7,8 @@ import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
 import { NcEditorModal, type NcDraft } from "@/components/qhse/NcEditorModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcHseTutorial } from "@/components/help/tutorials/CcHseTutorial";
 
 interface HseData {
   kpis: {
@@ -95,7 +97,10 @@ export default function HsePage() {
     <div id="screen-cc-hse" className="space-y-3">
       <header className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
         <h1 className="text-[16px] font-semibold text-ink">HSE &amp; incidents</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — HSE"><CcHseTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl bg-gradient-to-br from-red-500 to-red-700 p-4 shadow-card">

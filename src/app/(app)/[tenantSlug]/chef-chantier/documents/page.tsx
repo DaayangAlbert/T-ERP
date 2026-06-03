@@ -28,6 +28,8 @@ import {
   DOCUMENT_CATEGORY_GROUPS,
 } from "@/schemas/site-document";
 import { formatFCFA } from "@/lib/format";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CcDocumentsTutorial } from "@/components/help/tutorials/CcDocumentsTutorial";
 
 interface DocItem {
   id: string;
@@ -178,12 +180,15 @@ export default function CcDocumentsPage() {
             décomptes, plans et autres documents — classés par catégorie.
           </p>
         </div>
-        <button
-          onClick={() => setUploadOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600"
-        >
-          <Upload className="h-4 w-4" /> Téléverser un document
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary-500 px-3 py-2 text-[13px] font-medium text-white hover:bg-primary-600"
+          >
+            <Upload className="h-4 w-4" /> Téléverser un document
+          </button>
+          <PageHelp title="Aide — Documents CC"><CcDocumentsTutorial /></PageHelp>
+        </div>
       </header>
 
       {feedback && (
