@@ -55,11 +55,13 @@ export function QhseWorkspace({
   subtitle = "Pilotage QHSE des chantiers.",
   canEdit = true,
   readOnlyBanner,
+  help,
 }: {
   title?: string;
   subtitle?: string;
   canEdit?: boolean;
   readOnlyBanner?: React.ReactNode;
+  help?: React.ReactNode;
 }) {
   const { data, isLoading } = useDtQhse();
   const [tab, setTab] = useState<Tab>("dashboard");
@@ -82,9 +84,12 @@ export function QhseWorkspace({
         </div>
       )}
 
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">{subtitle}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">{subtitle}</p>
+        </div>
+        {help}
       </header>
 
       {readOnlyBanner}

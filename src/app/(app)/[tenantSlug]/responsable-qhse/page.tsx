@@ -3,6 +3,8 @@
 import { useAccess } from "@/hooks/useAccess";
 import { MODULES } from "@/lib/rbac/modules";
 import { QhseWorkspace } from "@/components/qhse/QhseWorkspace";
+import { PageHelp } from "@/components/help/PageHelp";
+import { QhseDashboardTutorial } from "@/components/help/tutorials/QhseDashboardTutorial";
 
 /**
  * Espace principal du Responsable QHSE (FULL sur QHSE).
@@ -15,6 +17,7 @@ export default function ResponsableQhsePage() {
       title="Espace Responsable QHSE"
       subtitle="Pilotage opérationnel QHSE — incidents, non-conformités, audits, certifications."
       canEdit={canEdit}
+      help={<PageHelp title="Aide — QHSE"><QhseDashboardTutorial /></PageHelp>}
     />
   );
 }
