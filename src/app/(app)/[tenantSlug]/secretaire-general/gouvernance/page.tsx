@@ -19,6 +19,8 @@ import { PvUploadModal } from "@/components/sg/gouvernance/PvUploadModal";
 import { DecisionAddModal } from "@/components/sg/gouvernance/DecisionAddModal";
 import { DecisionsRegisterCard } from "@/components/sg/gouvernance/DecisionsRegisterCard";
 import { CreateMeetingModal } from "@/components/sg/gouvernance/CreateMeetingModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgGouvernanceTutorial } from "@/components/help/tutorials/SgGouvernanceTutorial";
 
 export default function GouvernancePage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -69,6 +71,9 @@ export default function GouvernancePage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Gouvernance SG"><SgGouvernanceTutorial /></PageHelp>
+      </div>
       <GovernanceHeader
         kpis={data.kpis}
         nextMeeting={data.nextMeeting}

@@ -12,6 +12,8 @@ import { LegalCaseDetailDrawer } from "@/components/sg/contentieux/LegalCaseDeta
 import { NewLegalCaseWizard } from "@/components/sg/contentieux/NewLegalCaseWizard";
 import { HearingsCalendar } from "@/components/sg/contentieux/HearingsCalendar";
 import { LawyersDirectory } from "@/components/sg/contentieux/LawyersDirectory";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgContentieuxTutorial } from "@/components/help/tutorials/SgContentieuxTutorial";
 
 type Tab = "OPEN" | "CLOSED" | "ALL";
 
@@ -43,6 +45,9 @@ export default function ContentieuxPage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Contentieux SG"><SgContentieuxTutorial /></PageHelp>
+      </div>
       <LegalCasesHeader
         kpis={data?.kpis ?? { activeCount: 0, provisionTotal: 0, amountAtStakeTotal: 0, hearingsSoon: 0, closedYtd: 0, wonYtd: 0 }}
         lawyersCount={lawyersQ.data?.items.length ?? 0}

@@ -8,6 +8,8 @@ import { PriorityAlertsList } from "@/components/sg/dashboard/PriorityAlertsList
 import { CapitalStructureCard } from "@/components/sg/dashboard/CapitalStructureCard";
 import { OfficialCalendarCard } from "@/components/sg/dashboard/OfficialCalendarCard";
 import { AssignedTracksWidget } from "@/components/daf/payment-circuits/AssignedTracksWidget";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgDashboardTutorial } from "@/components/help/tutorials/SgDashboardTutorial";
 
 export default function SgDashboardPage() {
   const { data, isLoading, isError } = useSgDashboard();
@@ -43,6 +45,7 @@ export default function SgDashboardPage() {
             Bras droit administratif et juridique de la Direction — gouvernance, marchés clients, contentieux, conformité OHADA.
           </p>
         </div>
+        <PageHelp title="Aide — Tableau de bord SG"><SgDashboardTutorial /></PageHelp>
       </header>
 
       <SgHeaderBanner

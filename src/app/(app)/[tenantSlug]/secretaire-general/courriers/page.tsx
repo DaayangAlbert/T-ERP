@@ -19,6 +19,8 @@ import { CorrespondencesTable } from "@/components/sg/courriers/CorrespondencesT
 import { AdminActivityCards } from "@/components/sg/courriers/AdminActivityCards";
 import { CorrespondenceDetailDrawer } from "@/components/sg/courriers/CorrespondenceDetailDrawer";
 import { NewCorrespondenceWizard } from "@/components/sg/courriers/NewCorrespondenceWizard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgCourriersTutorial } from "@/components/help/tutorials/SgCourriersTutorial";
 
 export default function CourriersPage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -72,6 +74,9 @@ export default function CourriersPage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Courriers SG"><SgCourriersTutorial /></PageHelp>
+      </div>
       <CorrespondencesHeader
         counts={data?.counts ?? emptyCounts}
         readOnly={readOnly}

@@ -13,6 +13,8 @@ import { CallForTendersGrid } from "@/components/sg/marches/CallForTendersGrid";
 import { ContractDetailDrawer } from "@/components/sg/marches/ContractDetailDrawer";
 import { NewContractModal } from "@/components/sg/marches/NewContractModal";
 import type { ContractingAuthorityType } from "@prisma/client";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgMarchesTutorial } from "@/components/help/tutorials/SgMarchesTutorial";
 
 export default function MarchesPage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -41,6 +43,9 @@ export default function MarchesPage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Marchés SG"><SgMarchesTutorial /></PageHelp>
+      </div>
       <ContractsHeader
         activeCount={data?.counts.active ?? 0}
         portfolioValue={data?.kpis.portfolioValue ?? 0}

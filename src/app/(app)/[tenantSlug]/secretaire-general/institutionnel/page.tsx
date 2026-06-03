@@ -12,6 +12,8 @@ import { ApprovalsCard } from "@/components/sg/institutionnel/ApprovalsCard";
 import { InstitutionDetailDrawer } from "@/components/sg/institutionnel/InstitutionDetailDrawer";
 import { NewInstitutionModal } from "@/components/sg/institutionnel/NewInstitutionModal";
 import { ApprovalRenewalWizard } from "@/components/sg/institutionnel/ApprovalRenewalWizard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgInstitutionnelTutorial } from "@/components/help/tutorials/SgInstitutionnelTutorial";
 
 export default function InstitutionnelPage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -57,6 +59,9 @@ export default function InstitutionnelPage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Institutionnel SG"><SgInstitutionnelTutorial /></PageHelp>
+      </div>
       <InstitutionsHeader
         counts={instQ.data.counts}
         approvalsValid={apprQ.data?.counts.valid ?? 0}

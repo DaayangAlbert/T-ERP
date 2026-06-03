@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Phone, Mail, Search, Users } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgAnnuaireTutorial } from "@/components/help/tutorials/SgAnnuaireTutorial";
 
 interface PersonnelRow {
   id: string;
@@ -76,6 +78,7 @@ export default function SgAnnuairePage() {
             {data && data.total > 1 ? "personnes" : "personne"}.
           </p>
         </div>
+        <PageHelp title="Aide — Annuaire SG"><SgAnnuaireTutorial /></PageHelp>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

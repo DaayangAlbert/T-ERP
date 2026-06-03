@@ -11,6 +11,8 @@ import { UpcomingDeadlinesTable } from "@/components/sg/conformite/UpcomingDeadl
 import { RegistersGrid } from "@/components/sg/conformite/RegistersGrid";
 import { RegisterDetailDrawer } from "@/components/sg/conformite/RegisterDetailDrawer";
 import { NewComplianceEntryModal } from "@/components/sg/conformite/NewComplianceEntryModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgConformiteTutorial } from "@/components/help/tutorials/SgConformiteTutorial";
 
 export default function ConformitePage() {
   // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
@@ -50,6 +52,9 @@ export default function ConformitePage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Conformité SG"><SgConformiteTutorial /></PageHelp>
+      </div>
       <ComplianceHeader
         complianceScore={dashQ.data.complianceScore}
         registersCount={dashQ.data.counts.registers}

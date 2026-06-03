@@ -15,6 +15,8 @@ import {
   Flag,
   ShieldAlert,
 } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { SgRapportsChantiersTutorial } from "@/components/help/tutorials/SgRapportsChantiersTutorial";
 
 interface ReportItem {
   id: string;
@@ -94,6 +96,7 @@ export default function SgRapportsChantiersPage() {
             Vue consolidée des rapports journaliers remontés par les Chefs de Chantier — lecture seule.
           </p>
         </div>
+        <PageHelp title="Aide — Rapports chantiers SG"><SgRapportsChantiersTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
