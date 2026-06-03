@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Truck, ClipboardList, ChevronRight, AlertTriangle, Store, Wrench } from "lucide-react";
 import { clsx } from "clsx";
 import { useLogDashboard } from "@/hooks/useLogDashboard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogDashboardTutorial } from "@/components/help/tutorials/LogDashboardTutorial";
 
 function fmt(n: number): string {
   if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
@@ -64,9 +66,12 @@ export default function LogDashboardPage() {
               {data.greeting.equipmentCount} engins · {data.greeting.poToValidate} BC à valider
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11.5px] font-semibold backdrop-blur-sm">
-            Stocks · {fmt(data.banner.consolidatedStockValue)} FCFA
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11.5px] font-semibold backdrop-blur-sm">
+              Stocks · {fmt(data.banner.consolidatedStockValue)} FCFA
+            </span>
+            <PageHelp title="Aide — Logistique"><LogDashboardTutorial /></PageHelp>
+          </div>
         </div>
       </div>
 

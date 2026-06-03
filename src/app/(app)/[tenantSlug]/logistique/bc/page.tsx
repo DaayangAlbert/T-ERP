@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { clsx } from "clsx";
 import { useLogPurchaseOrders, useCreateLogPO } from "@/hooks/useLogPurchaseOrders";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogBcTutorial } from "@/components/help/tutorials/LogBcTutorial";
 
 const STATUSES = [
   { value: "", label: "Tous statuts" },
@@ -95,6 +97,7 @@ export default function LogPurchaseOrdersPage() {
           >
             <Plus className="h-3.5 w-3.5" /> Nouveau BC
           </button>
+          <PageHelp title="Aide — BC Logistique"><LogBcTutorial /></PageHelp>
         </div>
       </header>
 

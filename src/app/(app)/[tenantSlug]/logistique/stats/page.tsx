@@ -4,6 +4,8 @@ import { Download, FileText } from "lucide-react";
 import { clsx } from "clsx";
 import { useLogStats } from "@/hooks/useLogStats";
 import { useTenant } from "@/hooks/useTenant";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogStatsTutorial } from "@/components/help/tutorials/LogStatsTutorial";
 
 function fmt(n: number): string {
   if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
@@ -51,6 +53,7 @@ export default function LogStatsPage() {
           >
             <FileText className="h-3.5 w-3.5" /> Rapport DG
           </button>
+          <PageHelp title="Aide — Stats Logistique"><LogStatsTutorial /></PageHelp>
         </div>
       </header>
 

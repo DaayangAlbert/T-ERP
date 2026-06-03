@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { clsx } from "clsx";
 import { useLogSuppliers } from "@/hooks/useLogSuppliers";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogFournisseursTutorial } from "@/components/help/tutorials/LogFournisseursTutorial";
 
 type Tab = "frameworks" | "all" | "fiscal" | "evaluations";
 
@@ -47,13 +49,16 @@ export default function LogSuppliersPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Fournisseurs</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          <strong>{data.kpis.activeCount}</strong> fournisseurs actifs ·{" "}
-          <strong>{data.kpis.frameworkCount}</strong> contrats-cadres ·{" "}
-          <strong>{fmt(data.kpis.totalEngagementsYtd)} FCFA</strong> engagements YTD
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Fournisseurs</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            <strong>{data.kpis.activeCount}</strong> fournisseurs actifs ·{" "}
+            <strong>{data.kpis.frameworkCount}</strong> contrats-cadres ·{" "}
+            <strong>{fmt(data.kpis.totalEngagementsYtd)} FCFA</strong> engagements YTD
+          </p>
+        </div>
+        <PageHelp title="Aide — Fournisseurs Log"><LogFournisseursTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap gap-1 overflow-x-auto border-b border-line">

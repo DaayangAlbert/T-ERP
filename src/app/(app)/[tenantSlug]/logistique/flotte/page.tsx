@@ -6,6 +6,8 @@ import { fr } from "date-fns/locale";
 import { Search, Truck, Fuel, AlertOctagon, Wrench } from "lucide-react";
 import { clsx } from "clsx";
 import { useLogFleet } from "@/hooks/useLogFleet";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogFlotteTutorial } from "@/components/help/tutorials/LogFlotteTutorial";
 
 const TYPE_TABS: Array<{ key: string; label: string }> = [
   { key: "", label: "Tous" },
@@ -68,13 +70,16 @@ export default function LogFleetPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Flotte engins</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          <strong>{data.kpis.total}</strong> unités · <strong>{data.kpis.inService}</strong> en service ·{" "}
-          <strong>{data.kpis.maintenance}</strong> maintenance · <strong>{data.kpis.breakdown}</strong> panne · valorisation{" "}
-          <strong>{fmt(data.kpis.totalValue)} FCFA</strong>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Flotte engins</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            <strong>{data.kpis.total}</strong> unités · <strong>{data.kpis.inService}</strong> en service ·{" "}
+            <strong>{data.kpis.maintenance}</strong> maintenance · <strong>{data.kpis.breakdown}</strong> panne · valorisation{" "}
+            <strong>{fmt(data.kpis.totalValue)} FCFA</strong>
+          </p>
+        </div>
+        <PageHelp title="Aide — Flotte"><LogFlotteTutorial /></PageHelp>
       </header>
 
       {/* KPIs */}

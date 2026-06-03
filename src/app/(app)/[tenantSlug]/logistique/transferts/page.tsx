@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { clsx } from "clsx";
 import { useLogTransfers, useArbitrateTransfer } from "@/hooks/useLogTransfers";
+import { PageHelp } from "@/components/help/PageHelp";
+import { LogTransfertsTutorial } from "@/components/help/tutorials/LogTransfertsTutorial";
 
 function fmt(n: number): string {
   if (n >= 1_000_000_000) return `${new Intl.NumberFormat("fr-FR").format(Math.round(n))}`;
@@ -39,15 +41,18 @@ export default function LogTransfersPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Transferts inter-chantiers
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          <strong>{data.kpis.pendingCount}</strong> demandes en attente ·{" "}
-          <strong>{data.kpis.validatedYtdCount}</strong> transferts validés YTD ·{" "}
-          <strong>{fmt(data.kpis.ytdSavings)} FCFA</strong> d&apos;économies
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Transferts inter-chantiers
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            <strong>{data.kpis.pendingCount}</strong> demandes en attente ·{" "}
+            <strong>{data.kpis.validatedYtdCount}</strong> transferts validés YTD ·{" "}
+            <strong>{fmt(data.kpis.ytdSavings)} FCFA</strong> d&apos;économies
+          </p>
+        </div>
+        <PageHelp title="Aide — Transferts"><LogTransfertsTutorial /></PageHelp>
       </header>
 
       {/* Demandes en attente d'arbitrage */}
