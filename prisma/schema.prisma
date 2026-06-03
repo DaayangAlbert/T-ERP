@@ -4990,6 +4990,7 @@ model SitePlanning {
   site              Site    @relation(fields: [siteId], references: [id], onDelete: Cascade)
   templateId        String? // si cloné depuis TemplatePlanning DT
   totalDurationDays Int
+  observations      String? @db.Text // Notes / observations du Directeur des travaux, affichées dans le PDF
 
   phases     SitePhase[]
   milestones SiteMilestone[]

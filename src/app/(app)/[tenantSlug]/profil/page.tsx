@@ -35,6 +35,8 @@ import { AlertPreferencesCard } from "@/components/daf/profile/AlertPreferencesC
 import { DafAgendaCard } from "@/components/daf/profile/DafAgendaCard";
 import { RhSignatureCard } from "@/components/rh/profile/RhSignatureCard";
 import { RhAlertsCard } from "@/components/rh/profile/RhAlertsCard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ProfilTransverseTutorial } from "@/components/help/tutorials/ProfilTransverseTutorial";
 
 type TabId = "info" | "documents" | "activity" | "security" | "preferences" | "signature" | "dg-prefs" | "agenda" | "interests" | "daf-signature" | "daf-alerts" | "daf-agenda" | "rh-signature" | "rh-alerts";
 
@@ -152,6 +154,9 @@ function ProfileHero({ profile }: { profile: ReturnType<typeof useProfile>["data
       className="overflow-hidden rounded-xl text-white"
       style={{ background: "linear-gradient(135deg,#2A1B3D 0%,#7E22CE 100%)" }}
     >
+      <div className="flex justify-end px-3 pt-2">
+        <PageHelp title="Aide — Mon profil"><ProfilTransverseTutorial /></PageHelp>
+      </div>
       <div className="flex flex-wrap items-center gap-5 p-6">
         {profile.avatarUrl ? (
           <img

@@ -16,6 +16,9 @@ import {
   Layers,
   Sparkles,
   ArrowRight,
+  ClipboardList,
+  Save,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -53,7 +56,7 @@ interface Milestone {
   moaValidation: boolean;
 }
 interface PlanningResp {
-  planning: { id: string; totalDurationDays: number } | null;
+  planning: { id: string; totalDurationDays: number; observations: string | null } | null;
   phases: Phase[];
   milestones: Milestone[];
   kpis: {
@@ -449,6 +452,12 @@ export default function PlanningPage() {
               </ul>
             )}
           </section>
+
+          <ObservationsSection
+            siteId={activeChantierId!}
+            initial={data?.planning?.observations ?? ""}
+            onSaved={invalidate}
+          />
         </>
       )}
 
@@ -858,6 +867,84 @@ function MilestoneBadge({ status }: { status: string }) {
   };
   const [label, cls] = map[status] ?? [status, "bg-ink-3/10 text-ink-3"];
   return <span className={`rounded px-2 py-0.5 text-[11px] font-medium ${cls}`}>{label}</span>;
+}
+
+function ObservationsSection({
+  siteId,
+  initial,
+  onSaved,
+}: {
+  siteId: string;
+  initial: string;
+  onSaved: () => void;
+}) {
+  const [text, setText] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dirty = text !== initial;
+
+  async function save() {
+    setError(null);
+    setSaving(true);
+    const res = await fetch(`/api/dtrav/sites/${siteId}/planning`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ observations: text }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      setError(j.error ?? `Erreur (HTTP ${res.status})`);
+      return;
+    }
+    setSaved(true);
+    onSaved();
+    window.setTimeout(() => setSaved(false), 2000);
+  }
+
+  return (
+    <section className="rounded-xl border border-line bg-white shadow-card">
+      <header className="flex items-center justify-between border-b border-line px-3 py-2">
+        <h2 className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-ink-3">
+          <ClipboardList className="h-3.5 w-3.5" /> Observations
+        </h2>
+        <span className="text-[11px] text-ink-3">Affichées dans le PDF du planning</span>
+      </header>
+      <div className="p-3">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={5}
+          maxLength={8000}
+          placeholder="Remarques, contraintes particulières, hypothèses retenues, points de vigilance pour l'équipe…"
+          className="block w-full resize-y rounded-md border border-line bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-4 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200"
+        />
+        {error && (
+          <p className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-[12.5px] text-rose-700 ring-1 ring-rose-200">{error}</p>
+        )}
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-ink-3">{text.length} / 8000 caractères</span>
+          <div className="flex items-center gap-2">
+            {saved && (
+              <span className="inline-flex items-center gap-1 text-[12px] text-success">
+                <Check className="h-3.5 w-3.5" /> Enregistré
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving || !dirty}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" /> {saving ? "Enregistrement…" : "Enregistrer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function Kpi({ label, value, accent }: { label: string; value: string; accent?: "success" | "danger" }) {

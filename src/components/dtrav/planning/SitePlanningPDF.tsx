@@ -209,6 +209,7 @@ export interface SitePlanningPdfData {
     moaName: string | null;
   };
   totalDurationDays: number;
+  observations: string | null;
   phases: PlanningPhasePdf[];
   milestones: PlanningMilestonePdf[];
   generatedAt: string;
@@ -685,11 +686,15 @@ function BottomStrip({ data, paperW }: { data: SitePlanningPdfData; paperW: numb
       </View>
       <View style={styles.observationsBox}>
         <Text style={styles.boxTitle}>OBSERVATIONS</Text>
-        <View style={styles.observationLines}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <View key={i} style={styles.dottedLine} />
-          ))}
-        </View>
+        {data.observations && data.observations.trim() ? (
+          <Text style={styles.observationsText}>{data.observations}</Text>
+        ) : (
+          <View style={styles.observationLines}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <View key={i} style={styles.dottedLine} />
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -1090,6 +1095,7 @@ const styles = StyleSheet.create({
   recapLabel: { fontSize: 7, color: C.ink2 },
   recapValue: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.ink },
   observationLines: { marginTop: 3 },
+  observationsText: { marginTop: 3, fontSize: 7.5, color: C.ink2, lineHeight: 1.4 },
   // Bandeau jalons (slim, entre Gantt et BottomStrip)
   milestonesRow: {
     flexDirection: "row",

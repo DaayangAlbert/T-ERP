@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Clock, Coffee, AlertTriangle, CheckCircle2, X, Save, Calendar } from "lucide-react";
 import { clsx } from "clsx";
 import { useTimeToday, useCurrentMonth, useContestTimeReport, type MonthDay } from "@/hooks/useEmpTimeReport";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpPointageTutorial } from "@/components/help/tutorials/EmpPointageTutorial";
 
 const STATUS_LABEL: Record<string, string> = {
   PRESENT: "En poste",
@@ -66,12 +68,15 @@ export default function EmpPointagePage() {
 
   return (
     <div className="space-y-3 pb-20">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon temps de travail</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data.monthLabel} (jour {data.currentDay} / {data.totalDays}) · pointé par <span className="font-semibold text-ink">{data.pointerName}</span>
-          {data.lastSyncAt && <> · synchro {fmtTime(data.lastSyncAt)}</>}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon temps de travail</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data.monthLabel} (jour {data.currentDay} / {data.totalDays}) · pointé par <span className="font-semibold text-ink">{data.pointerName}</span>
+            {data.lastSyncAt && <> · synchro {fmtTime(data.lastSyncAt)}</>}
+          </p>
+        </div>
+        <PageHelp title="Aide — Mon pointage"><EmpPointageTutorial /></PageHelp>
       </header>
 
       {/* Card aujourd'hui */}

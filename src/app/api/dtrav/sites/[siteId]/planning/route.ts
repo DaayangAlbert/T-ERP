@@ -1,8 +1,39 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { guardDtravSite, guardDtravSiteMutation } from "@/lib/rbac/dtrav-guard";
 
 export const dynamic = "force-dynamic";
+
+const patchSchema = z.object({
+  observations: z.string().max(8000).optional().nullable(),
+});
+
+export async function PATCH(req: Request, { params }: { params: { siteId: string } }) {
+  const guard = await guardDtravSiteMutation(params.siteId);
+  if (guard instanceof NextResponse) return guard;
+
+  const planning = await prisma.sitePlanning.findUnique({
+    where: { siteId: params.siteId },
+    select: { id: true },
+  });
+  if (!planning) return NextResponse.json({ error: "Planning non initialisé" }, { status: 404 });
+
+  const parsed = patchSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Validation", issues: parsed.error.flatten() }, { status: 400 });
+  }
+
+  await prisma.sitePlanning.update({
+    where: { id: planning.id },
+    data: {
+      observations:
+        parsed.data.observations !== undefined ? parsed.data.observations?.trim() || null : undefined,
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}
 
 /**
  * Bootstrap le planning d'un chantier (idempotent — si déjà existant, le
@@ -89,6 +120,7 @@ export async function GET(_req: Request, { params }: { params: { siteId: string 
     planning: {
       id: planning.id,
       totalDurationDays: planning.totalDurationDays,
+      observations: planning.observations,
     },
     phases: planning.phases.map((ph) => ({
       id: ph.id,

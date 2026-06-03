@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEmployee } from "@/contexts/EmployeeContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpHomeTutorial } from "@/components/help/tutorials/EmpHomeTutorial";
 
 export default function EmpHomePage() {
   const { employee, isLoading } = useEmployee();
@@ -9,7 +11,10 @@ export default function EmpHomePage() {
   return (
     <main className="emp-home mx-auto w-full max-w-screen-sm px-4 pb-24 pt-6">
       <header className="rounded-2xl bg-gradient-to-br from-purple-700 via-purple-600 to-fuchsia-500 px-5 py-6 text-white shadow-lg">
-        <p className="text-xs uppercase tracking-wider opacity-80">Espace personnel</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs uppercase tracking-wider opacity-80">Espace personnel</p>
+          <PageHelp title="Aide — Mon espace"><EmpHomeTutorial /></PageHelp>
+        </div>
         <h1 className="mt-1 text-2xl font-semibold">
           {isLoading
             ? "Chargement…"

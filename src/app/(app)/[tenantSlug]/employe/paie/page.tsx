@@ -11,6 +11,8 @@ import { PayslipActionsRow } from "@/components/emp/paie/PayslipActionsRow";
 import { PayslipsHistoryList } from "@/components/emp/paie/PayslipsHistoryList";
 import { CnpsAttestationsList } from "@/components/emp/paie/CnpsAttestationsList";
 import { WhatsAppShareModal } from "@/components/emp/paie/WhatsAppShareModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpPaieTutorial } from "@/components/help/tutorials/EmpPaieTutorial";
 
 /**
  * /emp/paie — fonction 1.2 : historique et téléchargement des bulletins.
@@ -78,6 +80,9 @@ export default function EmpPaiePage() {
         </>
       ) : (
         <>
+          <div className="flex justify-end pt-2">
+            <PageHelp title="Aide — Mes bulletins"><EmpPaieTutorial /></PageHelp>
+          </div>
           <PayslipsHeader year={list.year} total={list.total} cumulNet={list.cumulNet} />
 
           {selectedListItem && (

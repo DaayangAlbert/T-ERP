@@ -71,6 +71,7 @@ export async function GET(_req: Request, { params }: { params: { siteId: string 
     totalDurationDays:
       planning?.totalDurationDays ??
       Math.max(1, Math.round((site.plannedEndDate.getTime() - site.startDate.getTime()) / 86_400_000)),
+    observations: planning?.observations ?? null,
     phases: (planning?.phases ?? []).map((ph) => ({
       name: ph.name,
       plannedStart: ph.plannedStart.toISOString(),

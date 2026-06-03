@@ -15,6 +15,8 @@ import { PendingLeaveRequestCard } from "@/components/emp/conges/PendingLeaveReq
 import { LeaveHistoryList } from "@/components/emp/conges/LeaveHistoryList";
 import { TeamAbsenceList } from "@/components/emp/conges/TeamAbsenceList";
 import { NewLeaveRequestWizard } from "@/components/emp/conges/NewLeaveRequestWizard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpCongesTutorial } from "@/components/help/tutorials/EmpCongesTutorial";
 
 /**
  * /emp/conges — fonction 1.3 : gestion des demandes de congés et soldes.
@@ -51,7 +53,10 @@ export default function EmpCongesPage() {
   return (
     <main className="mx-auto w-full max-w-screen-md px-4 pb-24 pt-2">
       <header className="mt-4 rounded-2xl border border-line bg-white p-4 shadow-card">
-        <p className="text-[11px] uppercase tracking-wider text-ink-3">Mes congés</p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[11px] uppercase tracking-wider text-ink-3">Mes congés</p>
+          <PageHelp title="Aide — Mes congés"><EmpCongesTutorial /></PageHelp>
+        </div>
         <h1 className="mt-1 text-lg font-semibold text-ink">
           Année {year} ·{" "}
           {balance ? (

@@ -6,6 +6,8 @@ import { clsx } from "clsx";
 import { useEmpProfile, useEmpDocuments, useEmpPolicies, useRequestProfileModification, type EmpDocument } from "@/hooks/useEmpProfile";
 import { useTenant } from "@/hooks/useTenant";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpProfilTutorial } from "@/components/help/tutorials/EmpProfilTutorial";
 
 const MODIFIABLE_FIELDS: { code: string; label: string; type: string }[] = [
   { code: "phoneMobile", label: "Téléphone mobile", type: "tel" },
@@ -72,6 +74,9 @@ export default function EmpProfilPage() {
 
   return (
     <div className="space-y-3 pb-20">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Mon profil"><EmpProfilTutorial /></PageHelp>
+      </div>
       {/* Carte profil */}
       <article className="rounded-xl border border-line bg-white p-4 shadow-card">
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">

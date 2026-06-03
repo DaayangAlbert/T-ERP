@@ -8,6 +8,8 @@ import { EmpKpiRow } from "@/components/emp/dashboard/EmpKpiRow";
 import { QuickActionsGrid } from "@/components/emp/dashboard/QuickActionsGrid";
 import { MyConstructionSiteCard } from "@/components/emp/dashboard/MyConstructionSiteCard";
 import { MyTeamList } from "@/components/emp/dashboard/MyTeamList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { EmpDashboardTutorial } from "@/components/help/tutorials/EmpDashboardTutorial";
 
 /**
  * Tableau de bord personnel ouvrier/employé — fn 1.1 EMP.
@@ -45,6 +47,9 @@ export default function EmpDashboardPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-4 pb-16 pt-0">
+      <div className="flex justify-end pt-2">
+        <PageHelp title="Aide — Tableau de bord"><EmpDashboardTutorial /></PageHelp>
+      </div>
       <EmpHeaderBanner
         firstName={data.user.firstName}
         position={data.user.position}
