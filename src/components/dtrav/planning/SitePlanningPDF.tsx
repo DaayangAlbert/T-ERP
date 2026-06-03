@@ -500,7 +500,7 @@ function TaskRow({
         <Text style={styles.taskNumText}>{index}</Text>
       </View>
       <View style={[styles.colName, styles.bodyCell, { alignItems: "flex-start", paddingHorizontal: 4, paddingLeft: 14 }]}>
-        <Text style={styles.taskNameText}>↳ {task.name}</Text>
+        <Text style={styles.taskNameText}>• {task.name}</Text>
       </View>
       <View style={[styles.colDur, styles.bodyCell]}>
         <Text style={styles.taskNumText}>{durWeeks}</Text>
