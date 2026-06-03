@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollText, Search } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { AdminAuditTutorial } from "@/components/help/tutorials/AdminAuditTutorial";
 
 interface AuditEntry {
   id: string;
@@ -36,13 +38,16 @@ export default function AdminAuditPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-config-audit">
-      <header className="border-b border-line pb-3">
-        <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          <ScrollText className="h-5 w-5 text-primary-600" /> Journal d'audit
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Toutes les actions sensibles tracées — accès réservé DG / Informaticien d'entreprise.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            <ScrollText className="h-5 w-5 text-primary-600" /> Journal d&apos;audit
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Toutes les actions sensibles tracées — accès réservé DG / Informaticien d&apos;entreprise.
+          </p>
+        </div>
+        <PageHelp title="Aide — Journal d&apos;audit"><AdminAuditTutorial /></PageHelp>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

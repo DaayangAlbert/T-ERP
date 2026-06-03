@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Shield } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { AdminUsersTutorial } from "@/components/help/tutorials/AdminUsersTutorial";
 
 interface AdminUser {
   id: string;
@@ -62,6 +64,7 @@ export default function AdminUsersPage() {
           >
             <Plus className="h-3.5 w-3.5" /> Nouvel utilisateur
           </Link>
+          <PageHelp title="Aide — Utilisateurs admin"><AdminUsersTutorial /></PageHelp>
         </div>
       </header>
 

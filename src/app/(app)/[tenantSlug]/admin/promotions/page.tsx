@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { AdminPromotionsTutorial } from "@/components/help/tutorials/AdminPromotionsTutorial";
 
 interface Promotion {
   id: string;
@@ -52,11 +54,14 @@ export default function AdminPromotionsPage() {
 
   return (
     <div data-rh-screen className="space-y-3" id="screen-config-promotions">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Workflow promotions</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Demandes RH de changement de rôle / extension de périmètre — validation N1 (DAF / DT) puis application auto.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Workflow promotions</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Demandes RH de changement de rôle / extension de périmètre — validation N1 (DAF / DT) puis application auto.
+          </p>
+        </div>
+        <PageHelp title="Aide — Promotions admin"><AdminPromotionsTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap gap-1 border-b border-line">
