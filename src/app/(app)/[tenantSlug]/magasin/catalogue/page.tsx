@@ -8,6 +8,8 @@ import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { ArticleCreateModal } from "@/components/articles/ArticleCreateModal";
 import { useArticles } from "@/hooks/useArticles";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagCatalogueTutorial } from "@/components/help/tutorials/MagCatalogueTutorial";
 
 interface CatalogueItem {
   id: string;
@@ -72,6 +74,7 @@ export default function MagCataloguePage() {
             </button>
           )}
           <SyncStatusBadge />
+          <PageHelp title="Aide — Catalogue"><MagCatalogueTutorial /></PageHelp>
         </div>
       </header>
 

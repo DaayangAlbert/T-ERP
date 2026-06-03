@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, ArrowUpFromLine } from "lucide-react";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagSortiesTutorial } from "@/components/help/tutorials/MagSortiesTutorial";
 
 interface Article {
   id: string;
@@ -43,7 +45,10 @@ export default function MagSortiesPage() {
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Sorties de stock</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Sorties"><MagSortiesTutorial /></PageHelp>
+        </div>
       </header>
 
       <button

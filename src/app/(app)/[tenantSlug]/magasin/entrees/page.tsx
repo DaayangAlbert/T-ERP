@@ -6,6 +6,8 @@ import { clsx } from "clsx";
 import { Camera, Pencil, Truck, Plus, X } from "lucide-react";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
 import { postOrQueue } from "@/lib/offline/db";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagEntreesTutorial } from "@/components/help/tutorials/MagEntreesTutorial";
 
 interface ExpectedDelivery {
   id: string;
@@ -39,7 +41,10 @@ export default function MagEntreesPage() {
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Entrées de stock</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Entrées"><MagEntreesTutorial /></PageHelp>
+        </div>
       </header>
 
       <section>

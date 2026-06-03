@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Play, CheckCircle2 } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagInventairesTutorial } from "@/components/help/tutorials/MagInventairesTutorial";
 
 interface Inventory {
   id: string;
@@ -71,7 +73,10 @@ export default function MagInventairesPage() {
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Inventaires</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Inventaires"><MagInventairesTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white shadow-md">

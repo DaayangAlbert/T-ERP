@@ -14,6 +14,8 @@ import {
 import { clsx } from "clsx";
 import { formatFCFA } from "@/lib/format";
 import { ContactActions } from "@/components/contact/ContactActions";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagDemandesTutorial } from "@/components/help/tutorials/MagDemandesTutorial";
 
 type Status = "PENDING" | "FULFILLED" | "PARTIAL" | "REJECTED" | "CANCELLED";
 type Priority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
@@ -88,14 +90,17 @@ export default function MagasinDemandesPage() {
 
   return (
     <>
-      <header className="mb-4 border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink">
-          Demandes de matériel
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Demandes émises par les chefs de chantier. Validation = sortie de
-          stock immédiate (création des mouvements OUT).
-        </p>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            Demandes de matériel
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Demandes émises par les chefs de chantier. Validation = sortie de
+            stock immédiate (création des mouvements OUT).
+          </p>
+        </div>
+        <PageHelp title="Aide — Demandes magasin"><MagDemandesTutorial /></PageHelp>
       </header>
 
       {feedback && (

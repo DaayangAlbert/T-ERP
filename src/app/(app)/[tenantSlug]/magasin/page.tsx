@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Package, TrendingDown, AlertTriangle, ClipboardList, Truck, ArrowDownToLine, ArrowUpFromLine, Building2, Eye } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagDashboardTutorial } from "@/components/help/tutorials/MagDashboardTutorial";
 import {
   WarehouseFilter,
   DEFAULT_WAREHOUSE_FILTER,
@@ -102,7 +104,10 @@ export default function MagDashboardPage() {
             )}
           </p>
         </div>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Magasin"><MagDashboardTutorial /></PageHelp>
+        </div>
       </section>
 
       {/* Filtres chantier / direction / magasin — visible uniquement

@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDownToLine, ArrowUpFromLine, RefreshCw, Download } from "lucide-react";
 import { clsx } from "clsx";
 import { SyncStatusBadge } from "@/components/cc/SyncStatusBadge";
+import { PageHelp } from "@/components/help/PageHelp";
+import { MagMouvementsTutorial } from "@/components/help/tutorials/MagMouvementsTutorial";
 
 interface Movement {
   id: string;
@@ -46,7 +48,10 @@ export default function MagMouvementsPage() {
     <div className="space-y-3">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
         <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Historique mouvements</h1>
-        <SyncStatusBadge />
+        <div className="flex items-center gap-2">
+          <SyncStatusBadge />
+          <PageHelp title="Aide — Mouvements"><MagMouvementsTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="flex items-center justify-between gap-2">
