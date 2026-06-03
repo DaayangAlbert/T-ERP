@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
+import { guardSgCorrespondence, guardSgCorrespondenceMutation } from "@/lib/rbac/sg-guard";
 import {
   CorrespondenceConfidentiality,
   CorrespondenceDirection,
@@ -12,7 +12,7 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const guard = await guardSg();
+  const guard = await guardSgCorrespondence();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;
@@ -162,7 +162,7 @@ async function nextReference(tenantId: string, direction: CorrespondenceDirectio
 }
 
 export async function POST(req: Request) {
-  const guard = await guardSgMutation("canManageOfficialCorrespondence");
+  const guard = await guardSgCorrespondenceMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

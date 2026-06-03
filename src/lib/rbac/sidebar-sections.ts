@@ -635,6 +635,20 @@ export function getSidebarSections(role: Role | null | undefined): NavSection[] 
     });
   }
 
+  // 2bis) Cas particulier ARCHIVIST : on lui ajoute un accès direct au
+  //       registre des courriers officiels du SG. Les correspondances sont
+  //       des documents transverses (en + sortants signés DG) → relèvent
+  //       de son périmètre documentaire. Le guard API guardSgCorrespondence
+  //       lui accorde un FULL spécifique sur ces routes.
+  if (role === Role.ARCHIVIST) {
+    sections.push({
+      title: "Courriers officiels",
+      items: [
+        { label: "Registre des courriers", href: "/secretaire-general/courriers", icon: Mail },
+      ],
+    });
+  }
+
   // 3) "Mon espace" personnel pour les rôles qui ont OWN sur EMP (mais pas FULL)
   //    Cas particulier WORKER : skip — il a son propre OUV_PERSONAL qui
   //    pointe vers /ouv/* (PWA), évite le doublon avec FULL.EMP qui

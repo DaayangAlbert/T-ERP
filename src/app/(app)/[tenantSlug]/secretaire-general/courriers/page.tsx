@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { useAccess } from "@/hooks/useAccess";
+import { useAuth } from "@/hooks/useAuth";
 import { MODULES } from "@/lib/rbac/modules";
 import {
   useCorrespondences,
@@ -23,8 +24,14 @@ import { PageHelp } from "@/components/help/PageHelp";
 import { SgCourriersTutorial } from "@/components/help/tutorials/SgCourriersTutorial";
 
 export default function CourriersPage() {
-  // Matrice : FULL sur SG pour SECRETARY_GENERAL/SG/TENANT_ADMIN, READ pour DG.
-  const readOnly = !useAccess(MODULES.SG).canEdit;
+  // FULL sur SG pour SECRETARY_GENERAL/TENANT_ADMIN ; READ pour DG.
+  // Exception : l'ARCHIVIST (READ sur SG) a un accès FULL spécifique aux
+  // courriers — les correspondances sont des documents transverses qui
+  // relèvent de son périmètre. Le guard API guardSgCorrespondenceMutation
+  // applique la même règle côté serveur.
+  const { user } = useAuth();
+  const sgCanEdit = useAccess(MODULES.SG).canEdit;
+  const readOnly = !sgCanEdit && user?.role !== "ARCHIVIST";
 
   const [tab, setTab] = useState<CorrespondenceTab>("INCOMING");
   const [q, setQ] = useState("");

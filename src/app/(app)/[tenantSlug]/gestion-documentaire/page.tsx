@@ -2,6 +2,8 @@
 
 import { useGedDashboard } from "@/hooks/useGedDashboard";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { GedHeaderBanner } from "@/components/ged/dashboard/GedHeaderBanner";
 import { GedGreeting } from "@/components/ged/dashboard/GedGreeting";
 import { GedKpiRow } from "@/components/ged/dashboard/GedKpiRow";
@@ -14,7 +16,7 @@ import { GedDashboardTutorial } from "@/components/help/tutorials/GedDashboardTu
 export default function GedDashboardPage() {
   const { user } = useAuth();
   const { data, isLoading, isError } = useGedDashboard();
-  const isReadOnly = user?.role !== "ARCHIVIST";
+  const isReadOnly = !useAccess(MODULES.GED).canEdit;
 
   if (isError) {
     return (

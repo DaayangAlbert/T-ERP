@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg, guardSgMutation } from "@/lib/rbac/sg-guard";
+import { guardSgCorrespondence, guardSgCorrespondenceMutation } from "@/lib/rbac/sg-guard";
 import { CorrespondenceConfidentiality, CorrespondenceStatus, Role } from "@prisma/client";
 import { z } from "zod";
 
@@ -11,7 +11,7 @@ interface RouteContext {
 }
 
 export async function GET(_req: Request, { params }: RouteContext) {
-  const guard = await guardSg();
+  const guard = await guardSgCorrespondence();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;
@@ -81,7 +81,7 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(req: Request, { params }: RouteContext) {
-  const guard = await guardSgMutation("canManageOfficialCorrespondence");
+  const guard = await guardSgCorrespondenceMutation();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

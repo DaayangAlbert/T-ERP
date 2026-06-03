@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Tags, Download, Plus, X, Save, Shield, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import {
   useGedClassifications,
   useCreateClassification,
@@ -42,8 +43,7 @@ const CONF_LABEL: Record<ClassificationConfidentiality, string> = {
 };
 
 export default function GedNomenclaturePage() {
-  const { user } = useAuth();
-  const canEdit = user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN" || user?.role === "SUPER_ADMIN";
+  const canEdit = useAccess(MODULES.GED).canEdit;
 
   const [tab, setTab] = useState<Tab>("ALL");
   const [showNew, setShowNew] = useState(false);

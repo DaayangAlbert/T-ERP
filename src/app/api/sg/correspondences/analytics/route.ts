@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { guardSg } from "@/lib/rbac/sg-guard";
+import { guardSgCorrespondence } from "@/lib/rbac/sg-guard";
 import { CorrespondenceDirection } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ const ADMIN_GROUPS = [
 ];
 
 export async function GET() {
-  const guard = await guardSg();
+  const guard = await guardSgCorrespondence();
   if (guard instanceof NextResponse) return guard;
   const { session } = guard;
   const tenantId = session.tenantId!;

@@ -5,6 +5,8 @@ import { Workflow, AlertTriangle, CheckCircle2, Clock, FileText, Bell, History, 
 import { clsx } from "clsx";
 import { useGedWorkflows, useEscalateWorkflow, type WorkflowInstanceRow } from "@/hooks/useGedWorkflows";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { WorkflowPipelineVisual } from "@/components/ged/workflows/WorkflowPipelineVisual";
 import { WorkflowDetailDrawer } from "@/components/ged/workflows/WorkflowDetailDrawer";
 import { WorkflowTemplatesSection } from "@/components/ged/workflows/WorkflowTemplatesSection";
@@ -18,6 +20,7 @@ function fmtDate(s: string | null): string {
 
 export default function GedWorkflowsPage() {
   const { user } = useAuth();
+  const canEdit = useAccess(MODULES.GED).canEdit;
   const { data, isLoading } = useGedWorkflows();
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -172,9 +175,7 @@ export default function GedWorkflowsPage() {
         </ul>
       </section>
 
-      <WorkflowTemplatesSection
-        canEdit={user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN"}
-      />
+      <WorkflowTemplatesSection canEdit={canEdit} />
 
       <WorkflowDetailDrawer
         workflowId={openId}

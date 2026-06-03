@@ -5,7 +5,8 @@ import { Search, FileText, Archive, AlertTriangle, Calendar, Filter, Shield, Cog
 import { clsx } from "clsx";
 import { useArchivalStats, useGedSearch, type SearchFilters, type SearchResultItem } from "@/hooks/useGedSearch";
 import { useGedClassifications, type ClassificationRow } from "@/hooks/useGedClassifications";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { RecentSearchesList } from "@/components/ged/recherche/RecentSearchesList";
 import { ArchivalPolicyDialog } from "@/components/ged/recherche/ArchivalPolicyDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,8 +38,7 @@ const ARCH_STATUS_LABEL: Record<string, string> = {
 };
 
 export default function GedRecherchePage() {
-  const { user } = useAuth();
-  const canEditPolicy = user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN";
+  const canEditPolicy = useAccess(MODULES.GED).canEdit;
   const qc = useQueryClient();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({});

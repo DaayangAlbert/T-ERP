@@ -6,7 +6,8 @@ import { fr } from "date-fns/locale";
 import { AlertOctagon, Check, X, Download, FileText, Shield, Award, FileBarChart, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { useGedAudit, useDecideAccessRequest } from "@/hooks/useGedAudit";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { AnomalyDetailDrawer } from "@/components/ged/audit/AnomalyDetailDrawer";
 import { ComplianceReportDialog } from "@/components/ged/audit/ComplianceReportDialog";
 import { Iso9001ReadinessChecklist } from "@/components/ged/audit/Iso9001ReadinessChecklist";
@@ -42,8 +43,7 @@ function fmt(n: number): string {
 }
 
 export default function GedAuditPage() {
-  const { user } = useAuth();
-  const canResolve = user?.role === "ARCHIVIST" || user?.role === "TENANT_ADMIN";
+  const canResolve = useAccess(MODULES.GED).canEdit;
   const [action, setAction] = useState("");
   const [anomalyOnly, setAnomalyOnly] = useState(false);
   const [page, setPage] = useState(1);

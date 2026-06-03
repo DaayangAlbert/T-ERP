@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { MODULES } from "@/lib/rbac/modules";
 import { useGedSpaces, type GedSpacesFilters } from "@/hooks/useGedSpaces";
 import { SpacesHeader } from "@/components/ged/espaces/SpacesHeader";
 import { SpacesTabs, type SpacesTab } from "@/components/ged/espaces/SpacesTabs";
@@ -19,8 +20,7 @@ import { PageHelp } from "@/components/help/PageHelp";
 import { GedEspacesTutorial } from "@/components/help/tutorials/GedEspacesTutorial";
 
 export default function GedEspacesPage() {
-  const { user } = useAuth();
-  const readOnly = user?.role !== "ARCHIVIST";
+  const readOnly = !useAccess(MODULES.GED).canEdit;
 
   const [tab, setTab] = useState<SpacesTab>("all");
   const [q, setQ] = useState("");

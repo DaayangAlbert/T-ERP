@@ -80,6 +80,80 @@ export async function guardSgMutation(requiredPower?: SgPower) {
 }
 
 /**
+ * Garde dédiée au registre des courriers officiels.
+ *
+ * Particularité : l'ARCHIVIST a un accès FULL au registre des correspondances
+ * (les courriers sont des documents transverses qui relèvent naturellement de
+ * son périmètre documentaire), bien qu'il n'ait que SG=READ dans la matrice
+ * pour le reste du module SG (contentieux, marchés, gouvernance).
+ *
+ * Acceptés : SECRETARY_GENERAL, TENANT_ADMIN, DG (lecture), ARCHIVIST.
+ */
+export async function guardSgCorrespondence() {
+  const session = getCurrentSession();
+  if (!session?.tenantId) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+  const role = session.role as Role;
+  if (role === Role.ARCHIVIST) {
+    // ARCHIVIST bénéficie d'un accès FULL spécifique aux correspondances.
+    return {
+      session,
+      access: {
+        level: "FULL" as const,
+        canEdit: true,
+        canValidate: true,
+        scopedByPerimeter: false,
+        ownerOnly: false,
+      },
+    };
+  }
+  return guardSg();
+}
+
+/**
+ * Variante stricte de `guardSgCorrespondence` pour POST/PATCH/DELETE.
+ *
+ * Règles :
+ *   - ARCHIVIST : autorisé sans flag (gardien documentaire).
+ *   - SECRETARY_GENERAL : doit avoir le flag canManageOfficialCorrespondence.
+ *   - TENANT_ADMIN / SG (matrice FULL) : autorisé.
+ *   - DG (READ) : refusé (lecture seule).
+ */
+export async function guardSgCorrespondenceMutation() {
+  const guard = await guardSgCorrespondence();
+  if (guard instanceof NextResponse) return guard;
+  const role = guard.session.role as Role;
+
+  // ARCHIVIST passe sans vérif supplémentaire.
+  if (role === Role.ARCHIVIST) return guard;
+
+  // SECRETARY_GENERAL : doit avoir le flag spécifique.
+  if (role === Role.SECRETARY_GENERAL) {
+    const user = await prisma.user.findUnique({
+      where: { id: guard.session.sub },
+      select: { canManageOfficialCorrespondence: true },
+    });
+    if (!user || !user.canManageOfficialCorrespondence) {
+      return NextResponse.json(
+        { error: "Pouvoir manquant : canManageOfficialCorrespondence" },
+        { status: 403 },
+      );
+    }
+    return guard;
+  }
+
+  // Autres rôles : matrice doit accorder canEdit.
+  if (!guard.access.canEdit) {
+    return NextResponse.json(
+      { error: "Action en lecture seule pour ce profil" },
+      { status: 403 },
+    );
+  }
+  return guard;
+}
+
+/**
  * Vérifie si le SG peut consulter en lecture les dashboards d'autres
  * directions (DAF, DT, RH...). Renvoie true si le flag est posé.
  * Le DG / TENANT_ADMIN bypass.
