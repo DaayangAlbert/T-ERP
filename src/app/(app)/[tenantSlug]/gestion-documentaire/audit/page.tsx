@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { AnomalyDetailDrawer } from "@/components/ged/audit/AnomalyDetailDrawer";
 import { ComplianceReportDialog } from "@/components/ged/audit/ComplianceReportDialog";
 import { Iso9001ReadinessChecklist } from "@/components/ged/audit/Iso9001ReadinessChecklist";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedAuditTutorial } from "@/components/help/tutorials/GedAuditTutorial";
 
 const ACTION_LABEL: Record<string, string> = {
   CONSULTATION: "Consultation",
@@ -89,6 +91,7 @@ export default function GedAuditPage() {
           >
             <FileBarChart className="h-3.5 w-3.5" /> Rapport conformité
           </button>
+          <PageHelp title="Aide — Audit GED"><GedAuditTutorial /></PageHelp>
         </div>
       </header>
 

@@ -12,6 +12,8 @@ import {
   type ClassificationConfidentiality,
 } from "@/hooks/useGedClassifications";
 import { ClassificationDetailDrawer } from "@/components/ged/nomenclature/ClassificationDetailDrawer";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedNomenclatureTutorial } from "@/components/help/tutorials/GedNomenclatureTutorial";
 
 type Tab = "ALL" | ClassificationCategoryCode;
 
@@ -88,6 +90,7 @@ export default function GedNomenclaturePage() {
               <Plus className="h-3.5 w-3.5" /> Nouveau type
             </button>
           )}
+          <PageHelp title="Aide — Nomenclature"><GedNomenclatureTutorial /></PageHelp>
         </div>
       </header>
 

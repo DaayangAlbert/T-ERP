@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { RecentSearchesList } from "@/components/ged/recherche/RecentSearchesList";
 import { ArchivalPolicyDialog } from "@/components/ged/recherche/ArchivalPolicyDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedRechercheTutorial } from "@/components/help/tutorials/GedRechercheTutorial";
 
 function fmt(n: number): string {
   return new Intl.NumberFormat("fr-FR").format(n);
@@ -86,6 +88,7 @@ export default function GedRecherchePage() {
               <Cog className="h-3.5 w-3.5" /> Politique archivage
             </button>
           )}
+          <PageHelp title="Aide — Recherche GED"><GedRechercheTutorial /></PageHelp>
         </div>
       </header>
 

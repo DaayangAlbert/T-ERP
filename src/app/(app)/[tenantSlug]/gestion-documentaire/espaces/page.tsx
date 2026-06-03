@@ -15,6 +15,8 @@ import { ImportDocumentModal } from "@/components/ged/documents/ImportDocumentMo
 import { UnclassifiedDocumentsCard } from "@/components/ged/documents/UnclassifiedDocumentsCard";
 import { Upload } from "lucide-react";
 import { Confidentiality } from "@prisma/client";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedEspacesTutorial } from "@/components/help/tutorials/GedEspacesTutorial";
 
 export default function GedEspacesPage() {
   const { user } = useAuth();
@@ -70,6 +72,9 @@ export default function GedEspacesPage() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <PageHelp title="Aide — Espaces GED"><GedEspacesTutorial /></PageHelp>
+      </div>
       <SpacesHeader
         spacesTotal={data?.counts.total ?? 0}
         documentsTotal={totalDocs}

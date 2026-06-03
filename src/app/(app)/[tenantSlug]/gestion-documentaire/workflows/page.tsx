@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { WorkflowPipelineVisual } from "@/components/ged/workflows/WorkflowPipelineVisual";
 import { WorkflowDetailDrawer } from "@/components/ged/workflows/WorkflowDetailDrawer";
 import { WorkflowTemplatesSection } from "@/components/ged/workflows/WorkflowTemplatesSection";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedWorkflowsTutorial } from "@/components/help/tutorials/GedWorkflowsTutorial";
 
 function fmtDate(s: string | null): string {
   if (!s) return "—";
@@ -34,12 +36,15 @@ export default function GedWorkflowsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Workflows de validation</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data.kpis.inProgress} en cours · délai moyen {data.kpis.avgDelayDays} j · {data.kpis.completedYtd} finalisés YTD ·{" "}
-          {data.kpis.completionRate}% taux complétion
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Workflows de validation</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data.kpis.inProgress} en cours · délai moyen {data.kpis.avgDelayDays} j · {data.kpis.completedYtd} finalisés YTD ·{" "}
+            {data.kpis.completionRate}% taux complétion
+          </p>
+        </div>
+        <PageHelp title="Aide — Workflows GED"><GedWorkflowsTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">

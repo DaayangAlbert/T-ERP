@@ -8,6 +8,8 @@ import { GedKpiRow } from "@/components/ged/dashboard/GedKpiRow";
 import { DocumentaryAlertsList } from "@/components/ged/dashboard/DocumentaryAlertsList";
 import { SpacesOverviewGrid } from "@/components/ged/dashboard/SpacesOverviewGrid";
 import { RecentActivityTable } from "@/components/ged/dashboard/RecentActivityTable";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedDashboardTutorial } from "@/components/help/tutorials/GedDashboardTutorial";
 
 export default function GedDashboardPage() {
   const { user } = useAuth();
@@ -51,6 +53,7 @@ export default function GedDashboardPage() {
               : `Référent documentaire — ${user?.firstName ?? ""} ${user?.lastName ?? ""}. Structure les espaces documentaires transverses.`}
           </p>
         </div>
+        <PageHelp title="Aide — GED"><GedDashboardTutorial /></PageHelp>
       </header>
 
       <GedHeaderBanner banner={data.banner} />

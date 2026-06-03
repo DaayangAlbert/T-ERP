@@ -10,6 +10,8 @@ import { BulkActionBar } from "./BulkActionBar";
 import { MoveToSpaceModal } from "./MoveToSpaceModal";
 import { ImportDocumentModal } from "./ImportDocumentModal";
 import { ClassifyDocumentModal } from "./ClassifyDocumentModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { GedDocumentsTutorial } from "@/components/help/tutorials/GedDocumentsTutorial";
 
 const PAGE_SIZE = 50;
 
@@ -129,13 +131,16 @@ export function DocumentsListPage() {
             (hors bulletins de paie et contentieux RH).
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setImportOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
-        >
-          <Plus className="h-4 w-4" /> Importer un document
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+          >
+            <Plus className="h-4 w-4" /> Importer un document
+          </button>
+          <PageHelp title="Aide — Documents GED"><GedDocumentsTutorial /></PageHelp>
+        </div>
       </header>
 
       <div className="flex flex-col gap-3 lg:flex-row">
