@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Image as ImageIcon, ClipboardList } from "lucide-react";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravProductionTutorial } from "@/components/help/tutorials/DtravProductionTutorial";
 
 interface DailyReport {
   id: string;
@@ -71,11 +73,14 @@ export default function ProductionPage() {
 
   return (
     <div id="screen-dtrav-production" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Production journalière</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.code} — validation des rapports terrain du chef de chantier.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Production journalière</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.code} — validation des rapports terrain du chef de chantier.
+          </p>
+        </div>
+        <PageHelp title="Aide — Production"><DtravProductionTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

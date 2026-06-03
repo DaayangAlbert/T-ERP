@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileText, Send, CheckCircle2 } from "lucide-react";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravReportingTutorial } from "@/components/help/tutorials/DtravReportingTutorial";
 
 interface MoaReport {
   id: string;
@@ -54,11 +56,14 @@ export default function ReportingMoaPage() {
 
   return (
     <div id="screen-dtrav-reporting" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Reporting MOA</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.code} · {activeChantier?.client} — rapports périodiques au maître d&apos;ouvrage.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Reporting MOA</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.code} · {activeChantier?.client} — rapports périodiques au maître d&apos;ouvrage.
+          </p>
+        </div>
+        <PageHelp title="Aide — Reporting MOA"><DtravReportingTutorial /></PageHelp>
       </header>
 
       <section

@@ -21,6 +21,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravPlanningTutorial } from "@/components/help/tutorials/DtravPlanningTutorial";
 
 interface Task {
   id: string;
@@ -189,6 +191,7 @@ export default function PlanningPage() {
               <Download className="h-4 w-4" /> Télécharger le PDF
             </a>
           )}
+          <PageHelp title="Aide — Planning g&eacute;n&eacute;ral"><DtravPlanningTutorial /></PageHelp>
         </div>
       </header>
 

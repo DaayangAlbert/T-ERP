@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { Plus, FileText, Pencil, Trash2, Download, Clock, AlertOctagon, CheckCircle2 } from "lucide-react";
 import { clsx } from "clsx";
 import { useDtravReports, useCreateDtravReport, useDeleteDtravReport, type DtravReportStatus } from "@/hooks/useDtravMonthlyReports";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravRapportsMensuelsTutorial } from "@/components/help/tutorials/DtravRapportsMensuelsTutorial";
 
 const STATUS_LABEL: Record<DtravReportStatus, string> = {
   DRAFT: "Brouillon",
@@ -50,9 +52,12 @@ export default function DtravMonthlyReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink">Rapports mensuels DTrav</h1>
-        <p className="text-[12.5px] text-ink-3">Synthèse production · recouvrement · CDT · soumission au DG</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink">Rapports mensuels DTrav</h1>
+          <p className="text-[12.5px] text-ink-3">Synthèse production · recouvrement · CDT · soumission au DG</p>
+        </div>
+        <PageHelp title="Aide — Rapports mensuels DTrav"><DtravRapportsMensuelsTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-3 shadow-card">

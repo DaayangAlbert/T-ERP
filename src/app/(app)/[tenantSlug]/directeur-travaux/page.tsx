@@ -6,6 +6,8 @@ import { SiteStateBanner } from "@/components/dtrav/dashboard/SiteStateBanner";
 import { DtravKpiRow } from "@/components/dtrav/dashboard/DtravKpiRow";
 import { SiteAlertsList } from "@/components/dtrav/dashboard/SiteAlertsList";
 import { TodayActivityTimeline } from "@/components/dtrav/dashboard/TodayActivityTimeline";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravDashboardTutorial } from "@/components/help/tutorials/DtravDashboardTutorial";
 
 export default function DtravDashboardPage() {
   const { activeChantierId, activeChantier, availableChantiers, isLoading: chantierLoading } = useChantier();
@@ -31,13 +33,16 @@ export default function DtravDashboardPage() {
 
   return (
     <div id="screen-dtrav-dashboard" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Tableau de bord chantier
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.client} · point d&apos;entrée terrain
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Tableau de bord chantier
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.client} · point d&apos;entrée terrain
+          </p>
+        </div>
+        <PageHelp title="Aide — Tableau de bord DTrav"><DtravDashboardTutorial /></PageHelp>
       </header>
 
       {error && (

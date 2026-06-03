@@ -14,6 +14,8 @@ import {
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
 import { PhotoCaptureButton } from "@/components/dtrav/documents/PhotoCaptureButton";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravDocumentsTutorial } from "@/components/help/tutorials/DtravDocumentsTutorial";
 
 interface Document {
   id: string;
@@ -69,12 +71,15 @@ export default function DocumentsPage() {
             {activeChantier?.code} — GED filtrée, capture photo terrain.
           </p>
         </div>
-        {activeChantierId && (
-          <PhotoCaptureButton
-            siteId={activeChantierId}
-            onUploaded={() => qc.invalidateQueries({ queryKey: ["dtrav", "documents"] })}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {activeChantierId && (
+            <PhotoCaptureButton
+              siteId={activeChantierId}
+              onUploaded={() => qc.invalidateQueries({ queryKey: ["dtrav", "documents"] })}
+            />
+          )}
+          <PageHelp title="Aide — Documents chantier"><DtravDocumentsTutorial /></PageHelp>
+        </div>
       </header>
 
       <section

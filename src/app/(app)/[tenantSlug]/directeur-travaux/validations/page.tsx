@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Shield, ClipboardList, FileText } from "lucide-react";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravValidationsTutorial } from "@/components/help/tutorials/DtravValidationsTutorial";
 
 interface PendingResp {
   dailyReports: Array<{
@@ -49,13 +51,16 @@ export default function DtravValidationsPage() {
 
   return (
     <div id="screen-dtrav-validations" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Validations N1
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Rapports journaliers, BC chantier &lt; 5 M, notes de frais, congés équipe.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Validations N1
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Rapports journaliers, BC chantier &lt; 5 M, notes de frais, congés équipe.
+          </p>
+        </div>
+        <PageHelp title="Aide — Validations N1 DTrav"><DtravValidationsTutorial /></PageHelp>
       </header>
 
       <section className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-3 text-[12.5px] text-ink-2">

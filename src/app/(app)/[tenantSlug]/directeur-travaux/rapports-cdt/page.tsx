@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, FileText, Download, AlertOctagon, X } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravRapportsCdtTutorial } from "@/components/help/tutorials/DtravRapportsCdtTutorial";
 
 interface ListItem {
   id: string;
@@ -81,11 +83,14 @@ export default function DtravCdtReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink">Rapports hebdomadaires CDT à valider</h1>
-        <p className="text-[12.5px] text-ink-3">
-          Validation N+1 des rapports consolidés des Conducteurs de Travaux
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink">Rapports hebdomadaires CDT à valider</h1>
+          <p className="text-[12.5px] text-ink-3">
+            Validation N+1 des rapports consolidés des Conducteurs de Travaux
+          </p>
+        </div>
+        <PageHelp title="Aide — Rapports CDT"><DtravRapportsCdtTutorial /></PageHelp>
       </header>
 
       {isLoading ? (

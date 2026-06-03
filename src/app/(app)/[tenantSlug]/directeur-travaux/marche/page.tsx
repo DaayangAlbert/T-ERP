@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowUp, Plus, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravMarcheTutorial } from "@/components/help/tutorials/DtravMarcheTutorial";
 
 interface ContractData {
   contract: {
@@ -80,11 +82,14 @@ export default function MarchePage() {
 
   return (
     <div id="screen-dtrav-marche" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Suivi marché</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.code} — situations, avenants, retenues, échéancier MOA.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Suivi marché</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.code} — situations, avenants, retenues, échéancier MOA.
+          </p>
+        </div>
+        <PageHelp title="Aide — Suivi marché"><DtravMarcheTutorial /></PageHelp>
       </header>
 
       <section className="rounded-xl border border-line bg-white p-3 shadow-card">

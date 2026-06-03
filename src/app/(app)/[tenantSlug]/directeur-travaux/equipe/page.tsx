@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Users, UserCog, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravEquipeTutorial } from "@/components/help/tutorials/DtravEquipeTutorial";
 
 interface HierarchyNode {
   userId: string;
@@ -46,11 +48,14 @@ export default function EquipePage() {
 
   return (
     <div id="screen-dtrav-equipe" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Équipe chantier</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.code} — organigramme et équipes ouvrières.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Équipe chantier</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.code} — organigramme et équipes ouvrières.
+          </p>
+        </div>
+        <PageHelp title="Aide — Équipe chantier"><DtravEquipeTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

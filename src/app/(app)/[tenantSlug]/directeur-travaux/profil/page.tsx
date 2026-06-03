@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Bell, Shield, Calendar, Mail } from "lucide-react";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravProfilTutorial } from "@/components/help/tutorials/DtravProfilTutorial";
 
 interface ProfileData {
   user: { firstName: string; lastName: string; role: string; position: string | null; category: string | null };
@@ -23,11 +25,14 @@ export default function DtravProfilePage() {
 
   return (
     <div id="screen-dtrav-profil" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon espace DTrav</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Profil, chantiers assignés, préférences alertes, agenda chantier.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Mon espace DTrav</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Profil, chantiers assignés, préférences alertes, agenda chantier.
+          </p>
+        </div>
+        <PageHelp title="Aide — Mon espace DTrav"><DtravProfilTutorial /></PageHelp>
       </header>
 
       <AvatarUploader />

@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Truck, ShoppingCart, Package } from "lucide-react";
 import { clsx } from "clsx";
 import { useChantier } from "@/contexts/ChantierContext";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtravApprosTutorial } from "@/components/help/tutorials/DtravApprosTutorial";
 
 interface Po {
   id: string;
@@ -50,11 +52,14 @@ export default function ApprosPage() {
 
   return (
     <div id="screen-dtrav-appros" className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Approvisionnements</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {activeChantier?.code} — BC, alertes ruptures, livraisons.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Approvisionnements</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {activeChantier?.code} — BC, alertes ruptures, livraisons.
+          </p>
+        </div>
+        <PageHelp title="Aide — Approvisionnements"><DtravApprosTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
