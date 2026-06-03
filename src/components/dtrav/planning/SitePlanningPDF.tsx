@@ -279,7 +279,7 @@ export function SitePlanningPDF({ data }: { data: SitePlanningPdfData }) {
         <ProjectInfoStrip data={data} />
         <GanttTable data={data} />
         <MilestonesRow data={data} />
-        <BottomStrip data={data} />
+        <BottomStrip data={data} paperW={paper.w} />
         <Signatures data={data} />
       </Page>
     </Document>
@@ -665,9 +665,11 @@ function computeFinancialCurve(physical: number[]): number[] {
 }
 
 // ───────── Bandeau bas : récap + courbe S + observations ─────────
-function BottomStrip({ data }: { data: SitePlanningPdfData }) {
+function BottomStrip({ data, paperW }: { data: SitePlanningPdfData; paperW: number }) {
   const months = Math.round(data.totalDurationDays / 30.44);
   const weeks = Math.round(data.totalDurationDays / 7);
+  // Largeur dispo pour la courbe = papier − marges page − recapBox − obsBox − gaps
+  const curveBoxW = Math.max(280, paperW - 18 * 2 - 175 - 175 - 4 * 2);
   return (
     <View style={styles.bottomStrip}>
       <View style={styles.recapBox}>
@@ -679,7 +681,7 @@ function BottomStrip({ data }: { data: SitePlanningPdfData }) {
       </View>
       <View style={styles.curveBox}>
         <Text style={styles.boxTitle}>COURBES D&apos;AVANCEMENT PHYSIQUE ET FINANCIER</Text>
-        <SCurve data={data} />
+        <SCurve data={data} maxW={curveBoxW} />
       </View>
       <View style={styles.observationsBox}>
         <Text style={styles.boxTitle}>OBSERVATIONS</Text>
@@ -714,17 +716,18 @@ function MilestonesRow({ data }: { data: SitePlanningPdfData }) {
 }
 
 // ───────── Composant courbe S (SVG) ─────────
-function SCurve({ data }: { data: SitePlanningPdfData }) {
+function SCurve({ data, maxW = 280 }: { data: SitePlanningPdfData; maxW?: number }) {
   const { monthCount, minMs } = computeMonthCount(data);
   const physical = computePhysicalCurve(data, monthCount, minMs);
   const financial = computeFinancialCurve(physical);
 
-  const W = 280;
-  const H = 95;
-  const padL = 20;
-  const padR = 6;
-  const padT = 6;
-  const padB = 14;
+  // Dimensions adaptatives — on remplit la largeur dispo, hauteur ~22% capée à 200pt
+  const W = Math.max(280, Math.min(maxW - 10, 3000));
+  const H = Math.min(220, Math.max(95, W * 0.22));
+  const padL = 24;
+  const padR = 8;
+  const padT = 8;
+  const padB = 16;
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
