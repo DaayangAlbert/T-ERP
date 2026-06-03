@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Palette, Globe, Shield, Calendar, Bell, Save, FileBadge, Upload, Trash2, Loader2 } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItSettingsTutorial } from "@/components/help/tutorials/ItSettingsTutorial";
 
 interface Settings {
   identity: Record<string, string>;
@@ -115,6 +117,7 @@ export default function ItSettingsPage() {
           >
             <Save className="h-3.5 w-3.5" /> {save.isPending ? "Sauvegarde…" : "Sauvegarder"}
           </button>
+          <PageHelp title="Aide — Paramètres tenant"><ItSettingsTutorial /></PageHelp>
         </div>
       </header>
 

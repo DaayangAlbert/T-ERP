@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { clsx } from "clsx";
 import { MapPin, Building2, HardHat, Crosshair, Save, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItPointageTutorial } from "@/components/help/tutorials/ItPointageTutorial";
 
 interface OfficeCfg { name: string; lat: number | null; lng: number | null; radiusM: number | null }
 interface SiteCfg { id: string; code: string; name: string; lat: number | null; lng: number | null; radiusM: number | null }
@@ -28,12 +30,15 @@ export default function ItPointagePage() {
 
   return (
     <div className="space-y-5">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Pointage de présence — Géolocalisation</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Définissez les coordonnées GPS du bureau (pour la direction) et de chaque chantier (pour le personnel affecté).
-          Rayon de tolérance par défaut : {cfg.defaultRadiusM} m.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Pointage de présence — Géolocalisation</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Définissez les coordonnées GPS du bureau (pour la direction) et de chaque chantier (pour le personnel affecté).
+            Rayon de tolérance par défaut : {cfg.defaultRadiusM} m.
+          </p>
+        </div>
+        <PageHelp title="Aide — Pointage IT"><ItPointageTutorial /></PageHelp>
       </header>
 
       <GeoCard

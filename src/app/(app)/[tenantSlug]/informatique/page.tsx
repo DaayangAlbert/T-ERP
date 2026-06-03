@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Users, Activity, AlertTriangle, Plug, Shield, ServerCrash, CheckCircle2 } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItDashboardTutorial } from "@/components/help/tutorials/ItDashboardTutorial";
 
 interface ItDashboard {
   tenant: { slug: string; env: string };
@@ -75,6 +77,7 @@ export default function ItDashboardPage() {
             {data.overallStatus === "OPERATIONAL" ? "Tous services opérationnels" : "Services dégradés"}
           </span>
         )}
+        <PageHelp title="Aide — Administration IT"><ItDashboardTutorial /></PageHelp>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

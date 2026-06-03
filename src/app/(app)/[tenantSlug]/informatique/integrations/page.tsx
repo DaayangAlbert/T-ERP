@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { Plug, Key, Webhook, ScrollText, RefreshCw, Pause, Play, KeyRound } from "lucide-react";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItIntegrationsTutorial } from "@/components/help/tutorials/ItIntegrationsTutorial";
 
 interface Integration {
   id: string;
@@ -47,11 +49,14 @@ export default function ItIntegrationsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Intégrations et journaux techniques</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Partenaires CNPS, DGI, banques · API keys · webhooks · journaux 5 niveaux.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Intégrations et journaux techniques</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Partenaires CNPS, DGI, banques · API keys · webhooks · journaux 5 niveaux.
+          </p>
+        </div>
+        <PageHelp title="Aide — Intégrations IT"><ItIntegrationsTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap gap-1 border-b border-line">

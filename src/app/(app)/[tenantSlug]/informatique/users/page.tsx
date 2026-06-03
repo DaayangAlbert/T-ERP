@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Shield, UserCheck, UserX } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItUsersTutorial } from "@/components/help/tutorials/ItUsersTutorial";
 
 interface ItUser {
   id: string;
@@ -59,12 +61,15 @@ export default function ItUsersPage() {
             Gestion des comptes, rôles, MFA, sessions — journalisé dans l'audit log.
           </p>
         </div>
-        <Link
-          href="/informatique/users/new"
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouvel utilisateur
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/informatique/users/new"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-600 px-3 text-[12.5px] font-medium text-white hover:bg-primary-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvel utilisateur
+          </Link>
+          <PageHelp title="Aide — Utilisateurs IT"><ItUsersTutorial /></PageHelp>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">

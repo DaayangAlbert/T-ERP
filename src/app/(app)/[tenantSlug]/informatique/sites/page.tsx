@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Search, Plus, Download, Building2, Pencil, Eye } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItSitesTutorial } from "@/components/help/tutorials/ItSitesTutorial";
 
 interface ItSite {
   id: string;
@@ -67,6 +69,7 @@ export default function ItSitesPage() {
           >
             <Plus className="h-3.5 w-3.5" /> Nouveau chantier
           </Link>
+          <PageHelp title="Aide — Sites IT"><ItSitesTutorial /></PageHelp>
         </div>
       </header>
 

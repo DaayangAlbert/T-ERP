@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Check, X, AlertCircle, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { ItChangeRequestsTutorial } from "@/components/help/tutorials/ItChangeRequestsTutorial";
 
 interface Change {
   field: string;
@@ -113,14 +115,17 @@ export function ChangeRequestsClient({ initial, initialStatus }: Props) {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-semibold text-ink">
-          Demandes de modification de profil
-        </h1>
-        <p className="mt-1 text-sm text-ink-3">
-          Validez ou refusez les demandes de mise à jour soumises par les
-          employés depuis leur page profil.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">
+            Demandes de modification de profil
+          </h1>
+          <p className="mt-1 text-sm text-ink-3">
+            Validez ou refusez les demandes de mise à jour soumises par les
+            employés depuis leur page profil.
+          </p>
+        </div>
+        <PageHelp title="Aide — Change requests"><ItChangeRequestsTutorial /></PageHelp>
       </header>
 
       {/* Tabs / stats */}
