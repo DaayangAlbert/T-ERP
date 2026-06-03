@@ -5,21 +5,23 @@ import { Coins, Banknote, Wallet } from "lucide-react";
 import { formatFCFA } from "@/lib/format";
 import { useOwnerFinances } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Row, Explain, Loading, ErrorBox, toneText } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaFinancesTutorial } from "@/components/help/tutorials/PcaFinancesTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerFinancesPage() {
   const { data, isLoading, isError } = useOwnerFinances();
 
-  if (isError) return <div className="space-y-4"><OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." /><ErrorBox /></div>;
-  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." /><Loading /></div>;
+  if (isError) return <div className="space-y-4"><OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." help={<PageHelp title="Aide — Finances (PCA)"><PcaFinancesTutorial /></PageHelp>} /><ErrorBox /></div>;
+  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." help={<PageHelp title="Aide — Finances (PCA)"><PcaFinancesTutorial /></PageHelp>} /><Loading /></div>;
 
   const net = BigInt(data.mois.net);
   const dette = BigInt(data.comptesProjet.detteTotale);
 
   return (
     <div className="space-y-4">
-      <OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." />
+      <OwnerHeader title="Finances" subtitle="Tout l'argent de l'entreprise, expliqué simplement." help={<PageHelp title="Aide — Finances (PCA)"><PcaFinancesTutorial /></PageHelp>} />
 
       <Section title="Argent en banque" icon={<Coins className="h-4 w-4" />}>
         <Explain>C&apos;est l&apos;argent <strong>immédiatement disponible</strong> sur vos comptes bancaires, plus la réserve que les banques vous autorisent à utiliser (ligne de crédit).</Explain>

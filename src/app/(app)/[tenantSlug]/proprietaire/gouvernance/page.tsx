@@ -6,6 +6,8 @@ import { formatFCFA } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerGouvernance } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Row, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaGouvernanceTutorial } from "@/components/help/tutorials/PcaGouvernanceTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
@@ -28,12 +30,12 @@ export default function OwnerGouvernancePage() {
   const { data, isLoading, isError } = useOwnerGouvernance();
   const tenantHref = useTenantHref();
 
-  if (isError) return <div className="space-y-4"><OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." /><ErrorBox /></div>;
-  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." /><Loading /></div>;
+  if (isError) return <div className="space-y-4"><OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." help={<PageHelp title="Aide — Gouvernance (PCA)"><PcaGouvernanceTutorial /></PageHelp>} /><ErrorBox /></div>;
+  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." help={<PageHelp title="Aide — Gouvernance (PCA)"><PcaGouvernanceTutorial /></PageHelp>} /><Loading /></div>;
 
   return (
     <div className="space-y-4">
-      <OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." />
+      <OwnerHeader title="Gouvernance" subtitle="Décisions et marchés de l'entreprise, expliqués." help={<PageHelp title="Aide — Gouvernance (PCA)"><PcaGouvernanceTutorial /></PageHelp>} />
 
       <Section title="Décisions" icon={<CheckCircle2 className="h-4 w-4" />}>
         <Explain>Les demandes importantes (dépenses, achats, recrutements, avenants…) qui passent par un circuit de validation. « En attente » = pas encore tranchées.</Explain>

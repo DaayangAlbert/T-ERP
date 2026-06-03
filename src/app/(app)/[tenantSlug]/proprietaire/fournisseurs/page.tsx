@@ -6,13 +6,15 @@ import { Truck, Star } from "lucide-react";
 import { formatFCFA } from "@/lib/format";
 import { useOwnerFournisseurs } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaFournisseursTutorial } from "@/components/help/tutorials/PcaFournisseursTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerFournisseursPage() {
   const { data, isLoading, isError } = useOwnerFournisseurs();
   const [cat, setCat] = useState("");
-  const head = <OwnerHeader title="Fournisseurs" subtitle="Tous les fournisseurs et prestataires de l'entreprise." />;
+  const head = <OwnerHeader title="Fournisseurs" subtitle="Tous les fournisseurs et prestataires de l'entreprise." help={<PageHelp title="Aide — Fournisseurs (PCA)"><PcaFournisseursTutorial /></PageHelp>} />;
 
   const items = useMemo(() => {
     if (!data) return [];

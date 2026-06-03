@@ -5,10 +5,12 @@ import { Landmark, CalendarClock, MapPin } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { useOwnerReunions } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaReunionsTutorial } from "@/components/help/tutorials/PcaReunionsTutorial";
 
 export default function OwnerReunionsPage() {
   const { data, isLoading, isError } = useOwnerReunions();
-  const head = <OwnerHeader title="Agenda" subtitle="Vos réunions de gouvernance (conseil, assemblées) programmées et passées." />;
+  const head = <OwnerHeader title="Agenda" subtitle="Vos réunions de gouvernance (conseil, assemblées) programmées et passées." help={<PageHelp title="Aide — Réunions (PCA)"><PcaReunionsTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

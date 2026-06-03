@@ -5,12 +5,14 @@ import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useOwnerRecouvrement } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaRecouvrementTutorial } from "@/components/help/tutorials/PcaRecouvrementTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerRecouvrementPage() {
   const { data, isLoading, isError } = useOwnerRecouvrement();
-  const head = <OwnerHeader title="Recouvrement & paiements" subtitle="Ce qu'on vous doit, et ce que vous devez — clairement." />;
+  const head = <OwnerHeader title="Recouvrement & paiements" subtitle="Ce qu'on vous doit, et ce que vous devez — clairement." help={<PageHelp title="Aide — Recouvrement (PCA)"><PcaRecouvrementTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

@@ -5,18 +5,20 @@ import { Users, Wallet } from "lucide-react";
 import { formatFCFA } from "@/lib/format";
 import { useOwnerPersonnel, useOwnerSalaires } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Row, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaPersonnelTutorial } from "@/components/help/tutorials/PcaPersonnelTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerPersonnelPage() {
   const { data, isLoading, isError } = useOwnerPersonnel();
 
-  if (isError) return <div className="space-y-4"><OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." /><ErrorBox /></div>;
-  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." /><Loading /></div>;
+  if (isError) return <div className="space-y-4"><OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." help={<PageHelp title="Aide — Personnel (PCA)"><PcaPersonnelTutorial /></PageHelp>} /><ErrorBox /></div>;
+  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." help={<PageHelp title="Aide — Personnel (PCA)"><PcaPersonnelTutorial /></PageHelp>} /><Loading /></div>;
 
   return (
     <div className="space-y-4">
-      <OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." />
+      <OwnerHeader title="Personnel" subtitle="Vos équipes et ce qu'elles coûtent, clairement." help={<PageHelp title="Aide — Personnel (PCA)"><PcaPersonnelTutorial /></PageHelp>} />
 
       <Section title="Vos équipes" icon={<Users className="h-4 w-4" />}>
         <Explain>Le nombre de personnes qui travaillent dans l&apos;entreprise, et le coût de base de leurs salaires chaque mois (hors primes et charges sociales).</Explain>

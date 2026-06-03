@@ -4,12 +4,14 @@ import { FileText, Coins, Wrench, Download } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { useOwnerRapports, type OwnerRapports } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaRapportsTutorial } from "@/components/help/tutorials/PcaRapportsTutorial";
 
 type Report = OwnerRapports["conseil"][number];
 
 export default function OwnerRapportsPage() {
   const { data, isLoading, isError } = useOwnerRapports();
-  const head = <OwnerHeader title="Rapports reçus" subtitle="Les rapports que la direction vous transmet : conseil, financier, technique." />;
+  const head = <OwnerHeader title="Rapports reçus" subtitle="Les rapports que la direction vous transmet : conseil, financier, technique." help={<PageHelp title="Aide — Rapports (PCA)"><PcaRapportsTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

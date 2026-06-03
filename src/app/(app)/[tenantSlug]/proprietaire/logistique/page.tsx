@@ -5,13 +5,15 @@ import { Truck } from "lucide-react";
 import { formatFCFA } from "@/lib/format";
 import { useOwnerLogistique } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Pill, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaLogistiqueTutorial } from "@/components/help/tutorials/PcaLogistiqueTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerLogistiquePage() {
   const { data, isLoading, isError } = useOwnerLogistique();
   const [chantier, setChantier] = useState<string>("");
-  const head = <OwnerHeader title="Logistique & engins" subtitle="Votre parc matériel : qui travaille, qui ne fait rien, qui est loué." />;
+  const head = <OwnerHeader title="Logistique & engins" subtitle="Votre parc matériel : qui travaille, qui ne fait rien, qui est loué." help={<PageHelp title="Aide — Logistique (PCA)"><PcaLogistiqueTutorial /></PageHelp>} />;
 
   const filtered = useMemo(() => {
     if (!data) return [];

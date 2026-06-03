@@ -6,6 +6,8 @@ import { Coins, Building2, Users, TrendingUp, ArrowRight, CheckCircle2, Receipt,
 import { formatFCFA, formatPercent } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerCockpit } from "@/hooks/useOwnerCockpit";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaDashboardTutorial } from "@/components/help/tutorials/PcaDashboardTutorial";
 
 const fcfa = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
@@ -34,11 +36,14 @@ export default function ProprietaireCockpitPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Santé de l&apos;entreprise</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Vue d&apos;ensemble du propriétaire — chaque domaine résumé, cliquez « Voir les détails » pour approfondir.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Santé de l&apos;entreprise</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Vue d&apos;ensemble du propriétaire — chaque domaine résumé, cliquez « Voir les détails » pour approfondir.
+          </p>
+        </div>
+        <PageHelp title="Aide — Cockpit PCA"><PcaDashboardTutorial /></PageHelp>
       </header>
 
       {/* Bandeau santé globale */}

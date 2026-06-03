@@ -7,6 +7,8 @@ import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useTenantHref } from "@/hooks/useTenantHref";
 import { useOwnerDecisions, useOwnerDecisionsHistory, useDecide, type OwnerDecision } from "@/hooks/useOwnerDecisions";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaDecisionsTutorial } from "@/components/help/tutorials/PcaDecisionsTutorial";
 
 const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
   CRITICAL: { label: "Critique", cls: "bg-danger/10 text-danger" },
@@ -22,14 +24,17 @@ export default function OwnerDecisionsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-4">
-        <Link href={tenantHref("/proprietaire")} className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
-          <ArrowLeft className="h-3.5 w-3.5" /> Retour au tableau de bord
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Décisions à valider</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Les demandes importantes qui attendent votre accord. Approuvez ou refusez en un clic.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <Link href={tenantHref("/proprietaire")} className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour au tableau de bord
+          </Link>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Décisions à valider</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Les demandes importantes qui attendent votre accord. Approuvez ou refusez en un clic.
+          </p>
+        </div>
+        <PageHelp title="Aide — Décisions PCA"><PcaDecisionsTutorial /></PageHelp>
       </header>
 
       {isError ? (

@@ -5,18 +5,22 @@ import { Building2 } from "lucide-react";
 import { formatFCFA, formatPercent, formatDate } from "@/lib/format";
 import { useOwnerChantiers } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Pill, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaChantiersTutorial } from "@/components/help/tutorials/PcaChantiersTutorial";
+
+const help = <PageHelp title="Aide — Chantiers (PCA)"><PcaChantiersTutorial /></PageHelp>;
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerChantiersPage() {
   const { data, isLoading, isError } = useOwnerChantiers();
 
-  if (isError) return <div className="space-y-4"><OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." /><ErrorBox /></div>;
-  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." /><Loading /></div>;
+  if (isError) return <div className="space-y-4"><OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." help={help} /><ErrorBox /></div>;
+  if (isLoading || !data) return <div className="space-y-4"><OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." help={help} /><Loading /></div>;
 
   return (
     <div className="space-y-4">
-      <OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." />
+      <OwnerHeader title="Chantiers" subtitle="L'état de vos chantiers, en un coup d'œil." help={help} />
 
       <Section title="Vue d'ensemble" icon={<Building2 className="h-4 w-4" />}>
         <Explain>Un chantier <strong className="text-success">Va bien</strong> 🟢 est sur les rails ; <strong className="text-warning">À surveiller</strong> 🟠 demande de l&apos;attention ; <strong className="text-danger">En difficulté</strong> 🔴 a un retard ou un dépassement à traiter.</Explain>

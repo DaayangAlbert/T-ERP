@@ -19,15 +19,18 @@ export const tonePill: Record<string, string> = {
 };
 
 /** En-tête de page avec retour vers le cockpit. */
-export function OwnerHeader({ title, subtitle }: { title: string; subtitle: string }) {
+export function OwnerHeader({ title, subtitle, help }: { title: string; subtitle: string; help?: React.ReactNode }) {
   const tenantHref = useTenantHref();
   return (
-    <header className="border-b border-line pb-4">
-      <Link href={tenantHref("/proprietaire")} className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
-        <ArrowLeft className="h-3.5 w-3.5" /> Retour au tableau de bord
-      </Link>
-      <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h1>
-      <p className="mt-1 text-[12.5px] text-ink-3">{subtitle}</p>
+    <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+      <div>
+        <Link href={tenantHref("/proprietaire")} className="mb-2 inline-flex items-center gap-1 text-[12px] text-ink-3 hover:text-primary-700">
+          <ArrowLeft className="h-3.5 w-3.5" /> Retour au tableau de bord
+        </Link>
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{title}</h1>
+        <p className="mt-1 text-[12.5px] text-ink-3">{subtitle}</p>
+      </div>
+      {help}
     </header>
   );
 }

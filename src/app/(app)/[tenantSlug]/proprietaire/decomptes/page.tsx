@@ -5,6 +5,8 @@ import { ClipboardCheck, AlertTriangle, FileX } from "lucide-react";
 import { formatFCFA, formatDate } from "@/lib/format";
 import { useOwnerDecomptes } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Pill, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaDecomptesTutorial } from "@/components/help/tutorials/PcaDecomptesTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 const STATUT: Record<string, { tone: string; label: string }> = {
@@ -15,7 +17,7 @@ const STATUT: Record<string, { tone: string; label: string }> = {
 
 export default function OwnerDecomptesPage() {
   const { data, isLoading, isError } = useOwnerDecomptes();
-  const head = <OwnerHeader title="Suivi des décomptes" subtitle="Où en est chaque décompte client, et ce qui le bloque." />;
+  const head = <OwnerHeader title="Suivi des décomptes" subtitle="Où en est chaque décompte client, et ce qui le bloque." help={<PageHelp title="Aide — Décomptes (PCA)"><PcaDecomptesTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

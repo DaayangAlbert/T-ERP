@@ -5,10 +5,12 @@ import { CalendarRange } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { useOwnerPlanning } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Pill, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaPlanningTutorial } from "@/components/help/tutorials/PcaPlanningTutorial";
 
 export default function OwnerPlanningPage() {
   const { data, isLoading, isError } = useOwnerPlanning();
-  const head = <OwnerHeader title="Planning des chantiers" subtitle="Les grandes activités de chaque chantier et leur avancement." />;
+  const head = <OwnerHeader title="Planning des chantiers" subtitle="Les grandes activités de chaque chantier et leur avancement." help={<PageHelp title="Aide — Planning (PCA)"><PcaPlanningTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;

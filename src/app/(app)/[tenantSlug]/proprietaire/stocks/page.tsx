@@ -6,13 +6,15 @@ import { Package, AlertTriangle } from "lucide-react";
 import { formatFCFA, formatNumber } from "@/lib/format";
 import { useOwnerStocks } from "@/hooks/useOwnerDetails";
 import { OwnerHeader, Section, BigStat, Explain, Loading, ErrorBox } from "@/components/owner/ui";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PcaStocksTutorial } from "@/components/help/tutorials/PcaStocksTutorial";
 
 const f = (s: string) => formatFCFA(BigInt(s), { scale: "raw" });
 
 export default function OwnerStocksPage() {
   const { data, isLoading, isError } = useOwnerStocks();
   const [selected, setSelected] = useState<string>("");
-  const head = <OwnerHeader title="Stocks" subtitle="Ce que vous avez réellement en magasin, magasin par magasin." />;
+  const head = <OwnerHeader title="Stocks" subtitle="Ce que vous avez réellement en magasin, magasin par magasin." help={<PageHelp title="Aide — Stocks (PCA)"><PcaStocksTutorial /></PageHelp>} />;
 
   if (isError) return <div className="space-y-4">{head}<ErrorBox /></div>;
   if (isLoading || !data) return <div className="space-y-4">{head}<Loading /></div>;
