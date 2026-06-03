@@ -14,6 +14,8 @@ import { ProfileDocuments } from "@/components/ouv/profil/ProfileDocuments";
 import { ChangePinModal } from "@/components/ouv/profil/ChangePinModal";
 import { ProfileBottomActions } from "@/components/ouv/profil/LogoutButton";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvProfilTutorial } from "@/components/help/tutorials/OuvProfilTutorial";
 
 // Page mirror screen-ouv-profil : identité gradient violet + infos pro
 // + coordonnées éditables + raccourcis docs + bouton PIN + déconnexion.
@@ -38,6 +40,7 @@ export default function OuvProfilPage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mon profil</p>
         </div>
+        <PageHelp title="Aide — Mon profil"><OuvProfilTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {profile.data?.profile.initials ?? "??"}
         </span>

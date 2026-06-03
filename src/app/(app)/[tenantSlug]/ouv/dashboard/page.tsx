@@ -8,6 +8,8 @@ import { OuvKpiMini } from "@/components/ouv/dashboard/OuvKpiMini";
 import { OuvBulletinCard } from "@/components/ouv/dashboard/OuvBulletinCard";
 import { OuvQuickActions } from "@/components/ouv/dashboard/OuvQuickActions";
 import { OuvWhatsAppButton } from "@/components/ouv/dashboard/OuvWhatsAppButton";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvDashboardTutorial } from "@/components/help/tutorials/OuvDashboardTutorial";
 
 // Reproduction pixel-perfect du prototype screen-ouv-dashboard (fn 1.1).
 // Mobile-first 414px. Empilage vertical :
@@ -60,6 +62,9 @@ export default function OuvDashboardPage() {
       />
 
       <main className="page mx-auto w-full max-w-screen-md px-3 pt-3.5">
+        <div className="mb-2 flex justify-end">
+          <PageHelp title="Aide — Mon espace"><OuvDashboardTutorial /></PageHelp>
+        </div>
         <OuvPointageCard
           state={todayClock.state}
           arrivalTime={todayClock.arrivalTime}

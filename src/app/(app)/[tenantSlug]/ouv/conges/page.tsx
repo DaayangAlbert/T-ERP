@@ -23,6 +23,8 @@ import { SickLeaveModal } from "@/components/ouv/conges/SickLeaveModal";
 import { OtherRequestCards } from "@/components/ouv/conges/OtherRequestCards";
 import { AttestationRequestModal } from "@/components/ouv/conges/AttestationRequestModal";
 import { AttestationsList } from "@/components/ouv/conges/AttestationsList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvCongesTutorial } from "@/components/help/tutorials/OuvCongesTutorial";
 
 // Page mirror screen-ouv-conges :
 //  1. Card solde HÉROS vert gradient (56px chiffre + progress bar)
@@ -95,6 +97,7 @@ export default function OuvCongesPage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mes congés</p>
         </div>
+        <PageHelp title="Aide — Mes congés"><OuvCongesTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>

@@ -18,6 +18,8 @@ import { NewMissionCard } from "@/components/ouv/missions/NewMissionCard";
 import { CompletedMissionsList } from "@/components/ouv/missions/CompletedMissionsList";
 import { MissionQuestionsModal } from "@/components/ouv/missions/MissionQuestionsModal";
 import { MissionProgressUpdater } from "@/components/ouv/missions/MissionProgressUpdater";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvMissionsTutorial } from "@/components/help/tutorials/OuvMissionsTutorial";
 
 // Page mirror screen-ouv-missions :
 //  1. Section "📍 Mission en cours" (border violet 2px + progress bar + consigne)
@@ -75,6 +77,7 @@ export default function OuvMissionsPage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mes missions</p>
         </div>
+        <PageHelp title="Aide — Mes missions"><OuvMissionsTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>

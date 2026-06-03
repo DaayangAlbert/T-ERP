@@ -16,6 +16,8 @@ import { HseTypeSelector } from "@/components/ouv/hse/HseTypeSelector";
 import { HseReportForm } from "@/components/ouv/hse/HseReportForm";
 import { HseReportsList } from "@/components/ouv/hse/HseReportsList";
 import type { OuvHseType } from "@/schemas/ouv-hse";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvHseTutorial } from "@/components/help/tutorials/OuvHseTutorial";
 
 // Page mirror screen-ouv-hse. Différence clé : header ROUGE intentionnel
 // (pas violet) pour signaler la criticité du domaine. Bandeau urgence
@@ -54,6 +56,7 @@ export default function OuvHsePage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">⚠ Signaler incident</p>
         </div>
+        <PageHelp title="Aide — HSE"><OuvHseTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[13px] font-bold text-rose-700">
           {initials}
         </span>

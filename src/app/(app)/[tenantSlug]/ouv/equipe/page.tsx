@@ -11,6 +11,8 @@ import { TeamChiefCard } from "@/components/ouv/equipe/TeamChiefCard";
 import { TeamHierarchyList } from "@/components/ouv/equipe/TeamHierarchyList";
 import { TeamColleaguesList } from "@/components/ouv/equipe/TeamColleaguesList";
 import { ColleagueDetailModal } from "@/components/ouv/equipe/ColleagueDetailModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvEquipeTutorial } from "@/components/help/tutorials/OuvEquipeTutorial";
 
 // Page mirror screen-ouv-equipe :
 //   1. Card "Mon Chef Chantier" focus (extrait depuis hierarchy)
@@ -44,6 +46,7 @@ export default function OuvEquipePage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mon équipe</p>
         </div>
+        <PageHelp title="Aide — Mon équipe"><OuvEquipeTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>

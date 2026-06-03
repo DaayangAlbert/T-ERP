@@ -25,6 +25,8 @@ import { WeekMonthKpis } from "@/components/ouv/pointage/WeekMonthKpis";
 import { DisputeCard } from "@/components/ouv/pointage/DisputeCard";
 import { DisputeFormModal } from "@/components/ouv/pointage/DisputeFormModal";
 import { OfflineIndicator } from "@/components/ouv/pointage/OfflineIndicator";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvPointageTutorial } from "@/components/help/tutorials/OuvPointageTutorial";
 
 // Page mirror du prototype screen-ouv-pointage. Orchestre :
 //  - lecture pointage du jour + semaine
@@ -161,6 +163,7 @@ export default function OuvPointagePage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mon pointage</p>
         </div>
+        <PageHelp title="Aide — Pointage"><OuvPointageTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>

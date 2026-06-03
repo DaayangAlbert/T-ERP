@@ -14,6 +14,8 @@ import { AdvanceRequestCTA } from "@/components/ouv/paie/AdvanceRequestCTA";
 import { AdvanceRequestModal } from "@/components/ouv/paie/AdvanceRequestModal";
 import { PayslipHistoryList } from "@/components/ouv/paie/PayslipHistoryList";
 import { AdvancesList } from "@/components/ouv/paie/AdvancesList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvPaieTutorial } from "@/components/help/tutorials/OuvPaieTutorial";
 
 // Page mirror du prototype screen-ouv-paie. Orchestre :
 //  - Card bulletin actuel (gradient violet + boutons Voir/WhatsApp)
@@ -76,6 +78,7 @@ export default function OuvPaiePage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Ma paie</p>
         </div>
+        <PageHelp title="Aide — Ma paie"><OuvPaieTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>

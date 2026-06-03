@@ -10,6 +10,8 @@ import { useOuvTools } from "@/hooks/useOuvTools";
 import { EpiList } from "@/components/ouv/outils/EpiList";
 import { ToolsList, ToolsOverdueAlert } from "@/components/ouv/outils/ToolsList";
 import { ToolRequestModal } from "@/components/ouv/outils/ToolRequestModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { OuvOutilsTutorial } from "@/components/help/tutorials/OuvOutilsTutorial";
 
 // Page mirror screen-ouv-outils : EPI obligatoires + outils sortis +
 // bouton "Demander un outil" (CTA violet 56px).
@@ -37,6 +39,7 @@ export default function OuvOutilsPage() {
         <div className="flex-1">
           <p className="text-[17px] font-bold leading-tight">Mes outils et EPI</p>
         </div>
+        <PageHelp title="Aide — Outils &amp; EPI"><OuvOutilsTutorial /></PageHelp>
         <span className="grid h-9 w-9 place-items-center rounded-full bg-purple-500 text-[13px] font-bold">
           {initials}
         </span>
