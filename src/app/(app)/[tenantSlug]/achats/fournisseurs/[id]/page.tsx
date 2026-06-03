@@ -6,6 +6,8 @@ import { ArrowLeft, Star, ShieldOff } from "lucide-react";
 import { useSupplier, useEvaluateSupplier } from "@/hooks/usePurchase";
 import { formatDate, formatFCFA } from "@/lib/format";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { AchatsFournisseursTutorial } from "@/components/help/tutorials/AchatsFournisseursTutorial";
 
 interface Props {
   params: { id: string };
@@ -62,13 +64,16 @@ export default function SupplierDetailPage({ params }: Props) {
           </div>
           <p className="mt-1 text-[12.5px] text-ink-3">{data.category}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
-        >
-          <Star className="h-3.5 w-3.5" /> Évaluer fournisseur
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowForm((v) => !v)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary-500 px-3 text-[12.5px] font-medium text-white hover:bg-primary-600"
+          >
+            <Star className="h-3.5 w-3.5" /> Évaluer fournisseur
+          </button>
+          <PageHelp title="Aide — Fournisseur"><AchatsFournisseursTutorial /></PageHelp>
+        </div>
       </header>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

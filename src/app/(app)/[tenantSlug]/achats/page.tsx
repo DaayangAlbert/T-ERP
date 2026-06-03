@@ -13,6 +13,8 @@ import { usePendingPos } from "@/hooks/usePurchase";
 import { useAccess } from "@/hooks/useAccess";
 import { MODULES } from "@/lib/rbac/modules";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { AchatsDashboardTutorial } from "@/components/help/tutorials/AchatsDashboardTutorial";
 
 type Tab = "orders" | "pending" | "articles" | "suppliers" | "contracts" | "analytics";
 
@@ -36,11 +38,14 @@ export default function AchatsPage() {
 
   return (
     <>
-      <header className="mb-5 border-b border-line pb-4">
-        <h1 className="text-xl font-bold tracking-tight text-ink">Achats</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Validations DG, fournisseurs stratégiques, contrats-cadres et analyse.
-        </p>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-line pb-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Achats</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Validations DG, fournisseurs stratégiques, contrats-cadres et analyse.
+          </p>
+        </div>
+        <PageHelp title="Aide — Achats"><AchatsDashboardTutorial /></PageHelp>
       </header>
 
       <div className="mb-4 flex flex-wrap gap-1 overflow-x-auto border-b border-line">
