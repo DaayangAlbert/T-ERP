@@ -12,6 +12,8 @@ import { useDtPortfolio } from "@/hooks/useDtPortfolio";
 import { DtValidationsKpis } from "@/components/dt/validations/DtValidationsKpis";
 import { DtValidationsTable } from "@/components/dt/validations/DtValidationsTable";
 import { DtBulkValidateBar } from "@/components/dt/validations/DtBulkValidateBar";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtValidationsTutorial } from "@/components/help/tutorials/DtValidationsTutorial";
 import { RejectModal } from "@/components/dt/validations/RejectModal";
 import { DtCircuitView } from "@/components/dt/validations/DtCircuitView";
 import { DtDelegationsManager } from "@/components/dt/validations/DtDelegationsManager";
@@ -47,14 +49,17 @@ export default function DtValidationsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Validations techniques
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data?.kpis.pendingCount ?? "—"} N2 en attente · {data?.kpis.monthValidatedCount ?? "—"} validés ce mois · délai moyen{" "}
-          {data?.kpis.avgDelayHours.toFixed(1) ?? "—"} h
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Validations techniques
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data?.kpis.pendingCount ?? "—"} N2 en attente · {data?.kpis.monthValidatedCount ?? "—"} validés ce mois · délai moyen{" "}
+            {data?.kpis.avgDelayHours.toFixed(1) ?? "—"} h
+          </p>
+        </div>
+        <PageHelp title="Aide — Validations techniques"><DtValidationsTutorial /></PageHelp>
       </header>
 
       {data && <DtValidationsKpis kpis={data.kpis} />}

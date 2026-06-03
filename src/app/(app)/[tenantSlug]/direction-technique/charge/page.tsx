@@ -3,6 +3,8 @@
 import { useDtCapacity } from "@/hooks/useDtCapacity";
 import { CapacityHeatmap } from "@/components/dt/capacity/CapacityHeatmap";
 import { OverloadsList } from "@/components/dt/capacity/OverloadsList";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtChargeTutorial } from "@/components/help/tutorials/DtChargeTutorial";
 
 export default function DtCapacityPage() {
   const { data, isLoading } = useDtCapacity();
@@ -22,6 +24,7 @@ export default function DtCapacityPage() {
             {data.weeks[0]} → {data.weeks[data.weeks.length - 1]} — pilotage capacité et arbitrage surcharges.
           </p>
         </div>
+        <PageHelp title="Aide — Plan de charge"><DtChargeTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">

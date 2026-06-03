@@ -9,6 +9,8 @@ import { Bell, Pen, Calendar, MessageSquare, Save } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/hooks/useAuth";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtProfilTutorial } from "@/components/help/tutorials/DtProfilTutorial";
 
 interface DtProfileResponse {
   alertsConfig: {
@@ -98,13 +100,16 @@ export default function DtProfilePage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Mon espace Direction Technique
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {user ? `${user.firstName} ${user.lastName} · ` : ""}Préférences alertes, habilitations, agenda, messagerie technique.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Mon espace Direction Technique
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {user ? `${user.firstName} ${user.lastName} · ` : ""}Préférences alertes, habilitations, agenda, messagerie technique.
+          </p>
+        </div>
+        <PageHelp title="Aide — Mon espace DT"><DtProfilTutorial /></PageHelp>
       </header>
 
       <AvatarUploader />

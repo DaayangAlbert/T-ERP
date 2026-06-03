@@ -8,6 +8,8 @@ import { DtAlertsList } from "@/components/dt/dashboard/DtAlertsList";
 import { ProgressVsFinancialChart } from "@/components/dt/dashboard/ProgressVsFinancialChart";
 import { DirectorOfWorksDonut } from "@/components/dt/dashboard/DirectorOfWorksDonut";
 import { SitesToWatchTable } from "@/components/dt/dashboard/SitesToWatchTable";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtDashboardTutorial } from "@/components/help/tutorials/DtDashboardTutorial";
 
 export default function DtDashboardPage() {
   const { user } = useAuth();
@@ -48,6 +50,7 @@ export default function DtDashboardPage() {
               : `Cockpit production — ${user?.firstName ?? ""} ${user?.lastName ?? ""}. Supervision portefeuille chantiers et équipes travaux.`}
           </p>
         </div>
+        <PageHelp title="Aide — Tableau de bord DT"><DtDashboardTutorial /></PageHelp>
       </header>
 
       <DtProductionBanner banner={data.banner} />

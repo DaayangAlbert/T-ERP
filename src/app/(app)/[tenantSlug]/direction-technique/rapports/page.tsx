@@ -12,6 +12,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtRapportsTutorial } from "@/components/help/tutorials/DtRapportsTutorial";
 
 interface DtTemplate {
   type: string;
@@ -51,13 +53,16 @@ export default function DtReportsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Rapports techniques
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          7 templates DT — reporting hebdo, production, QHSE, MOA, ISO.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Rapports techniques
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            7 templates DT — reporting hebdo, production, QHSE, MOA, ISO.
+          </p>
+        </div>
+        <PageHelp title="Aide — Rapports techniques"><DtRapportsTutorial /></PageHelp>
       </header>
 
       <section>

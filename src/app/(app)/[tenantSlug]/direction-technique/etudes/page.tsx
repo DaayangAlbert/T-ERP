@@ -7,6 +7,8 @@ import { TendersKpis } from "@/components/dt/tenders/TendersKpis";
 import { TendersStageTabs } from "@/components/dt/tenders/TendersStageTabs";
 import { TendersTable } from "@/components/dt/tenders/TendersTable";
 import { NewTenderModal } from "@/components/dt/tenders/NewTenderModal";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtEtudesTutorial } from "@/components/help/tutorials/DtEtudesTutorial";
 
 type View = "in_progress" | "imminent" | "this_month" | "history";
 
@@ -26,13 +28,16 @@ export default function DtTendersPage() {
             Pipeline appels d&apos;offres et étude de prix.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
-        >
-          <Plus className="h-3.5 w-3.5" /> Nouvelle étude
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Études et offres"><DtEtudesTutorial /></PageHelp>
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-violet-600 px-3 text-[12.5px] font-semibold text-white hover:bg-violet-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> Nouvelle étude
+          </button>
+        </div>
       </header>
 
       {createOpen && <NewTenderModal onClose={() => setCreateOpen(false)} />}

@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { Plus, FileText, Pencil, Trash2, Download, Clock, AlertOctagon, CheckCircle2, ShieldAlert } from "lucide-react";
 import { clsx } from "clsx";
 import { useQhseReports, useCreateQhseReport, useDeleteQhseReport, type QhseReportStatus } from "@/hooks/useQhseMonthlyReports";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtRapportsQhseTutorial } from "@/components/help/tutorials/DtRapportsQhseTutorial";
 
 const STATUS_LABEL: Record<QhseReportStatus, string> = {
   DRAFT: "Brouillon",
@@ -43,9 +45,12 @@ export default function QhseMonthlyReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-violet-600" /> Rapports mensuels QHSE</h1>
-        <p className="text-[12.5px] text-ink-3">Sinistralité · audits · NC · formations · soumission DG</p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-violet-600" /> Rapports mensuels QHSE</h1>
+          <p className="text-[12.5px] text-ink-3">Sinistralité · audits · NC · formations · soumission DG</p>
+        </div>
+        <PageHelp title="Aide — Rapports QHSE"><DtRapportsQhseTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-3 shadow-card">

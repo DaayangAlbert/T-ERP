@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Star, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { useDtSubcontractors } from "@/hooks/useDtSubcontractors";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtSousTraitanceTutorial } from "@/components/help/tutorials/DtSousTraitanceTutorial";
 
 const SPECIALTY_LABEL: Record<string, string> = {
   EARTHWORKS_HEAVY: "Terrassement",
@@ -51,13 +53,16 @@ export default function DtSubcontractorsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Sous-traitance technique
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Référentiel sous-traitants qualifiés, contrats-cadres et évaluations.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Sous-traitance technique
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Référentiel sous-traitants qualifiés, contrats-cadres et évaluations.
+          </p>
+        </div>
+        <PageHelp title="Aide — Sous-traitance"><DtSousTraitanceTutorial /></PageHelp>
       </header>
 
       {data && (

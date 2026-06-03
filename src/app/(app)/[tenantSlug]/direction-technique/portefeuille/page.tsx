@@ -9,6 +9,8 @@ import { SitesTable } from "@/components/dt/portfolio/SitesTable";
 import { SitesMapView } from "@/components/dt/portfolio/SitesMapView";
 import { SiteDetailDrawer } from "@/components/dt/portfolio/SiteDetailDrawer";
 import { clsx } from "clsx";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtPortefeuilleTutorial } from "@/components/help/tutorials/DtPortefeuilleTutorial";
 
 const LIMIT = 12;
 
@@ -65,6 +67,8 @@ export default function DtPortfolioPage() {
             {data?.kpis.activeCount ?? "—"} chantiers actifs · vue consolidée Direction Technique.
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <PageHelp title="Aide — Portefeuille chantiers"><DtPortefeuilleTutorial /></PageHelp>
         <div className="flex items-center gap-1 rounded-md border border-line-2 bg-white p-0.5">
           <button
             onClick={() => setView("list")}
@@ -84,6 +88,7 @@ export default function DtPortfolioPage() {
           >
             <Map className="h-3.5 w-3.5" /> Carte
           </button>
+        </div>
         </div>
       </header>
 

@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { clsx } from "clsx";
 import { useDtMethods } from "@/hooks/useDtMethods";
+import { PageHelp } from "@/components/help/PageHelp";
+import { DtMethodesTutorial } from "@/components/help/tutorials/DtMethodesTutorial";
 
 type Tab = "methods" | "templates" | "ratios" | "rex";
 
@@ -46,13 +48,16 @@ export default function DtMethodsPage() {
 
   return (
     <div className="space-y-3">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Méthodes et planification techniques
-        </h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Bibliothèque modes opératoires, plannings types, ratios, REX.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Méthodes et planification techniques
+          </h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Bibliothèque modes opératoires, plannings types, ratios, REX.
+          </p>
+        </div>
+        <PageHelp title="Aide — Méthodes &amp; planification"><DtMethodesTutorial /></PageHelp>
       </header>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
