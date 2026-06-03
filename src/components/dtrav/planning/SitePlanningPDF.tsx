@@ -237,8 +237,10 @@ type PaperName = (typeof PAPER_SIZES)[number]["name"];
 
 function pickPaperSize(data: SitePlanningPdfData): { name: PaperName; w: number; h: number } {
   // Hauteur de contenu requise (estimation conservative)
-  const phaseRowH = 22;
+  const phaseRowH = 18;
+  const taskRowH = 14;
   const milestoneChipRowH = 14;
+  const totalTasks = data.phases.reduce((sum, ph) => sum + ph.tasks.length, 0);
   const milestoneRows = Math.ceil(Math.max(1, data.milestones.length) / 4);
   const fixedH =
     100 /* en-tête */ +
@@ -249,7 +251,7 @@ function pickPaperSize(data: SitePlanningPdfData): { name: PaperName; w: number;
     140 /* bandeau bas (récap + courbe + obs) */ +
     95 /* signatures + notes */ +
     35; /* marges page */
-  const contentH = fixedH + data.phases.length * phaseRowH;
+  const contentH = fixedH + data.phases.length * phaseRowH + totalTasks * taskRowH;
 
   // Largeur de contenu requise : colonnes fixes + grille Gantt à minWeekW pt/semaine
   const { monthCount } = computeMonthCount(data);
@@ -437,22 +439,103 @@ function GanttTable({ data }: { data: SitePlanningPdfData }) {
         </View>
       </View>
 
-      {/* Lignes phases */}
-      {data.phases.map((ph, idx) => (
-        <PhaseRow
-          key={idx}
-          index={idx + 1}
-          phase={ph}
-          minMs={minMs}
-          totalWeeks={totalWeeks}
-          monthCount={monthCount}
-        />
+      {/* Lignes phases + leurs tâches détaillées */}
+      {data.phases.map((ph, phIdx) => (
+        <React.Fragment key={phIdx}>
+          <PhaseRow
+            index={phIdx + 1}
+            phase={ph}
+            minMs={minMs}
+            totalWeeks={totalWeeks}
+            monthCount={monthCount}
+          />
+          {ph.tasks.map((t, tIdx) => (
+            <TaskRow
+              key={tIdx}
+              index={`${phIdx + 1}.${tIdx + 1}`}
+              task={t}
+              parentColor={categoryFor(ph.name).color}
+              minMs={minMs}
+              totalWeeks={totalWeeks}
+              monthCount={monthCount}
+            />
+          ))}
+        </React.Fragment>
       ))}
       {data.phases.length === 0 && (
         <View style={styles.emptyRow}>
           <Text style={styles.empty}>Aucune phase saisie pour ce chantier.</Text>
         </View>
       )}
+    </View>
+  );
+}
+
+function TaskRow({
+  index,
+  task,
+  parentColor,
+  minMs,
+  totalWeeks,
+  monthCount,
+}: {
+  index: string;
+  task: PlanningPhasePdf["tasks"][number];
+  parentColor: string;
+  minMs: number;
+  totalWeeks: number;
+  monthCount: number;
+}) {
+  const tStart = new Date(task.plannedStart).getTime();
+  const tEnd = new Date(task.plannedEnd).getTime();
+  const startWeek = Math.max(0, (tStart - minMs) / (7 * DAY));
+  const endWeek = Math.max(startWeek + 0.3, (tEnd - minMs) / (7 * DAY));
+  const leftPct = (startWeek / totalWeeks) * 100;
+  const widthPct = ((endWeek - startWeek) / totalWeeks) * 100;
+  const durWeeks = Math.max(1, Math.round((tEnd - tStart) / (7 * DAY)));
+
+  return (
+    <View style={styles.taskBodyRow} wrap={false}>
+      <View style={[styles.colNum, styles.bodyCell]}>
+        <Text style={styles.taskNumText}>{index}</Text>
+      </View>
+      <View style={[styles.colName, styles.bodyCell, { alignItems: "flex-start", paddingHorizontal: 4, paddingLeft: 14 }]}>
+        <Text style={styles.taskNameText}>↳ {task.name}</Text>
+      </View>
+      <View style={[styles.colDur, styles.bodyCell]}>
+        <Text style={styles.taskNumText}>{durWeeks}</Text>
+      </View>
+      <View style={[styles.colDate, styles.bodyCell]}>
+        <Text style={styles.taskNumText}>{fmtShort(task.plannedStart)}</Text>
+      </View>
+      <View style={[styles.colDate, styles.bodyCell]}>
+        <Text style={styles.taskNumText}>{fmtShort(task.plannedEnd)}</Text>
+      </View>
+      <View style={styles.colGantt}>
+        <View style={styles.weekGrid}>
+          {Array.from({ length: monthCount }).map((_, mi) =>
+            Array.from({ length: 4 }).map((_, wi) => (
+              <View
+                key={`${mi}-${wi}`}
+                style={[
+                  styles.weekGridCell,
+                  wi === 3 ? { borderRightColor: C.line, borderRightWidth: 0.4 } : {},
+                ]}
+              />
+            )),
+          )}
+        </View>
+        {/* Barre tâche : plus fine + couleur atténuée */}
+        <View
+          style={[
+            styles.taskGanttBar,
+            { left: `${leftPct}%`, width: `${widthPct}%`, backgroundColor: parentColor, opacity: 0.55 },
+          ]}
+        />
+      </View>
+      <View style={[styles.colProg, styles.bodyCell]}>
+        <Text style={[styles.taskNumText, styles.progressText]}>{Math.round(task.progressPercent)}%</Text>
+      </View>
     </View>
   );
 }
@@ -486,15 +569,6 @@ function PhaseRow({
       </View>
       <View style={[styles.colName, styles.bodyCell, { alignItems: "flex-start", paddingHorizontal: 4 }]}>
         <Text style={styles.phaseName}>{phase.name.toUpperCase()}</Text>
-        {phase.tasks.length > 0 && (
-          <Text style={styles.tasksLine}>
-            {phase.tasks
-              .slice(0, 3)
-              .map((t) => t.name)
-              .join(" · ")}
-            {phase.tasks.length > 3 ? ` … (+${phase.tasks.length - 3})` : ""}
-          </Text>
-        )}
       </View>
       <View style={[styles.colDur, styles.bodyCell]}>
         <Text style={styles.bodyText}>{durWeeks}</Text>
@@ -914,7 +988,24 @@ const styles = StyleSheet.create({
   },
   weekLabel: { fontSize: 5, color: C.mute },
 
-  bodyRow: { flexDirection: "row", minHeight: 18, borderBottomWidth: 0.3, borderBottomColor: C.lineSoft },
+  bodyRow: { flexDirection: "row", minHeight: 16, borderBottomWidth: 0.3, borderBottomColor: C.lineSoft },
+  taskBodyRow: {
+    flexDirection: "row",
+    minHeight: 13,
+    borderBottomWidth: 0.2,
+    borderBottomColor: C.lineSoft,
+    backgroundColor: "#fafbfc",
+  },
+  taskNumText: { fontSize: 6.8, color: C.mute, textAlign: "center" },
+  taskNameText: { fontSize: 6.8, color: C.ink2 },
+  taskGanttBar: {
+    position: "absolute",
+    top: 4,
+    height: 6,
+    borderRadius: 1.2,
+    borderWidth: 0.25,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
   bodyCell: {
     alignItems: "center",
     justifyContent: "center",
