@@ -22,6 +22,10 @@ export interface GedDashboardResponse {
     indexationTarget: number;
     complianceAlerts: number;
     criticalAlertsCount: number;
+    /** Courriers officiels en attente (RECEIVED non traités + AWAITING_DG). */
+    correspondencesPending: number;
+    /** Courriers archivés en GED année courante. */
+    correspondencesArchivedYtd: number;
   };
   alerts: Array<{
     id: string;

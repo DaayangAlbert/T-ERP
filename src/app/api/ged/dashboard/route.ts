@@ -4,6 +4,7 @@ import { guardGed } from "@/lib/rbac/ged-guard";
 import {
   ArchivalStatus,
   ClassificationCategory,
+  CorrespondenceStatus,
   GedAuditAction,
   SpaceType,
   WorkflowStatus,
@@ -21,6 +22,8 @@ export async function GET() {
   const since24h = new Date(Date.now() - 24 * 3600 * 1000);
   const in30d = new Date(Date.now() + 30 * 24 * 3600 * 1000);
 
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+
   const [
     spaces,
     activeDocs,
@@ -35,6 +38,8 @@ export async function GET() {
     anomalies,
     activityRaw,
     docsByCategory,
+    correspondencesPending,
+    correspondencesArchivedYtd,
   ] = await Promise.all([
     prisma.documentSpace.findMany({
       where: { tenantId, active: true },
@@ -120,6 +125,27 @@ export async function GET() {
       by: ["classificationId"],
       where: { tenantId },
       _count: { _all: true },
+    }),
+    // Courriers officiels en attente de traitement :
+    //  - INCOMING reçus mais non encore traités (handledAt nul)
+    //  - OUTGOING en attente de signature DG
+    prisma.officialCorrespondence.count({
+      where: {
+        tenantId,
+        OR: [
+          { status: CorrespondenceStatus.RECEIVED, handledAt: null },
+          { status: CorrespondenceStatus.AWAITING_DG_SIGNATURE },
+        ],
+      },
+    }),
+    // Courriers archivés (ARCHIVED) cette année — métrique de production
+    // documentaire de l'archiviste.
+    prisma.officialCorrespondence.count({
+      where: {
+        tenantId,
+        status: CorrespondenceStatus.ARCHIVED,
+        archivedInGedAt: { gte: yearStart },
+      },
     }),
   ]);
 
@@ -261,6 +287,8 @@ export async function GET() {
       indexationTarget: 95,
       complianceAlerts,
       criticalAlertsCount: criticalCount,
+      correspondencesPending,
+      correspondencesArchivedYtd,
     },
     alerts,
     spaces: spacesCards,

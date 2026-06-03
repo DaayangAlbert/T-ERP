@@ -58,7 +58,10 @@ export function useSidebarBadges(): Record<string, SidebarBadge | null> {
     },
     // Le TENANT_ADMIN n'a pas accès au module SG (matrice RBAC retourne 403)
     // — on ne fetch que pour SECRETARY_GENERAL pour éviter le spam 403 console.
-    enabled: role === Role.SECRETARY_GENERAL,
+    // L'ARCHIVIST a un accès lecture SG + un accès dédié au registre des
+    // courriers via guardSgCorrespondence → on l'inclut pour alimenter
+    // son badge sidebar « Registre des courriers ».
+    enabled: role === Role.SECRETARY_GENERAL || role === Role.ARCHIVIST,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
