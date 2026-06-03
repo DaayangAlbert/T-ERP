@@ -10,6 +10,8 @@ import {
   useDeleteWeeklyReport,
   type WeeklyReportStatus,
 } from "@/hooks/useCdtWeeklyReports";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtRapportsTutorial } from "@/components/help/tutorials/CdtRapportsTutorial";
 
 const STATUS_LABEL: Record<WeeklyReportStatus, string> = {
   DRAFT: "Brouillon",
@@ -70,11 +72,14 @@ export default function CdtWeeklyReportsPage() {
 
   return (
     <div className="space-y-4">
-      <header className="border-b border-line pb-2.5">
-        <h1 className="text-[20px] font-bold text-ink">Rapports hebdomadaires</h1>
-        <p className="text-[12.5px] text-ink-3">
-          Consolidation hebdo des chantiers · soumission DTrav · export PDF
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-2.5">
+        <div>
+          <h1 className="text-[20px] font-bold text-ink">Rapports hebdomadaires</h1>
+          <p className="text-[12.5px] text-ink-3">
+            Consolidation hebdo des chantiers · soumission DTrav · export PDF
+          </p>
+        </div>
+        <PageHelp title="Aide — Rapports CDT"><CdtRapportsTutorial /></PageHelp>
       </header>
 
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-3 shadow-card">

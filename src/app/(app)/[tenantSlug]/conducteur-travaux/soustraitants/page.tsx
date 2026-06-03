@@ -4,6 +4,8 @@ import { useState } from "react";
 import { HardHat, Star, Phone, Camera, FileText, Plus, Users, CheckCircle2, X, Save } from "lucide-react";
 import { clsx } from "clsx";
 import { useRecordAttendance, useSubcontractors, type ActiveSubcontractor } from "@/hooks/useCdtSubcontractors";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtSoustraitantsTutorial } from "@/components/help/tutorials/CdtSoustraitantsTutorial";
 
 function fmt(n: number): string {
   return new Intl.NumberFormat("fr-FR").format(n);
@@ -28,12 +30,15 @@ export default function CdtSoustraitantsPage() {
 
   return (
     <div className="space-y-3 pb-20">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Sous-traitants</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data.active.length} actif · {data.upcoming.length} en démarrage prochain ·{" "}
-          <span className="font-mono font-semibold text-ink">{fmt(data.totalEngagedAmount)} FCFA</span> engagés
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Sous-traitants</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data.active.length} actif · {data.upcoming.length} en démarrage prochain ·{" "}
+            <span className="font-mono font-semibold text-ink">{fmt(data.totalEngagedAmount)} FCFA</span> engagés
+          </p>
+        </div>
+        <PageHelp title="Aide — Sous-traitants CDT"><CdtSoustraitantsTutorial /></PageHelp>
       </header>
 
       {/* Cards actifs */}

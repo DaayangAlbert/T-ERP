@@ -5,6 +5,8 @@ import { Plus, X, Save, FileText, AlertOctagon, CheckCircle2, Briefcase } from "
 import { clsx } from "clsx";
 import type { VisitorType } from "@prisma/client";
 import { useCreateVisit, useReportVisit, useVisits, type RecentVisit, type UpcomingVisit } from "@/hooks/useCdtVisits";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtVisitesTutorial } from "@/components/help/tutorials/CdtVisitesTutorial";
 
 const VISITOR_LABEL: Record<VisitorType, string> = {
   BCT: "BCT",
@@ -51,13 +53,16 @@ export default function CdtVisitesPage() {
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Visites externes</h1>
           <p className="mt-1 text-[12.5px] text-ink-3">BCT · géomètres · MOA · banques · assurances.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowSchedule(true)}
-          className="inline-flex h-12 items-center gap-2 rounded-md bg-primary-500 px-4 text-[13px] font-semibold text-white hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" /> Programmer visite
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSchedule(true)}
+            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary-500 px-4 text-[13px] font-semibold text-white hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" /> Programmer visite
+          </button>
+          <PageHelp title="Aide — Visites externes"><CdtVisitesTutorial /></PageHelp>
+        </div>
       </header>
 
       {/* Visites à venir */}

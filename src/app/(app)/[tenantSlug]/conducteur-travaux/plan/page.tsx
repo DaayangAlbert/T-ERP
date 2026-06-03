@@ -5,6 +5,8 @@ import { Users, Package, AlertTriangle, Save, CheckCircle2, ClipboardCheck } fro
 import { clsx } from "clsx";
 import type { TeamStatus } from "@prisma/client";
 import { useTodayPlan, useUpdateTeamAssignment, useValidatePlan, type DailyPlanTeamRow } from "@/hooks/useCdtPlan";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtPlanTutorial } from "@/components/help/tutorials/CdtPlanTutorial";
 
 const STATUS_LABEL: Record<TeamStatus, string> = {
   ASSIGNED: "Affecté",
@@ -50,14 +52,17 @@ export default function CdtPlanPage() {
 
   return (
     <div className="space-y-3 pb-32">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Plan du jour</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {data.teams.length} équipes · revue avec J. KAMGA à 7h45 · statut{" "}
-          <span className={clsx("font-semibold", data.status === "VALIDATED" ? "text-emerald-700" : "text-amber-700")}>
-            {data.status === "VALIDATED" ? "Validé" : "Brouillon"}
-          </span>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Plan du jour</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {data.teams.length} équipes · revue avec J. KAMGA à 7h45 · statut{" "}
+            <span className={clsx("font-semibold", data.status === "VALIDATED" ? "text-emerald-700" : "text-amber-700")}>
+              {data.status === "VALIDATED" ? "Validé" : "Brouillon"}
+            </span>
+          </p>
+        </div>
+        <PageHelp title="Aide — Plan du jour"><CdtPlanTutorial /></PageHelp>
       </header>
 
       <div className="space-y-2">

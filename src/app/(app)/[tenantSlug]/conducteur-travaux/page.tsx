@@ -4,6 +4,8 @@ import Link from "next/link";
 import { HardHat, Users, ClipboardList, ShieldCheck, AlertTriangle, ArrowRight, Calendar, AlertOctagon, Info } from "lucide-react";
 import { clsx } from "clsx";
 import { useCdtDashboard } from "@/hooks/useCdtDashboard";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtDashboardTutorial } from "@/components/help/tutorials/CdtDashboardTutorial";
 
 function fmtTime(d: Date): string {
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -50,12 +52,15 @@ export default function CdtDashboardPage() {
       </div>
 
       {/* Salutation */}
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Bonjour Samuel</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {fmtDayLong(now)} · {fmtTime(now)} · {data.weather} · phase{" "}
-          <span className="font-semibold text-primary-700">{data.activePhase.label} {data.activePhase.progress}%</span>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Bonjour Samuel</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {fmtDayLong(now)} · {fmtTime(now)} · {data.weather} · phase{" "}
+            <span className="font-semibold text-primary-700">{data.activePhase.label} {data.activePhase.progress}%</span>
+          </p>
+        </div>
+        <PageHelp title="Aide — Tableau de bord CDT"><CdtDashboardTutorial /></PageHelp>
       </header>
 
       {/* KPIs techniques */}

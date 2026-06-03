@@ -5,6 +5,8 @@ import { ShieldCheck, AlertOctagon, Plus, FlaskConical, Camera, CheckCircle2, X,
 import { clsx } from "clsx";
 import type { QcCategory, QcType } from "@prisma/client";
 import { useCreateQualityControl, useLabTests, useQualityControls, type QcCheckpoint } from "@/hooks/useCdtQuality";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtQualiteTutorial } from "@/components/help/tutorials/CdtQualiteTutorial";
 
 const CATEGORY_LABEL: Record<QcCategory, string> = {
   CONCRETE: "Béton",
@@ -52,13 +54,16 @@ export default function CdtQualitePage() {
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Contrôles qualité</h1>
           <p className="mt-1 text-[12.5px] text-ink-3">Auto-contrôles internes · tests labo · non-conformités.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowWizard(true)}
-          className="inline-flex h-12 items-center gap-2 rounded-md bg-primary-500 px-4 text-[13px] font-semibold text-white hover:bg-primary-600"
-        >
-          <Plus className="h-4 w-4" /> Nouvel auto-contrôle
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowWizard(true)}
+            className="inline-flex h-12 items-center gap-2 rounded-md bg-primary-500 px-4 text-[13px] font-semibold text-white hover:bg-primary-600"
+          >
+            <Plus className="h-4 w-4" /> Nouvel auto-contrôle
+          </button>
+          <PageHelp title="Aide — Qualité CDT"><CdtQualiteTutorial /></PageHelp>
+        </div>
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">

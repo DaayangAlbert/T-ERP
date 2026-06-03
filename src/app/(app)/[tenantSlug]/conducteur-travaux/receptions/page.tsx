@@ -5,6 +5,8 @@ import { ClipboardCheck, CalendarClock, AlertOctagon, CheckCircle2, ChevronDown,
 import { clsx } from "clsx";
 import type { CdtMilestoneStatus } from "@prisma/client";
 import { useMilestones, useToggleDeliverable, type MilestoneItem } from "@/hooks/useCdtMilestones";
+import { PageHelp } from "@/components/help/PageHelp";
+import { CdtReceptionsTutorial } from "@/components/help/tutorials/CdtReceptionsTutorial";
 
 const STATUS_LABEL: Record<CdtMilestoneStatus, string> = {
   UPCOMING: "À venir",
@@ -42,12 +44,15 @@ export default function CdtReceptionsPage() {
 
   return (
     <div className="space-y-3 pb-20">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Réceptions techniques</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          Jalons MOA · {data.kpis.total} jalons · {data.kpis.reached} atteints · prochain dans{" "}
-          <span className="font-semibold text-ink">{data.kpis.daysToNext ?? "—"} jours</span>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Réceptions techniques</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Jalons MOA · {data.kpis.total} jalons · {data.kpis.reached} atteints · prochain dans{" "}
+            <span className="font-semibold text-ink">{data.kpis.daysToNext ?? "—"} jours</span>
+          </p>
+        </div>
+        <PageHelp title="Aide — Réceptions techniques"><CdtReceptionsTutorial /></PageHelp>
       </header>
 
       <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
