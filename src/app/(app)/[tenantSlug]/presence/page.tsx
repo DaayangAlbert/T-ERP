@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { MapPin, LogIn, LogOut, Clock, RefreshCw, AlertTriangle, CheckCircle2, Users, Building2, HardHat } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { PageHelp } from "@/components/help/PageHelp";
+import { PresenceTutorial } from "@/components/help/tutorials/PresenceTutorial";
 
 interface MeResp {
   canClockIn: boolean;
@@ -50,11 +52,14 @@ export default function PresencePage() {
 
   return (
     <div className="space-y-4 pb-16">
-      <header className="border-b border-line pb-3">
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Présence</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {d.canClockIn ? "Pointez votre arrivée et votre départ — votre position GPS est vérifiée." : "Suivi des présences de l'équipe."}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Présence</h1>
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            {d.canClockIn ? "Pointez votre arrivée et votre départ — votre position GPS est vérifiée." : "Suivi des présences de l'équipe."}
+          </p>
+        </div>
+        <PageHelp title="Aide — Présence"><PresenceTutorial /></PageHelp>
       </header>
 
       {showTabs && (
