@@ -7,7 +7,8 @@ import {
   FileImage,
   FileType,
   File as FileIcon,
-  ExternalLink,
+  Share2,
+  Download,
   Tags,
   AlertCircle,
 } from "lucide-react";
@@ -19,6 +20,7 @@ interface Props {
   onToggle: (id: string) => void;
   onToggleAll: () => void;
   onClassify: (doc: GedDocument) => void;
+  onShare: (doc: GedDocument) => void;
   isLoading: boolean;
 }
 
@@ -66,6 +68,7 @@ export function DocumentsTable({
   onToggle,
   onToggleAll,
   onClassify,
+  onShare,
   isLoading,
 }: Props) {
   if (isLoading && documents.length === 0) {
@@ -233,15 +236,23 @@ export function DocumentsTable({
                     >
                       <Tags className="h-3.5 w-3.5" />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => onShare(d)}
+                      className="grid h-7 w-7 place-items-center rounded-md text-emerald-600 hover:bg-emerald-50"
+                      aria-label="Partager"
+                      title="Partager via la messagerie"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
                     <a
                       href={d.url}
-                      target="_blank"
-                      rel="noopener"
+                      download={d.name}
                       className="grid h-7 w-7 place-items-center rounded-md text-ink-3 hover:bg-surface-alt"
-                      aria-label="Ouvrir"
-                      title="Ouvrir le document"
+                      aria-label="Télécharger"
+                      title="Télécharger le document"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <Download className="h-3.5 w-3.5" />
                     </a>
                   </div>
                 </td>

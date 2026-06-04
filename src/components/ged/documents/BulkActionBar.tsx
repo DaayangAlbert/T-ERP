@@ -1,15 +1,24 @@
 "use client";
 
-import { FolderOpen, Tags, X } from "lucide-react";
+import { FolderOpen, Tags, X, Share2, Download } from "lucide-react";
 
 interface Props {
   count: number;
   onMove: () => void;
   onClassify: () => void;
+  onShare: () => void;
+  onDownload: () => void;
   onClear: () => void;
 }
 
-export function BulkActionBar({ count, onMove, onClassify, onClear }: Props) {
+export function BulkActionBar({
+  count,
+  onMove,
+  onClassify,
+  onShare,
+  onDownload,
+  onClear,
+}: Props) {
   if (count === 0) return null;
   return (
     <div className="sticky bottom-0 z-30 mx-auto flex items-center justify-between gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 shadow-md">
@@ -21,7 +30,23 @@ export function BulkActionBar({ count, onMove, onClassify, onClear }: Props) {
           {count} document{count > 1 ? "s" : ""} sélectionné{count > 1 ? "s" : ""}
         </span>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onShare}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[12px] font-semibold text-white hover:bg-emerald-700"
+          title="Partager via la messagerie"
+        >
+          <Share2 className="h-3.5 w-3.5" /> Partager
+        </button>
+        <button
+          type="button"
+          onClick={onDownload}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-white px-3 text-[12px] font-semibold text-ink hover:bg-surface-alt"
+          title="Télécharger les documents sélectionnés"
+        >
+          <Download className="h-3.5 w-3.5" /> Télécharger
+        </button>
         <button
           type="button"
           onClick={onMove}

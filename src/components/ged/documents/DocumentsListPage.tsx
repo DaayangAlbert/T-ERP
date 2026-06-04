@@ -10,6 +10,7 @@ import { BulkActionBar } from "./BulkActionBar";
 import { MoveToSpaceModal } from "./MoveToSpaceModal";
 import { ImportDocumentModal } from "./ImportDocumentModal";
 import { ClassifyDocumentModal } from "./ClassifyDocumentModal";
+import { ShareDocumentsModal } from "./ShareDocumentsModal";
 import { PageHelp } from "@/components/help/PageHelp";
 import { GedDocumentsTutorial } from "@/components/help/tutorials/GedDocumentsTutorial";
 
@@ -26,6 +27,37 @@ export function DocumentsListPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [classifyDoc, setClassifyDoc] = useState<GedDocument | null>(null);
+  const [shareDocs, setShareDocs] = useState<GedDocument[] | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  /**
+   * Déclenche le téléchargement de plusieurs documents en série en simulant
+   * un clic sur un lien `<a download>` éphémère pour chacun. Le navigateur
+   * regroupe les téléchargements dans sa barre de download.
+   */
+  function bulkDownload(docs: GedDocument[]) {
+    if (docs.length === 0) return;
+    docs.forEach((d, idx) => {
+      // Léger décalage pour éviter que certains navigateurs ne bloquent les
+      // téléchargements multiples comme étant du popup spam.
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = d.url;
+        a.download = d.name;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, idx * 200);
+    });
+    showToast(
+      `Téléchargement de ${docs.length} document${docs.length > 1 ? "s" : ""} lancé`,
+    );
+  }
 
   const filters = {
     spaceId: selectedSpaceId ?? undefined,
@@ -206,6 +238,7 @@ export function DocumentsListPage() {
               onToggle={toggleId}
               onToggleAll={toggleAll}
               onClassify={setClassifyDoc}
+              onShare={(d) => setShareDocs([d])}
               isLoading={docsQ.isLoading}
             />
 
@@ -244,6 +277,10 @@ export function DocumentsListPage() {
             onClassify={() => {
               if (selectedDocs.length === 1) setClassifyDoc(selectedDocs[0]);
             }}
+            onShare={() => {
+              if (selectedDocs.length > 0) setShareDocs(selectedDocs);
+            }}
+            onDownload={() => bulkDownload(selectedDocs)}
             onClear={() => setSelectedIds(new Set())}
           />
         </main>
@@ -287,6 +324,26 @@ export function DocumentsListPage() {
             setSelectedIds(new Set());
           }}
         />
+      )}
+
+      {shareDocs && shareDocs.length > 0 && (
+        <ShareDocumentsModal
+          documents={shareDocs}
+          onClose={() => setShareDocs(null)}
+          onShared={({ recipients, messagesCreated }) => {
+            showToast(
+              `Partagé vers ${recipients} destinataire${recipients > 1 ? "s" : ""} · ${messagesCreated} message${messagesCreated > 1 ? "s" : ""} créé${messagesCreated > 1 ? "s" : ""}`,
+            );
+            setShareDocs(null);
+            setSelectedIds(new Set());
+          }}
+        />
+      )}
+
+      {toast && (
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-lg bg-ink px-4 py-2 text-[12.5px] font-semibold text-white shadow-lg">
+          {toast}
+        </div>
       )}
     </div>
   );
