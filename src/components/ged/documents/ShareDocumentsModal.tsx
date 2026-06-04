@@ -4,10 +4,19 @@ import { useMemo, useState } from "react";
 import { Send, Search, X, Check, FileText, Loader2, Users } from "lucide-react";
 import { clsx } from "clsx";
 import { useMessagingContacts } from "@/hooks/useMessaging";
-import type { GedDocument } from "@/hooks/useGedDocuments";
+
+/**
+ * Forme minimale requise pour partager un document — accepte aussi bien
+ * `GedDocument` (bibliothèque) que `UnclassifiedDocument` (carte « à classer »).
+ */
+export interface ShareableDocument {
+  id: string;
+  name: string;
+  internalReference?: string | null;
+}
 
 interface Props {
-  documents: GedDocument[];
+  documents: ShareableDocument[];
   onClose: () => void;
   onShared: (info: { recipients: number; messagesCreated: number }) => void;
 }

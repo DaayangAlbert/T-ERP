@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { FileWarning, FileText, ExternalLink, Tags, AlertTriangle } from "lucide-react";
-import { clsx } from "clsx";
+import { FileWarning, FileText, Share2, Download, Tags, AlertTriangle } from "lucide-react";
 import { useUnclassifiedDocuments, type UnclassifiedDocument } from "@/hooks/useGedDocuments";
 import { ClassifyDocumentModal } from "./ClassifyDocumentModal";
+import { ShareDocumentsModal } from "./ShareDocumentsModal";
 
 function fmtSize(b: number): string {
   if (b >= 1_000_000) return `${(b / 1_000_000).toFixed(1)} Mo`;
@@ -27,6 +27,12 @@ interface Props {
 export function UnclassifiedDocumentsCard({ readOnly = false, includeRecent = false }: Props) {
   const { data, isLoading } = useUnclassifiedDocuments({ includeRecent });
   const [classifying, setClassifying] = useState<UnclassifiedDocument | null>(null);
+  const [sharing, setSharing] = useState<UnclassifiedDocument | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
 
   return (
     <section className="rounded-xl border border-line bg-white">
@@ -86,14 +92,23 @@ export function UnclassifiedDocumentsCard({ readOnly = false, includeRecent = fa
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSharing(d)}
+                    className="grid h-7 w-7 place-items-center rounded-md text-emerald-600 hover:bg-emerald-50"
+                    title="Partager via la messagerie"
+                    aria-label="Partager"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </button>
                   <a
                     href={d.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-7 items-center gap-1 rounded-md border border-line bg-white px-2 text-[11px] font-semibold text-ink-3 hover:bg-surface-alt"
-                    title="Ouvrir le fichier"
+                    download={d.name}
+                    className="grid h-7 w-7 place-items-center rounded-md text-ink-3 hover:bg-surface-alt"
+                    title="Télécharger le document"
+                    aria-label="Télécharger"
                   >
-                    <ExternalLink className="h-3 w-3" />
+                    <Download className="h-3.5 w-3.5" />
                   </a>
                   {!readOnly && (
                     <button
@@ -122,6 +137,25 @@ export function UnclassifiedDocumentsCard({ readOnly = false, includeRecent = fa
             /* le hook invalide automatiquement la query */
           }}
         />
+      )}
+
+      {sharing && (
+        <ShareDocumentsModal
+          documents={[{ id: sharing.id, name: sharing.name }]}
+          onClose={() => setSharing(null)}
+          onShared={({ recipients, messagesCreated }) => {
+            showToast(
+              `Partagé vers ${recipients} destinataire${recipients > 1 ? "s" : ""} · ${messagesCreated} message${messagesCreated > 1 ? "s" : ""}`,
+            );
+            setSharing(null);
+          }}
+        />
+      )}
+
+      {toast && (
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-[80] -translate-x-1/2 rounded-lg bg-ink px-4 py-2 text-[12.5px] font-semibold text-white shadow-lg">
+          {toast}
+        </div>
       )}
     </section>
   );
